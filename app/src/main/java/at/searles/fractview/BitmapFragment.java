@@ -261,17 +261,16 @@ public class BitmapFragment extends Fragment {
 		// and also the fractal.
 		this.fractal = getArguments().getParcelable("fractal");
 
-		// FIXME Can fractal be null?
+		// The fractal must be compilable! If it is a user-defined one
+		// it was checked before it was put into the parcel.
 
 		// the initial fractal must always be compilable, otherwise it is no fun.
 		try {
-			// FIXME Best fix: do not compile fractal in here!
+			// Fractal is guaranteed to compile
 			this.fractal.parse();
 			this.fractal.compile();
 		} catch(CompileException e) {
 			e.printStackTrace();
-
-			// FIXME Bug report: This one causes a crash! What to do in this case?
 			throw new IllegalArgumentException("initial fractal is not compilable: " + e.getMessage());
 		}
 

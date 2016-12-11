@@ -21,7 +21,7 @@ public class FavoriteEntry {
 	 * creates a new bitmap with size 64x64 containing the center of the current image
 	 * @return
 	 */
-	static Bitmap createIcon(Bitmap original) {
+	private static Bitmap createIcon(Bitmap original) {
 		// create a square icon. Should  only contain central square.
 		Bitmap icon = Bitmap.createBitmap(ICON_LEN, ICON_LEN, Bitmap.Config.ARGB_8888);
 
@@ -50,7 +50,7 @@ public class FavoriteEntry {
 		return icon;
 	}
 
-	static String getStringFromBitmap(Bitmap bitmapPicture) {
+	private static String getStringFromBitmap(Bitmap bitmapPicture) {
 		// Thanks to http://mobile.cs.fsu.edu/converting-images-to-json-objects/
 		String encodedImage;
 		ByteArrayOutputStream byteArrayBitmapStream = new ByteArrayOutputStream();
@@ -60,8 +60,14 @@ public class FavoriteEntry {
 		return encodedImage;
 	}
 
-	static Bitmap getBitmapFromString(String str) {
+	/**
+	 * Convert a Base64 encoded icon to a bitmap
+	 * @param str The base64 encoded value
+	 * @return
+     */
+	private static Bitmap getBitmapFromString(String str) {
 		// Thanks to http://mobile.cs.fsu.edu/converting-images-to-json-objects/
+		// FIXME check error case
 		byte[] decodedString = Base64.decode(str, Base64.DEFAULT);
 		return BitmapFactory.decodeByteArray(decodedString, 0, decodedString.length);
 	}

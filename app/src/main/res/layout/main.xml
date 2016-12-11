@@ -8,11 +8,12 @@
     android:columnCount="3">
 
     <at.searles.fractview.ui.ScaleableImageView
-            android:layout_width="fill_parent"
-            android:layout_height="fill_parent"
-            android:id="@+id/imageView"
-            android:gravity="center|center_vertical"
-        android:scaleType="matrix" />
+        android:layout_width="fill_parent"
+        android:layout_height="fill_parent"
+        android:id="@+id/imageView"
+        android:gravity="center|center_vertical"
+        android:scaleType="matrix"
+        android:keepScreenOn="true"/>
 
     <ProgressBar
         style="?android:attr/progressBarStyleHorizontal"

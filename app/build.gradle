@@ -15,7 +15,9 @@ android {
                 cppFlags ""
             }
         }
-
+        jackOptions {
+            enabled true
+        }
     }
     buildTypes {
         release {
@@ -27,6 +29,10 @@ android {
         cmake {
             path "CMakeLists.txt"
         }
+    }
+    compileOptions {
+        targetCompatibility 1.8
+        sourceCompatibility 1.8
     }
 }
 

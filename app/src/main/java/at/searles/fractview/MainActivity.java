@@ -229,9 +229,7 @@ public class MainActivity extends Activity implements BitmapFragment.UpdateListe
 			try {
 				sourceCode = PresetFractals.readSourcecode(this, "Default.fv");
 			} catch (IOException e) {
-				// FIXME Just show a default mandelbrot set.
-				sourceCode = "";
-				throw new AssertionError("It should be asserted that assets can be read...");
+				throw new IllegalArgumentException("Default.fv is missing?!");
 			}
 
 			Fractal initFractal = new Fractal(
@@ -263,7 +261,9 @@ public class MainActivity extends Activity implements BitmapFragment.UpdateListe
 
 	@Override
 	public void onSaveInstanceState(@NotNull Bundle savedInstanceState) {
+		// FIXME make sure that fractal is compilable!
 		bitmapFragment.getArguments().putParcelable("fractal", bitmapFragment.fractal());
+
 		// Always call the superclass so it can save the view hierarchy state
 		super.onSaveInstanceState(savedInstanceState);
 	}
@@ -486,12 +486,7 @@ public class MainActivity extends Activity implements BitmapFragment.UpdateListe
 
 			// yay, success
 
-			bitmapFragment.edit(new Runnable() {
-				@Override
-				public void run() {
-					bitmapFragment.setFractal(newFractal);
-				}
-			});
+			bitmapFragment.edit(() -> bitmapFragment.setFractal(newFractal));
 		} catch(CompileException e) {
 			e.printStackTrace();
 			Toast.makeText(this, e.getMessage(), Toast.LENGTH_LONG).show();
