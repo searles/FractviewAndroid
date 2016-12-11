@@ -1,0 +1,58 @@
+<?xml version="1.0" encoding="utf-8"?>
+<GridLayout xmlns:android="http://schemas.android.com/apk/res/android" android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:columnCount="2"
+    android:rowCount="4">
+
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="@string/label_width"
+        android:id="@+id/widthTextView"
+        android:layout_row="0"
+        android:layout_column="0" />
+
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="@string/label_height"
+        android:id="@+id/heightTextView"
+        android:layout_row="1"
+        android:layout_column="0" />
+
+    <EditText
+        android:layout_width="fill_parent"
+        android:layout_height="wrap_content"
+        android:inputType="number"
+        android:ems="10"
+        android:id="@+id/widthEditText"
+        android:layout_row="0"
+        android:layout_column="1" />
+
+    <EditText
+        android:layout_width="fill_parent"
+        android:layout_height="wrap_content"
+        android:inputType="number"
+        android:ems="10"
+        android:id="@+id/heightEditText"
+        android:layout_row="1"
+        android:layout_column="1" />
+
+    <CheckBox
+        android:layout_width="fill_parent"
+        android:layout_height="wrap_content"
+        android:text="@string/label_keep_as_default"
+        android:id="@+id/defaultCheckBox"
+        android:layout_row="2"
+        android:layout_column="0"
+        android:layout_columnSpan="2" />
+
+    <Button
+        android:layout_width="fill_parent"
+        android:layout_height="wrap_content"
+        android:text="@string/label_default_size"
+        android:id="@+id/resetSizeButton"
+        android:layout_row="3"
+        android:layout_column="0"
+        android:layout_columnSpan="2" />
+</GridLayout>

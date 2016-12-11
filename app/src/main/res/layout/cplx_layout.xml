@@ -1,0 +1,49 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android" android:orientation="vertical"
+    android:layout_width="match_parent" android:layout_height="match_parent">
+
+    <LinearLayout
+        android:orientation="horizontal"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_gravity="center_horizontal">
+
+        <TextView
+            android:textAppearance="?android:attr/textAppearanceLarge"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="x = "
+            android:id="@+id/xTextView" />
+
+        <EditText
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:inputType="numberDecimal|numberSigned"
+            android:ems="10"
+            android:id="@+id/xEditText"
+            android:layout_weight="1" />
+    </LinearLayout>
+
+    <LinearLayout
+        android:orientation="horizontal"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_gravity="center_horizontal">
+
+        <TextView
+            android:textAppearance="?android:attr/textAppearanceLarge"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="y = "
+            android:id="@+id/yTextView" />
+
+        <EditText
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:inputType="numberDecimal|numberSigned"
+            android:ems="10"
+            android:id="@+id/yEditText"
+            android:layout_weight="1" />
+    </LinearLayout>
+
+</LinearLayout>

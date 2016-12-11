@@ -1,0 +1,144 @@
+// Julia Map. 
+var x int, y int, color int, width int, height int;
+
+extern juliacount int = 9;
+extern miniscale real = 1.5;
+
+extern juliaset bool = false;
+extern juliapoint cplx = -0.8:0.16;
+
+extern maxdepth int = 120;
+
+func escapetime(c, p, breakcondition) {
+	// slight modification (mandelinit not needed, p set in drawpixel)
+	var i int = 0,
+		zlast cplx = 0,
+		z cplx,
+		znext cplx = 0;
+
+    z = c;
+
+	extern function expr = "mandelbrot(z, p)";
+
+	var color quat;
+
+	while {
+		znext = function;
+		not breakcondition(i, znext, z, zlast, c, p, color)
+	} do {
+		// advance to next values
+		zlast = z;
+		z = znext;
+	}
+
+	// return color
+	color
+}
+
+func get_color(c, p, value) {
+	func breakcondition(i, znext, z, zlast, c, p, color) {
+		func bailoutcolor() {
+			extern bailout real = 64;
+			extern max_power real = 2;
+			var smooth_i = smoothen(znext, bailout, max_power) ;
+
+            // the next ones are only used in 3d-fractals
+			extern bailoutvalue expr = "i + smooth_i";
+			value = bailoutvalue ;
+		
+			extern bailouttransfer expr = "log(value + 19)";
+
+			extern bailoutpalette palette = [
+					[#006, #26c, #fff, #fa0, #303]];
+	
+			color = bailoutpalette bailouttransfer
+		}
+
+		func lakecolor() {
+			extern epsilon real = 1e-9;
+		
+			// the next ones are only used in 3d-fractals
+			extern lakevalue expr = "rad znext";
+			value = lakevalue;
+
+			extern laketransfer expr =
+				"arcnorm znext : log(1 + value)";
+
+			extern lakepalette palette = [
+				[#000, #000, #000, #000],
+				[#f00, #ff0, #0f8, #00f],
+				[#f88, #ff8, #afc, #88f]];
+
+			color = lakepalette laketransfer
+		}
+
+		{ lakecolor() ; true } if not next(i, maxdepth) else
+		radrange(znext, z, bailout, epsilon, bailoutcolor(), lakecolor())
+	}
+
+	escapetime(c, p, breakcondition)
+}
+
+func get_pixel_juliamap(x, y, value) {
+	// FIXME
+    // returns quat of pixel
+	var c cplx, p cplx;
+
+	if not juliaset then {
+		var x0 real = x; 
+		var y0 real = y; 
+
+		var wc real = width; wc = wc / juliacount; // width of a minijulia/
+		var hc real = height; hc = hc / juliacount; // height of a minijulia
+
+		// Center of mini-julia
+		var x1 = x0 + wc (0.5 - fract(x0 / wc));
+		var y1 = y0 + hc (0.5 - fract(y0 / hc));
+		
+		// and the normalized coordinates in mini-julia.
+		x0 = width (fract(x0 / wc) - 0.5);
+		y0 = height (fract(y0 / hc) - 0.5);
+
+		c = (x0 : y0) * 2 miniscale / min(width, height);
+		p = map(x1, y1);
+	} else {
+		c = map(x, y);
+		p = juliapoint;
+	}
+
+	get_color(c, p, value)
+}
+
+// ******************************************
+// * Next are just drawing procedures. They *
+// * should be the same for all drawings.   *                 
+// ******************************************
+	
+extern supersampling bool = false;
+	
+// drawpixel for 2D
+func drawpixel(x, y) { 
+	//var c cplx = map(x, y);
+	var value real;
+	get_pixel_juliamap(x, y, value) // value is not used
+}
+
+
+func do_pixel(x, y) {	
+	func drawaapixel(x, y) {
+		0.25 (
+			drawpixel(x - 0.375, y - 0.125) + 
+			drawpixel(x + 0.125, y - 0.375) + 
+			drawpixel(x + 0.375, y + 0.125) +
+			drawpixel(x - 0.125, y + 0.375)			
+		);
+	}
+
+	// which function to apply?
+	def fn = drawpixel if not supersampling else drawaapixel;
+
+	color = lab2int fn(x, y)
+}
+
+// and finally call the draing procedure
+do_pixel(x, y)

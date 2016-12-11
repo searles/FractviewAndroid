@@ -1,0 +1,272 @@
+// Min/Max Orbit trap: determines the minimum and maximum distance
+// to the given trap.
+var x int, y int, color int;
+
+extern maxdepth int = 120;
+
+// some further arguments
+extern juliaset bool = false;
+extern juliapoint cplx = -0.8:0.16;
+
+func escapetime(c, breakcondition) {
+	var i int = 0,
+		p cplx = juliapoint if juliaset else c,
+		zlast cplx = 0,
+		z cplx,
+		znext cplx = 0;
+
+	extern mandelinit expr = "0";
+
+    z = c if juliaset else mandelinit;
+
+	extern function expr = "mandelbrot(z, p)";
+
+	var color quat;
+
+	while {
+		znext = function;
+		not breakcondition(i, znext, z, zlast, c, p, color)
+	} do {
+		// advance to next values
+		zlast = z;
+		z = znext;
+	}
+
+	// return color
+	color
+}
+
+// some nice trap shapes:
+func pipe(z, color) {
+	var ret quat = color;
+	var v = circlefn (1 - z);
+	var a = (200 - 4 ret.a);
+	ret.a = a sqr v + (100 - a) v;
+	ret.d = 1 - v (1 - opacity);
+	ret
+}
+
+func framed(v, color) {
+	// 0.1 white
+	// 0.4 black
+	// 0.5 while
+	//   1 color
+    var ret quat;
+    var alpha real;
+    
+    // hat function; peak at 0.5, min at 0 and 1.
+    func hat(x) { 2 x if x < 0.5 else 2 (1 - x) };
+    
+    { ret = 100:0:0:1 ; alpha = hat 10 v  } if v < 0.1 else
+    { ret = 0:0:0:1 ; alpha = hat 3.3333333333333 (v - 0.1) } if v < 0.4 else
+    { ret = 100:0:0:1 ; alpha = hat 10 (v - 0.4) } if v < 0.5 else
+    { ret = color ; alpha = 2 (v - 0.5) };
+    
+    ret.d = opacity circlefn (1 - alpha);
+    ret
+}
+
+
+
+func get_color(c, value) { 
+	var trapcolorfront quat = 0:0:0:0; // later traps in front
+	var trapcolorback quat = 0:0:0:0; // later traps behind
+
+	var trapfirst real, trapindex = -1;
+	var traplast real;
+
+	// draw single pixel
+	func breakcondition(i, znext, z, zlast, c, p, color) {
+		// if true, color contains the lab color (quat)
+	
+		func bailoutcolor() {
+			extern bailout real = 128;
+			extern max_power real = 2;
+			var smooth_i = smoothen(znext, bailout, max_power) ;
+
+            // the next ones are only used in 3d-fractals
+			extern bailoutvalue expr = "i + smooth_i";
+			value = bailoutvalue ;
+
+			extern bailouttransfer expr =
+				"log(value + 19)";
+
+			extern bailoutpalette palette = [
+					[#006, #26c, #fff, #fa0, #303]];
+		
+			color = over(trapcolorfront, bailoutpalette bailouttransfer);
+			if trapindex >= 0 then value = traplast;
+		}
+
+		func lakecolor() {
+			extern epsilon real = 1e-9;
+		
+			// the next ones are only used in 3d-fractals
+			extern lakevalue expr = "rad znext";
+			value = lakevalue;
+
+			extern laketransfer expr = 
+				"arcnorm znext : log(1 + value)";
+
+			extern lakepalette palette = [
+				[#000, #000, #000, #000],
+				[#f00, #ff0, #0f8, #00f],
+				[#f88, #ff8, #afc, #88f]];
+
+			color = over(trapcolorback, lakepalette laketransfer);
+			if trapindex >= 0 then value = trapfirst;
+		}
+
+		// update trap
+		func updatetrap() {
+			extern trapwidth real = 0.2;
+
+			extern trapfn expr = "min(box(-2:-2, 0.5:0.5, znext), box(-0.5:-0.5, 2:2, znext))";
+			
+			var trapdist real = 1 - trapfn / trapwidth;
+
+			if trapdist > 0 then {
+				// we are inside the trap
+				extern trapvalue expr = "trapdist";
+				
+				extern traptransfer expr = "log(i + 1)";
+				
+				extern trappalette palette = [
+						[#4b0082, #800000, #ffd700, #000080, #f5deb3]];
+
+				extern opacity real = 0.67;
+				
+				var fg = framed(trapdist, trappalette traptransfer);
+				
+				trapcolorfront = over(fg, trapcolorfront);
+				trapcolorback = over(trapcolorback, fg);
+				
+				if trapindex < 0 then {
+					trapfirst = trapvalue;
+					traplast = trapfirst;
+					trapindex = i
+				} else {
+					traplast = trapvalue;
+				};
+				
+				trapindex = i;
+			}			
+		}
+
+		updatetrap();
+
+		{ lakecolor() ; true } if not next(i, maxdepth) else
+		radrange(znext, z, bailout, epsilon, bailoutcolor(), lakecolor())
+
+	}
+
+	escapetime(c, breakcondition)
+}
+
+// ******************************************
+// * Next are just drawing procedures. They *
+// * should be the same for all drawings.   *                 
+// ******************************************
+
+extern supersampling bool = false;
+extern light bool = false;
+
+// drawpixel for 2D
+func drawpixel_2d(x, y) { 
+	var c cplx = map(x, y);
+	var value real;
+	get_color(c, value) // value is not used
+}
+
+// drawpixel for 3D
+func drawpixel_3d(x, y) {
+	var c00 cplx = map(x, y),
+		c10 cplx = map(x + 1, y + 0.5),
+		c01 cplx = map(x + 0.5, y + 1);
+	
+	var h00 real, h10 real, h01 real; // heights
+	
+	// color is already kinda super-sampled
+	var color = (get_color(c00, h00) + get_color(c10, h10) + get_color(c01, h01)) / 3;
+
+	// get height out of value
+	func height(value) {
+		extern valuetransfer expr = "value";
+		valuetransfer
+	}
+	
+	h00 = height h00; h01 = height h01; h10 = height h10;
+
+	// get the normal vector (cross product)
+	var xp = c10 - c00, xz = h10 - h00;
+	var yp = c01 - c00, yz = h01 - h00;
+	
+	var np cplx = (xp.y yz - xz yp.y) : (xz yp.x - xp.x yz);
+	var nz real = xp.x yp.y - xp.y yp.x;
+		
+	// normalize np and nz
+	var nlen = sqrt(rad2 np + sqr nz);
+	np = np / nlen; nz = nz / nlen;
+		
+	// get light direction
+	extern lightvector cplx = -0.667 : -0.667; // direction from which the light is coming
+	def lz = sqrt(1 - sqr re lightvector - sqr im lightvector); // this is inlined
+
+	// Lambert's law.
+	var cos_a real = dot(lightvector, np) + lz nz;
+
+	// diffuse reflexion with ambient factor
+	extern lightintensity real = 1;
+	extern ambientlight real = 0.5;
+
+	// if lumen is negative it is behind, 
+	// but I tweak it a bit for the sake of the looks:
+	// cos_a = -1 (which is super-behind) ==> 0
+	// cos_a = 0 ==> ambientlight
+	// cos_a = 1 ==> lightintensity
+
+	// for a mathematically correct look use the following:
+	// if cos_a < 0 then cos_a = 0;
+	// color.a = color.a * (ambientlight + lightintensity lumen);
+	
+	def d = lightintensity / 2; // will be inlined later
+
+	// Change L in Lab-Color
+	color.a = color.a (((d - ambientlight) cos_a + d) cos_a + ambientlight);
+
+	// Next, spectacular reflection. Viewer is always assumed to be in direction (0,0,1)
+	extern spectacularintensity real = 1;
+
+	extern shininess real = 8;
+
+	// r = 2 n l - l; v = 0:0:1
+	var spec_refl = 2 cos_a nz - lz;
+	
+	// 100 because L in the Lab-Model is between 0 and 100
+	if spec_refl > 0 then
+		color.a = color.a + 100 * spectacularintensity * spec_refl ^ shininess;
+
+	color
+}
+
+func do_pixel(x, y) {
+	// two or three dimensions?
+	def drawpixel = drawpixel_3d if light else drawpixel_2d;
+	
+	func drawaapixel(x, y) {
+		0.25 (
+			drawpixel(x - 0.375, y - 0.125) + 
+			drawpixel(x + 0.125, y - 0.375) + 
+			drawpixel(x + 0.375, y + 0.125) +
+			drawpixel(x - 0.125, y + 0.375)			
+		);
+	}
+
+	// which function to apply?
+	def fn = drawpixel if not supersampling else drawaapixel;
+
+	color = lab2int fn(x, y)
+}
+
+// and finally call the draing procedure
+do_pixel(x, y)

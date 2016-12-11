@@ -1,0 +1,213 @@
+// Two folds
+var x int, y int, color int;
+
+
+extern maxdepth int = 120;
+
+// some further arguments
+extern juliaset bool = false;
+extern juliapoint cplx = -0.8:0.16;
+
+// c: coordinates, breakcondition: a function whether we should stop,
+// value: a real variable to return some kind of value
+//        used in 3d-types for the height.
+// returns a quat representing the color
+func escapetime(c, breakcondition) {
+	var i int = 0,
+		p cplx = juliapoint if juliaset else c,
+		zlast cplx = 0,
+		z cplx,
+		znext cplx = 0;
+
+	extern mandelinit expr = "0";
+
+    z = c if juliaset else mandelinit;
+
+	extern function expr = "mandelbrot(z, p)";
+
+	var color quat;
+
+	while {
+		znext = function;
+		not breakcondition(i, znext, z, zlast, c, p, color)
+	} do {
+		// advance to next values
+		zlast = z;
+		z = znext;
+	}
+
+	// return color
+	color
+}
+
+// everything that is drawn must have a get_color-function.
+
+// c = coordinates (scaled)
+// value is a real variable for z-information in 3D
+// but also otherwise convenient to separate drawing
+// algorithm from transfer
+// returns color.
+func get_color(c, value) {
+
+	// if the fractal accumulates some values
+	// like in traps or addends, here is a got place to do it.
+	extern foldinit expr = "0";
+	var foldvalue cplx = foldinit;
+
+	extern foldinit2 expr = "0";
+	var foldvalue2 cplx = foldinit;
+
+	func breakcondition(i, znext, z, zlast, c, p, color) {
+		extern foldfn expr = "/(rad znext + 1) + foldvalue";
+		extern foldfn2 expr = "dist(z, znext) + foldvalue2";
+
+		func bailoutcolor() {
+			extern bailout real = 512;
+
+            // the next ones are only used in 3d-fractals
+			extern bailoutvalue expr = "foldvalue.x";
+			value = bailoutvalue ;
+
+			extern bailouttransfer expr = "log(value + 1)";
+
+			extern bailoutpalette palette = [
+					[#a8f, #404, #fa4, #ff8, #f40, #008]];
+
+			color = bailoutpalette bailouttransfer
+		}
+
+		func lakecolor() {
+			extern epsilon real = 1e-9;
+
+			// the next ones are only used in 3d-fractals
+			extern lakevalue expr = "foldvalue2.x";
+			value = lakevalue;
+
+			extern laketransfer expr =
+					"arcnorm znext : log(1 + log(1 + value)) ";
+
+			extern lakepalette palette = [
+				[#fff, #fff, #fff, #fff, #fff, #fff],
+				[#a8f, #404, #fa4, #ff8, #f40, #008],
+				[#caf, #a4a, #fc8, #ffc, #f82, #24a],
+				[#000, #000, #000, #000, #000, #000]];
+
+			color = lakepalette laketransfer
+		}
+
+		{ lakecolor() ; true } if not next(i, maxdepth) else
+		true if radrange(znext, z, bailout, epsilon, bailoutcolor(), lakecolor()) else
+		{ foldvalue = foldfn; foldvalue2 = foldfn2; false }
+	}
+
+	escapetime(c, breakcondition)
+}
+
+
+// ******************************************
+// * Next are just drawing procedures. They *
+// * should be the same for all drawings.   *
+// ******************************************
+
+extern supersampling bool = false;
+extern light bool = false;
+
+// drawpixel for 2D
+func drawpixel_2d(x, y) {
+	var c cplx = map(x, y);
+	var value real;
+	get_color(c, value) // value is not used
+}
+
+// drawpixel for 3D
+func drawpixel_3d(x, y) {
+	var c00 cplx = map(x, y),
+		c10 cplx = map(x + 1, y + 0.5),
+		c01 cplx = map(x + 0.5, y + 1);
+
+	var h00 real, h10 real, h01 real; // heights
+
+	// color is already kinda super-sampled
+	var color = (get_color(c00, h00) + get_color(c10, h10) + get_color(c01, h01)) / 3;
+
+	// get height out of value
+	func height(value) {
+		extern valuetransfer expr = "value";
+		valuetransfer
+	}
+
+	h00 = height h00; h01 = height h01; h10 = height h10;
+
+	// get the normal vector (cross product)
+	var xp = c10 - c00, xz = h10 - h00;
+	var yp = c01 - c00, yz = h01 - h00;
+
+	var np cplx = (xp.y yz - xz yp.y) : (xz yp.x - xp.x yz);
+	var nz real = xp.x yp.y - xp.y yp.x;
+
+	// normalize np and nz
+	var nlen = sqrt(rad2 np + sqr nz);
+	np = np / nlen; nz = nz / nlen;
+
+	// get light direction
+	extern lightvector cplx = -0.667 : -0.667; // direction from which the light is coming
+	def lz = sqrt(1 - sqr re lightvector - sqr im lightvector); // this is inlined
+
+	// Lambert's law.
+	var cos_a real = dot(lightvector, np) + lz nz;
+
+	// diffuse reflexion with ambient factor
+	extern lightintensity real = 1;
+	extern ambientlight real = 0.5;
+
+	// if lumen is negative it is behind,
+	// but I tweak it a bit for the sake of the looks:
+	// cos_a = -1 (which is super-behind) ==> 0
+	// cos_a = 0 ==> ambientlight
+	// cos_a = 1 ==> lightintensity
+
+	// for a mathematically correct look use the following:
+	// if cos_a < 0 then cos_a = 0;
+	// color.a = color.a * (ambientlight + lightintensity lumen);
+
+	def d = lightintensity / 2; // will be inlined later
+
+	// Change L in Lab-Color
+	color.a = color.a (((d - ambientlight) cos_a + d) cos_a + ambientlight);
+
+	// Next, spectacular reflection. Viewer is always assumed to be in direction (0,0,1)
+	extern spectacularintensity real = 1;
+
+	extern shininess real = 8;
+
+	// r = 2 n l - l; v = 0:0:1
+	var spec_refl = 2 cos_a nz - lz;
+
+	// 100 because L in the Lab-Model is between 0 and 100
+	if spec_refl > 0 then
+		color.a = color.a + 100 * spectacularintensity * spec_refl ^ shininess;
+
+	color
+}
+
+func do_pixel(x, y) {
+	// two or three dimensions?
+	def drawpixel = drawpixel_3d if light else drawpixel_2d;
+
+	func drawaapixel(x, y) {
+		0.25 (
+			drawpixel(x - 0.375, y - 0.125) +
+			drawpixel(x + 0.125, y - 0.375) +
+			drawpixel(x + 0.375, y + 0.125) +
+			drawpixel(x - 0.125, y + 0.375)
+		);
+	}
+
+	// which function to apply?
+	def fn = drawpixel if not supersampling else drawaapixel;
+
+	color = lab2int fn(x, y)
+}
+
+// and finally call the draing procedure
+do_pixel(x, y)

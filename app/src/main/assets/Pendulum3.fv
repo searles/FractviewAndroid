@@ -1,0 +1,170 @@
+// Pendulum with 3 magnets
+var x int, y int, color int;
+
+func get_color(c, value) {
+	extern pal palette = [
+		    [#fff, #fff, #fff, #fff], 
+		    [#f00, #ff0, #0f8, #00f], 
+		    [#000, #000, #000, #000]];
+
+	extern stepcount int = 250;
+
+	extern stepsize real = 0.05;
+	extern friction real = 0.07;
+	extern gravity real = 0.2;
+	extern height real = 0.25;
+
+	extern strength0 real = 1;
+	extern m0 cplx = 2:0;
+
+	extern strength1 real = 1;
+	extern m1 cplx = -1:1.73205081;
+
+	extern strength2 real = 1;
+	extern m2 cplx = -1:-1.73205081;
+
+	var len real = 0;
+	var pos = c;
+	var vel = 0:0;
+	var acc_prev = 0:0;
+	var acc = 0:0;
+
+
+	func do_magnet(strength, m) {
+		var d cplx = m - pos;
+		var dist = sqrt(rad2 d + sqr height);
+		var factor = strength / (dist * dist * dist);
+		d * factor
+	}
+
+	var i = 0;
+
+	while {
+		var acc_next = -gravity * pos
+		    + do_magnet(strength0, m0)
+		    + do_magnet(strength1, m1)
+		    + do_magnet(strength2, m2)
+		    - vel * friction;
+
+		vel = vel + stepsize * (2 * acc_next + 5 * acc - acc_prev) / 6;
+		var dir = vel * stepsize + sqr stepsize * (4 * acc_next - acc) / 6;
+		len = len + rad dir;
+		pos = pos + dir;
+
+		acc_prev = acc;
+		acc = acc_next;
+
+		next(i, stepcount)
+	}
+
+	value = len;
+	pal (arcnorm pos : (0.42442 * atan log(1 + log(1 + len))))
+}
+
+// ******************************************
+// * Next are just drawing procedures. They *
+// * should be the same for all drawings.   *                 
+// ******************************************
+
+extern supersampling bool = false;
+extern light bool = false;
+
+// drawpixel for 2D
+func drawpixel_2d(x, y) { 
+	var c cplx = map(x, y);
+	var value real;
+	get_color(c, value) // value is not used
+}
+
+// drawpixel for 3D
+func drawpixel_3d(x, y) {
+	var c00 cplx = map(x, y),
+		c10 cplx = map(x + 1, y + 0.5),
+		c01 cplx = map(x + 0.5, y + 1);
+	
+	var h00 real, h10 real, h01 real; // heights
+	
+	// color is already kinda super-sampled
+	var color = (get_color(c00, h00) + get_color(c10, h10) + get_color(c01, h01)) / 3;
+
+	// get height out of value
+	func height(value) {
+		extern valuetransfer expr = "value";
+		valuetransfer
+	}
+	
+	h00 = height h00; h01 = height h01; h10 = height h10;
+
+	// get the normal vector (cross product)
+	var xp = c10 - c00, xz = h10 - h00;
+	var yp = c01 - c00, yz = h01 - h00;
+	
+	var np cplx = (xp.y yz - xz yp.y) : (xz yp.x - xp.x yz);
+	var nz real = xp.x yp.y - xp.y yp.x;
+		
+	// normalize np and nz
+	var nlen = sqrt(rad2 np + sqr nz);
+	np = np / nlen; nz = nz / nlen;
+		
+	// get light direction
+	extern lightvector cplx = -0.667 : -0.667; // direction from which the light is coming
+	def lz = sqrt(1 - sqr re lightvector - sqr im lightvector); // this is inlined
+
+	// Lambert's law.
+	var cos_a real = dot(lightvector, np) + lz nz;
+
+	// diffuse reflexion with ambient factor
+	extern lightintensity real = 1;
+	extern ambientlight real = 0.5;
+
+	// if lumen is negative it is behind, 
+	// but I tweak it a bit for the sake of the looks:
+	// cos_a = -1 (which is super-behind) ==> 0
+	// cos_a = 0 ==> ambientlight
+	// cos_a = 1 ==> lightintensity
+
+	// for a mathematically correct look use the following:
+	// if cos_a < 0 then cos_a = 0;
+	// color.a = color.a * (ambientlight + lightintensity lumen);
+	
+	def d = lightintensity / 2; // will be inlined later
+
+	// Change L in Lab-Color
+	color.a = color.a (((d - ambientlight) cos_a + d) cos_a + ambientlight);
+
+	// Next, spectacular reflection. Viewer is always assumed to be in direction (0,0,1)
+	extern spectacularintensity real = 1;
+
+	extern shininess real = 8;
+
+	// r = 2 n l - l; v = 0:0:1
+	var spec_refl = 2 cos_a nz - lz;
+	
+	// 100 because L in the Lab-Model is between 0 and 100
+	if spec_refl > 0 then
+		color.a = color.a + 100 * spectacularintensity * spec_refl ^ shininess;
+
+	color
+}
+
+func do_pixel(x, y) {
+	// two or three dimensions?
+	def drawpixel = drawpixel_3d if light else drawpixel_2d;
+	
+	func drawaapixel(x, y) {
+		0.25 (
+			drawpixel(x - 0.375, y - 0.125) + 
+			drawpixel(x + 0.125, y - 0.375) + 
+			drawpixel(x + 0.375, y + 0.125) +
+			drawpixel(x - 0.125, y + 0.375)			
+		);
+	}
+
+	// which function to apply?
+	def fn = drawpixel if not supersampling else drawaapixel;
+
+	color = lab2int fn(x, y)
+}
+
+// and finally call the draing procedure
+do_pixel(x, y)

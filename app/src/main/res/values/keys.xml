@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="width_key">width</string>
+    <string name="height_key">height</string>
+    <string name="maxdepth_key">maxdepth</string>
+    <string name="bitmap_main">bitmap_main</string>
+    <string name="size_key">size</string>
+</resources>
