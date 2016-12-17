@@ -132,8 +132,8 @@ func drawpixel_3d(x, y) {
 	// Change L in Lab-Color
 	color.a = color.a (((d - ambientlight) cos_a + d) cos_a + ambientlight);
 
-	// Next, spectacular reflection. Viewer is always assumed to be in direction (0,0,1)
-	extern spectacularintensity real = 1;
+	// Next, specular reflection. Viewer is always assumed to be in direction (0,0,1)
+	extern specularintensity real = 1;
 
 	extern shininess real = 8;
 
@@ -142,7 +142,7 @@ func drawpixel_3d(x, y) {
 	
 	// 100 because L in the Lab-Model is between 0 and 100
 	if spec_refl > 0 then
-		color.a = color.a + 100 * spectacularintensity * spec_refl ^ shininess;
+		color.a = color.a + 100 * specularintensity * spec_refl ^ shininess;
 
 	color
 }

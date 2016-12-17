@@ -20,27 +20,26 @@ public class DefaultData implements ExternalData {
 	Map<String, Type> elements = new LinkedHashMap<>();
 
 	// LinkedHashMap keeps them in the order of the program
-	Map<String, String> exprs = new LinkedHashMap<>();
-	Map<String, Boolean> bools = new LinkedHashMap<>();
-	Map<String, Integer> ints = new LinkedHashMap<>();
-	Map<String, Double> reals = new LinkedHashMap<>();
-	Map<String, Cplx> cplxs = new LinkedHashMap<>();
-	Map<String, Integer> colors = new LinkedHashMap<>();
-	Map<String, Palette> palettes = new LinkedHashMap<>();
-
-
+	final Map<String, String> exprs = new LinkedHashMap<>();
+	final Map<String, Boolean> bools = new LinkedHashMap<>();
+	final Map<String, Integer> ints = new LinkedHashMap<>();
+	final Map<String, Double> reals = new LinkedHashMap<>();
+	final Map<String, Cplx> cplxs = new LinkedHashMap<>();
+	final Map<String, Integer> colors = new LinkedHashMap<>();
+	final Map<String, Palette> palettes = new LinkedHashMap<>();
 
 	@Override
 	public void add(String id, String sType, Tree init) throws CompileException {
 		if(elements.containsKey(id))
-			throw new CompileException(id + " already defined");
+			throw new CompileException("the extern field \"" + id + "\" is already defined.");
 
 		Type type;
 
 		try {
+			// FIXME I get bug reports that 'int' was not found???
 			type = Type.valueOf(sType.toUpperCase());
 		} catch(IllegalArgumentException e) {
-			throw new CompileException("no extern type " + sType);
+			throw new CompileException("the type \"" + sType + "\" for extern field \"" + id + "\" does not exist.");
 		}
 
 
@@ -110,7 +109,7 @@ public class DefaultData implements ExternalData {
 		elements.put(id, type);
 	}
 
-	static Palette toPalette(Object t) throws CompileException {
+	private static Palette toPalette(Object t) throws CompileException {
 		if(t == null) {
 			throw new CompileException("Missing list value");
 		}

@@ -31,24 +31,88 @@ public class Fractal implements Parcelable {
 	/**
 	 * Parameters of the program (these are the external-parts in the program)
 	 */
-	private Parameters parameters;
+	private Parameters parameters; // FIXME isn't this connected to the default?
 
 	// FIXME The next 3 ones should rather be bundled in a separate object
 
-	/**
-	 * Data that are fetched during compilation
-	 */
-	private DefaultData defaults = null; // generated
+	class Compiled {
+		/**
+		 * Data that are fetched during compilation
+		 */
+		DefaultData defaults = null; // generated
 
-	/**
-	 * Abstract Syntax Tree
-	 */
-	private Tree ast = null; // generated
+		/**
+		 * Abstract Syntax Tree
+		 */
+		Tree ast = null; // generated
 
-	/**
-	 * Result of compiling it.
-	 */
-	private int[] code = null; // generated
+		/**
+		 * Result of compiling it.
+		 */
+		int[] code = null; // generated
+
+		void parse() throws ParsingError, CompileException {
+			defaults = new DefaultData();
+			ast = Meelan.parse(sourceCode, defaults);
+			Log.d("FR", ast.toString());
+		}
+
+		void compile() throws ParsingError, CompileException {
+			if(defaults == null) parse();
+
+			ScopeTable table = new ScopeTable();
+
+			// Add values to table
+			for(String id : exprLabels()) {
+				try {
+					// extern values must be treated special
+					// unless they are constants.
+					table.addExtern(id, Meelan.parse(expr(id), null));
+				} catch(ParsingError e) {
+					throw new CompileException(e.getMessage());
+				}
+			}
+
+			for(String id : boolLabels()) {
+				table.addDef(id, new Value.Bool(bool(id)));
+			}
+
+			for(String id : intLabels()) {
+				table.addDef(id, new Value.Int(intVal(id)));
+			}
+
+			for(String id : realLabels()) {
+				table.addDef(id, new Value.Real(real(id)));
+			}
+
+			for(String id : cplxLabels()) {
+				table.addDef(id, new Value.CplxVal(cplx(id)));
+			}
+
+			for(String id : colorLabels()) {
+				table.addDef(id, new Value.Int(color(id)));
+			}
+
+			// Palettes are special
+			// A palette is actually a function with one complex argument.
+			Tree.Id xy = new Tree.Id("__xy");
+
+			int paletteIndex = 0;
+			for(String id : paletteLabels()) {
+				// FIXME this one defines a function
+				Tree.FuncDef fn = new Tree.FuncDef("palette_" + id, Collections.singletonList("__xy"),
+						Op.__ld_palette.eval(Arrays.asList(new Value.Label(paletteIndex), xy)));
+
+				table.addDef(id, fn);
+				paletteIndex++;
+			}
+
+			this.code = Meelan.compile(ast, table);
+		}
+	}
+
+	private Compiled compiled = new Compiled();
+
 
 	/**
 	 * Simple constructor
@@ -120,64 +184,15 @@ public class Fractal implements Parcelable {
 	}
 
 	public void parse() throws ParsingError, CompileException {
-		defaults = new DefaultData();
-		ast = Meelan.parse(sourceCode, defaults);
-		Log.d("FR", ast.toString());
+		compiled.parse();
 	}
 
 	public boolean isDefaultValue(String id) {
 		return !parameters.contains(id);
 	}
 
-	public void compile() throws CompileException {
-		ScopeTable table = new ScopeTable();
-
-		// Add values to table
-		for(String id : exprLabels()) {
-			try {
-				// extern values must be treated special
-				// unless they are constants.
-				table.addExtern(id, Meelan.parse(expr(id), null));
-			} catch(ParsingError e) {
-				throw new CompileException(e.getMessage());
-			}
-		}
-
-		for(String id : boolLabels()) {
-			table.addDef(id, new Value.Bool(bool(id)));
-		}
-
-		for(String id : intLabels()) {
-			table.addDef(id, new Value.Int(intVal(id)));
-		}
-
-		for(String id : realLabels()) {
-			table.addDef(id, new Value.Real(real(id)));
-		}
-
-		for(String id : cplxLabels()) {
-			table.addDef(id, new Value.CplxVal(cplx(id)));
-		}
-
-		for(String id : colorLabels()) {
-			table.addDef(id, new Value.Int(color(id)));
-		}
-
-		// Palettes are special
-		// A palette is actually a function with one complex argument.
-		Tree.Id xy = new Tree.Id("__xy");
-
-		int paletteIndex = 0;
-		for(String id : paletteLabels()) {
-			// FIXME this one defines a function
-			Tree.FuncDef fn = new Tree.FuncDef("palette_" + id, Collections.singletonList("__xy"),
-					Op.__ld_palette.eval(Arrays.asList(new Value.Label(paletteIndex), xy)));
-
-			table.addDef(id, fn);
-			paletteIndex++;
-		}
-
-		this.code = Meelan.compile(ast, table);
+	public void compile() throws ParsingError, CompileException {
+		compiled.compile();
 	}
 
 	/**
@@ -195,9 +210,7 @@ public class Fractal implements Parcelable {
 		Fractal f = new Fractal(newScale, sourceCode, parameters);
 
 		// take over generated stuff.
-		f.ast = ast;
-		f.defaults = defaults;
-		f.code = code;
+		f.compiled = compiled;
 
 		return f;
 	}
@@ -215,12 +228,15 @@ public class Fractal implements Parcelable {
 		this.scale = scale;
 	}
 
+
+
 	public Iterable<String> exprLabels() {
-		return defaults.exprs.keySet();
+		return compiled.defaults.exprs.keySet();
 	}
 
+	// FIXME shouldn't I rather use something like parameters.get(EXPR, id)?
 	public String expr(String id) {
-		return parameters.exprs.containsKey(id) ? parameters.exprs.get(id) : defaults.exprs.get(id);
+		return parameters.exprs.containsKey(id) ? parameters.exprs.get(id) : compiled.defaults.exprs.get(id);
 	}
 
 	public void resetExpr(String id) {
@@ -234,11 +250,11 @@ public class Fractal implements Parcelable {
 
 
 	public Iterable<String> boolLabels() {
-		return defaults.bools.keySet();
+		return compiled.defaults.bools.keySet();
 	}
 
 	public boolean bool(String id) {
-		return parameters.bools.containsKey(id) ? parameters.bools.get(id) : defaults.bools.get(id);
+		return parameters.bools.containsKey(id) ? parameters.bools.get(id) : compiled.defaults.bools.get(id);
 	}
 
 	public void resetBool(String id) {
@@ -252,11 +268,11 @@ public class Fractal implements Parcelable {
 
 
 	public Iterable<String> intLabels() {
-		return defaults.ints.keySet();
+		return compiled.defaults.ints.keySet();
 	}
 
 	public int intVal(String id) {
-		return parameters.ints.containsKey(id) ? parameters.ints.get(id) : defaults.ints.get(id);
+		return parameters.ints.containsKey(id) ? parameters.ints.get(id) : compiled.defaults.ints.get(id);
 	}
 
 	public void resetInt(String id) {
@@ -270,11 +286,11 @@ public class Fractal implements Parcelable {
 
 
 	public Iterable<String> realLabels() {
-		return defaults.reals.keySet();
+		return compiled.defaults.reals.keySet();
 	}
 
 	public double real(String id) {
-		return parameters.reals.containsKey(id) ? parameters.reals.get(id) : defaults.reals.get(id);
+		return parameters.reals.containsKey(id) ? parameters.reals.get(id) : compiled.defaults.reals.get(id);
 	}
 
 	public void resetReal(String id) {
@@ -288,11 +304,11 @@ public class Fractal implements Parcelable {
 
 
 	public Iterable<String> cplxLabels() {
-		return defaults.cplxs.keySet();
+		return compiled.defaults.cplxs.keySet();
 	}
 
 	public Cplx cplx(String id) {
-		return parameters.cplxs.containsKey(id) ? parameters.cplxs.get(id) : defaults.cplxs.get(id);
+		return parameters.cplxs.containsKey(id) ? parameters.cplxs.get(id) : compiled.defaults.cplxs.get(id);
 	}
 
 	public void resetCplx(String id) {
@@ -306,11 +322,11 @@ public class Fractal implements Parcelable {
 
 
 	public Iterable<String> colorLabels() {
-		return defaults.colors.keySet();
+		return compiled.defaults.colors.keySet();
 	}
 
 	public int color(String id) {
-		return parameters.colors.containsKey(id) ? parameters.colors.get(id) : defaults.colors.get(id);
+		return parameters.colors.containsKey(id) ? parameters.colors.get(id) : compiled.defaults.colors.get(id);
 	}
 
 	public void resetColor(String id) {
@@ -324,11 +340,11 @@ public class Fractal implements Parcelable {
 
 
 	public Iterable<String> paletteLabels() {
-		return defaults.palettes.keySet();
+		return compiled.defaults.palettes.keySet();
 	}
 
 	public Palette palette(String id) {
-		return parameters.palettes.containsKey(id) ? parameters.palettes.get(id) : defaults.palettes.get(id);
+		return parameters.palettes.containsKey(id) ? parameters.palettes.get(id) : compiled.defaults.palettes.get(id);
 	}
 
 	public void resetPalette(String id) {
@@ -344,7 +360,7 @@ public class Fractal implements Parcelable {
 	 * @return
 	 */
 	public Palette[] palettes() {
-		Palette[] array = new Palette[defaults.palettes.size()];
+		Palette[] array = new Palette[compiled.defaults.palettes.size()];
 
 		int i = 0;
 
@@ -384,7 +400,7 @@ public class Fractal implements Parcelable {
 	};
 
 	public int[] code() {
-		return code;
+		return compiled.code;
 	}
 
 	public String sourceCode() {
@@ -392,6 +408,6 @@ public class Fractal implements Parcelable {
 	}
 
 	public Iterable<? extends Map.Entry<String, DefaultData.Type>> parameterMap() {
-		return defaults.elements.entrySet();
+		return compiled.defaults.elements.entrySet();
 	}
 }

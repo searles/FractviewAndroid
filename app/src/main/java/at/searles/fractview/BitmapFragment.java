@@ -485,6 +485,9 @@ public class BitmapFragment extends Fragment {
         // start calculation in background
         Log.d("BMF", "Start Drawing");
 		isRunning = true;
+
+		// FIXME listener() can be null in here...
+
 		listener().calculationStarting();
         currentFuture = executorService.submit(drawer);
     }

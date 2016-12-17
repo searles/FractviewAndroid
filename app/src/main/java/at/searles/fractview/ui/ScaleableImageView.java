@@ -19,49 +19,70 @@ public class ScaleableImageView extends ImageView {
 
 	public static final float SCALE_ON_DOUBLE_TAB = 3f; // scale factor on double tapping
 
-	public static final Paint GRID_PAINT_1 = new Paint();
-	public static final Paint GRID_PAINT_2 = new Paint();
+	/**
+	 * The grid is painted from two kinds of lines. These are the paints
+	 */
+	private static final Paint[] GRID_PAINTS = new Paint[]{new Paint(), new Paint(), new Paint()};
 
 	static {
-		GRID_PAINT_1.setColor(0xffffffff);
-		GRID_PAINT_2.setColor(0xff000000);
+		GRID_PAINTS[0].setColor(0xffffffff);
+		GRID_PAINTS[0].setStyle(Paint.Style.STROKE);
+		GRID_PAINTS[0].setStrokeWidth(5f);
 
-		GRID_PAINT_1.setStyle(Paint.Style.STROKE);
-		GRID_PAINT_2.setStyle(Paint.Style.STROKE);
+		GRID_PAINTS[1].setColor(0xff000000);
+		GRID_PAINTS[1].setStyle(Paint.Style.STROKE);
+		GRID_PAINTS[1].setStrokeWidth(3f);
 
-		GRID_PAINT_1.setStrokeWidth(3f);
-		GRID_PAINT_2.setStrokeWidth(1f);
+		GRID_PAINTS[2].setColor(0xffffffff);
+		GRID_PAINTS[2].setStyle(Paint.Style.STROKE);
+		GRID_PAINTS[2].setStrokeWidth(1f);
 	}
 
 	// Here, we also have some gesture control
 	// Scroll-Events are handled as multitouch scale-events
 	// double tab zooms at tabbed position
 
-	// FIXME bitmap fragment is needed for the following reasons:
+	// FIXME: Change structure so that bitmap Fragment is not needed.
+	// FIXME: bitmap fragment is needed for the following reasons:
 	// FIXME: first, matrices for view transformations
 	// FIXME: second, setting Scale
 	// FIXME: and third, checking whether it is still running.
 
-	BitmapFragment bitmapFragment;
+	private BitmapFragment bitmapFragment;
 
-	Matrix view2bitmap = new Matrix();
-	Matrix bitmap2view = new Matrix();
+	private Matrix view2bitmap = new Matrix();
+	private Matrix bitmap2view = new Matrix();
 
 	/**
 	 * We use this one to store the last transformation
 	 * to also apply it to the picture if it was not updated yet.
 	 */
-	LinkedList<Matrix> lastScale = new LinkedList<>();
+	private LinkedList<Matrix> lastScale = new LinkedList<>();
 
-	GestureDetector detector;
-	MultiTouch multitouch;
-	boolean showGrid;
+	/**
+	 * To detect gestures (3 finger drag etc...)
+	 */
+	private GestureDetector detector;
+
+	/**
+	 * Multitouch object that always reacts to finger input
+	 */
+	private MultiTouch multitouch;
+
+	/**
+	 * Should the grid be shown or not?
+	 */
+	private boolean showGrid;
 
 	public ScaleableImageView(Context context, AttributeSet attrs) {
 		super(context, attrs);
 		initTouch();
 	}
 
+	/**
+	 * From outside set whether grid should be shown or not. Will invalidate the view.
+	 * @param showGrid
+     */
 	public void setShowGrid(boolean showGrid) {
 		this.showGrid = showGrid;
 		invalidate();
@@ -172,16 +193,8 @@ public class ScaleableImageView extends ImageView {
 	}*/
 
 	final float[] gridPoints = new float[]{
-			//0, 0,
-			-1, -1,
-			-1, 1,
-			1, 1,
-			1, -1,
-
-			-1, 0,
-			1, 0,
-			0, -1,
-			0, 1,
+			-1, -1, // ul
+			1, 1,   // dr
 	};
 
 	float[] viewGridPoints = new float[gridPoints.length];
@@ -200,31 +213,29 @@ public class ScaleableImageView extends ImageView {
 		if(showGrid) {
 			invNormAll(gridPoints, viewGridPoints);
 
-			float len = Math.min(getWidth(), getHeight());
+			float	ulx = viewGridPoints[0], // up left x
+					uly = viewGridPoints[1], // up left y
+					drx = viewGridPoints[2], // down right x
+					dry = viewGridPoints[3]; // down right y
 
-			// outside square
-			canvas.drawLine(viewGridPoints[0], viewGridPoints[1], viewGridPoints[2], viewGridPoints[3], GRID_PAINT_1);
-			canvas.drawLine(viewGridPoints[2], viewGridPoints[3], viewGridPoints[4], viewGridPoints[5], GRID_PAINT_1);
-			canvas.drawLine(viewGridPoints[4], viewGridPoints[5], viewGridPoints[6], viewGridPoints[7], GRID_PAINT_1);
-			canvas.drawLine(viewGridPoints[6], viewGridPoints[7], viewGridPoints[0], viewGridPoints[1], GRID_PAINT_1);
+			float w = getWidth(), h = getHeight();
 
-			// inside cross
-			canvas.drawLine(viewGridPoints[8], viewGridPoints[9], viewGridPoints[10], viewGridPoints[11], GRID_PAINT_1);
-			canvas.drawLine(viewGridPoints[12], viewGridPoints[13], viewGridPoints[14], viewGridPoints[15], GRID_PAINT_1);
+			float minlen = Math.min(getWidth(), getHeight());
 
-			// now same with other dash
-			canvas.drawLine(viewGridPoints[0], viewGridPoints[1], viewGridPoints[2], viewGridPoints[3], GRID_PAINT_2);
-			canvas.drawLine(viewGridPoints[2], viewGridPoints[3], viewGridPoints[4], viewGridPoints[5], GRID_PAINT_2);
-			canvas.drawLine(viewGridPoints[4], viewGridPoints[5], viewGridPoints[6], viewGridPoints[7], GRID_PAINT_2);
-			canvas.drawLine(viewGridPoints[6], viewGridPoints[7], viewGridPoints[0], viewGridPoints[1], GRID_PAINT_2);
+			for (Paint gridPaint : GRID_PAINTS) {
+				// outside grid
+				canvas.drawLine(0, uly, w, uly, gridPaint);
+				canvas.drawLine(0, dry, w, dry, gridPaint);
+				canvas.drawLine(ulx, 0, ulx, h, gridPaint);
+				canvas.drawLine(drx, 0, drx, h, gridPaint);
 
-			// inside cross
-			canvas.drawLine(viewGridPoints[8], viewGridPoints[9], viewGridPoints[10], viewGridPoints[11], GRID_PAINT_2);
-			canvas.drawLine(viewGridPoints[12], viewGridPoints[13], viewGridPoints[14], viewGridPoints[15], GRID_PAINT_2);
+				// inside cross
+				canvas.drawLine(0, h / 2.f, h / 2.f, dry, gridPaint);
+				canvas.drawLine(w / 2.f, 0, w / 2.f, h, gridPaint);
 
-			// and show outer area
-
-
+				// and a circle inside
+				canvas.drawCircle(w / 2.f, h / 2.f, minlen / 2.f, gridPaint);
+			}
 		}
 	}
 
