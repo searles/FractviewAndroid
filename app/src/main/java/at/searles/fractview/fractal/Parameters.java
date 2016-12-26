@@ -21,7 +21,6 @@ import java.util.TreeMap;
  */
 public class Parameters {
 
-
 	static final Adapters.Adapter<Map<String, String>> ea = Adapters.mapAdapter(Adapters.stringAdapter);
 	static final Adapters.Adapter<Map<String, Boolean>> ba = Adapters.mapAdapter(Adapters.boolAdapter);
 	static final Adapters.Adapter<Map<String, Integer>> ia = Adapters.mapAdapter(Adapters.intAdapter);

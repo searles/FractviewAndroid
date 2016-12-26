@@ -14,10 +14,12 @@ import java.util.Iterator;
 import java.util.Map;
 
 /**
- * This class contains the Adapter-Interface plus some static adapters.
+ * This class is rather a namespace that contains the Adapter-Interface plus some static adapters.
  * Preferred way is to extend Adapter.
  */
 public class Adapters {
+
+	private Adapters() { throw new IllegalArgumentException(); }
 
 	public interface Adapter<A> {
 		A fromParcel(Parcel parcel);
