@@ -83,7 +83,7 @@ public class SaveLoadDeleteSharedPref {
 	public static void openLoadDialog(final Context context, final SharedPreferences sharedPrefs, String title, final StringFn fn) {
 		// open dialog with all keys
 		AlertDialog.Builder fileSelectorBuilder = new AlertDialog.Builder(context);
-		fileSelectorBuilder.setIcon(R.drawable.ic_launcher);
+		fileSelectorBuilder.setIcon(R.mipmap.ic_launcher);
 		fileSelectorBuilder.setTitle(title);
 
 		ListView lv = new ListView(context); // I don't use 'setAdapter' because I need longClick
@@ -118,7 +118,7 @@ public class SaveLoadDeleteSharedPref {
 
 	public static void openSaveDialog(final Context context, final SharedPreferences sharedPrefs, String title, final String data) {
 		AlertDialog.Builder filenameDialogBuilder = new AlertDialog.Builder(context);
-		filenameDialogBuilder.setIcon(R.drawable.ic_launcher);
+		filenameDialogBuilder.setIcon(R.mipmap.ic_launcher);
 		filenameDialogBuilder.setTitle(title);
 
 		View view = ((Activity) context).getLayoutInflater().inflate(R.layout.save_layout, null);
