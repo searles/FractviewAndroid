@@ -166,6 +166,7 @@ public class ScaleableImageView extends ImageView {
 
 	/**
 	 * If the view measurements are the ones in the arguments, what would be the width?
+	 * In case the image is flipped then this one returns the scaled height.
 	 * @param viewWidth
 	 * @param viewHeight
      * @return
@@ -176,9 +177,18 @@ public class ScaleableImageView extends ImageView {
 		float bitmapWidth = bitmapFragment.width(); // fixme: bitmapFragment requires drawer in the background.
 		float bitmapHeight = bitmapFragment.height();
 
-		float ratio = Math.max(bitmapWidth, bitmapHeight) / Math.max(viewWidth, viewHeight);
+		/* Just some thoughts:
+		The scaled rectangle of the bitmap should fit into the view.
+		So, the ratio is the min-ratio.
+		 */
 
-		return ratio * (flipBitmap(viewWidth, viewHeight) ? bitmapHeight : bitmapWidth);
+		if(flipBitmap(viewWidth, viewHeight)) {
+			float ratio = Math.min(viewWidth / bitmapHeight, viewHeight / bitmapWidth);
+			return bitmapHeight * ratio;
+		} else {
+			float ratio = Math.min(viewWidth / bitmapWidth, viewHeight / bitmapHeight);
+			return bitmapWidth * ratio;
+		}
 	}
 
 	private float scaledBitmapHeight(float viewWidth, float viewHeight) {
@@ -187,9 +197,13 @@ public class ScaleableImageView extends ImageView {
 		float bitmapWidth = bitmapFragment.width(); // fixme: bitmapFragment requires drawer in the background.
 		float bitmapHeight = bitmapFragment.height();
 
-		float ratio = Math.max(bitmapWidth, bitmapHeight) / Math.max(viewWidth, viewHeight);
-
-		return ratio * (flipBitmap(viewWidth, viewHeight) ? bitmapHeight : bitmapWidth);
+		if(flipBitmap(viewWidth, viewHeight)) {
+			float ratio = Math.min(viewWidth / bitmapHeight, viewHeight / bitmapWidth);
+			return bitmapWidth * ratio;
+		} else {
+			float ratio = Math.min(viewWidth / bitmapWidth, viewHeight / bitmapHeight);
+			return bitmapHeight * ratio;
+		}
 	}
 
 	/**
@@ -330,12 +344,6 @@ public class ScaleableImageView extends ImageView {
 		float cx = w / 2.f;
 		float cy = h / 2.f;
 
-		// draw in total 4 rectangles
-		canvas.drawRect(-1, -1, w, cy - bh / 2.f - 1, BOUNDS_PAINT); // top
-		canvas.drawRect(-1, -1, cx + bw / 2.f - 1, h, BOUNDS_PAINT); // left
-		canvas.drawRect(-1, h, w, cy + bh / 2.f + 1, BOUNDS_PAINT);  // bottom
-		canvas.drawRect(w, -1, cx + bw / 2.f + 1, h, BOUNDS_PAINT);  // right
-
 		if(showGrid) {
 			float minlen = Math.min(bw, bh) / 2.f;
 
@@ -349,11 +357,11 @@ public class ScaleableImageView extends ImageView {
 				canvas.drawLine(cx + minlen, 0, cx + minlen, h, gridPaint);
 
 				// inside cross
-				canvas.drawLine(0, h / 2.f, h / 2.f, w, gridPaint);
+				canvas.drawLine(0, h / 2.f, w, h / 2.f, gridPaint);
 				canvas.drawLine(w / 2.f, 0, w / 2.f, h, gridPaint);
 
 				// and a circle inside
-				canvas.drawCircle(w / 2.f, h / 2.f, minlen / 2.f, gridPaint);
+				canvas.drawCircle(w / 2.f, h / 2.f, minlen, gridPaint);
 
 				// and also draw quaters with thinner lines
 				if(i != 0) {
@@ -365,6 +373,12 @@ public class ScaleableImageView extends ImageView {
 				}
 			}
 		}
+
+		// draw in total 4 transparent rectangles to indicate the drawing area
+		canvas.drawRect(-1, -1, w, cy - bh / 2.f - 1, BOUNDS_PAINT); // top
+		canvas.drawRect(-1, -1, cx - bw / 2.f - 1, h, BOUNDS_PAINT); // left
+		canvas.drawRect(-1, cy + bh / 2.f + 1, w, h, BOUNDS_PAINT);  // bottom
+		canvas.drawRect(cx + bw / 2.f + 1, -1, w, h, BOUNDS_PAINT);  // right
 	}
 
 	public void setBitmapFragment(BitmapFragment bitmapFragment) {

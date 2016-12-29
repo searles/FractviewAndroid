@@ -22,33 +22,38 @@ public class RenderScriptDrawer implements FractalDrawer {
 
 	private FractalDrawer.Controller controller;
 
-	Scale scale;
-	Bitmap bitmap;
-	int width;
-	int height;
+	private Scale scale;
+	private Bitmap bitmap;
+	private int width;
+	private int height;
 
-	final RenderScript rs;
-	Allocation rsBitmap = null;
+	private final RenderScript rs;
+	private Allocation rsBitmap = null;
 
-	ScriptC_fillimage fillScript;
-	ScriptC_fractal script;
+	private ScriptC_fillimage fillScript;
+	private ScriptC_fractal script;
 
 	//final Script.LaunchOptions options;
 
-	Allocation rsTile;
-	// the next field is needed to force sync of drawings.
+	private Allocation rsTile;
+
+	/**
+	 * the next field is needed to force sync of drawings. It has no other
+	 * practical use than to force a copy-operation that waits until the
+	 * rs-kernel is done.
+	 */
 	final byte[] dummy = new byte[4 * parallelPixs]; // one byte per pix
 
 	// allocation for program code
-	Allocation program_alloc = null;
+	private Allocation program_alloc = null;
 
 	// allocation for palettes
-	ScriptField_palette rs_palettes;
-	ScriptField_lab_surface rs_palette_data;
+	private ScriptField_palette rs_palettes;
+	private ScriptField_lab_surface rs_palette_data;
 
 	// for the task-part
-	volatile int maxProgress;
-	volatile int progress;
+	private volatile int maxProgress;
+	private volatile int progress;
 
 	public RenderScriptDrawer(FractalDrawer.Controller controller) {
 		this.controller = controller;

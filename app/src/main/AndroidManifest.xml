@@ -14,6 +14,11 @@
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
+        <activity android:name=".ui.FavoritesActivity"/>
+        <activity android:name=".ui.PaletteActivity"/>
+        <activity android:name=".ui.ParameterActivity"/>
+        <activity android:name=".ui.PresetsActivity"/>
+        <activity android:name=".ui.ProgramActivity"/>
     </application>
 
 </manifest>

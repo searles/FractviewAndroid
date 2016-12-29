@@ -14,6 +14,8 @@ import android.os.Bundle;
 import android.os.Handler;
 import android.util.Log;
 import android.widget.Toast;
+
+import at.searles.fractview.fractal.DemoFractalDrawer;
 import at.searles.fractview.fractal.Fractal;
 import at.searles.fractview.fractal.FractalDrawer;
 import at.searles.fractview.renderscript.RenderScriptDrawer;
@@ -101,7 +103,7 @@ public class BitmapFragment extends Fragment {
 	// call back if something changed/has to be drawn etc...
 	UpdateListener listener() {
 		return (UpdateListener) getActivity();
-	};
+	}
 
 	// We must sometimes run lengthy tasks. For this purpose
 	// use the following fields. pd must be dispatched and recreated!
@@ -177,6 +179,19 @@ public class BitmapFragment extends Fragment {
 		// the RS-Object because it needs the activity and we are
 		// in the UI-thread, so no race-conditions.
 		if(this.drawer == null) {
+
+			// FIXME
+			// FIXME
+			// FIXME
+			// FIXME
+			// FIXME
+			// FIXME
+			// FIXME
+			// FIXME
+			// FIXME
+			// FIXME
+			// FIXME Replace by renderscript drawer
+
 			this.drawer = new RenderScriptDrawer(new FractalDrawer.Controller() {
 				@Override
 				public void previewGenerated() {
@@ -290,21 +305,19 @@ public class BitmapFragment extends Fragment {
 
 			@Override
 			protected void onPreExecute() {
-				Handler handler = new Handler();
-				handler.postDelayed(new Runnable() {
-					public void run() {
-						// start in UI-thread (unless we are already done)
-						if(!initializationFinished) {
-							pdData = new ProgressDialogData(
-									"Please wait...",
-									"Initializing program (this may take a few seconds " +
-									"after a fresh install because" +
-									" the GPU scripts are compiled by Android)", false, null);
+				Handler handler = new Handler(); // FIXME create a 'delayed dialog'-class.
+				handler.postDelayed(() -> {
+                    // start in UI-thread (unless we are already done)
+                    if(!initializationFinished) {
+                        pdData = new ProgressDialogData(
+                                "Please wait...",
+                                "Initializing program (this may take a few seconds " +
+                                "after a fresh install because" +
+                                " the GPU scripts are compiled by Android)", false, null);
 
-							pdData.showPD(getActivity());
-						}
-					}
-				}, 1250); // show dialog after 1250ms
+                        pdData.showPD(getActivity());
+                    }
+                }, 1250); // show dialog after 1250ms
 			}
 
 			@Override
@@ -379,12 +392,7 @@ public class BitmapFragment extends Fragment {
 
 			updateMatrices();
 
-			getActivity().runOnUiThread(new Runnable() {
-				@Override
-				public void run() {
-					listener().newBitmapCreated(bitmap);
-				}
-			});
+			getActivity().runOnUiThread(() -> listener().newBitmapCreated(bitmap));
 
 			return true;
 		} catch(OutOfMemoryError e) {
@@ -530,7 +538,7 @@ public class BitmapFragment extends Fragment {
 
 			@Override
 			protected Boolean doInBackground(Void... params) {
-				String errorMsg = "";
+				String errorMsg;
 				try {
 					FileOutputStream fos = new FileOutputStream(imageFile);
 
@@ -539,12 +547,7 @@ public class BitmapFragment extends Fragment {
 						fos.close();
 
 						// Show toast
-						getActivity().runOnUiThread(new Runnable() {
-							@Override
-							public void run() {
-								Toast.makeText(getActivity(), "Image saved as " + imageFile.getName(), Toast.LENGTH_SHORT).show();
-							}
-						});
+						getActivity().runOnUiThread(() -> Toast.makeText(getActivity(), "Image saved as " + imageFile.getName(), Toast.LENGTH_SHORT).show());
 
 						return true;
 					} else {
@@ -557,13 +560,8 @@ public class BitmapFragment extends Fragment {
 
 				final String s = errorMsg; // seriously, please Java 8, come to Android...
 
-				getActivity().runOnUiThread(new Runnable() {
-					@Override
-					public void run() {
-						Toast.makeText(getActivity(), "Error: " + s,
-								Toast.LENGTH_LONG).show();
-					}
-				});
+				getActivity().runOnUiThread(() -> Toast.makeText(getActivity(), "Error: " + s,
+                        Toast.LENGTH_LONG).show());
 
 				return false;
 			}
@@ -612,25 +610,19 @@ public class BitmapFragment extends Fragment {
 			pdData = new ProgressDialogData("Waiting until calculation is finished",
 					"Skip to save immediately",
 					true,
-					new Runnable() {
-						@Override
-						public void run() {
-							invokeWhenFinished = null; // first, clear invokeWhenFinished
-							saveTask.execute(); // then run this one.
-						}
-					}
+					() -> {
+                        invokeWhenFinished = null; // first, clear invokeWhenFinished
+                        saveTask.execute(); // then run this one.
+                    }
 			);
 
 			pdData.showPD(getActivity());
 
 			// a bit of aspect oriented programming would be nice here:
-			invokeWhenFinished = new Runnable() {
-				@Override
-				public void run() {
-					// this is in the UI-thread.
-					pdData.dismissAndClear();
-				}
-			};
+			invokeWhenFinished = () -> {
+                // this is in the UI-thread.
+                pdData.dismissAndClear();
+            };
 
 		} else {
 			saveTask.execute();
@@ -670,13 +662,13 @@ public class BitmapFragment extends Fragment {
 
 		/**
 		 * Called when the calculation is finished (and it was not cancelled)
-		 * @param ms
+		 * @param ms milliseconds
 		 */
         void calculationFinished(long ms);
 
 		/**
-		 * Called when a new bitmap is created.
-		 * @param bitmap
+		 * Called after a new bitmap was created.
+		 * @param bitmap The new bitmap
 		 */
 		void newBitmapCreated(Bitmap bitmap);
 	}

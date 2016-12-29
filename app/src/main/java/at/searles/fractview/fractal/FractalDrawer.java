@@ -6,6 +6,9 @@ import at.searles.math.Scale;
 
 public interface FractalDrawer extends Runnable {
 
+	/**
+	 * Controller interface for notification callbacks
+	 */
 	public interface Controller {
 		/**
 		 * Called when the first preview of the new image is generated.
