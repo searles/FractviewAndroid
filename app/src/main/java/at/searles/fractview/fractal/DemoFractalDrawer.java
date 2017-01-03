@@ -64,7 +64,7 @@ public class DemoFractalDrawer implements FractalDrawer {
 
         for(int y = 0; y < height; ++y) {
             for(int x = 0; x < width; ++x) {
-                b.setPixel(x, y, 0xffffffff); // white background = lake
+                b.setPixel(x, y, 0xffff0000); // red background = lake
             }
         }
 

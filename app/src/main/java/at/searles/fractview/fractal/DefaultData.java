@@ -48,21 +48,21 @@ public class DefaultData implements ExternalData {
 				if(init instanceof Value.StringVal) {
 					exprs.put(id, ((Value.StringVal) init).value);
 				} else {
-					throw new CompileException("expr expects a string");
+					throw new CompileException("extern " + id + " = " + init + " is not an expr but a " + init.getClass() + "!");
 				}
 				break;
 			case BOOL:
 				if(init instanceof Value.Bool) {
 					bools.put(id, ((Value.Bool) init).value);
 				} else {
-					throw new CompileException("bool expects a boolean");
+					throw new CompileException("extern " + id + " = " + init + " is not a bool but a " + init.getClass() + "!");
 				}
 				break;
 			case INT:
 				if(init instanceof Value.Int) {
 					ints.put(id, ((Value.Int) init).value);
 				} else {
-					throw new CompileException("int expects an integer");
+					throw new CompileException("extern " + id + " = " + init + " is not an int but a " + init.getClass() + "!");
 				}
 				break;
 			case REAL:
@@ -72,7 +72,7 @@ public class DefaultData implements ExternalData {
 				} else if(init instanceof Value.Real) {
 					d = ((Value.Real) init).value;
 				} else {
-					throw new CompileException("real expects a real number");
+					throw new CompileException("extern " + id + " = " + init + " is not a real but a " + init.getClass() + "!");
 				}
 
 				reals.put(id, d);
@@ -86,7 +86,7 @@ public class DefaultData implements ExternalData {
 				} else if(init instanceof Value.CplxVal) {
 					c = ((Value.CplxVal) init).value;
 				} else {
-					throw new CompileException(init + " assigned to cplx");
+					throw new CompileException("extern " + id + " = " + init + " is not a cplx but a " + init.getClass() + "!");
 				}
 
 				cplxs.put(id, c);
@@ -97,7 +97,7 @@ public class DefaultData implements ExternalData {
 				if(init instanceof Value.Int) {
 					colors.put(id, ((Value.Int) init).value);
 				} else {
-					throw new CompileException(init + " assigned to color");
+					throw new CompileException("extern " + id + " = " + init + " is not a color but a " + init.getClass() + "!");
 				}
 				break;
 			case PALETTE:

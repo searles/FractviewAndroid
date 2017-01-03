@@ -35,7 +35,7 @@ public class Fractal implements Parcelable {
 
 	// FIXME The next 3 ones should rather be bundled in a separate object
 
-	class Compiled {
+	private class Compiled {
 		/**
 		 * Data that are fetched during compilation
 		 */

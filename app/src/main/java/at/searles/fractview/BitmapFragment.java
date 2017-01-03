@@ -192,7 +192,7 @@ public class BitmapFragment extends Fragment {
 			// FIXME
 			// FIXME Replace by renderscript drawer
 
-			this.drawer = new RenderScriptDrawer(new FractalDrawer.Controller() {
+			this.drawer = new DemoFractalDrawer(new FractalDrawer.Controller() {
 				@Override
 				public void previewGenerated() {
 					// fixme can getActivity return null?

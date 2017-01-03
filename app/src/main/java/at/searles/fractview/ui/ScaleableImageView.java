@@ -43,8 +43,8 @@ public class ScaleableImageView extends ImageView {
 		GRID_PAINTS[2].setStyle(Paint.Style.STROKE);
 		GRID_PAINTS[2].setStrokeWidth(1f);
 
-		BOUNDS_PAINT.setColor(0x80000000); // semi-transparent black
-		BOUNDS_PAINT.setStyle(Paint.Style.FILL);
+		BOUNDS_PAINT.setColor(0xaa000000); // semi-transparent black
+		BOUNDS_PAINT.setStyle(Paint.Style.FILL_AND_STROKE);
 	}
 
 
@@ -375,10 +375,10 @@ public class ScaleableImageView extends ImageView {
 		}
 
 		// draw in total 4 transparent rectangles to indicate the drawing area
-		canvas.drawRect(-1, -1, w, cy - bh / 2.f - 1, BOUNDS_PAINT); // top
-		canvas.drawRect(-1, -1, cx - bw / 2.f - 1, h, BOUNDS_PAINT); // left
-		canvas.drawRect(-1, cy + bh / 2.f + 1, w, h, BOUNDS_PAINT);  // bottom
-		canvas.drawRect(cx + bw / 2.f + 1, -1, w, h, BOUNDS_PAINT);  // right
+		canvas.drawRect(-1, -1, w, cy - bh / 2.f, BOUNDS_PAINT); // top
+		canvas.drawRect(-1, -1, cx - bw / 2.f, h, BOUNDS_PAINT); // left
+		canvas.drawRect(-1, cy + bh / 2.f, w, h, BOUNDS_PAINT);  // bottom
+		canvas.drawRect(cx + bw / 2.f, -1, w, h, BOUNDS_PAINT);  // right
 	}
 
 	public void setBitmapFragment(BitmapFragment bitmapFragment) {

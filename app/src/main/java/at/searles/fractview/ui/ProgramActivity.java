@@ -111,7 +111,14 @@ public class ProgramActivity extends Activity {
 			//Log.d("PE", start + " and end is " + end);
 			//span.setSpan(new BackgroundColorSpan(bgColor), start, end, 0);
 
-			cursor = compilerException.topPosition();
+			// FIXME
+			// FIXME
+			// FIXME
+			// FIXME
+			// FIXME
+			// FIXME
+			// FIXME
+			cursor = 0; // compilerException.topPosition();
 
 			Toast.makeText(this, "Compiler Error: " + compilerException.getMessage(), Toast.LENGTH_LONG).show();
 			compilerException.printStackTrace();

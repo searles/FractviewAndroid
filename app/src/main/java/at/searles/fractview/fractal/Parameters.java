@@ -21,13 +21,13 @@ import java.util.TreeMap;
  */
 public class Parameters {
 
-	static final Adapters.Adapter<Map<String, String>> ea = Adapters.mapAdapter(Adapters.stringAdapter);
-	static final Adapters.Adapter<Map<String, Boolean>> ba = Adapters.mapAdapter(Adapters.boolAdapter);
-	static final Adapters.Adapter<Map<String, Integer>> ia = Adapters.mapAdapter(Adapters.intAdapter);
-	static final Adapters.Adapter<Map<String, Double>> ra = Adapters.mapAdapter(Adapters.realAdapter);
-	static final Adapters.Adapter<Map<String, Cplx>> ca = Adapters.mapAdapter(Adapters.cplxAdapter);
+	private static final Adapters.Adapter<Map<String, String>> ea = Adapters.mapAdapter(Adapters.stringAdapter);
+	private static final Adapters.Adapter<Map<String, Boolean>> ba = Adapters.mapAdapter(Adapters.boolAdapter);
+	private static final Adapters.Adapter<Map<String, Integer>> ia = Adapters.mapAdapter(Adapters.intAdapter);
+	private static final Adapters.Adapter<Map<String, Double>> ra = Adapters.mapAdapter(Adapters.realAdapter);
+	private static final Adapters.Adapter<Map<String, Cplx>> ca = Adapters.mapAdapter(Adapters.cplxAdapter);
 	// No need for color because it is an int.
-	static final Adapters.Adapter<Map<String, Palette>> pa = Adapters.mapAdapter(Adapters.paletteAdapter);
+	private static final Adapters.Adapter<Map<String, Palette>> pa = Adapters.mapAdapter(Adapters.paletteAdapter);
 
 	final Map<String, String> exprs;
 	final Map<String, Boolean> bools;
@@ -142,7 +142,7 @@ public class Parameters {
 			Map<String, Integer> colors = ia.fromParcel(parcel);
 			Map<String, Palette> palettes = pa.fromParcel(parcel);
 
-			Parameters dm = new Parameters(
+			return new Parameters(
 					exprs,
 					bools,
 					ints,
@@ -151,8 +151,6 @@ public class Parameters {
 					colors,
 					palettes
 			);
-
-			return dm;
 		}
 
 		@Override
@@ -187,9 +185,7 @@ public class Parameters {
 				Map<String, Integer> colors = ll == null ? new LinkedHashMap<String, Integer>() : ia.fromJSON(ll);
 				Map<String, Palette> palettes = pp == null ? new LinkedHashMap<String, Palette>() : pa.fromJSON(pp);
 
-				Parameters dm = new Parameters(exprs, bools, ints, reals, cplxs, colors, palettes);
-
-				return dm;
+				return new Parameters(exprs, bools, ints, reals, cplxs, colors, palettes);
 			}
 
 			throw new JSONException("not a JSONObject");

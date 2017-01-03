@@ -7,6 +7,8 @@ import android.util.Log;
 import android.view.MotionEvent;
 import android.view.View;
 
+import at.searles.math.Commons;
+
 public class ColorView extends View {
 
 	static final float SQRT_3_4 = (float) Math.sqrt(0.75);
@@ -25,15 +27,13 @@ public class ColorView extends View {
 	ColorCube cube;
 	BrightnessBar bar;
 
-	// fixme should the dot in the colorcube be actually drawn in the colorcube?
-	// na. selection I handle in here.
 	Paint dotPaint;
 
-	// fixme: the following should be independent from the
-	// actual size of the width.
 	float brightness;     // ranges from 0 to 1.
-	float alpha;
+	// fixme float alpha;
 	PointF cubeSelection; // ranges from -1 to 1 in both coordinates.
+
+	int selectedTriangleIndex = -1;
 
 	private int color;
 
@@ -152,12 +152,37 @@ public class ColorView extends View {
 
 	}
 
-	void updateSelectionPoint(float x, float y) {
+	// FIXME the following two methods should be inside TouchController
+
+	/**
+	 * This one first normalizes the selection according to the selected triangle.
+	 * @param x
+	 * @param y
+     */
+	void setCubeSelection(float x, float y) {
 		cubeSelection.set((x - cube.x0) / cube.base, (y - cube.y0) / cube.base);
-		bar.initCubeSelection();
+
+		// pick triangle
+		if(selectedTriangleIndex == -1) {
+			selectedTriangleIndex = cube.selectedTriangle(cubeSelection.x, cubeSelection.y);
+		}
+
+		// normalize x, y
+		cube.normalize(cubeSelection, selectedTriangleIndex);
+
+		// all values are fine, fetch color
 		this.color = cube.color(cubeSelection, brightness);
+
+		// update bar
+		bar.initCubeSelection();
+
+		// and background color
 		setBackgroundColor(this.color);
+
+		// and redraw.
 		invalidate();
+
+		// tell others what has happened.
 		if(listener != null) listener.onColorChanged(color);
 	}
 
@@ -180,14 +205,17 @@ public class ColorView extends View {
 
 	// pointer ids for cube element and bar element
 	class TouchController {
+
 		int cubeId = -1;
 		int barId = -1;
 
 		void down(int id, float x, float y) {
 			Log.d("CV", "down: " + id + ", " + x + ":" + y);
 			if(cube.inBounds(x, y) && cubeId == -1 && barId != id) {
+				// check which triangle it is. The triangles are numbered clockwise.
+				// 0 is up 12 to 2, 1 is from 2 to 4 etc...
 				cubeId = id;
-				updateSelectionPoint(x, y);
+				setCubeSelection(x, y);
 			} else if(bar.inBounds(x, y) && barId == -1 && cubeId != id) {
 				barId = id;
 				updateBarSelection(y);
@@ -195,9 +223,10 @@ public class ColorView extends View {
 		}
 
 		void move(int id, float x, float y) {
+			// FIXME Check in which triangle I am
 			Log.d("CV", "move: " + id + ", " + x + ":" + y);
 			if(id == cubeId) {
-				updateSelectionPoint(x, y);
+				setCubeSelection(x, y);
 			} else if(id == barId) {
 				updateBarSelection(y);
 			} else {
@@ -209,8 +238,9 @@ public class ColorView extends View {
 		void up(int id, float x, float y) {
 			Log.d("CV", "up: " + id + ", " + x + ":" + y);
 			if(id == cubeId) {
-				updateSelectionPoint(x, y);
+				setCubeSelection(x, y);
 				cubeId = -1;
+				selectedTriangleIndex = -1;
 			} else if(id == barId) {
 				updateBarSelection(y);
 				barId = -1;
@@ -325,23 +355,12 @@ public class ColorView extends View {
 	class ColorCube {
 		Paint paint;
 
-		Path w;
-		Path nw;
-		Path ne;
-		Path e;
-		Path se;
-		Path sw;
-
-		ComposeShader wShader;
-		ComposeShader nwShader;
-		ComposeShader neShader;
-		ComposeShader eShader;
-		ComposeShader seShader;
-		ComposeShader swShader;
+		Path[] paths = new Path[6];
+		ComposeShader[] shaders = new ComposeShader[6];
 
 		float x0, y0;
-		float height;
-		float base;
+		float height; // height is the distance from center to midpoint
+		float base; // base is the radius (distance from center to corner)
 
 		// points normalized:
 		final float gx = 0f, gy = -1f;
@@ -351,7 +370,7 @@ public class ColorView extends View {
 		final float rx = -SQRT_3_4, ry = 0.5f;
 		final float yx = -SQRT_3_4, yy = -0.5f;
 
-		public ColorCube() {
+		ColorCube() {
 			this.paint = new Paint();
 			paint.setStyle(Paint.Style.FILL);
 		}
@@ -364,40 +383,29 @@ public class ColorView extends View {
 			this.x0 = x0;
 			this.y0 = y0;
 
-			w = new Path();
-			sw = new Path();
-			se = new Path();
-			e = new Path();
-			ne = new Path();
-			nw = new Path();
+			for(int i = 0; i < 6; ++i) {
+				paths[i] = new Path();
+				paths[i].moveTo(x0, y0);
+			}
 
-			w.moveTo(x0, y0);
-			sw.moveTo(x0, y0);
-			se.moveTo(x0, y0);
-			e.moveTo(x0, y0);
-			ne.moveTo(x0, y0);
-			nw.moveTo(x0, y0);
+			paths[0].lineTo(x0 + base * gx, y0 + base * gy);
+			paths[1].lineTo(x0 + base * cx, y0 + base * cy);
+			paths[2].lineTo(x0 + base * bx, y0 + base * by);
+			paths[3].lineTo(x0 + base * mx, y0 + base * my);
+			paths[4].lineTo(x0 + base * rx, y0 + base * ry);
+			paths[5].lineTo(x0 + base * yx, y0 + base * yy);
 
-			w.lineTo(x0 + base * rx, y0 + base * ry);
-			sw.lineTo(x0 + base * mx, y0 + base * my);
-			se.lineTo(x0 + base * bx, y0 + base * by);
-			e.lineTo(x0 + base * cx, y0 + base * cy);
-			ne.lineTo(x0 + base * gx, y0 + base * gy);
-			nw.lineTo(x0 + base * yx, y0 + base * yy);
+			paths[0].lineTo(x0 + base * cx, y0 + base * cy);
+			paths[1].lineTo(x0 + base * bx, y0 + base * by);
+			paths[2].lineTo(x0 + base * mx, y0 + base * my);
+			paths[3].lineTo(x0 + base * rx, y0 + base * ry);
+			paths[4].lineTo(x0 + base * yx, y0 + base * yy);
+			paths[5].lineTo(x0 + base * gx, y0 + base * gy);
 
-			w.lineTo(x0 + base * yx, y0 + base * yy);
-			sw.lineTo(x0 + base * rx, y0 + base * ry);
-			se.lineTo(x0 + base * mx, y0 + base * my);
-			e.lineTo(x0 + base * bx, y0 + base * by);
-			ne.lineTo(x0 + base * cx, y0 + base * cy);
-			nw.lineTo(x0 + base * gx, y0 + base * gy);
-
-			w.lineTo(x0, y0);
-			sw.lineTo(x0, y0);
-			se.lineTo(x0, y0);
-			e.lineTo(x0, y0);
-			ne.lineTo(x0, y0);
-			nw.lineTo(x0, y0);
+			for(int i = 0; i < 6; ++i) {
+				// and back.
+				paths[i].lineTo(x0, y0);
+			}
 
 			updateGradients();
 		}
@@ -460,7 +468,7 @@ public class ColorView extends View {
 
 			green = new LinearGradient(yx2, yy2, x, y, g, black, Shader.TileMode.CLAMP);
 
-			wShader = new ComposeShader(new ComposeShader(red, green, PorterDuff.Mode.ADD), blue, PorterDuff.Mode.ADD);
+			shaders[4] = new ComposeShader(new ComposeShader(red, green, PorterDuff.Mode.ADD), blue, PorterDuff.Mode.ADD);
 
 			red = new LinearGradient(x0, y0, (rx2 + mx2) / 2f, (ry2 + my2) / 2f, r2, r, Shader.TileMode.CLAMP);
 			green = new LinearGradient(x0, y0, (rx2 + mx2) / 2f, (ry2 + my2) / 2f, g2, black, Shader.TileMode.CLAMP);
@@ -479,7 +487,7 @@ public class ColorView extends View {
 
 			blue = new LinearGradient(mx2, my2, x, y, b, black, Shader.TileMode.CLAMP);
 
-			swShader = new ComposeShader(new ComposeShader(red, green, PorterDuff.Mode.ADD), blue, PorterDuff.Mode.ADD);
+			shaders[3] = new ComposeShader(new ComposeShader(red, green, PorterDuff.Mode.ADD), blue, PorterDuff.Mode.ADD);
 
 			blue = new LinearGradient(x0, y0, (mx2 + bx2) / 2f, (my2 + by2) / 2f, b2, b, Shader.TileMode.CLAMP);
 			green = new LinearGradient(x0, y0, (mx2 + bx2) / 2f, (my2 + by2) / 2f, g2, black, Shader.TileMode.CLAMP);
@@ -498,7 +506,7 @@ public class ColorView extends View {
 
 			red = new LinearGradient(mx2, my2, x, y, r, black, Shader.TileMode.CLAMP);
 
-			seShader = new ComposeShader(new ComposeShader(red, green, PorterDuff.Mode.ADD), blue, PorterDuff.Mode.ADD);
+			shaders[2] = new ComposeShader(new ComposeShader(red, green, PorterDuff.Mode.ADD), blue, PorterDuff.Mode.ADD);
 
 			blue = new LinearGradient(x0, y0, (cx2 + bx2) / 2f, (cy2 + by2) / 2f, b2, b, Shader.TileMode.CLAMP);
 			red = new LinearGradient(x0, y0, (cx2 + bx2) / 2f, (cy2 + by2) / 2f, r2, black, Shader.TileMode.CLAMP);
@@ -517,7 +525,7 @@ public class ColorView extends View {
 
 			green = new LinearGradient(cx2, cy2, x, y, g, black, Shader.TileMode.CLAMP);
 
-			eShader = new ComposeShader(new ComposeShader(red, green, PorterDuff.Mode.ADD), blue, PorterDuff.Mode.ADD);
+			shaders[1] = new ComposeShader(new ComposeShader(red, green, PorterDuff.Mode.ADD), blue, PorterDuff.Mode.ADD);
 
 			green = new LinearGradient(x0, y0, (cx2 + gx2) / 2f, (cy2 + gy2) / 2f, g2, g, Shader.TileMode.CLAMP);
 			red = new LinearGradient(x0, y0, (cx2 + gx2) / 2f, (cy2 + gy2) / 2f, r2, black, Shader.TileMode.CLAMP);
@@ -536,7 +544,7 @@ public class ColorView extends View {
 
 			blue = new LinearGradient(cx2, cy2, x, y, b, black, Shader.TileMode.CLAMP);
 
-			neShader = new ComposeShader(new ComposeShader(red, green, PorterDuff.Mode.ADD), blue, PorterDuff.Mode.ADD);
+			shaders[0] = new ComposeShader(new ComposeShader(red, green, PorterDuff.Mode.ADD), blue, PorterDuff.Mode.ADD);
 
 			green = new LinearGradient(x0, y0, (yx2 + gx2) / 2f, (yy2 + gy2) / 2f, g2, g, Shader.TileMode.CLAMP);
 			blue = new LinearGradient(x0, y0, (yx2 + gx2) / 2f, (yy2 + gy2) / 2f, b2, black, Shader.TileMode.CLAMP);
@@ -555,44 +563,41 @@ public class ColorView extends View {
 
 			red = new LinearGradient(yx2, yy2, x, y, r, black, Shader.TileMode.CLAMP);
 
-			nwShader = new ComposeShader(new ComposeShader(red, green, PorterDuff.Mode.ADD), blue, PorterDuff.Mode.ADD);
+			shaders[5] = new ComposeShader(new ComposeShader(red, green, PorterDuff.Mode.ADD), blue, PorterDuff.Mode.ADD);
 		}
 
 		void draw(Canvas canvas) {
 			paint.setStyle(Paint.Style.FILL);
-			paint.setShader(wShader);
-			canvas.drawPath(w, paint);
-			paint.setShader(swShader);
-			canvas.drawPath(sw, paint);
-			paint.setShader(seShader);
-			canvas.drawPath(se, paint);
-			paint.setShader(eShader);
-			canvas.drawPath(e, paint);
-			paint.setShader(neShader);
-			canvas.drawPath(ne, paint);
-			paint.setShader(nwShader);
-			canvas.drawPath(nw, paint);
+
+			for(int i = 0; i < 6; ++i) {
+				paint.setShader(shaders[i]);
+				canvas.drawPath(paths[i], paint);
+				paint.setShader(null);
+
+				if(selectedTriangleIndex != -1 && i != selectedTriangleIndex) {
+					// in this case not selected triangles are drawn pale.
+					paint.setColor(0x80808080);
+					canvas.drawPath(paths[i], paint);
+				}
+			}
 		}
 
 		// called from outside to set the selected color
 		// returns the brightness; NaN if brightness is the whole
 		// range from 0 to 1.
-		public float colorCoords(int color, PointF point) {
-			float alpha = Color.alpha(color) / 255f;
+		float colorCoords(int color, PointF point) {
+			// fixme float alpha = Color.alpha(color) / 255f;
 			float r = Color.red(color) / 255f;
 			float g = Color.green(color) / 255f;
 			float b = Color.blue(color) / 255f;
 
 			// first, determine triangle
 			// set some values etc...
-			int index;
-
 			float x1, y1, x2, y2, d, e, l;
 
 			// fixme make independent of concrete color-cube values!
 			if(g >= b && b >= r) {
 				// gc (green cyan-triangle)
-				index = 0;
 				x1 = gx; y1 = gy; // gx = 0, gy =
 				x2 = cx; y2 = cy;
 				e = g - r;
@@ -600,7 +605,6 @@ public class ColorView extends View {
 				l = r / (1.f - e); // will be new brightness
 			} else if(b >= g && g >= r) {
 				// cb
-				index = 1;
 				x1 = cx; y1 = cy;
 				x2 = bx; y2 = by;
 				e = b - r;
@@ -608,7 +612,6 @@ public class ColorView extends View {
 				l = r / (1.f - e); // will be new brightness
 			} else if(b >= r && r >= g) {
 				// bm
-				index = 2;
 				x1 = bx; y1 = by;
 				x2 = mx; y2 = my;
 				e = b - g;
@@ -616,7 +619,6 @@ public class ColorView extends View {
 				l = g / (1.f - e); // will be new brightness
 			} else if(r >= b && b >= g) {
 				// mr
-				index = 3;
 				x1 = mx; y1 = my;
 				x2 = rx; y2 = ry;
 				e = r - g;
@@ -624,7 +626,6 @@ public class ColorView extends View {
 				l = g / (1.f - e); // will be new brightness
 			} else if(r >= g && g >= b) {
 				// ry
-				index = 4;
 				x1 = rx; y1 = ry;
 				x2 = yx; y2 = yy;
 				e = r - b;
@@ -632,7 +633,6 @@ public class ColorView extends View {
 				l = b / (1.f - e); // will be new brightness
 			} else if(g >= r && r >= b) {
 				// yg
-				index = 5;
 				x1 = yx; y1 = yy;
 				x2 = gx; y2 = gy;
 				e = g - b;
@@ -664,15 +664,87 @@ public class ColorView extends View {
 			return l;
 		}
 
+		/**
+		 * Return the point that is closest to the triangle with index triangleIndex
+		 * @param p the point
+		 * @param triangleIndex if -1 then the best matching triangle for p is used.
+         * @return p with normalized coordinates
+         */
+		void normalize(PointF p, int triangleIndex) {
+			// first check
+			if (triangleIndex == -1) triangleIndex = selectedTriangle(p.x, p.y);
 
-		// if out of range, selection is modified
+			// the following are the corners of the triangle (the third is 0/0)
+			float x1, y1, x2, y2;
+
+			switch (triangleIndex) {
+				case 0: { // ne
+					x1 = gx;
+					y1 = gy;
+					x2 = cx;
+					y2 = cy;
+				}
+				break;
+				case 1: { // e
+					x1 = cx;
+					y1 = cy;
+					x2 = bx;
+					y2 = by;
+				}
+				break;
+				case 2: { // se
+					x1 = bx;
+					y1 = by;
+					x2 = mx;
+					y2 = my;
+				}
+				break;
+				case 3: { // sw
+					x1 = mx;
+					y1 = my;
+					x2 = rx;
+					y2 = ry;
+				}
+				break;
+				case 4: { // w
+					x1 = rx;
+					y1 = ry;
+					x2 = yx;
+					y2 = yy;
+				}
+				break;
+				case 5: { // nw
+					x1 = yx;
+					y1 = yy;
+					x2 = gx;
+					y2 = gy;
+				}
+				break;
+				default:
+					throw new IllegalArgumentException("BUG: bad triangle");
+			}
+
+			float[] q = Commons.norm(p.x, p.y, 0f, 0f, x1, y1, x2, y2, null);
+			p.x = q[0];
+			p.y = q[1];
+		}
+
+
+		/**
+		 * Return color according to selection
+		 * @param selection the selection. it should be inside the correct triangle.
+		 * @param brightness brightness is set externally
+         * @return
+         */
 		int color(PointF selection, float brightness) {
-			// selection is normalized
+			// objective: Find color for given selection point.
+
 			float x = selection.x;
 			float y = selection.y;
 
-			int index = selectedTriangle(x, y);
+			int index = selectedTriangleIndex == -1 ? selectedTriangle(x, y) : selectedTriangleIndex;
 
+			// the following are the corners of the triangle (the third is 0/0)
 			float x1, y1, x2, y2;
 
 			switch(index) {
@@ -731,14 +803,8 @@ public class ColorView extends View {
 
 			float len2 = (float) Math.sqrt(x * x + y * y);
 
-			float e = len2 / len1;
-
-			// if e > 1 then it is out of range. set e = 1 and selection to px/py
-			if(e > 1) {
-				selection.x = px;
-				selection.y = py;
-				e = 1;
-			}
+			// if e > 1 then it is out of range. set e = 1
+			float e = Math.min(1f, len2 / len1);
 
 			// brightness is the rgb-value at x0/y0.
 			float r = 0, g = 0, b = 0;

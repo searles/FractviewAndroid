@@ -7,6 +7,7 @@ import android.content.DialogInterface;
 import android.content.Intent;
 import android.graphics.Typeface;
 import android.os.Bundle;
+import android.util.Log;
 import android.view.*;
 import android.widget.*;
 import at.searles.fractview.R;
@@ -93,6 +94,8 @@ public class ParameterActivity extends Activity implements ScaleEditor.Callback,
 
 	@Override
 	public boolean applyCplx(Cplx c) {
+		Log.d("cplx edit callback: " , "re = " + c.re() + ", im = " + c.im());
+
 		fb.setCplx(currentEditId, c);
 		adapter.notifyDataSetChanged();
 		return true;

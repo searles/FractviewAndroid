@@ -7,8 +7,8 @@ android {
         applicationId "at.searles.fractview"
         minSdkVersion 21
         targetSdkVersion 25
-        versionCode 39
-        versionName "3.1.92"
+        versionCode 41
+        versionName "3.1.94"
         testInstrumentationRunner "android.support.test.runner.AndroidJUnitRunner"
         externalNativeBuild {
             cmake {
@@ -44,5 +44,4 @@ dependencies {
     compile 'com.android.support:appcompat-v7:25.1.0'
     testCompile 'junit:junit:4.12'
     compile 'org.jetbrains:annotations-java5:15.0'
-    compile files('libs/Meelan.jar')
 }

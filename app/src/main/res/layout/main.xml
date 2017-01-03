@@ -13,7 +13,8 @@
         android:id="@+id/imageView"
         android:gravity="center|center_vertical"
         android:scaleType="matrix"
-        android:keepScreenOn="true"/>
+        android:keepScreenOn="true"
+        android:background="@android:color/darker_gray"/>
 
     <ProgressBar
         style="?android:attr/progressBarStyleHorizontal"
