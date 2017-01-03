@@ -180,11 +180,11 @@ public class BitmapFragment extends Fragment {
 		// in the UI-thread, so no race-conditions.
 		if(this.drawer == null) {
 
+			// FIXME Lots of fixmes so that I can find this one easily.
+			// FIXME Emulator does not like renderscript, thus a dummy
+			// FIXME implementation of drawer should be used in this case.
 			// FIXME
-			// FIXME
-			// FIXME
-			// FIXME
-			// FIXME
+			// FIXME This one is DemoFractalDrawer.
 			// FIXME
 			// FIXME
 			// FIXME
@@ -192,7 +192,7 @@ public class BitmapFragment extends Fragment {
 			// FIXME
 			// FIXME Replace by renderscript drawer
 
-			this.drawer = new DemoFractalDrawer(new FractalDrawer.Controller() {
+			this.drawer = new RenderScriptDrawer(new FractalDrawer.Controller() {
 				@Override
 				public void previewGenerated() {
 					// fixme can getActivity return null?
