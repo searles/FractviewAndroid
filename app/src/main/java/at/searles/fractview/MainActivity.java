@@ -6,6 +6,7 @@ import android.app.Activity;
 import android.app.AlertDialog;
 import android.app.FragmentManager;
 import android.app.FragmentTransaction;
+import android.app.WallpaperManager;
 import android.content.ClipData;
 import android.content.ClipboardManager;
 import android.content.Context;
@@ -15,6 +16,7 @@ import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
 import android.graphics.Bitmap;
 import android.graphics.Point;
+import android.net.Uri;
 import android.os.Bundle;
 import android.os.Environment;
 import android.os.Handler;
@@ -330,15 +332,21 @@ public class MainActivity extends Activity implements BitmapFragment.UpdateListe
 
 			case R.id.action_share: {
 				// save/share image
+ 				applyShare(); // FIXME Now it should be simple
+
 				//bitmapFragment.debugBitmap();
 
-				// FIXME First, ask for permission
-				// FIXME (Android 6)
+				// First, ask for permission (Android 6)
 
 				// <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" />
 				// <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE"/>
 				// <uses-permission android:name="android.permission.SET_WALLPAPER"/>
 
+
+				// FIXME
+				// FIXME
+				// FIXME
+				// FIXME
 
 				int readPermission = ContextCompat.checkSelfPermission(this, Manifest.permission.READ_EXTERNAL_STORAGE);
 				int writePermission = ContextCompat.checkSelfPermission(this, Manifest.permission.WRITE_EXTERNAL_STORAGE);
@@ -353,7 +361,7 @@ public class MainActivity extends Activity implements BitmapFragment.UpdateListe
 									Manifest.permission.SET_WALLPAPER
 							}, IMAGE_PERMISSIONS);
 				} else {
-					shareAction(wallpaperPermission == PackageManager.PERMISSION_GRANTED);
+					// shareAction(wallpaperPermission == PackageManager.PERMISSION_GRANTED);
 				}
 			} return true;
 
@@ -702,8 +710,19 @@ public class MainActivity extends Activity implements BitmapFragment.UpdateListe
 		return true;
 	}
 
+
+	// FIXME
+	// FIXME
+	// FIXME
+	// FIXME
+	// FIXME
+	// FIXME
+
 	@Override
 	public boolean applySave(String filename, final boolean share, final boolean setAsWallpaper) {
+		return false;
+	}
+	/*
 		// Get path for picture
 		File directory = new File(
 				Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_PICTURES),
@@ -721,17 +740,71 @@ public class MainActivity extends Activity implements BitmapFragment.UpdateListe
 			}
 		}
 
-		final File imageFile = new File(directory, filename + (filename.endsWith(".png") ? "" : ".png"));
+		// loop up index
+		for(int i = 0;; ++i) {
+			final File imageFile = new File(directory, filename
+					+ (i == 0 ? "" : ("(" + i + ")"))
+							+ (filename.endsWith(".png") ? "" : ".png"));
 
-		if(imageFile.exists()) {
-			Toast.makeText(MainActivity.this, R.string.file_exists,
-					Toast.LENGTH_LONG).show();
-			return false;
+			if(!imageFile.exists()) {
+				// Saving is done in the following background thread
+				bitmapFragment.saveImageInBackground(imageFile, share, setAsWallpaper);
+				return true;
+			}
 		}
+	}*/
 
-		// Saving is done in the following background thread
-		bitmapFragment.saveImageInBackground(imageFile, share, setAsWallpaper);
 
-		return true;
+
+	public void applyShare() {
+		// share picture
+		try {
+			File imageFile = File.createTempFile("fractview", "png", getExternalCacheDir());
+			Uri contentUri = Uri.fromFile(imageFile);
+
+			bitmapFragment.saveImageInBackground(imageFile, () -> {
+				Intent share = new Intent(Intent.ACTION_SEND);
+				share.setType("image/png");
+				share.putExtra(Intent.EXTRA_STREAM, contentUri);
+				startActivity(Intent.createChooser(share, "Share Image"));
+			});
+		} catch(IOException e) {}
+
+		/*
+							// do all the sharing part
+					// this is executed after saving was successful
+					// Add it to the gallery
+					Intent mediaScanIntent = new Intent(Intent.ACTION_MEDIA_SCANNER_SCAN_FILE);
+					Uri contentUri = Uri.fromFile(imageFile);
+					mediaScanIntent.setData(contentUri);
+					getActivity().sendBroadcast(mediaScanIntent);
+
+					// If share is selected share it
+					if(share) {
+						Intent share = new Intent(Intent.ACTION_SEND);
+						share.setType("image/png");
+						share.putExtra(Intent.EXTRA_STREAM, contentUri);
+						startActivity(Intent.createChooser(share, "Share Image"));
+					}
+
+					// If wallpaper is selected, set as wallpaper
+					if(setAsWallpaper) {
+					}
+
+		 */
+	}
+
+	public void setWallpaper() {
+		// FIXME fill with life.
+		// this is only true if allowSettingWallpaper is true.
+		/*WallpaperManager wallpaperManager = WallpaperManager.getInstance(this);
+		try {
+			wallpaperManager.setBitmap(getBitmap());
+		} catch(IOException e) {
+			Toast.makeText(getActivity(), e.getLocalizedMessage(),
+					Toast.LENGTH_LONG).show();
+			// could not set it as wallpaper, but since it was saved,
+			// not such a big deal.
+		}*/
 	}
 }

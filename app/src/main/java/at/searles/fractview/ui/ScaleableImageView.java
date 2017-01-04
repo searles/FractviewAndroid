@@ -24,6 +24,8 @@ public class ScaleableImageView extends ImageView {
 	 */
 	public static final float SCALE_ON_DOUBLE_TAB = 3f;
 
+	public static final float LEFT_UP_INDICATOR_LENGTH = 40f;
+
 	/**
 	 * The grid is painted from two kinds of lines. These are the paints
 	 */
@@ -379,6 +381,33 @@ public class ScaleableImageView extends ImageView {
 		canvas.drawRect(-1, -1, cx - bw / 2.f, h, BOUNDS_PAINT); // left
 		canvas.drawRect(-1, cy + bh / 2.f, w, h, BOUNDS_PAINT);  // bottom
 		canvas.drawRect(cx + bw / 2.f, -1, w, h, BOUNDS_PAINT);  // right
+
+		if(flipBitmap(w, h)) {
+			// draw an indicator in the left upper corner of the bitmap
+			// which is in this case
+			for (int i = 0; i < GRID_PAINTS.length; ++i) {
+				Paint gridPaint = GRID_PAINTS[i];
+
+				// three lines in total
+				canvas.drawLine(
+						w - LEFT_UP_INDICATOR_LENGTH * 0.5f, LEFT_UP_INDICATOR_LENGTH * 0.5f,
+						w - LEFT_UP_INDICATOR_LENGTH * 0.5f, LEFT_UP_INDICATOR_LENGTH * 1.5f,
+						gridPaint
+				);
+
+				canvas.drawLine(
+						w - LEFT_UP_INDICATOR_LENGTH * 0.5f, LEFT_UP_INDICATOR_LENGTH * 0.5f,
+						w - LEFT_UP_INDICATOR_LENGTH * 1.5f, LEFT_UP_INDICATOR_LENGTH * 0.5f,
+						gridPaint
+				);
+
+				canvas.drawLine(
+						w - LEFT_UP_INDICATOR_LENGTH * 1.5f, LEFT_UP_INDICATOR_LENGTH * 0.5f,
+						w - LEFT_UP_INDICATOR_LENGTH * 0.5f, LEFT_UP_INDICATOR_LENGTH * 1.5f,
+						gridPaint
+				);
+			}
+		}
 	}
 
 	public void setBitmapFragment(BitmapFragment bitmapFragment) {

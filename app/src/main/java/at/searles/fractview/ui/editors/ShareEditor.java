@@ -10,11 +10,11 @@ import at.searles.fractview.R;
 
 public class ShareEditor extends SettingsEditor<String> {
 
-	String filename;
+	private String filename;
 
-	boolean allowSettingWallpaper = false;
+	private boolean allowSettingWallpaper = false;
 
-	EditText filenameEditor;
+	private EditText filenameEditor;
 
 	public ShareEditor(String title, String filename) {
 		super(title, R.layout.share_editor);
@@ -39,7 +39,7 @@ public class ShareEditor extends SettingsEditor<String> {
 		return filename;
 	}
 
-	void updateFilename() {
+	private void updateFilename() {
 		if(filenameEditor != null) {
 			filenameEditor.setText(filename);
 		}
@@ -65,6 +65,11 @@ public class ShareEditor extends SettingsEditor<String> {
 		EditText filenameEditor = (EditText) view.findViewById(R.id.filenameEditText);
 
 		this.filename = filenameEditor.getText().toString();
+
+		// Cut off extension if provided
+		if(filename.endsWith(".png")) {
+			filename = filename.substring(0, filename.length() - 4);
+		}
 
 		if(filename.isEmpty()) {
 			Toast.makeText(view.getContext(), "Filename must not be empty", Toast.LENGTH_LONG).show();

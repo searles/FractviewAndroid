@@ -62,11 +62,8 @@ func get_color(c, value) {
 			extern bailouttransfer expr =
 				"branch_avg : log(i + smooth_i)";
 			extern bailoutpalette palette = [
-				[#f80, #f22, #008, #080, #ff8],
-				[#ff8, #f80, #f22, #008, #080],
-				[#080, #ff8, #f80, #f22, #008],
-				[#008, #080, #ff8, #f80, #f22],
-				[#f22, #008, #080, #ff8, #f80]];
+				[#f80, #f22, #40f, #008, #080, #ff8],
+				[#fff, #000, #fff, #000, #fff, #000]];
 
 
 			color = bailoutpalette bailouttransfer

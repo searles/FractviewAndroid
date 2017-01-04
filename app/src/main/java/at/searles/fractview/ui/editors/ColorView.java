@@ -156,8 +156,8 @@ public class ColorView extends View {
 
 	/**
 	 * This one first normalizes the selection according to the selected triangle.
-	 * @param x
-	 * @param y
+	 * @param x coordinates of the keypress
+	 * @param y coordinates of the keypress
      */
 	void setCubeSelection(float x, float y) {
 		cubeSelection.set((x - cube.x0) / cube.base, (y - cube.y0) / cube.base);
@@ -357,6 +357,7 @@ public class ColorView extends View {
 
 		Path[] paths = new Path[6];
 		ComposeShader[] shaders = new ComposeShader[6];
+		ComposeShader[] passiveShaders = new ComposeShader[6];
 
 		float x0, y0;
 		float height; // height is the distance from center to midpoint
@@ -410,11 +411,23 @@ public class ColorView extends View {
 			updateGradients();
 		}
 
-		void updateGradients() {
-			LinearGradient red;
-			LinearGradient green;
-			LinearGradient blue;
+		/**
+		 * Returns the same color but 50% darker
+         */
+		private int darker(int color) {
+			int r = (color >> 16) & 0xff,
+					g = (color >> 8) & 0xff,
+					b = (color) & 0xff,
+					a = (color >> 24) & 0xff;
 
+			r = r * 3 / 4;
+			g = g * 3 / 4;
+			b = b * 3 / 4;
+
+			return a << 24 | r << 16 | g << 8 | b;
+		}
+
+		void updateGradients() {
 			int r = 0xffff0000;
 			int g = 0xff00ff00;
 			int b = 0xff0000ff;
@@ -440,9 +453,6 @@ public class ColorView extends View {
 			float rx2 = x0 + base * rx, ry2 = y0 + base * ry;
 			float yx2 = x0 + base * yx, yy2 = y0 + base * yy;
 
-			// w: red and blue are same direction
-			red = new LinearGradient(x0, y0, (rx2 + yx2) / 2f, (ry2 + yy2) / 2f, r2, r, Shader.TileMode.CLAMP);
-			blue = new LinearGradient(x0, y0, (rx2 + yx2) / 2f, (ry2 + yy2) / 2f, b2, black, Shader.TileMode.CLAMP);
 
 			// the geometry is rather complicated with this one.
 			// connect x0/y0 with the corresponding green-value on the line y-r. => p.
@@ -451,132 +461,96 @@ public class ColorView extends View {
 			// it remains to find appropriate points.
 			// here I pick y fixed.
 
-			float px = yx2 * brightness + rx2 * dd;
-			float py = yy2 * brightness + ry2 * dd;
+			// and here we start
 
-			float vx = x0 - px; // vector perpendicular to gradient
-			float vy = y0 - py;
+			// w: red and blue are same direction
+			for(int i = 0; i < 6; ++i) {
+				float px0, py0, px1, py1;
+				int color0, color1; // used by gradient 1
+				int color2, color3; // used by gradient 2 and 3
 
-			float aa =  vx * yx2 + vy * yy2; // line y -> direction gradient is vx * x + vy * y = aa
-			float bb = -vy * rx2 + vx * ry2; // line r -> direction g=0 is    -vy * x + vx * y = bb
 
-			// the intersection of both lines is the point I am looking for.
+				switch(i) {
+					case 0: {
+						px0 = cx2; py0 = cy2;
+						px1 = gx2; py1 = gy2;
+						color0 = g2; color1 = g;
+						color2 = r2; color3 = b;
+					} break;
+					case 1: {
+						px0 = cx2; py0 = cy2;
+						px1 = bx2; py1 = by2;
+						color0 = b2; color1 = b;
+						color2 = r2; color3 = g;
+					} break;
+					case 2: {
+						px0 = mx2; py0 = my2;
+						px1 = bx2; py1 = by2;
+						color0 = b2; color1 = b;
+						color2 = g2; color3 = r;
+					} break;
+					case 3: {
+						px0 = mx2; py0 = my2;
+						px1 = rx2; py1 = ry2;
+						color0 = r2; color1 = r;
+						color2 = g2; color3 = b;
+					} break;
+					case 4: {
+						px0 = yx2; py0 = yy2;
+						px1 = rx2; py1 = ry2;
+						color0 = r2; color1 = r;
+						color2 = b2; color3 = g;
+					} break;
+					case 5: {
+						px0 = yx2; py0 = yy2;
+						px1 = gx2; py1 = gy2;
+						color0 = g2; color1 = g;
+						color2 = b2; color3 = r;
+					} break;
+					default: throw new IllegalArgumentException("BUG: missing case " + i);
+				}
 
-			float det = vx * vx + vy * vy;
-			float x = (aa * vx - bb * vy) / det;
-			float y = (vx * bb + vy * aa) / det;
+				float px = px0 * brightness + px1 * dd;
+				float py = py0 * brightness + py1 * dd;
 
-			green = new LinearGradient(yx2, yy2, x, y, g, black, Shader.TileMode.CLAMP);
+				float vx = x0 - px; // vector perpendicular to gradient
+				float vy = y0 - py;
 
-			shaders[4] = new ComposeShader(new ComposeShader(red, green, PorterDuff.Mode.ADD), blue, PorterDuff.Mode.ADD);
+				float aa =  vx * px0 + vy * py0; // line y -> direction gradient is vx * x + vy * y = aa
+				float bb = -vy * px1 + vx * py1; // line r -> direction g=0 is    -vy * x + vx * y = bb
 
-			red = new LinearGradient(x0, y0, (rx2 + mx2) / 2f, (ry2 + my2) / 2f, r2, r, Shader.TileMode.CLAMP);
-			green = new LinearGradient(x0, y0, (rx2 + mx2) / 2f, (ry2 + my2) / 2f, g2, black, Shader.TileMode.CLAMP);
+				// the intersection of both lines is the point I am looking for.
 
-			px = mx2 * brightness + rx2 * dd;
-			py = my2 * brightness + ry2 * dd;
+				float det = vx * vx + vy * vy;
+				float x = (aa * vx - bb * vy) / det;
+				float y = (vx * bb + vy * aa) / det;
 
-			vx = x0 - px; vy = y0 - py;
+				LinearGradient gradient1 = new LinearGradient(x0, y0, (px0 + px1) / 2f, (py0 + py1) / 2f, color0, color1, Shader.TileMode.CLAMP);
+				LinearGradient gradient2 = new LinearGradient(x0, y0, (px0 + px1) / 2f, (py0 + py1) / 2f, color2, black, Shader.TileMode.CLAMP);
+				LinearGradient gradient3 = new LinearGradient(px0, py0, x, y, color3, black, Shader.TileMode.CLAMP);
 
-			aa =  vx * mx2 + vy * my2;
-			bb = -vy * rx2 + vx * ry2;
+				shaders[i] = new ComposeShader(new ComposeShader(gradient1, gradient2, PorterDuff.Mode.ADD), gradient3, PorterDuff.Mode.ADD);
 
-			det = vx * vx + vy * vy;
-			x = (aa * vx - bb * vy) / det;
-			y = (vx * bb + vy * aa) / det;
+				// Passive shader is almost the same but the colors are darker
+				gradient1 = new LinearGradient(x0, y0, (px0 + px1) / 2f, (py0 + py1) / 2f, darker(color0), darker(color1), Shader.TileMode.CLAMP);
+				gradient2 = new LinearGradient(x0, y0, (px0 + px1) / 2f, (py0 + py1) / 2f, darker(color2), black, Shader.TileMode.CLAMP);
+				gradient3 = new LinearGradient(px0, py0, x, y, darker(color3), black, Shader.TileMode.CLAMP);
 
-			blue = new LinearGradient(mx2, my2, x, y, b, black, Shader.TileMode.CLAMP);
-
-			shaders[3] = new ComposeShader(new ComposeShader(red, green, PorterDuff.Mode.ADD), blue, PorterDuff.Mode.ADD);
-
-			blue = new LinearGradient(x0, y0, (mx2 + bx2) / 2f, (my2 + by2) / 2f, b2, b, Shader.TileMode.CLAMP);
-			green = new LinearGradient(x0, y0, (mx2 + bx2) / 2f, (my2 + by2) / 2f, g2, black, Shader.TileMode.CLAMP);
-
-			px = mx2 * brightness + bx2 * dd;
-			py = my2 * brightness + by2 * dd;
-
-			vx = x0 - px; vy = y0 - py;
-
-			aa =  vx * mx2 + vy * my2;
-			bb = -vy * bx2 + vx * by2;
-
-			det = vx * vx + vy * vy;
-			x = (aa * vx - bb * vy) / det;
-			y = (vx * bb + vy * aa) / det;
-
-			red = new LinearGradient(mx2, my2, x, y, r, black, Shader.TileMode.CLAMP);
-
-			shaders[2] = new ComposeShader(new ComposeShader(red, green, PorterDuff.Mode.ADD), blue, PorterDuff.Mode.ADD);
-
-			blue = new LinearGradient(x0, y0, (cx2 + bx2) / 2f, (cy2 + by2) / 2f, b2, b, Shader.TileMode.CLAMP);
-			red = new LinearGradient(x0, y0, (cx2 + bx2) / 2f, (cy2 + by2) / 2f, r2, black, Shader.TileMode.CLAMP);
-
-			px = cx2 * brightness + bx2 * dd;
-			py = cy2 * brightness + by2 * dd;
-
-			vx = x0 - px; vy = y0 - py;
-
-			aa =  vx * cx2 + vy * cy2;
-			bb = -vy * bx2 + vx * by2;
-
-			det = vx * vx + vy * vy;
-			x = (aa * vx - bb * vy) / det;
-			y = (vx * bb + vy * aa) / det;
-
-			green = new LinearGradient(cx2, cy2, x, y, g, black, Shader.TileMode.CLAMP);
-
-			shaders[1] = new ComposeShader(new ComposeShader(red, green, PorterDuff.Mode.ADD), blue, PorterDuff.Mode.ADD);
-
-			green = new LinearGradient(x0, y0, (cx2 + gx2) / 2f, (cy2 + gy2) / 2f, g2, g, Shader.TileMode.CLAMP);
-			red = new LinearGradient(x0, y0, (cx2 + gx2) / 2f, (cy2 + gy2) / 2f, r2, black, Shader.TileMode.CLAMP);
-
-			px = cx2 * brightness + gx2 * dd;
-			py = cy2 * brightness + gy2 * dd;
-
-			vx = x0 - px; vy = y0 - py;
-
-			aa =  vx * cx2 + vy * cy2;
-			bb = -vy * gx2 + vx * gy2;
-
-			det = vx * vx + vy * vy;
-			x = (aa * vx - bb * vy) / det;
-			y = (vx * bb + vy * aa) / det;
-
-			blue = new LinearGradient(cx2, cy2, x, y, b, black, Shader.TileMode.CLAMP);
-
-			shaders[0] = new ComposeShader(new ComposeShader(red, green, PorterDuff.Mode.ADD), blue, PorterDuff.Mode.ADD);
-
-			green = new LinearGradient(x0, y0, (yx2 + gx2) / 2f, (yy2 + gy2) / 2f, g2, g, Shader.TileMode.CLAMP);
-			blue = new LinearGradient(x0, y0, (yx2 + gx2) / 2f, (yy2 + gy2) / 2f, b2, black, Shader.TileMode.CLAMP);
-
-			px = yx2 * brightness + gx2 * dd;
-			py = yy2 * brightness + gy2 * dd;
-
-			vx = x0 - px; vy = y0 - py;
-
-			aa =  vx * yx2 + vy * yy2;
-			bb = -vy * gx2 + vx * gy2;
-
-			det = vx * vx + vy * vy;
-			x = (aa * vx - bb * vy) / det;
-			y = (vx * bb + vy * aa) / det;
-
-			red = new LinearGradient(yx2, yy2, x, y, r, black, Shader.TileMode.CLAMP);
-
-			shaders[5] = new ComposeShader(new ComposeShader(red, green, PorterDuff.Mode.ADD), blue, PorterDuff.Mode.ADD);
+				passiveShaders[i] = new ComposeShader(new ComposeShader(gradient1, gradient2, PorterDuff.Mode.ADD), gradient3, PorterDuff.Mode.ADD);
+			}
 		}
 
 		void draw(Canvas canvas) {
 			paint.setStyle(Paint.Style.FILL);
 
 			for(int i = 0; i < 6; ++i) {
-				paint.setShader(shaders[i]);
-				canvas.drawPath(paths[i], paint);
-				paint.setShader(null);
-
 				if(selectedTriangleIndex != -1 && i != selectedTriangleIndex) {
 					// in this case not selected triangles are drawn pale.
-					paint.setColor(0x80808080);
+					// thus, draw a transpatent grey triangle on top of it.
+					paint.setShader(passiveShaders[i]);
+					canvas.drawPath(paths[i], paint);
+				} else {
+					paint.setShader(shaders[i]);
 					canvas.drawPath(paths[i], paint);
 				}
 			}

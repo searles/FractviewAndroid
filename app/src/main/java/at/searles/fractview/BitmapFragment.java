@@ -110,52 +110,55 @@ public class BitmapFragment extends Fragment {
 	class ProgressDialogData {
 		String title = null;
 		String msg = null;
-		boolean allowSkip = false;
 
-		Runnable postAction = null;
+		Runnable skipAction = null;
+		Runnable cancelAction = null;
 
 		ProgressDialog pd = null; // if we are busy.
 
-		ProgressDialogData(String title, String msg, boolean allowSkip, Runnable postAction) {
+		/**
+		 *
+		 * @param title Title of the dialog (if null, no title is used)
+		 * @param msg Message of the dialog (if null, no dialog is used)
+		 * @param skipAction Action to be performed after skip is picked. If null, then there is no skip-action.
+         * @param cancelAction Action to be performed after cancel is picked. If null, then there is no cancel-action.
+         */
+		ProgressDialogData(String title, String msg, Runnable skipAction, Runnable cancelAction) {
 			this.title = title;
 			this.msg = msg;
-			this.allowSkip = allowSkip;
-			this.postAction = postAction;
+			this.skipAction = skipAction;
+			this.cancelAction = cancelAction;
 		}
 
-		void showPD(Activity activity) {
+		void showPD() {
 			if(pd != null) throw new IllegalArgumentException();
 
 			pd = new ProgressDialog(getActivity());
-			pd.setTitle(title);
-			pd.setMessage(msg);
+			if(title != null) pd.setTitle(title);
+			if(msg != null) pd.setMessage(msg);
 			pd.setCancelable(false);
 
-			if(allowSkip) {
-				pd.setButton(DialogInterface.BUTTON_NEGATIVE, "Skip", new DialogInterface.OnClickListener() {
-					@Override
-					public void onClick(DialogInterface dialog, int which) {
-						dismissAndClear();
-					}
-				});
+			if(skipAction != null) {
+				pd.setButton(DialogInterface.BUTTON_NEUTRAL, "Skip", (dialog, which) -> { dismissDialog(); skipAction.run(); });
+			}
+
+			if(cancelAction != null) {
+				pd.setButton(DialogInterface.BUTTON_NEGATIVE, "Cancel", (dialog, which) -> { dismissDialog(); cancelAction.run(); });
 			}
 
 			pd.show();
 		}
 
-		void dismissPD() {
+		void dismissDialog() {
 			if(pd != null) {
 				pd.dismiss();
 				pd = null;
 			}
 		}
 
-		void dismissAndClear() {
-			dismissPD(); // first, dismiss dialog (since we might create another one in postAction)
-			pdData = null; // clear pdData (because we might create another dialog)
-
-			// only now run it.
-			if(postAction != null) postAction.run();
+		void dismissDialogAndClear() {
+			dismissDialog();
+			BitmapFragment.this.pdData = null;
 		}
 	}
 
@@ -171,7 +174,7 @@ public class BitmapFragment extends Fragment {
 		super.onAttach(context);
 
 		if(pdData != null) {
-			pdData.showPD(context);
+			pdData.showPD();
 		}
 
 		// we are in the UI-thread and if this was the first start,
@@ -251,7 +254,7 @@ public class BitmapFragment extends Fragment {
 	public void onDetach() {
 		Log.d("BMF", "onDetach");
 		super.onDetach();
-		if(pdData != null) pdData.dismissPD();
+		if(pdData != null) pdData.dismissDialog();
 		// but we keep the pdData.
 	}
 
@@ -313,9 +316,9 @@ public class BitmapFragment extends Fragment {
                                 "Please wait...",
                                 "Initializing program (this may take a few seconds " +
                                 "after a fresh install because" +
-                                " the GPU scripts are compiled by Android)", false, null);
+                                " the GPU scripts are compiled by Android)", null, null);
 
-                        pdData.showPD(getActivity());
+                        pdData.showPD();
                     }
                 }, 1250); // show dialog after 1250ms
 			}
@@ -331,8 +334,7 @@ public class BitmapFragment extends Fragment {
 				startBackgroundTask();
 
 				if(pdData != null) {
-					pdData.dismissPD();
-					pdData = null;
+					pdData.dismissDialogAndClear();
 				}
 			}
 		}.execute();
@@ -523,17 +525,23 @@ public class BitmapFragment extends Fragment {
         return height;
     }
 
-	public void saveImageInBackground(final File imageFile, final boolean share, final boolean setAsWallpaper) {
+	/**
+	 * Saves the image in the background. As a special tweak, it displays a dialog to
+	 * save the file only once the calculation is done. This dialog allows skip or cancel. Skip
+	 * saves the image instantly, Cancel cancels the whole thing.
+	 * @param imageFile File object in which the image should be saved.
+	 * @param postSaveAction Action to do after the image has been saved.
+     */
+	public void saveImageInBackground(final File imageFile, Runnable postSaveAction) {
 		// We are in the UI-Thread.
 
 		// Create task that will save the image
 		final AsyncTask<Void, Void, Boolean> saveTask = new AsyncTask<Void, Void, Boolean>() {
 			@Override
 			protected void onPreExecute() {
-				pdData = new ProgressDialogData("Saving image",
-						"Saving image to " + imageFile.getAbsolutePath(),
-						false, null);
-				pdData.showPD(getActivity());
+				pdData = new ProgressDialogData(null,
+						"Saving image...", null, null);
+				pdData.showPD();
 			}
 
 			@Override
@@ -547,20 +555,22 @@ public class BitmapFragment extends Fragment {
 						fos.close();
 
 						// Show toast
-						getActivity().runOnUiThread(() -> Toast.makeText(getActivity(), "Image saved as " + imageFile.getName(), Toast.LENGTH_SHORT).show());
+						getActivity().runOnUiThread(() -> Toast.makeText(getActivity(),
+								"Image successfully saved", Toast.LENGTH_SHORT).show());
 
 						return true;
 					} else {
-						errorMsg = "Error calling \"compress\". This is a bug.";
+						errorMsg = "Error calling \"compress\".";
 						fos.close();
 					}
 				} catch(IOException e) {
 					errorMsg = e.getLocalizedMessage();
 				}
 
-				final String s = errorMsg; // seriously, please Java 8, come to Android...
+				// There was some error
 
-				getActivity().runOnUiThread(() -> Toast.makeText(getActivity(), "Error: " + s,
+				String finalErrorMsg = errorMsg;
+				getActivity().runOnUiThread(() -> Toast.makeText(getActivity(), "Error: " + finalErrorMsg,
                         Toast.LENGTH_LONG).show());
 
 				return false;
@@ -568,39 +578,11 @@ public class BitmapFragment extends Fragment {
 
 			@Override
 			protected void onPostExecute(Boolean saved) {
-				// it is hard to get into a race condition but it is possible.
-				pdData.dismissAndClear();
+				// fixme it is hard to get into a race condition but it is possible.
+				pdData.dismissDialog(); // clear the dialog
 
 				if(saved) {
-					// do all the sharing part
-					// this is executed after saving was successful
-					// Add it to the gallery
-					Intent mediaScanIntent = new Intent(Intent.ACTION_MEDIA_SCANNER_SCAN_FILE);
-					Uri contentUri = Uri.fromFile(imageFile);
-					mediaScanIntent.setData(contentUri);
-					getActivity().sendBroadcast(mediaScanIntent);
-
-					// If share is selected share it
-					if(share) {
-						Intent share = new Intent(Intent.ACTION_SEND);
-						share.setType("image/png");
-						share.putExtra(Intent.EXTRA_STREAM, contentUri);
-						startActivity(Intent.createChooser(share, "Share Image"));
-					}
-
-					// If wallpaper is selected, set as wallpaper
-					if(setAsWallpaper) {
-						// this is only true if allowSettingWallpaper is true.
-						WallpaperManager wallpaperManager = WallpaperManager.getInstance(getActivity());
-						try {
-							wallpaperManager.setBitmap(getBitmap());
-						} catch(IOException e) {
-							Toast.makeText(getActivity(), e.getLocalizedMessage(),
-									Toast.LENGTH_LONG).show();
-							// could not set it as wallpaper, but since it was saved,
-							// not such a big deal.
-						}
-					}
+					postSaveAction.run();
 				}
 			}
 		};
@@ -609,21 +591,20 @@ public class BitmapFragment extends Fragment {
 			// show skipable dialog
 			pdData = new ProgressDialogData("Waiting until calculation is finished",
 					"Skip to save immediately",
-					true,
-					() -> {
-                        invokeWhenFinished = null; // first, clear invokeWhenFinished
-                        saveTask.execute(); // then run this one.
-                    }
+					() -> { invokeWhenFinished = null; saveTask.execute(); }, // skip
+					() -> { /* pdData is cleared in ProgressDialogData */ } // cancel
 			);
 
-			pdData.showPD(getActivity());
+			pdData.showPD();
 
 			// a bit of aspect oriented programming would be nice here:
 			invokeWhenFinished = () -> {
                 // this is in the UI-thread.
-                pdData.dismissAndClear();
+                if(pdData != null) {
+					pdData.dismissDialogAndClear();
+					saveTask.execute();
+				}
             };
-
 		} else {
 			saveTask.execute();
 		}
