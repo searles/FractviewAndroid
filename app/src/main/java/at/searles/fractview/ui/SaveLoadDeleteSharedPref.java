@@ -30,52 +30,38 @@ public class SaveLoadDeleteSharedPref {
 
 		lv.setAdapter(arrayAdapter);
 
-		lv.setOnItemClickListener(new AdapterView.OnItemClickListener() {
-			@Override
-			public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
-				String selected = arrayAdapter.getItem(position);
+		lv.setOnItemClickListener((parent, view, position, id) -> {
+            String selected = arrayAdapter.getItem(position);
 
-				// successfully got sth.
-				fn.apply(selected, sharedPrefs);
-			}
-		});
+            // successfully got sth.
+            fn.apply(selected, sharedPrefs);
+        });
 
-		lv.setOnItemLongClickListener(new AdapterView.OnItemLongClickListener() {
-			@Override
-			public boolean onItemLongClick(AdapterView<?> parent, View view, int position, long id) {
-				// offer to delete it
-				// fixme I know this is a bit a violation because I open a Dialog from a Dialog
-				// fixme but here it is ok.
-				// fixme just make sure to not preserve it on rotate.
-				final String selected = arrayAdapter.getItem(position);
+		lv.setOnItemLongClickListener((parent, view, position, id) -> {
+            // offer to delete it
+            // fixme I know this is a bit a violation because I open a Dialog from a Dialog
+            // fixme but here it is ok.
+            // fixme just make sure to not preserve it on rotate.
+            final String selected = arrayAdapter.getItem(position);
 
-				AlertDialog.Builder yesNoBuilder = new AlertDialog.Builder(context);
-				yesNoBuilder.setIcon(android.R.drawable.ic_delete);
-				yesNoBuilder.setTitle("Delete entry " + selected + "?");
+            AlertDialog.Builder yesNoBuilder = new AlertDialog.Builder(context);
+            yesNoBuilder.setIcon(android.R.drawable.ic_delete);
+            yesNoBuilder.setTitle("Delete entry " + selected + "?");
 
-				yesNoBuilder.setPositiveButton("Yes", new DialogInterface.OnClickListener() {
-					@Override
-					public void onClick(DialogInterface dialogInterface, int which) {
-						SharedPreferences.Editor edit = sharedPrefs.edit();
-						edit.remove(selected);
-						edit.apply();
-						dialogInterface.dismiss();
-						arrayAdapter.remove(selected);
-					}
-				});
+            yesNoBuilder.setPositiveButton("Yes", (dialogInterface, which) -> {
+                SharedPreferences.Editor edit = sharedPrefs.edit();
+                edit.remove(selected);
+                edit.apply();
+                dialogInterface.dismiss();
+                arrayAdapter.remove(selected);
+            });
 
-				yesNoBuilder.setNegativeButton("No", new DialogInterface.OnClickListener() {
-					@Override
-					public void onClick(DialogInterface dialogInterface, int which) {
-						dialogInterface.dismiss();
-					}
-				});
+            yesNoBuilder.setNegativeButton("No", (dialogInterface, which) -> dialogInterface.dismiss());
 
-				yesNoBuilder.show();
+            yesNoBuilder.show();
 
-				return true;
-			}
-		});
+            return true;
+        });
 	}
 
 	// commons for loading and storing a value to shared preferences
@@ -105,13 +91,10 @@ public class SaveLoadDeleteSharedPref {
 
 		fileSelectorBuilder.setView(lv);
 
-		fileSelectorBuilder.setNegativeButton("Cancel", new DialogInterface.OnClickListener() {
-			@Override
-			public void onClick(DialogInterface dialogInterface, int which) {
-				// don't select anything
-				dialogInterface.dismiss();
-			}
-		});
+		fileSelectorBuilder.setNegativeButton("Cancel", (dialogInterface, which) -> {
+            // don't select anything
+            dialogInterface.dismiss();
+        });
 
 		afn.dialog = fileSelectorBuilder.show();
 	}
@@ -126,75 +109,58 @@ public class SaveLoadDeleteSharedPref {
 		final EditText fileEdit = (EditText) view.findViewById(R.id.saveNameEditText);
 		final ListView lv = (ListView) view.findViewById(R.id.existingListView);
 
-		initListView(context, lv, sharedPrefs, new StringFn() {
-			@Override
-			public void apply(String key, SharedPreferences sharedPrefs) {
-				fileEdit.setText(key);
-			}
-		});
+		initListView(context, lv, sharedPrefs, (key, sharedPrefs1) -> fileEdit.setText(key));
 
 		filenameDialogBuilder.setView(view);
 
-		filenameDialogBuilder.setPositiveButton("Ok", new DialogInterface.OnClickListener() {
-			@Override
-			public void onClick(DialogInterface dialogInterface, int which) {
-				final String filename = fileEdit.getText().toString();
-				if(filename.isEmpty()) {
-					// fixme do not dismiss (though, dismissing with error message is not bad)
-					Toast.makeText(context, "Name cannot be empty", Toast.LENGTH_LONG).show();
-				} else {
-					if(sharedPrefs.contains(filename)) {
-						AlertDialog.Builder yesNoBuilder = new AlertDialog.Builder(context);
-						yesNoBuilder.setIcon(android.R.drawable.ic_delete);
-						yesNoBuilder.setTitle("Overwrite entry " + filename + "?");
+		filenameDialogBuilder.setPositiveButton("Ok", (dialogInterface, which) -> {
+            final String filename = fileEdit.getText().toString();
+            if(filename.isEmpty()) {
+                // fixme do not dismiss (though, dismissing with error message is not bad)
+                Toast.makeText(context, "Name cannot be empty", Toast.LENGTH_LONG).show();
+            } else {
+                if(sharedPrefs.contains(filename)) {
+                    AlertDialog.Builder yesNoBuilder = new AlertDialog.Builder(context);
+                    yesNoBuilder.setIcon(android.R.drawable.ic_delete);
+                    yesNoBuilder.setTitle("Overwrite entry " + filename + "?");
 
-						yesNoBuilder.setPositiveButton("Yes", new DialogInterface.OnClickListener() {
-							@Override
-							public void onClick(DialogInterface dialogInterface, int which) {
-								// fixme violation of DRY
-								SharedPreferences.Editor edit = sharedPrefs.edit();
+                    yesNoBuilder.setPositiveButton("Yes", (dialogInterface1, which1) -> {
+                        // fixme violation of DRY
+                        SharedPreferences.Editor edit = sharedPrefs.edit();
 
-								edit.putString(filename, data);
-								edit.apply();
+                        edit.putString(filename, data);
+                        edit.apply();
 
-								Toast.makeText(context, "Successfully stored " + filename, Toast.LENGTH_SHORT).show();
-								dialogInterface.dismiss();
-							}
-						});
+                        Toast.makeText(context, "Successfully stored " + filename, Toast.LENGTH_SHORT).show();
+                        dialogInterface1.dismiss();
+                    });
 
-						yesNoBuilder.setNegativeButton("No", new DialogInterface.OnClickListener() {
-							@Override
-							public void onClick(DialogInterface dialogInterface, int which) {
-								Toast.makeText(context, "Did not save", Toast.LENGTH_LONG).show();
-								dialogInterface.dismiss();
-							}
-						});
+                    yesNoBuilder.setNegativeButton("No", (dialogInterface12, which12) -> {
+                        Toast.makeText(context, "Did not save", Toast.LENGTH_LONG).show();
+                        dialogInterface12.dismiss();
+                    });
 
-						yesNoBuilder.show();
-					} else {
-						// does not exist yet.
-						// fixme once Android allows lambda expressions, put this one in one
-						// to avoid WET
-						SharedPreferences.Editor edit = sharedPrefs.edit();
+                    yesNoBuilder.show();
+                } else {
+                    // does not exist yet.
+                    // fixme once Android allows lambda expressions, put this one in one
+                    // to avoid WET
+                    SharedPreferences.Editor edit = sharedPrefs.edit();
 
-						edit.putString(filename, data);
-						edit.apply();
+                    edit.putString(filename, data);
+                    edit.apply();
 
-						Toast.makeText(context, "Successfully stored " + filename, Toast.LENGTH_SHORT).show();
-					}
+                    Toast.makeText(context, "Successfully stored " + filename, Toast.LENGTH_SHORT).show();
+                }
 
-					dialogInterface.dismiss();
-				}
-			}
-		});
+                dialogInterface.dismiss();
+            }
+        });
 
-		filenameDialogBuilder.setNegativeButton("Cancel", new DialogInterface.OnClickListener() {
-			@Override
-			public void onClick(DialogInterface dialogInterface, int which) {
-				// fixme what is the difference to dialogInterface.cancel()?
-				dialogInterface.dismiss();
-			}
-		});
+		filenameDialogBuilder.setNegativeButton("Cancel", (dialogInterface, which) -> {
+            // fixme what is the difference to dialogInterface.cancel()?
+            dialogInterface.dismiss();
+        });
 
 		filenameDialogBuilder.show();
 	}

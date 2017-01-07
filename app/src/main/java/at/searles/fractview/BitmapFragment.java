@@ -3,12 +3,9 @@ package at.searles.fractview;
 import android.app.Activity;
 import android.app.Fragment;
 import android.app.ProgressDialog;
-import android.app.WallpaperManager;
 import android.content.DialogInterface;
-import android.content.Intent;
 import android.graphics.Bitmap;
 import android.graphics.Matrix;
-import android.net.Uri;
 import android.os.AsyncTask;
 import android.os.Bundle;
 import android.os.Handler;
@@ -18,7 +15,6 @@ import android.widget.Toast;
 import at.searles.fractview.fractal.DemoFractalDrawer;
 import at.searles.fractview.fractal.Fractal;
 import at.searles.fractview.fractal.FractalDrawer;
-import at.searles.fractview.renderscript.RenderScriptDrawer;
 import at.searles.math.Scale;
 import at.searles.meelan.CompileException;
 
@@ -48,7 +44,7 @@ import java.util.concurrent.locks.ReentrantLock;
  *     ==> call setScale
  *
  *     * There is a new image size
- *     ==> call setSize
+ *     ==> call setSizeUnsafe
  *
  *     * Editor:
  *         pre-exec: increment cancel-counter
@@ -102,7 +98,7 @@ public class BitmapFragment extends Fragment {
 
 	// call back if something changed/has to be drawn etc...
 	UpdateListener listener() {
-		return (UpdateListener) getActivity();
+		return ((MainActivity) getActivity()).getBitmapFragmentCallback();
 	}
 
 	// We must sometimes run lengthy tasks. For this purpose
@@ -195,7 +191,7 @@ public class BitmapFragment extends Fragment {
 			// FIXME
 			// FIXME Replace by renderscript drawer
 
-			this.drawer = new RenderScriptDrawer(new FractalDrawer.Controller() {
+			this.drawer = new DemoFractalDrawer(new FractalDrawer.Controller() {
 				@Override
 				public void previewGenerated() {
 					// fixme can getActivity return null?
@@ -379,7 +375,11 @@ public class BitmapFragment extends Fragment {
 	// Now for the editing part
 	// ------------------------
 
-	public boolean setSize(int width, int height) {
+	public void setSize(int width, int height, boolean setAsDefaultIfSuccess) {
+		edit(() -> setSizeUnsafe(width, height, setAsDefaultIfSuccess));
+	}
+
+	private boolean setSizeUnsafe(int width, int height, boolean setAsDefaultIfSuccess) {
 		// this might not be run from UI-thread
 		assert bitmap != null;
 
@@ -387,7 +387,7 @@ public class BitmapFragment extends Fragment {
 			Bitmap newBitmap = Bitmap.createBitmap(width, height, Bitmap.Config.ARGB_8888);
 			drawer.updateBitmap(newBitmap);
 
-			// so far, everythimg worked, hence update fields
+			// so far, everything worked, hence update fields
 			this.bitmap = newBitmap;
 			this.width = width;
 			this.height = height;
@@ -396,9 +396,14 @@ public class BitmapFragment extends Fragment {
 
 			getActivity().runOnUiThread(() -> listener().newBitmapCreated(bitmap));
 
+			if(setAsDefaultIfSuccess) {
+				getActivity().runOnUiThread(() -> ((MainActivity) getActivity()).storeDefaultSize(width, height));
+			}
+
 			return true;
 		} catch(OutOfMemoryError e) {
 			// fixme not super-nice, but it works
+			Toast.makeText(getActivity(), "Out of memory", Toast.LENGTH_LONG).show();
 			return false;
 		}
 	}
@@ -581,7 +586,7 @@ public class BitmapFragment extends Fragment {
 				// fixme it is hard to get into a race condition but it is possible.
 				pdData.dismissDialog(); // clear the dialog
 
-				if(saved) {
+				if(saved && postSaveAction != null) {
 					postSaveAction.run();
 				}
 			}

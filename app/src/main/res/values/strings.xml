@@ -52,4 +52,6 @@
     <string name="label_default_size">Reset to Default</string>
     <string name="file_exists">File already exists</string>
     <string name="error_read_presets">Error reading presets:\n</string>
+    <string name="action_set_wallpaper">Set as Wallpaper</string>
+    <string name="action_save_image">Save Image</string>
 </resources>
