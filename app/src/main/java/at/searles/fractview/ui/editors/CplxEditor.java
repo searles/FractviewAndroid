@@ -2,7 +2,6 @@ package at.searles.fractview.ui.editors;
 
 import android.os.Parcel;
 import android.os.Parcelable;
-import android.util.Log;
 import android.view.View;
 import android.widget.EditText;
 import android.widget.Toast;
@@ -14,7 +13,7 @@ public class CplxEditor extends SettingsEditor<Cplx> {
 	private Cplx value;
 
 	public CplxEditor(String title, Cplx value) {
-		super(title, R.layout.cplx_layout);
+		super(title, R.layout.cplx_editor);
 		this.value = value;
 	}
 

@@ -45,7 +45,6 @@ import java.io.IOException;
 
 import at.searles.fractview.fractal.FavoriteEntry;
 import at.searles.fractview.fractal.Fractal;
-import at.searles.fractview.fractal.Parameters;
 import at.searles.fractview.fractal.PresetFractals;
 import at.searles.fractview.ui.FavoritesActivity;
 import at.searles.fractview.ui.MyAlertDialogFragment;
@@ -242,7 +241,7 @@ public class MainActivity extends Activity
 			Fractal initFractal = new Fractal(
 					PresetFractals.INIT_SCALE,
 					sourceCode,
-					new Parameters()
+					new Fractal.Parameters()
 			);
 
 			bundle.putParcelable("fractal", initFractal);
@@ -335,12 +334,10 @@ public class MainActivity extends Activity
         switch (item.getItemId()) {
 			case R.id.action_size: {
 				// change size of the image
-				MyAlertDialogFragment dialogFragment =
-						MyAlertDialogFragment.newInstance(
-								"Add Favorite",
-								R.layout.image_size_editor,
-								IMAGE_SIZE);
-				showDialog(dialogFragment);
+				MyAlertDialogFragment.newInstance(
+						"Add Favorite",
+						R.layout.image_size_editor,
+						IMAGE_SIZE).showDialog(this);
 			} return true;
 
 			case R.id.action_share: {
@@ -349,13 +346,10 @@ public class MainActivity extends Activity
 			} return true;
 
 			case R.id.action_add_favorite: {
-				MyAlertDialogFragment dialogFragment =
-						MyAlertDialogFragment.newInstance(
-								"Add Favorite",
-								R.layout.add_favorite_layout,
-								ADD_FAVORITE);
-
-				showDialog(dialogFragment);
+				MyAlertDialogFragment.newInstance(
+						"Add Favorite",
+						R.layout.add_favorite_layout,
+						ADD_FAVORITE).showDialog(this);
 			} return true;
 
 			case R.id.action_parameters: {
@@ -445,25 +439,6 @@ public class MainActivity extends Activity
                 return super.onOptionsItemSelected(item);
         }
     }
-
-	/**
-	 * From the documentation of DialogFragment:
-	 * @param newFragment The new dialog to be shown.
-	 */
-	void showDialog(DialogFragment newFragment) {
-		// DialogFragment.show() will take care of adding the fragment
-		// in a transaction.  We also want to remove any currently showing
-		// dialog, so make our own transaction and take care of that here.
-		FragmentTransaction ft = getFragmentManager().beginTransaction();
-		Fragment prev = getFragmentManager().findFragmentByTag("dialog");
-		if (prev != null) {
-			ft.remove(prev);
-		}
-		ft.addToBackStack(null);
-
-		// Create and show the dialog.
-		newFragment.show(ft, "dialog");
-	}
 
 	// Labels for myalertdialogfragment
 	private static final String ADD_FAVORITE = "add_favorite";
@@ -900,7 +875,7 @@ public class MainActivity extends Activity
 		@Override
 		public void bitmapUpdated() {
 			// can be called from outside the UI-thread!
-			Log.d("MA", "bitmap updated");
+			// Log.d("MA", "bitmap updated");
 			imageView.invalidate();
 		}
 

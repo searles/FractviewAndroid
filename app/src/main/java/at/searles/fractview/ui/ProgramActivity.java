@@ -16,7 +16,6 @@ import android.widget.EditText;
 import android.widget.Toast;
 import at.searles.fractview.R;
 import at.searles.fractview.fractal.Fractal;
-import at.searles.fractview.fractal.Parameters;
 import at.searles.meelan.CompileException;
 import at.searles.parsing.ParsingError;
 
@@ -88,7 +87,7 @@ public class ProgramActivity extends Activity {
 		source = editor.getText().toString();
 
 		try {
-			Fractal fractal = new Fractal(null, source, new Parameters());
+			Fractal fractal = new Fractal(null, source, new Fractal.Parameters());
 			fractal.parse(); // Check whether parsing works
 			fractal.compile(); // Also checks default-values for external data.
 			return true;

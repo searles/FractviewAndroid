@@ -11,7 +11,7 @@ import android.view.LayoutInflater;
 import android.view.View;
 import org.jetbrains.annotations.NotNull;
 
-public class DialogEditFragment extends DialogFragment {
+/*public class DialogEditFragment extends DialogFragment {
 
 	View view;
 	AlertDialog dialog;
@@ -100,4 +100,4 @@ public class DialogEditFragment extends DialogFragment {
 
 		return dialog;
 	}
-}
+}*/

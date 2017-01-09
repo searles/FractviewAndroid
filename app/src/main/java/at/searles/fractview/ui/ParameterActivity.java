@@ -7,28 +7,25 @@ import android.content.DialogInterface;
 import android.content.Intent;
 import android.graphics.Typeface;
 import android.os.Bundle;
-import android.util.Log;
 import android.view.*;
 import android.widget.*;
 import at.searles.fractview.R;
-import at.searles.fractview.fractal.DefaultData.Type;
 import at.searles.fractview.fractal.Fractal;
 import at.searles.fractview.fractal.PresetFractals;
-import at.searles.fractview.ui.editors.*;
+import at.searles.fractview.ui.editors.ColorView;
 import at.searles.math.Cplx;
 import at.searles.math.Scale;
 import at.searles.math.color.Palette;
 import at.searles.meelan.CompileException;
+import at.searles.utils.Pair;
+
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
-import java.util.Map;
 
-public class ParameterActivity extends Activity implements ScaleEditor.Callback, IntEditor.Callback, RealEditor.Callback, CplxEditor.Callback, ColorEditor.Callback, ExprEditor.Callback {
+public class ParameterActivity extends Activity implements MyAlertDialogFragment.MyAlertFragmentHandler {
 
 	public static final int PROGRAM_ACTIVITY_RETURN = 100;
-
-	enum ParameterType { /* Label, */ Scale, Bool, Int, Real, Cplx, Color, Expr, Palette };
 
 	static final CharSequence[] scaleOptions = { "Reset to Default", "Center on Origin", "Orthogonalize", "Straighten" };
 	static final CharSequence[] boolOptions = { "Reset to Default" };
@@ -43,28 +40,156 @@ public class ParameterActivity extends Activity implements ScaleEditor.Callback,
 	static final int ELEMENT = 1;
 	static final int SCALE = 2;
 
-	static class ParameterElements {
-
-		final ParameterType t;
-		// FIXME do I need this? final int index; //
-		final String label;
-
-		ParameterElements(ParameterType t, String label) {
-			this.t = t;
-			this.label = label;
-		}
-	}
-
 	Fractal fb;
 	ParameterAdapter adapter; // List adapter for parameters
-	ArrayList<ParameterElements> elements;
 	ListView listView;
 
 	// if something is edited, here is the information once the dialog calls this activities' confirm method
 	private String currentEditId = null;
 
+	@Override
+	public void initDialogView(String id, View view) {
+		Pair<Fractal.Type, Object> p = fb.get(id);
+
+		Object value = p.b;
+
+		switch(p.a) {
+			case Int: {
+				EditText editor = (EditText) view.findViewById(R.id.intEditText);
+				editor.setText(Integer.toString((Integer) p.b));
+			} break;
+			case Real: {
+				EditText editor = (EditText) view.findViewById(R.id.realEditText);
+				editor.setText(Double.toString((Double) p.b));
+			} break;
+			case Cplx: {
+				EditText editorX = (EditText) view.findViewById(R.id.xEditText);
+				EditText editorY = (EditText) view.findViewById(R.id.yEditText);
+				Cplx c = (Cplx) p.b;
+				editorX.setText(Double.toString(c.re()));
+				editorY.setText(Double.toString(c.im()));
+			} break;
+			case Expr: {
+				EditText editor = (EditText) view.findViewById(R.id.stringEditText);
+				editor.setText((String) value);
+			} break;
+			case Color: {
+				ColorView editor = (ColorView) view.findViewById(R.id.colorView);
+				editor.setColor((Integer) value);
+			} break;
+			case Scale: {
+				EditText editorXX = (EditText) view.findViewById(R.id.xxEditText);
+				EditText editorXY = (EditText) view.findViewById(R.id.xyEditText);
+				EditText editorYX = (EditText) view.findViewById(R.id.yxEditText);
+				EditText editorYY = (EditText) view.findViewById(R.id.yyEditText);
+				EditText editorCX = (EditText) view.findViewById(R.id.cxEditText);
+				EditText editorCY = (EditText) view.findViewById(R.id.cyEditText);
+
+				Scale sc = (Scale) p.b;
+
+				editorXX.setText(Double.toString(sc.xx));
+				editorXY.setText(Double.toString(sc.xy));
+				editorYX.setText(Double.toString(sc.yx));
+				editorYY.setText(Double.toString(sc.yy));
+				editorCX.setText(Double.toString(sc.cx));
+				editorCY.setText(Double.toString(sc.cy));
+			} break;
+			// bool is not handled via a dialog!
+			// neither is palette.
+			default:
+				throw new IllegalArgumentException("No such type");
+		}
+	}
 
 	@Override
+	public boolean applyDialogView(String id, View view) {
+		Pair<Fractal.Type, Object> p = fb.get(id);
+
+		switch(p.a) {
+			case Int: {
+				EditText editor = (EditText) view.findViewById(R.id.intEditText);
+				String sVal = editor.getText().toString();
+
+				try {
+					int val = Integer.parseInt(sVal);
+					fb.setInt(id, val);
+					return true;
+				} catch(NumberFormatException e) {
+					Toast.makeText(this, e.getMessage(), Toast.LENGTH_LONG).show();
+					return false;
+				}
+			}
+			case Real: {
+				EditText editor = (EditText) view.findViewById(R.id.realEditText);
+				String sVal = editor.getText().toString();
+
+				try {
+					double val = Double.parseDouble(sVal);
+					fb.setReal(id, val);
+					return true;
+				} catch(NumberFormatException e) {
+					Toast.makeText(this, e.getMessage(), Toast.LENGTH_LONG).show();
+					return false;
+				}
+			}
+			case Cplx: {
+				EditText editorX = (EditText) view.findViewById(R.id.xEditText);
+				EditText editorY = (EditText) view.findViewById(R.id.yEditText);
+
+				String sx = editorX.getText().toString();
+				String sy = editorY.getText().toString();
+
+				try {
+					double x = Double.parseDouble(sx);
+
+					try {
+						double y = Double.parseDouble(sy);
+						fb.setCplx(id, new Cplx(x, y));
+						return true;
+					} catch(NumberFormatException e) {
+						// FIXME focus on editorY
+						Toast.makeText(this, e.getMessage(), Toast.LENGTH_LONG).show();
+						return false;
+					}
+				} catch(NumberFormatException e) {
+					// FIXME focus on editorX
+					Toast.makeText(this, e.getMessage(), Toast.LENGTH_LONG).show();
+					return false;
+				}
+			}
+			case Expr: {
+				EditText editor = (EditText) view.findViewById(R.id.stringEditText);
+				editor.setText((String) value);
+			} break;
+			case Color: {
+				ColorView editor = (ColorView) view.findViewById(R.id.colorView);
+				editor.
+				editor.setColor((Integer) value);
+			} break;
+			case Scale: {
+				EditText editorXX = (EditText) view.findViewById(R.id.xxEditText);
+				EditText editorXY = (EditText) view.findViewById(R.id.xyEditText);
+				EditText editorYX = (EditText) view.findViewById(R.id.yxEditText);
+				EditText editorYY = (EditText) view.findViewById(R.id.yyEditText);
+				EditText editorCX = (EditText) view.findViewById(R.id.cxEditText);
+				EditText editorCY = (EditText) view.findViewById(R.id.cyEditText);
+
+				Scale sc = (Scale) p.b;
+
+				editorXX.setText(Double.toString(sc.xx));
+				editorXY.setText(Double.toString(sc.xy));
+				editorYX.setText(Double.toString(sc.yx));
+				editorYY.setText(Double.toString(sc.yy));
+				editorCX.setText(Double.toString(sc.cx));
+				editorCY.setText(Double.toString(sc.cy));
+			} break;
+			default:
+				// bool and palette is not her
+				throw new IllegalArgumentException("No such type");
+		}
+	}
+
+	/*@Override
 	public boolean applyScale(Scale sc) {
 		fb.setScale(sc);
 		adapter.notifyDataSetChanged();
@@ -123,7 +248,7 @@ public class ParameterActivity extends Activity implements ScaleEditor.Callback,
 
 			return false;
 		}
-	}
+	}*/
 
 	private void showOptionsDialog(CharSequence[] options, DialogInterface.OnClickListener listener) {
 		// show these simple dialogs to reset or center values.
@@ -132,12 +257,7 @@ public class ParameterActivity extends Activity implements ScaleEditor.Callback,
 		builder.setTitle("Select an Option");
 		builder.setItems(options, listener);
 
-		builder.setNegativeButton("Cancel", new DialogInterface.OnClickListener() {
-			@Override
-			public void onClick(DialogInterface dialog, int which) {
-				dialog.dismiss();
-			}
-		});
+		builder.setNegativeButton("Cancel", (dialog, which) -> dialog.dismiss());
 
 		builder.show();
 	}
@@ -169,280 +289,233 @@ public class ParameterActivity extends Activity implements ScaleEditor.Callback,
 
 		listView.setAdapter(adapter);
 
-		listView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
-			@Override
-			public void onItemClick(AdapterView<?> parent, final View view, int position, long id) {
-				final ParameterElements p = elements.get(position);
+		listView.setOnItemClickListener((parent, view, position, id) -> {
+			// Element 'position' was selected
+            Pair<String, Fractal.Type> p = adapter.elements.get(position);
 
-				currentEditId = p.label;
+            currentEditId = p.a;
 
-				switch(p.t) {
-					/*case Label: {
-						// this should not happen...
-					} return;*/
-					case Scale: {
-						Scale value = fb.scale();
+            switch(p.b) {
+                /*case Label: {
+                    // this should not happen...
+                } return;*/
+                case Scale: {
+					MyAlertDialogFragment.newInstance("Edit Scale", R.layout.scale_editor, p.a).showDialog(this);
+                } return;
+                case Expr: {
+					MyAlertDialogFragment.newInstance("Edit Expression", R.layout.string_editor, p.a).showDialog(this);
+                } return;
+                case Bool: {
+                    boolean newValue = !(Boolean) fb.get(p.a).b;
 
-						DialogEditFragment.createDialog(ParameterActivity.this,
-								new ScaleEditor("Scale", value));
-					} return;
-					case Expr: {
-						String value = fb.expr(p.label);
+                    fb.setBool(p.a, newValue);
+                    ((CheckedTextView) view).setChecked(newValue);
 
-						DialogEditFragment.createDialog(ParameterActivity.this,
-								new ExprEditor(p.label, value));
-					} return;
-					case Bool: {
-						boolean newValue = !fb.bool(p.label);
+                    adapter.notifyDataSetChanged();
 
-						fb.setBool(p.label, newValue);
-						((CheckedTextView) view).setChecked(newValue);
+                    return;
+                }
+                case Int: {
+					MyAlertDialogFragment.newInstance("Edit Integer", R.layout.int_editor, p.a).showDialog(this);
+                } return;
+                case Real: {
+					MyAlertDialogFragment.newInstance("Edit Real Value", R.layout.real_editor, p.a).showDialog(this);
+                }
+                return;
+                case Cplx: {
+					MyAlertDialogFragment.newInstance("Edit Complex Value", R.layout.cplx_editor, p.a).showDialog(this);
+                }
+                return;
+                case Color: {
+					MyAlertDialogFragment.newInstance("Edit Color", R.layout.color_editor, p.a).showDialog(this);
+                }
+                return;
+                case Palette: {
+					// start new activity
+                    Palette value = (Palette) fb.get(p.a).b;
 
-						adapter.notifyDataSetChanged();
+                    Intent i = new Intent(ParameterActivity.this, PaletteActivity.class);
 
-						return;
-					}
-					case Int: {
-						int value = fb.intVal(p.label);
+                    i.putExtra("palette", new PaletteActivity.PaletteWrapper(/*p.label,*/ value));
+                    startActivityForResult(i, PaletteActivity.PALETTE_ACTIVITY_RETURN);
+                }
+                return;
+				default:
+					throw new IllegalArgumentException();
+            }
+        });
 
-						DialogEditFragment.createDialog(ParameterActivity.this,
-							new IntEditor(p.label, value));
-					} return;
-					case Real: {
-						double value = fb.real(p.label);
+		listView.setOnItemLongClickListener((parent, view, position, id) -> {
+            Pair<String, Fractal.Type> p = adapter.elements.get(position);
 
-						DialogEditFragment.createDialog(ParameterActivity.this,
-							new RealEditor(p.label, value));
-					}
-					return;
-					case Cplx: {
-						Cplx value = fb.cplx(p.label);
+            switch(p.b) {
+                case Scale: {
+                    showOptionsDialog(scaleOptions, (dialog, which) -> {
+                        Scale original = fb.scale();
+                        switch(which) {
+                            case 0: // Reset
+                                fb.resetScale();
+                                break;
+                            case 1: // Origin
+                                fb.setScale(new Scale(original.xx, original.xy, original.yx, original.yy, 0, 0));
+                                break;
+                            case 2: // Ratio
 
-						DialogEditFragment.createDialog(ParameterActivity.this,
-							new CplxEditor(p.label, value));
-					}
-					return;
-					case Color: {
-						int value = fb.color(p.label);
+                                // Step 1: make x/y-vectors same length
+                                double xx = original.xx;
+                                double xy = original.xy;
 
-						DialogEditFragment.createDialog(ParameterActivity.this,
-							new ColorEditor(p.label, value));
-					}
-					return;
-					case Palette: {
-						Palette value = fb.palette(p.label);
+                                double yx = original.yx;
+                                double yy = original.yy;
 
-						Intent i = new Intent(ParameterActivity.this, PaletteActivity.class);
+                                double lenx = Math.sqrt(xx * xx + xy * xy);
+                                double leny = Math.sqrt(yx * yx + yy * yy);
 
-						i.putExtra("palette", new PaletteActivity.PaletteWrapper(/*p.label,*/ value));
-						startActivityForResult(i, PaletteActivity.PALETTE_ACTIVITY_RETURN);
-					}
-					return;
-				}
-			}
-		});
+                                double mlen = Math.max(lenx, leny);
 
-		listView.setOnItemLongClickListener(new AdapterView.OnItemLongClickListener() {
-			@Override
-			public boolean onItemLongClick(AdapterView<?> parent, final View view, int position, long id) {
-				final ParameterElements p = elements.get(position);
+                                xx *= mlen / lenx;
+                                xy *= mlen / lenx;
+                                yx *= mlen / leny;
+                                yy *= mlen / leny;
 
-				switch(p.t) {
-					case Scale: {
-						showOptionsDialog(scaleOptions, new DialogInterface.OnClickListener() {
-							@Override
-							public void onClick(DialogInterface dialog, int which) {
-								Scale original = fb.scale();
-								switch(which) {
-									case 0: // Reset
-										fb.setScale(PresetFractals.INIT_SCALE);
-										break;
-									case 1: // Origin
-										fb.setScale(new Scale(original.xx, original.xy, original.yx, original.yy, 0, 0));
-										break;
-									case 2: // Ratio
+                                double vx = (xx + yx) / 2;
+                                double vy = (xy + yy) / 2;
 
-										// Step 1: make x/y-vectors same length
-										double xx = original.xx;
-										double xy = original.xy;
+                                double ax = vx + vy;
+                                double ay = vx - vy;
 
-										double yx = original.yx;
-										double yy = original.yy;
+                                // fixme find proper orientation
+                                fb.setScale(new Scale(ax, ay, -ay, ax, original.cx, original.cy));
 
-										double lenx = Math.sqrt(xx * xx + xy * xy);
-										double leny = Math.sqrt(yx * yx + yy * yy);
+                                break;
+                            case 3: // Straighten
+                                double xlen = Math.hypot(original.xx, original.xy);
+                                double ylen = Math.hypot(original.yx, original.yy);
+                                fb.setScale(new Scale(xlen, 0, 0, ylen, original.cx, original.cy));
+                                break;
+                        }
 
-										double mlen = Math.max(lenx, leny);
+                        adapter.notifyDataSetChanged();
+                    });
 
-										xx *= mlen / lenx;
-										xy *= mlen / lenx;
-										yx *= mlen / leny;
-										yy *= mlen / leny;
+                    return true;
+                }
+                case Expr: {
+                    showOptionsDialog(exprOptions, new DialogInterface.OnClickListener() {
+                        @Override
+                        public void onClick(DialogInterface dialog, int which) {
+                            switch(which) {
+                                case 0: // Reset
+                                    fb.reset(p.a);
+                                    break;
+                            }
 
-										double vx = (xx + yx) / 2;
-										double vy = (xy + yy) / 2;
+                            adapter.notifyDataSetChanged();
+                        }
+                    });
+                    return true;
+                }
+                case Bool: {
+                    showOptionsDialog(boolOptions, (dialog, which) -> {
+                        switch(which) {
+                            case 0: // Reset
+                                fb.reset(p.a);
+                                // must update it in the interface
+                                ((CheckedTextView) view).setChecked((Boolean) fb.get(p.a).b);
+                                break;
+                        }
 
-										double ax = vx + vy;
-										double ay = vx - vy;
+                        adapter.notifyDataSetChanged();
+                    });
+                    return true;
+                }
+                case Int: {
+                    showOptionsDialog(intOptions, (dialog, which) -> {
+                        switch(which) {
+                            case 0: // Reset
+                                fb.reset(p.a);
+                                break;
+                        }
 
-										// fixme find proper orientation
-										fb.setScale(new Scale(ax, ay, -ay, ax, original.cx, original.cy));
+                        adapter.notifyDataSetChanged();
+                    });
+                    return true;
+                }
+                case Real: {
+                    showOptionsDialog(realOptions, (dialog, which) -> {
+                        switch(which) {
+                            case 0: // Reset
+                                fb.reset(p.a);
+                                break;
+                        }
 
-										break;
-									case 3: // Straighten
-										double xlen = Math.hypot(original.xx, original.xy);
-										double ylen = Math.hypot(original.yx, original.yy);
-										fb.setScale(new Scale(xlen, 0, 0, ylen, original.cx, original.cy));
-										break;
-								}
+                        adapter.notifyDataSetChanged();
+                    });
 
-								adapter.notifyDataSetChanged();
-							}
-						});
+                    return true;
+                }
+                case Cplx: {
+                    showOptionsDialog(cplxOptions, (dialog, which) -> {
+                        switch(which) {
+                            case 0: // Reset
+                                fb.reset(p.a);
+                                break;
+                            case 1: // Center
+                                fb.setCplx(p.a, new Cplx(fb.scale().cx, fb.scale().cy));
+                                break;
+                        }
 
-						return true;
-					}
-					case Expr: {
-						showOptionsDialog(exprOptions, new DialogInterface.OnClickListener() {
-							@Override
-							public void onClick(DialogInterface dialog, int which) {
-								switch(which) {
-									case 0: // Reset
-										fb.resetExpr(p.label);
-										break;
-								}
+                        adapter.notifyDataSetChanged();
+                    });
 
-								adapter.notifyDataSetChanged();
-							}
-						});
-						return true;
-					}
-					case Bool: {
-						showOptionsDialog(boolOptions, new DialogInterface.OnClickListener() {
-							@Override
-							public void onClick(DialogInterface dialog, int which) {
-								switch(which) {
-									case 0: // Reset
-										fb.resetBool(p.label);
-										// must update it in the interface
-										((CheckedTextView) view).setChecked(fb.bool(p.label));
-										break;
-								}
+                    return true;
+                }
+                case Color: {
+                    showOptionsDialog(colorOptions, (dialog, which) -> {
+                        switch(which) {
+                            case 0: // Reset
+                                fb.reset(p.a);
+                                break;
+                        }
 
-								adapter.notifyDataSetChanged();
-							}
-						});
-						return true;
-					}
-					case Int: {
-						showOptionsDialog(intOptions, new DialogInterface.OnClickListener() {
-							@Override
-							public void onClick(DialogInterface dialog, int which) {
-								switch(which) {
-									case 0: // Reset
-										fb.resetInt(p.label);
-										break;
-								}
+                        adapter.notifyDataSetChanged();
+                    });
 
-								adapter.notifyDataSetChanged();
-							}
-						});
-						return true;
-					}
-					case Real: {
-						showOptionsDialog(realOptions, new DialogInterface.OnClickListener() {
-							@Override
-							public void onClick(DialogInterface dialog, int which) {
-								switch(which) {
-									case 0: // Reset
-										fb.resetReal(p.label);
-										break;
-								}
+                    return true;
+                }
+                case Palette: {
+                    showOptionsDialog(paletteOptions, (dialog, which) -> {
+                        switch(which) {
+                            case 0: // Reset
+                                fb.reset(p.a);
+                                break;
+                        }
 
-								adapter.notifyDataSetChanged();
-							}
-						});
+                        adapter.notifyDataSetChanged();
+                    });
 
-						return true;
-					}
-					case Cplx: {
-						showOptionsDialog(cplxOptions, new DialogInterface.OnClickListener() {
-							@Override
-							public void onClick(DialogInterface dialog, int which) {
-								switch(which) {
-									case 0: // Reset
-										fb.resetCplx(p.label);
-										break;
-									case 1: // Center
-										fb.setCplx(p.label, new Cplx(fb.scale().cx, fb.scale().cy));
-										break;
-								}
+                    return true;
+                }
+            }
+            // edit value
 
-								adapter.notifyDataSetChanged();
-							}
-						});
-
-						return true;
-					}
-					case Color: {
-						showOptionsDialog(colorOptions, new DialogInterface.OnClickListener() {
-							@Override
-							public void onClick(DialogInterface dialog, int which) {
-								switch(which) {
-									case 0: // Reset
-										fb.resetColor(p.label);
-										break;
-								}
-
-								adapter.notifyDataSetChanged();
-							}
-						});
-
-						return true;
-					}
-					case Palette: {
-						showOptionsDialog(paletteOptions, new DialogInterface.OnClickListener() {
-							@Override
-							public void onClick(DialogInterface dialog, int which) {
-								switch(which) {
-									case 0: // Reset
-										fb.resetPalette(p.label);
-										break;
-								}
-
-								adapter.notifyDataSetChanged();
-							}
-						});
-
-						return true;
-					}
-				}
-				// edit value
-
-				return false;
-			}
-		});
+            return false;
+        });
 
 		Button okButton = (Button) findViewById(R.id.okButton);
 		Button cancelButton = (Button) findViewById(R.id.cancelButton);
 
-		cancelButton.setOnClickListener(new View.OnClickListener() {
-			@Override
-			public void onClick(View view) {
-				setResult(0);
-				finish();
-			}
-		});
+		cancelButton.setOnClickListener(view -> {
+            setResult(0);
+            finish();
+        });
 
-		okButton.setOnClickListener(new View.OnClickListener() {
-			@Override
-			public void onClick(View view) {
-				Intent data = new Intent();
-				data.putExtra("parameters", fb);
-				setResult(1, data);
-				finish();
-			}
-		});
+		okButton.setOnClickListener(view -> {
+            Intent data = new Intent();
+            data.putExtra("parameters", fb);
+            setResult(1, data);
+            finish();
+        });
 	}
 
 	@Override
@@ -495,7 +568,7 @@ public class ParameterActivity extends Activity implements ScaleEditor.Callback,
 			if (resultCode == 1) { // = "Ok"
 				PaletteActivity.PaletteWrapper wrapper = data.getParcelableExtra("palette");
 
-				fb.setPalette(/*wrapper.label,*/currentEditId, wrapper.p);
+				fb.setPalette(currentEditId, wrapper.p);
 				adapter.notifyDataSetChanged();
 			}
 		} else if (requestCode == PROGRAM_ACTIVITY_RETURN) {
@@ -503,7 +576,6 @@ public class ParameterActivity extends Activity implements ScaleEditor.Callback,
 				String sourceCode = data.getExtras().getString("source");
 				setNewSourceCode(sourceCode);
 			}
-
 		}
 	}
 
@@ -524,30 +596,15 @@ public class ParameterActivity extends Activity implements ScaleEditor.Callback,
 				// confirm that reset is what you want.
 				AlertDialog.Builder builder = new AlertDialog.Builder(this);
 
-				builder.setTitle("Reset Parameters to Defaults");
-				builder.setMessage("Do you really want to reset all parameters to their default values?");
-				builder.setPositiveButton("Yes", new DialogInterface.OnClickListener() {
-					@Override
-					public void onClick(DialogInterface dialogInterface, int which) {
-						fb.setScale(PresetFractals.INIT_SCALE);
-						for(String id : fb.boolLabels()) fb.resetBool(id);
-						for(String id : fb.exprLabels()) fb.resetExpr(id);
-						for(String id : fb.intLabels()) fb.resetInt(id);
-						for(String id : fb.realLabels()) fb.resetReal(id);
-						for(String id : fb.cplxLabels()) fb.resetCplx(id);
-						for(String id : fb.colorLabels()) fb.resetColor(id);
-						for(String id : fb.paletteLabels()) fb.resetPalette(id);
+				builder.setMessage("Reset Parameters to Defaults?");
+				builder.setPositiveButton("Ok", (dialogInterface, which) -> {
+					fb.resetAll();
+                    adapter.notifyDataSetChanged(); // something changed...
+                });
 
-						adapter.notifyDataSetChanged(); // something changed...
-					}
-				});
-
-				builder.setNegativeButton("No", new DialogInterface.OnClickListener() {
-					@Override
-					public void onClick(DialogInterface dialogInterface, int which) {
-						// do nothing.
-					}
-				});
+				builder.setNegativeButton("Cancel", (dialogInterface, which) -> {
+                    // do nothing.
+                });
 
 				builder.show();
 
@@ -585,7 +642,8 @@ public class ParameterActivity extends Activity implements ScaleEditor.Callback,
 
 	class ParameterAdapter extends BaseAdapter implements ListAdapter {
 
-		private final LayoutInflater inflater;
+		final LayoutInflater inflater;
+		final ArrayList<Pair<String, Fractal.Type>> elements;
 
 		ParameterAdapter(Context context) {
 			inflater = (LayoutInflater) context.getSystemService(LAYOUT_INFLATER_SERVICE);
@@ -594,29 +652,21 @@ public class ParameterActivity extends Activity implements ScaleEditor.Callback,
 			init();
 		}
 
+		/**
+		 * Fill elements-list with content.
+		 */
 		void init() {
 			elements.clear();
-			elements.add(new ParameterElements(ParameterType.Scale, "Scale"));
 
-			for(Map.Entry<String, Type> entry : fb.parameterMap()) {
-				ParameterType t;
+			// First add scale.
+			elements.add(new Pair<>("Scale", Fractal.Type.Scale));
 
-				switch(entry.getValue()) {
-					case BOOL: t = ParameterType.Bool; break;
-					case EXPR: t = ParameterType.Expr; break;
-					case INT: t = ParameterType.Int; break;
-					case REAL: t = ParameterType.Real; break;
-					case CPLX: t = ParameterType.Cplx; break;
-					case COLOR: t = ParameterType.Color; break;
-					case PALETTE: t = ParameterType.Palette; break;
-					default:
-						throw new IllegalArgumentException();
-				}
-
-				elements.add(new ParameterElements(t, entry.getKey()));
+			for(String id : fb.parameterIds()) {
+				elements.add(new Pair<>(id, fb.get(id).a));
 			}
 		}
 
+		@Override
 		public boolean areAllItemsEnabled() {
 			return true;
 		}
@@ -628,7 +678,7 @@ public class ParameterActivity extends Activity implements ScaleEditor.Callback,
 
 		@Override
 		public String getItem(int position) {
-			return elements.get(position).label;
+			return elements.get(position).a;
 		}
 
 		@Override
@@ -645,15 +695,15 @@ public class ParameterActivity extends Activity implements ScaleEditor.Callback,
 
 		@Override
 		public int getItemViewType(int position) {
-			ParameterType t = elements.get(position).t;
-			return t == ParameterType.Bool ? BOOL : t == ParameterType.Scale ? SCALE : ELEMENT;
+			Fractal.Type t = elements.get(position).b;
+			return t == Fractal.Type.Bool ? BOOL : t == Fractal.Type.Scale ? SCALE : ELEMENT;
 		}
 
 		@Override
 		public View getView(int position, View view, ViewGroup parent) {
 			int viewType = getItemViewType(position);
 
-			ParameterElements e = elements.get(position);
+			Pair<String, Fractal.Type> e = elements.get(position);
 
 			switch(viewType) {
 				case BOOL: {
@@ -662,7 +712,7 @@ public class ParameterActivity extends Activity implements ScaleEditor.Callback,
 
 					CheckedTextView text1 = (CheckedTextView) view.findViewById(android.R.id.text1);
 
-					if(!fb.isDefaultValue(e.label)) {
+					if(!fb.isDefaultValue(e.a)) {
 						//Log.d("PA", e.label + " is not default");
 						text1.setTypeface(Typeface.DEFAULT_BOLD);
 					} else {
@@ -670,17 +720,17 @@ public class ParameterActivity extends Activity implements ScaleEditor.Callback,
 						text1.setTypeface(Typeface.DEFAULT);
 					}
 
-					text1.setText(e.label);
-					text1.setChecked(fb.bool(e.label));
+					text1.setText(e.a);
+					text1.setChecked((Boolean) fb.get(e.a).b);
 				} break;
 				case ELEMENT: {
 					if (view == null)
 						view = inflater.inflate(android.R.layout.simple_list_item_2, parent, false);
 					TextView text1 = (TextView) view.findViewById(android.R.id.text1);
-					text1.setText(e.label);
+					text1.setText(e.a);
 
 					// if not isDefaultValue set bold.
-					if(!fb.isDefaultValue(e.label)) {
+					if(!fb.isDefaultValue(e.a)) {
 						//Log.d("PA", e.label + " is not default");
 						text1.setTypeface(Typeface.DEFAULT_BOLD);
 					} else {
@@ -689,7 +739,7 @@ public class ParameterActivity extends Activity implements ScaleEditor.Callback,
 					}
 
 					TextView text2 = (TextView) view.findViewById(android.R.id.text2);
-					switch(e.t) {
+					switch(e.b) {
 						case Expr: text2.setText("Expression"); break;
 						case Int: text2.setText("Integer Number"); break;
 						case Real: text2.setText("Real Number"); break;
@@ -702,7 +752,7 @@ public class ParameterActivity extends Activity implements ScaleEditor.Callback,
 					if (view == null)
 						view = inflater.inflate(android.R.layout.simple_list_item_1, parent, false);
 					TextView text1 = (TextView) view.findViewById(android.R.id.text1);
-					text1.setText(e.label);
+					text1.setText("Scale"); // FIXME there is only one. Thus use a string.
 
 					if(!fb.scale().equals(PresetFractals.INIT_SCALE)) {
 						//Log.d("PA", e.label + " is not default");

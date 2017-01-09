@@ -1,4 +1,4 @@
-package at.searles.fractview.renderscript;
+package at.searles.fractview.fractal;
 
 import android.graphics.Bitmap;
 import android.renderscript.*;
@@ -266,9 +266,9 @@ public class RenderScriptDrawer implements FractalDrawer {
 	}
 
 
-	private void updatePalettes(Palette[] l) {
+	private void updatePalettes(List<Palette> l) {
 		// get size of required data structures
-		if (l.length == 0) return;
+		if (l.isEmpty()) return;
 
 		int surfaceCount = 0;
 
@@ -285,7 +285,7 @@ public class RenderScriptDrawer implements FractalDrawer {
 		// FIXME: do I have to free old memory??? CHECK!!!
 		// fixme if (rs_palettes == null) {
 
-		rs_palettes = new ScriptField_palette(rs, l.length);
+		rs_palettes = new ScriptField_palette(rs, l.size());
 		script.bind_palettes(rs_palettes);
 
 

@@ -36,7 +36,7 @@ public class Adapters {
 		Object toJSON(A a) throws JSONException;
 	}
 
-	public static final Adapter<String> stringAdapter = new Adapter<String>() {
+	/*public static final Adapter<String> stringAdapter = new Adapter<String>() {
 		@Override
 		public String fromParcel(Parcel parcel) {
 			return parcel.readString();
@@ -58,7 +58,7 @@ public class Adapters {
 		public Object toJSON(String s) throws JSONException {
 			return s;
 		}
-	};
+	};*/
 
 	public static Adapter<Scale> scaleAdapter = new Adapter<Scale>() {
 		// A scale consists of 6 doubles.
@@ -198,7 +198,7 @@ public class Adapters {
 		}
 	};
 
-	public static Adapter<Boolean> boolAdapter = new Adapter<Boolean>() {
+	/*public static Adapter<Boolean> boolAdapter = new Adapter<Boolean>() {
 		@Override
 		public Boolean fromParcel(Parcel parcel) {
 			return parcel.readInt() == 1;
@@ -220,9 +220,9 @@ public class Adapters {
 			// this one's easy
 			return b;
 		}
-	};
+	};*/
 
-	public static final Adapter<Integer> intAdapter = new Adapter<Integer>() {
+	/*public static final Adapter<Integer> intAdapter = new Adapter<Integer>() {
 		@Override
 		public Integer fromParcel(Parcel parcel) {
 			return parcel.readInt();
@@ -245,9 +245,9 @@ public class Adapters {
 			// this one's easy
 			return i;
 		}
-	};
+	};*/
 	
-	public static final Adapter<Double> realAdapter = new Adapter<Double>() {
+	/*public static final Adapter<Double> realAdapter = new Adapter<Double>() {
 		@Override
 		public Double fromParcel(Parcel parcel) {
 			return parcel.readDouble();
@@ -268,7 +268,7 @@ public class Adapters {
 		public Object toJSON(Double d) throws JSONException {
 			return d;
 		}
-	};
+	};*/
 
 	public static final Adapter<Cplx> cplxAdapter = new Adapter<Cplx>() {
 		// Parcel: Two doubles in a row.
@@ -350,7 +350,7 @@ public class Adapters {
 		};
 	};*/
 
-	public static <A> Adapter<Map<String, A>> mapAdapter(final Adapter<A> adapter) {
+	/*public static <A> Adapter<Map<String, A>> mapAdapter(final Adapter<A> adapter) {
 		return new Adapter<Map<String, A>>() {
 			@Override
 			public Map<String, A> fromParcel(Parcel parcel) {
@@ -411,5 +411,5 @@ public class Adapters {
 				return obj;
 			}
 		};
-	};
+	};*/
 }

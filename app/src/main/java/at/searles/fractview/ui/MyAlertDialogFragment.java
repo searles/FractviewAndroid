@@ -1,8 +1,11 @@
 package at.searles.fractview.ui;
 
+import android.app.Activity;
 import android.app.AlertDialog;
 import android.app.Dialog;
 import android.app.DialogFragment;
+import android.app.Fragment;
+import android.app.FragmentTransaction;
 import android.os.Bundle;
 import android.view.View;
 import android.widget.Button;
@@ -37,6 +40,22 @@ public class MyAlertDialogFragment extends DialogFragment {
          */
         boolean applyDialogView(String labelId, View view);
     }
+
+    public void showDialog(Activity activity) {
+        // DialogFragment.show() will take care of adding the fragment
+        // in a transaction.  We also want to remove any currently showing
+        // dialog, so make our own transaction and take care of that here.
+        FragmentTransaction ft = activity.getFragmentManager().beginTransaction();
+        Fragment prev = activity.getFragmentManager().findFragmentByTag("dialog");
+        if (prev != null) {
+            ft.remove(prev);
+        }
+        ft.addToBackStack(null);
+
+        // Create and show the dialog.
+        show(ft, "dialog");
+    }
+
 
     public static MyAlertDialogFragment newInstance(String title, int layoutId, String labelId) {
         MyAlertDialogFragment frag = new MyAlertDialogFragment();

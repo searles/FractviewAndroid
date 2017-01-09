@@ -94,68 +94,71 @@ public class PresetsActivity extends Activity {
 			}
 		});
 
-		lv.setOnItemLongClickListener(new AdapterView.OnItemLongClickListener() {
-			@Override
-			public boolean onItemLongClick(AdapterView<?> adapterView, final View view, final int index, long id) {
-				AlertDialog.Builder builder = new AlertDialog.Builder(PresetsActivity.this);
+		lv.setOnItemLongClickListener((adapterView, view, index, id) -> {
+            AlertDialog.Builder builder = new AlertDialog.Builder(PresetsActivity.this);
 
-				builder.setTitle("Select an Option");
-				builder.setItems(options, new DialogInterface.OnClickListener() {
-					@Override
-					public void onClick(DialogInterface dialog, int which) {
-						String l = labels.get(index);
+            builder.setTitle("Select an Option");
+            builder.setItems(options, new DialogInterface.OnClickListener() {
+                @Override
+                public void onClick(DialogInterface dialog, int which) {
+                    String l = labels.get(index);
 
-						Fractal selected = entries.get(labels.get(index)).fractal;
+                    Fractal selected = entries.get(labels.get(index)).fractal;
 
-						switch (which) {
-							case 0: {
-								// Select
-								returnFractal(selected);
-							} break;
-							case 1: {
-								// Merge
-								returnFractal(new Fractal(inFractal.scale(), selected.sourceCode(), inFractal.parameters().merge(selected.parameters())));
-							} break;
-							case 2: {
-								// Merge Program
-								returnFractal(new Fractal(inFractal.scale(), selected.sourceCode(), inFractal.parameters()));
-							} break;
-							case 3: {
-								// Merge Parameters
-								// ==> Merge parameters!
-								returnFractal(new Fractal(inFractal.scale(), inFractal.sourceCode(), inFractal.parameters().merge(selected.parameters())));
-							} break;
-							case 4: {
-								// Merge Parameters and Scale
-								// ==> Merge parameters!
-								returnFractal(new Fractal(selected.scale(), inFractal.sourceCode(), inFractal.parameters().merge(selected.parameters())));
-							} break;
-						}
-					}
-				});
+                    switch (which) {
+                        case 0: {
+                            // Select
+                            returnFractal(selected);
+                        } break;
+                        case 1: {
+                            // Merge
+                            returnFractal(new Fractal(
+                                    inFractal.scale(),
+                                    selected.sourceCode(),
+                                    inFractal.parameters().merge(selected.parameters())));
+                        } break;
+                        case 2: {
+                            // Merge Program
+                            returnFractal(new Fractal(
+                                    inFractal.scale(),
+                                    selected.sourceCode(),
+                                    inFractal.parameters()));
+                        } break;
+                        case 3: {
+                            // Merge Parameters
+                            // ==> Merge parameters!
+                            returnFractal(new Fractal(
+                                    inFractal.scale(),
+                                    inFractal.sourceCode(),
+                                    inFractal.parameters().merge(selected.parameters())));
+                        } break;
+                        case 4: {
+                            // Merge Parameters and Scale
+                            // ==> Merge parameters!
+                            returnFractal(new Fractal(
+                                    selected.scale(),
+                                    inFractal.sourceCode(),
+                                    inFractal.parameters().merge(selected.parameters())));
+                        } break;
+                    }
+                }
+            });
 
-				builder.setNegativeButton("Cancel", new DialogInterface.OnClickListener() {
-					@Override
-					public void onClick(DialogInterface dialogInterface, int which) {
-						// just dismiss it.
-						dialogInterface.dismiss();
-					}
-				});
+            builder.setNegativeButton("Cancel", (dialogInterface, which) -> {
+				// just dismiss it.
+				dialogInterface.dismiss();
+			});
 
-				builder.show();
+            builder.show();
 
-				return true;
-			}
-		});
+            return true;
+        });
 
 		Button closeButton = (Button) findViewById(R.id.closeButton);
-		closeButton.setOnClickListener(new View.OnClickListener() {
-			@Override
-			public void onClick(View view) {
-				// end this activity.
-				PresetsActivity.this.finish();
-			}
-		});
+		closeButton.setOnClickListener(view -> {
+            // end this activity.
+            PresetsActivity.this.finish();
+        });
 	}
 
 	void returnFractal(Fractal f) {

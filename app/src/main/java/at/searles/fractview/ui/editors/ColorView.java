@@ -13,7 +13,7 @@ public class ColorView extends View {
 
 	static final float SQRT_3_4 = (float) Math.sqrt(0.75);
 
-	public static interface ColorListener {
+	public interface ColorListener {
 		void onColorChanged(int color);
 	}
 

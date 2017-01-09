@@ -265,6 +265,10 @@ public class BitmapFragment extends Fragment {
 		this.width = getArguments().getInt("width");
 		this.height = getArguments().getInt("height");
 
+		if(this.width <= 0 || this.height <= 0) {
+			throw new IllegalArgumentException("width was " + width + ", height was " + height);
+		}
+
 		updateMatrices();
 
 		// create bitmap
