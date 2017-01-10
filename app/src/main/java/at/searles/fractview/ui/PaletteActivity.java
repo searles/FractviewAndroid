@@ -12,16 +12,18 @@ import android.view.MenuInflater;
 import android.view.MenuItem;
 import android.view.View;
 import android.widget.Button;
+import android.widget.EditText;
 import android.widget.Toast;
 import at.searles.fractview.R;
 import at.searles.fractview.fractal.Adapters;
 import at.searles.fractview.ui.editors.*;
+import at.searles.math.color.Colors;
 import at.searles.math.color.Palette;
 import org.jetbrains.annotations.NotNull;
 import org.json.JSONException;
 import org.json.JSONObject;
 
-public class PaletteActivity extends Activity implements ColorEditor.Callback {
+public class PaletteActivity extends Activity implements MyAlertDialogFragment.MyAlertFragmentHandler {
 
 	// Editors should contain all the important information because they are retained.
 
@@ -39,8 +41,8 @@ public class PaletteActivity extends Activity implements ColorEditor.Callback {
 
 	// if something is currently edited, these two
 	// contain its coordinates
-	private int editX = -1;
-	private int editY = -1;
+	//private int editX = -1;
+	//private int editY = -1;
 
 	@Override
 	public void onCreate(Bundle savedInstanceState) {
@@ -53,8 +55,8 @@ public class PaletteActivity extends Activity implements ColorEditor.Callback {
 			wrapper = getIntent().getParcelableExtra("palette");
 		} else {
 			wrapper = savedInstanceState.getParcelable("palette");
-			editX = savedInstanceState.getInt("edit_x");
-			editY = savedInstanceState.getInt("edit_y");
+			//editX = savedInstanceState.getInt("edit_x");
+			//editY = savedInstanceState.getInt("edit_y");
 		}
 
 		palette = wrapper.p;
@@ -92,8 +94,8 @@ public class PaletteActivity extends Activity implements ColorEditor.Callback {
 	public void onSaveInstanceState(@NotNull Bundle savedInstanceState) {
 		// Save the user's current game state
 		savedInstanceState.putParcelable("palette", new PaletteWrapper(/*label, */model.createPalette()));
-		savedInstanceState.putInt("edit_x", editX);
-		savedInstanceState.putInt("edit_y", editY);
+		//savedInstanceState.putInt("edit_x", editX);
+		//savedInstanceState.putInt("edit_y", editY);
 
 		// Always call the superclass so it can save the view hierarchy state
 		super.onSaveInstanceState(savedInstanceState);
@@ -147,16 +149,38 @@ public class PaletteActivity extends Activity implements ColorEditor.Callback {
 		}
 	}
 
-	public void editColorAt(int x, int y) {
-		editX = x;
-		editY = y;
-		SettingsEditor<Integer> editor = new ColorEditor("Edit Color", model.get(x, y));
-		DialogEditFragment.createDialog(this, editor);
+	@Override
+	public void initDialogView(String id, View view) {
+		String[] s = id.split(",");
+
+		int x = Integer.parseInt(s[0]);
+		int y = Integer.parseInt(s[1]);
+
+		int color = model.get(x, y);
+
+		// I initialize the view here.
+		ColorView colorView = (ColorView) view.findViewById(R.id.colorView);
+		EditText webcolorEditor = (EditText) view.findViewById(R.id.webcolorEditText);
+
+		// I need listeners for both of them.
+		colorView.bindToEditText(webcolorEditor);
+
+		webcolorEditor.setText(Colors.toColorString(color));
+		colorView.setColor(color);
 	}
 
 	@Override
-	public boolean applyColor(int color) {
-		model.set(editX, editY, color);
+	public boolean applyDialogView(String id, View view) {
+		String[] s = id.split(",");
+
+		int x = Integer.parseInt(s[0]);
+		int y = Integer.parseInt(s[1]);
+
+		ColorView editor = (ColorView) view.findViewById(R.id.colorView);
+		int color = editor.getColor();
+
+		// fixme alpha!
+		model.set(x, y, color  | 0xff000000);
 		return true;
 	}
 

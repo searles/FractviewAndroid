@@ -2,12 +2,16 @@ package at.searles.fractview.ui.editors;
 
 import android.content.Context;
 import android.graphics.*;
+import android.text.Editable;
+import android.text.TextWatcher;
 import android.util.AttributeSet;
 import android.util.Log;
 import android.view.MotionEvent;
 import android.view.View;
+import android.widget.EditText;
 
 import at.searles.math.Commons;
+import at.searles.math.color.Colors;
 
 public class ColorView extends View {
 
@@ -57,6 +61,51 @@ public class ColorView extends View {
 
 		touchController = new TouchController();
 	}
+
+	/**
+	 * The following method initializes the listeners of the colorview. Better to put this one
+	 * into a viewgroup. It is static so that there is no reference to the Actitivy.
+	 * @param webcolorEditor
+	 */
+	public void bindToEditText(EditText webcolorEditor) {
+
+		if(listener != null) throw new IllegalArgumentException("there can be only one listener");
+
+		webcolorEditor.addTextChangedListener(new TextWatcher() {
+			@Override
+			public void beforeTextChanged(CharSequence s, int start, int before, int count) {
+			}
+
+			@Override
+			public void onTextChanged(CharSequence s, int start, int before, int count) {
+			}
+
+			@Override
+			public void afterTextChanged(Editable s) {
+				String cs = s.toString().trim();
+
+				try {
+					int color = Color.parseColor(cs);
+					setColor(color);
+				} catch (IllegalArgumentException e) {
+					// not a valid color
+				} catch (StringIndexOutOfBoundsException android_bug) {
+					// fixme bug in android - really annoying one, makes
+					// me wonder about the quality of google'string android
+					// code...
+				}
+			}
+		});
+
+		setListener(new ColorView.ColorListener() {
+			@Override
+			public void onColorChanged(int color) {
+				webcolorEditor.setText(Colors.toColorString(color));
+			}
+		});
+	}
+
+
 
 	@Override
 	protected void onMeasure(int widthMeasureSpec, int heightMeasureSpec) {
@@ -293,6 +342,10 @@ public class ColorView extends View {
 		//}
 		//return true;
 		//return super.onTouchEvent(event);
+	}
+
+	public int getColor() {
+		return color;
 	}
 
 	public void setColor(int color) {

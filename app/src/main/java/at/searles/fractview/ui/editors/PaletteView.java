@@ -1,5 +1,6 @@
 package at.searles.fractview.ui.editors;
 
+import android.app.Activity;
 import android.app.AlertDialog;
 import android.content.Context;
 import android.content.DialogInterface;
@@ -11,7 +12,9 @@ import android.util.AttributeSet;
 import android.view.GestureDetector;
 import android.view.MotionEvent;
 import android.view.View;
-import at.searles.fractview.ui.PaletteActivity;
+
+import at.searles.fractview.R;
+import at.searles.fractview.ui.MyAlertDialogFragment;
 import at.searles.math.color.Colors;
 
 public class PaletteView extends View {
@@ -415,8 +418,7 @@ public class PaletteView extends View {
 						// create color editor that modifies the model
 						// this way we survive rotations (since model is stuck
 						// to the editor which is again stuck to the dialog fragment)
-
-						((PaletteActivity) context).editColorAt(x, y);
+						MyAlertDialogFragment.newInstance("Edit Color", R.layout.color_editor, x + "," + y).showDialog((Activity) getContext());
 					}
 				}
 

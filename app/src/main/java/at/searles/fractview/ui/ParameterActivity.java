@@ -5,8 +5,11 @@ import android.app.AlertDialog;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
+import android.graphics.Color;
 import android.graphics.Typeface;
 import android.os.Bundle;
+import android.text.Editable;
+import android.text.TextWatcher;
 import android.view.*;
 import android.widget.*;
 import at.searles.fractview.R;
@@ -15,6 +18,7 @@ import at.searles.fractview.fractal.PresetFractals;
 import at.searles.fractview.ui.editors.ColorView;
 import at.searles.math.Cplx;
 import at.searles.math.Scale;
+import at.searles.math.color.Colors;
 import at.searles.math.color.Palette;
 import at.searles.meelan.CompileException;
 import at.searles.utils.Pair;
@@ -74,8 +78,15 @@ public class ParameterActivity extends Activity implements MyAlertDialogFragment
 				editor.setText((String) value);
 			} break;
 			case Color: {
-				ColorView editor = (ColorView) view.findViewById(R.id.colorView);
-				editor.setColor((Integer) value);
+				// I initialize the view here.
+				ColorView colorView = (ColorView) view.findViewById(R.id.colorView);
+				EditText webcolorEditor = (EditText) view.findViewById(R.id.webcolorEditText);
+
+				// I need listeners for both of them.
+				colorView.bindToEditText(webcolorEditor);
+
+				webcolorEditor.setText(Colors.toColorString((Integer) value));
+				colorView.setColor((Integer) value);
 			} break;
 			case Scale: {
 				EditText editorXX = (EditText) view.findViewById(R.id.xxEditText);
@@ -159,30 +170,42 @@ public class ParameterActivity extends Activity implements MyAlertDialogFragment
 			}
 			case Expr: {
 				EditText editor = (EditText) view.findViewById(R.id.stringEditText);
-				editor.setText((String) value);
-			} break;
+				String sExpr = editor.getText().toString();
+				fb.setExpr(id, sExpr);
+				return true;
+			}
 			case Color: {
 				ColorView editor = (ColorView) view.findViewById(R.id.colorView);
-				editor.
-				editor.setColor((Integer) value);
-			} break;
+				int color = editor.getColor();
+				fb.setColor(id, color | 0xff000000);
+				return true;
+			}
 			case Scale: {
-				EditText editorXX = (EditText) view.findViewById(R.id.xxEditText);
-				EditText editorXY = (EditText) view.findViewById(R.id.xyEditText);
-				EditText editorYX = (EditText) view.findViewById(R.id.yxEditText);
-				EditText editorYY = (EditText) view.findViewById(R.id.yyEditText);
-				EditText editorCX = (EditText) view.findViewById(R.id.cxEditText);
-				EditText editorCY = (EditText) view.findViewById(R.id.cyEditText);
+				EditText[] editors = new EditText[6];
 
-				Scale sc = (Scale) p.b;
+				editors[0] = ((EditText) view.findViewById(R.id.xxEditText));
+				editors[1] = (EditText) view.findViewById(R.id.xyEditText);
+				editors[2] = (EditText) view.findViewById(R.id.yxEditText);
+				editors[3] = (EditText) view.findViewById(R.id.yyEditText);
+				editors[4] = (EditText) view.findViewById(R.id.cxEditText);
+				editors[5] = (EditText) view.findViewById(R.id.cyEditText);
 
-				editorXX.setText(Double.toString(sc.xx));
-				editorXY.setText(Double.toString(sc.xy));
-				editorYX.setText(Double.toString(sc.yx));
-				editorYY.setText(Double.toString(sc.yy));
-				editorCX.setText(Double.toString(sc.cx));
-				editorCY.setText(Double.toString(sc.cy));
-			} break;
+				double[] ds = new double[6];
+
+				for(int i = 0; i < 6; ++i) {
+					try {
+						ds[i] = Double.parseDouble(editors[i].getText().toString());
+					} catch(NumberFormatException e) {
+						Toast.makeText(this, e.getMessage(), Toast.LENGTH_LONG).show();
+						return false;
+					}
+				}
+
+				Scale sc = new Scale(ds[0], ds[1], ds[2], ds[3], ds[4], ds[5]);
+
+				fb.setScale(sc);
+				return true;
+			}
 			default:
 				// bool and palette is not her
 				throw new IllegalArgumentException("No such type");

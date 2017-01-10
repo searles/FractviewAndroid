@@ -1,25 +1,27 @@
 package at.searles.fractview.ui.editors;
 
+import android.content.Context;
 import android.graphics.Color;
 import android.os.Parcel;
 import android.os.Parcelable;
 import android.text.Editable;
 import android.text.TextWatcher;
+import android.util.AttributeSet;
 import android.util.MutableBoolean;
 import android.view.View;
+import android.view.ViewGroup;
 import android.widget.EditText;
 import android.widget.Toast;
 import at.searles.fractview.R;
 import at.searles.math.color.Colors;
 
-public class ColorEditor extends SettingsEditor<Integer> {
+public class ColorEditorView {
 
 	// here, store a value that can be easily obtained later.
-	int color;
+	/*private int color;
 
-	public ColorEditor(String title, int value) {
-		super(title, R.layout.color_editor);
-		this.color = value;
+	public ColorEditorView(Context context, AttributeSet attrs) {
+		super(context, attrs);
 	}
 
 	@Override
@@ -79,7 +81,7 @@ public class ColorEditor extends SettingsEditor<Integer> {
 	/*@Override
 	public void set(Integer color) {
 		this.color = color;
-	}*/
+	}*
 
 	@Override
 	public Integer get() {
@@ -123,5 +125,5 @@ public class ColorEditor extends SettingsEditor<Integer> {
 		public ColorEditor[] newArray(int size) {
 			return new ColorEditor[size];
 		}
-	};
+	};*/
 }

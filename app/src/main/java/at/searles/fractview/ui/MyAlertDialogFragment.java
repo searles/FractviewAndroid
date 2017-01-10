@@ -41,6 +41,18 @@ public class MyAlertDialogFragment extends DialogFragment {
         boolean applyDialogView(String labelId, View view);
     }
 
+
+    public static MyAlertDialogFragment newInstance(String title, int layoutId, String labelId) {
+        MyAlertDialogFragment frag = new MyAlertDialogFragment();
+        Bundle args = new Bundle();
+        args.putString("title", title);
+        args.putInt("layout_id", layoutId);
+        args.putString("label_id", labelId);
+        frag.setArguments(args);
+        return frag;
+    }
+
+
     public void showDialog(Activity activity) {
         // DialogFragment.show() will take care of adding the fragment
         // in a transaction.  We also want to remove any currently showing
@@ -56,16 +68,6 @@ public class MyAlertDialogFragment extends DialogFragment {
         show(ft, "dialog");
     }
 
-
-    public static MyAlertDialogFragment newInstance(String title, int layoutId, String labelId) {
-        MyAlertDialogFragment frag = new MyAlertDialogFragment();
-        Bundle args = new Bundle();
-        args.putString("title", title);
-        args.putInt("layout_id", layoutId);
-        args.putString("label_id", labelId);
-        frag.setArguments(args);
-        return frag;
-    }
 
     @Override
     public void onCreate(Bundle savedInstanceState) {

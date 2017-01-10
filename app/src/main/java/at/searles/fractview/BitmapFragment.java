@@ -15,6 +15,7 @@ import android.widget.Toast;
 import at.searles.fractview.fractal.DemoFractalDrawer;
 import at.searles.fractview.fractal.Fractal;
 import at.searles.fractview.fractal.FractalDrawer;
+import at.searles.fractview.fractal.RenderScriptDrawer;
 import at.searles.math.Scale;
 import at.searles.meelan.CompileException;
 
@@ -191,7 +192,7 @@ public class BitmapFragment extends Fragment {
 			// FIXME
 			// FIXME Replace by renderscript drawer
 
-			this.drawer = new DemoFractalDrawer(new FractalDrawer.Controller() {
+			this.drawer = new RenderScriptDrawer(new FractalDrawer.Controller() {
 				@Override
 				public void previewGenerated() {
 					// fixme can getActivity return null?
