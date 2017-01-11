@@ -2,8 +2,6 @@ package at.searles.fractview;
 
 import android.app.Activity;
 import android.app.Fragment;
-import android.app.ProgressDialog;
-import android.content.DialogInterface;
 import android.graphics.Bitmap;
 import android.graphics.Matrix;
 import android.os.AsyncTask;
@@ -15,7 +13,7 @@ import android.widget.Toast;
 import at.searles.fractview.fractal.DemoFractalDrawer;
 import at.searles.fractview.fractal.Fractal;
 import at.searles.fractview.fractal.FractalDrawer;
-import at.searles.fractview.fractal.RenderScriptDrawer;
+import at.searles.fractview.ui.MyProgressDialogFragment;
 import at.searles.math.Scale;
 import at.searles.meelan.CompileException;
 
@@ -65,17 +63,24 @@ import java.util.concurrent.locks.ReentrantLock;
 public class BitmapFragment extends Fragment {
 
     // Allocations and various data
-    //int height, width;
+    int height, width;
 	Fractal fractal;
+	Bitmap bitmap;
 
+	// Now the drawing stuff
 	FractalDrawer drawer = null;
     ExecutorService executorService;
     Future<?> currentFuture;
 
     // Locks + variable to cancel a running calculation.
 	ReentrantLock editLock = new ReentrantLock();
-    volatile int cancelled = 0;
 
+	// the next two variables are only changed in the UI thread.
+
+	// the next one counts the cancel requests.
+	volatile int cancelled = 0;
+
+	// if running.
 	boolean isRunning;
 
 	/**
@@ -91,88 +96,14 @@ public class BitmapFragment extends Fragment {
 	 */
 	public final Matrix norm2bitmap = new Matrix();
 
-	Bitmap bitmap;
-	int width;
-	int height;
 
 	LinkedList<Fractal> history = new LinkedList<>();
-
-	// call back if something changed/has to be drawn etc...
-	UpdateListener listener() {
-		return ((MainActivity) getActivity()).getBitmapFragmentCallback();
-	}
-
-	// We must sometimes run lengthy tasks. For this purpose
-	// use the following fields. pd must be dispatched and recreated!
-	class ProgressDialogData {
-		String title = null;
-		String msg = null;
-
-		Runnable skipAction = null;
-		Runnable cancelAction = null;
-
-		ProgressDialog pd = null; // if we are busy.
-
-		/**
-		 *
-		 * @param title Title of the dialog (if null, no title is used)
-		 * @param msg Message of the dialog (if null, no dialog is used)
-		 * @param skipAction Action to be performed after skip is picked. If null, then there is no skip-action.
-         * @param cancelAction Action to be performed after cancel is picked. If null, then there is no cancel-action.
-         */
-		ProgressDialogData(String title, String msg, Runnable skipAction, Runnable cancelAction) {
-			this.title = title;
-			this.msg = msg;
-			this.skipAction = skipAction;
-			this.cancelAction = cancelAction;
-		}
-
-		void showPD() {
-			if(pd != null) throw new IllegalArgumentException();
-
-			pd = new ProgressDialog(getActivity());
-			if(title != null) pd.setTitle(title);
-			if(msg != null) pd.setMessage(msg);
-			pd.setCancelable(false);
-
-			if(skipAction != null) {
-				pd.setButton(DialogInterface.BUTTON_NEUTRAL, "Skip", (dialog, which) -> { dismissDialog(); skipAction.run(); });
-			}
-
-			if(cancelAction != null) {
-				pd.setButton(DialogInterface.BUTTON_NEGATIVE, "Cancel", (dialog, which) -> { dismissDialog(); cancelAction.run(); });
-			}
-
-			pd.show();
-		}
-
-		void dismissDialog() {
-			if(pd != null) {
-				pd.dismiss();
-				pd = null;
-			}
-		}
-
-		void dismissDialogAndClear() {
-			dismissDialog();
-			BitmapFragment.this.pdData = null;
-		}
-	}
-
-	ProgressDialogData pdData = null; // if null, then there is no dialog to be shown.
-
-	// if not null this will be executed whent the calculation has finished (in UI-thread!)
-	Runnable invokeWhenFinished = null;
 
 	@Override
 	public void onAttach(Activity context) {
 		// Deprecated but Android SDK is buggy here!
 		Log.d("BMF", "onAttach");
 		super.onAttach(context);
-
-		if(pdData != null) {
-			pdData.showPD();
-		}
 
 		// we are in the UI-thread and if this was the first start,
 		// onCreate was not yet called. Good point to initialize
@@ -186,13 +117,9 @@ public class BitmapFragment extends Fragment {
 			// FIXME
 			// FIXME This one is DemoFractalDrawer.
 			// FIXME
-			// FIXME
-			// FIXME
-			// FIXME
-			// FIXME
 			// FIXME Replace by renderscript drawer
 
-			this.drawer = new RenderScriptDrawer(new FractalDrawer.Controller() {
+			this.drawer = new DemoFractalDrawer(new FractalDrawer.Controller() {
 				@Override
 				public void previewGenerated() {
 					// fixme can getActivity return null?
@@ -200,7 +127,7 @@ public class BitmapFragment extends Fragment {
 						@Override
 						public void run() {
 							// if getActivity is null, this one will not work anyways
-							listener().previewGenerated();
+							((UpdateListener) getActivity()).previewGenerated();
 						}
 					});
 				}
@@ -212,7 +139,7 @@ public class BitmapFragment extends Fragment {
 						@Override
 						public void run() {
 							// if getActivity is null, this one will not work anyways
-							listener().bitmapUpdated();
+							((UpdateListener) getActivity()).bitmapUpdated();
 						}
 					});
 				}
@@ -224,8 +151,8 @@ public class BitmapFragment extends Fragment {
 						@Override
 						public void run() {
 							// the next line is due to the "wait until finished"-feature
-							if(invokeWhenFinished != null) invokeWhenFinished.run();
-							if(listener() != null) listener().calculationFinished(ms);
+							// FIXME check whether there is a dialog waiting
+							((UpdateListener) getActivity()).calculationFinished(ms);
 						}
 					});
 				}
@@ -243,7 +170,7 @@ public class BitmapFragment extends Fragment {
 		}
 
 		if(this.bitmap != null) {
-			listener().newBitmapCreated(bitmap); // in case of rotation, this fragment is preserved
+			((UpdateListener) getActivity()).newBitmapCreated(bitmap); // in case of rotation, this fragment is preserved
 		}
 	}
 
@@ -251,8 +178,6 @@ public class BitmapFragment extends Fragment {
 	public void onDetach() {
 		Log.d("BMF", "onDetach");
 		super.onDetach();
-		if(pdData != null) pdData.dismissDialog();
-		// but we keep the pdData.
 	}
 
 	@Override
@@ -275,10 +200,12 @@ public class BitmapFragment extends Fragment {
 		// create bitmap
 		this.bitmap = Bitmap.createBitmap(width, height, Bitmap.Config.ARGB_8888);
 
-		listener().newBitmapCreated(bitmap); // tell others about it.
+		((UpdateListener) getActivity()).newBitmapCreated(bitmap); // tell others about it.
 
 		// and also the fractal.
 		this.fractal = getArguments().getParcelable("fractal");
+
+		if(this.fractal == null) throw new IllegalArgumentException("no fractal in arguments!");
 
 		// The fractal must be compilable! If it is a user-defined one
 		// it was checked before it was put into the parcel.
@@ -299,7 +226,8 @@ public class BitmapFragment extends Fragment {
 		// finally, we initialize the drawer.
 		// this might take some time after a fresh install, hence do it in the background
 		new AsyncTask<Void, Void, Void>() {
-			boolean initializationFinished = false;
+			boolean finished = false;
+			MyProgressDialogFragment ft = null; // it will only be instantiated if it takes more than 1.25 seconds
 
 			@Override
 			protected Void doInBackground(Void...ignore) {
@@ -312,31 +240,28 @@ public class BitmapFragment extends Fragment {
 				Handler handler = new Handler(); // FIXME create a 'delayed dialog'-class.
 				handler.postDelayed(() -> {
                     // start in UI-thread (unless we are already done)
-                    if(!initializationFinished) {
-                        pdData = new ProgressDialogData(
-                                "Please wait...",
-                                "Initializing program (this may take a few seconds " +
-                                "after a fresh install because" +
-                                " the GPU scripts are compiled by Android)", null, null);
-
-                        pdData.showPD();
+                    if(!finished) {
+						ft = MyProgressDialogFragment.newInstance(
+								"Please wait...",
+								"Initializing program (this may take a few seconds "
+								+ "after the program cache was cleaned because"
+								+ " the GPU scripts are compiled by Android)", false, false, -1);
+						ft.showDialog(getActivity(), "init");
                     }
                 }, 1250); // show dialog after 1250ms
 			}
 
 			@Override
 			protected void onPostExecute(Void ignore) {
-				initializationFinished = true;
+				finished = true;
+
+				if(ft != null) ft.dismiss();
 
 				Log.d("BMF", "Init Fractal");
 				drawer.setFractal(fractal);
 
 				Log.d("BMF", "Starting thread");
 				startBackgroundTask();
-
-				if(pdData != null) {
-					pdData.dismissDialogAndClear();
-				}
 			}
 		}.execute();
 	}
@@ -399,7 +324,7 @@ public class BitmapFragment extends Fragment {
 
 			updateMatrices();
 
-			getActivity().runOnUiThread(() -> listener().newBitmapCreated(bitmap));
+			getActivity().runOnUiThread(() -> ((UpdateListener) getActivity()).newBitmapCreated(bitmap));
 
 			if(setAsDefaultIfSuccess) {
 				getActivity().runOnUiThread(() -> ((MainActivity) getActivity()).storeDefaultSize(width, height));
@@ -500,21 +425,20 @@ public class BitmapFragment extends Fragment {
     }
 
 
+	/**
+	 * This method starts the drawing thread in the background.
+	 */
     void startBackgroundTask() {
         // this is always started from UI-thread
         // start calculation in background
         Log.d("BMF", "Start Drawing");
 		isRunning = true;
 
-		// FIXME listener() can be null in here...
+		// FIXME ((UpdateListener) getActivity()) can be null in here...
 
-		listener().calculationStarting();
+		((UpdateListener) getActivity()).calculationStarting();
         currentFuture = executorService.submit(drawer);
     }
-
-    /*public Fractal fractalBuilder() {
-        return fractalBuilder;
-    }*/
 
 	public Fractal fractal() {
 		return fractal;
@@ -540,18 +464,19 @@ public class BitmapFragment extends Fragment {
 	 * save the file only once the calculation is done. This dialog allows skip or cancel. Skip
 	 * saves the image instantly, Cancel cancels the whole thing.
 	 * @param imageFile File object in which the image should be saved.
-	 * @param postSaveAction Action to do after the image has been saved.
      */
-	public void saveImageInBackground(final File imageFile, Runnable postSaveAction) {
+	public void saveImageInBackground(final File imageFile, int id) {
 		// We are in the UI-Thread.
 
 		// Create task that will save the image
-		final AsyncTask<Void, Void, Boolean> saveTask = new AsyncTask<Void, Void, Boolean>() {
+		new AsyncTask<Void, Void, Boolean>() {
+			MyProgressDialogFragment ft;
+
 			@Override
 			protected void onPreExecute() {
-				pdData = new ProgressDialogData(null,
-						"Saving image...", null, null);
-				pdData.showPD();
+				this.ft = MyProgressDialogFragment.newInstance("Please wait...",
+						"Saving image...", false, false, -1);
+				ft.showDialog(getActivity(), "saving");
 			}
 
 			@Override
@@ -588,36 +513,13 @@ public class BitmapFragment extends Fragment {
 
 			@Override
 			protected void onPostExecute(Boolean saved) {
-				// fixme it is hard to get into a race condition but it is possible.
-				pdData.dismissDialog(); // clear the dialog
+				ft.dismiss();
 
-				if(saved && postSaveAction != null) {
-					postSaveAction.run();
+				if(saved) {
+					((UpdateListener) getActivity()).imageSaved(imageFile, id);
 				}
 			}
-		};
-
-		if(isRunning) {
-			// show skipable dialog
-			pdData = new ProgressDialogData("Waiting until calculation is finished",
-					"Skip to save immediately",
-					() -> { invokeWhenFinished = null; saveTask.execute(); }, // skip
-					() -> { /* pdData is cleared in ProgressDialogData */ } // cancel
-			);
-
-			pdData.showPD();
-
-			// a bit of aspect oriented programming would be nice here:
-			invokeWhenFinished = () -> {
-                // this is in the UI-thread.
-                if(pdData != null) {
-					pdData.dismissDialogAndClear();
-					saveTask.execute();
-				}
-            };
-		} else {
-			saveTask.execute();
-		}
+		}.execute();
 	}
 
     /*public void debugBitmap() {
@@ -662,5 +564,14 @@ public class BitmapFragment extends Fragment {
 		 * @param bitmap The new bitmap
 		 */
 		void newBitmapCreated(Bitmap bitmap);
+
+		/**
+		 * Called when the image was successfully saved
+		 * @param file The file in which the image was saved.
+		 * @param id Id that was used in the call to saveInBackground. Useful to distinguish
+		 *           who called saveInBackground in the first place.
+		 *
+		 */
+		void imageSaved(File file, int id);
 	}
 }

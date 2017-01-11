@@ -2,15 +2,12 @@ package at.searles.fractview.ui;
 
 import android.app.Activity;
 import android.app.AlertDialog;
-import android.app.Dialog;
 import android.app.DialogFragment;
 import android.app.Fragment;
 import android.app.FragmentTransaction;
 import android.os.Bundle;
 import android.view.View;
 import android.widget.Button;
-
-import at.searles.fractview.R;
 
 /**
  * General purpose dialog fragment for alert dialogs.
@@ -23,31 +20,31 @@ public class MyAlertDialogFragment extends DialogFragment {
     // see https://developer.android.com/reference/android/app/DialogFragment.html
 
 
-    public interface MyAlertFragmentHandler {
+    public interface DialogHandler {
         /**
          * This method initializes the view. Useful to put values into
          * the view of a dialog.
-         * @param labelId The label of the dialog
+         * @param id The id of the dialog
          * @param view The view in the dialog that should be initialized
          */
-        void initDialogView(String labelId, View view);
+        void initDialogView(String id, View view);
 
         /**
          * After positive button press, this method
-         * @param labelId The label of the dialog
+         * @param id The id of the dialog
          * @param view The view that should be initialized
          * @return if false, the dialog is not closed (for instance to correct the input)
          */
-        boolean applyDialogView(String labelId, View view);
+        boolean applyDialogView(String id, View view);
     }
 
 
-    public static MyAlertDialogFragment newInstance(String title, int layoutId, String labelId) {
+    public static MyAlertDialogFragment newInstance(String title, int layoutId, String id) {
         MyAlertDialogFragment frag = new MyAlertDialogFragment();
         Bundle args = new Bundle();
         args.putString("title", title);
         args.putInt("layout_id", layoutId);
-        args.putString("label_id", labelId);
+        args.putString("id", id);
         frag.setArguments(args);
         return frag;
     }
@@ -68,26 +65,18 @@ public class MyAlertDialogFragment extends DialogFragment {
         show(ft, "dialog");
     }
 
-
     @Override
-    public void onCreate(Bundle savedInstanceState) {
-        super.onCreate(savedInstanceState);
-
-        // fetch arguments
-    }
-
-    @Override
-    public Dialog onCreateDialog(Bundle savedInstanceState) {
+    public AlertDialog onCreateDialog(Bundle savedInstanceState) {
         // Fetch data
         String title = getArguments().getString("title");
         int layoutId = getArguments().getInt("layout_id");
-        String labelId = getArguments().getString("label_id");
+        String id = getArguments().getString("id");
 
         // create view
         View view = this.getActivity().getLayoutInflater().inflate(layoutId, null);
 
         // initialize the view
-        ((MyAlertFragmentHandler) this.getActivity()).initDialogView(labelId, view);
+        ((DialogHandler) this.getActivity()).initDialogView(id, view);
 
         // finally create dialog
         AlertDialog dialog = new AlertDialog.Builder(getActivity())
@@ -109,8 +98,8 @@ public class MyAlertDialogFragment extends DialogFragment {
                 // FIXME do lambdas embedded in lambdas work?
                 @Override
                 public void onClick(View button) {
-                    if (((MyAlertFragmentHandler) getActivity())
-                            .applyDialogView(labelId, view)) {
+                    if (((DialogHandler) getActivity())
+                            .applyDialogView(id, view)) {
                         //Dismiss once everything is OK.
                         source.dismiss();
                     }

@@ -5,17 +5,13 @@ import android.app.AlertDialog;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
-import android.graphics.Color;
 import android.graphics.Typeface;
 import android.os.Bundle;
-import android.text.Editable;
-import android.text.TextWatcher;
 import android.view.*;
 import android.widget.*;
 import at.searles.fractview.R;
 import at.searles.fractview.fractal.Fractal;
 import at.searles.fractview.fractal.PresetFractals;
-import at.searles.fractview.ui.editors.ColorView;
 import at.searles.math.Cplx;
 import at.searles.math.Scale;
 import at.searles.math.color.Colors;
@@ -27,7 +23,7 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
 
-public class ParameterActivity extends Activity implements MyAlertDialogFragment.MyAlertFragmentHandler {
+public class ParameterActivity extends Activity implements MyAlertDialogFragment.DialogHandler {
 
 	public static final int PROGRAM_ACTIVITY_RETURN = 100;
 
@@ -47,9 +43,6 @@ public class ParameterActivity extends Activity implements MyAlertDialogFragment
 	Fractal fb;
 	ParameterAdapter adapter; // List adapter for parameters
 	ListView listView;
-
-	// if something is edited, here is the information once the dialog calls this activities' confirm method
-	private String currentEditId = null;
 
 	@Override
 	public void initDialogView(String id, View view) {
@@ -171,8 +164,29 @@ public class ParameterActivity extends Activity implements MyAlertDialogFragment
 			case Expr: {
 				EditText editor = (EditText) view.findViewById(R.id.stringEditText);
 				String sExpr = editor.getText().toString();
-				fb.setExpr(id, sExpr);
-				return true;
+
+				// store id in case of error
+				String backup = fb.isDefaultValue(id) ? null : (String) fb.get(id).b;
+
+				try {
+					fb.setExpr(id, sExpr);
+					fb.compile();
+
+					// compiling was fine...
+					adapter.notifyDataSetChanged();
+					return true;
+				} catch(CompileException e) { // this includes parsing exceptions now
+					Toast.makeText(this, e.getLocalizedMessage(), Toast.LENGTH_LONG).show();
+
+					// there was an error. Restore expr for id to original state
+					if (backup == null) {
+						fb.reset(id);
+					} else {
+						fb.setExpr(id, backup);
+					}
+
+					return false;
+				}
 			}
 			case Color: {
 				ColorView editor = (ColorView) view.findViewById(R.id.colorView);
@@ -296,8 +310,12 @@ public class ParameterActivity extends Activity implements MyAlertDialogFragment
 			this.fb = intent.getParcelableExtra("fractal");
 		} else {
 			this.fb = savedInstanceState.getParcelable("fractal");
-			this.currentEditId = savedInstanceState.getString("edit_id");
 		}
+
+		if(this.fb == null) {
+			throw new IllegalArgumentException("fb is null!");
+		}
+
 		// need to extract all external values from FB. Hence parse it [compiling not necessary]
 
 		try {
@@ -315,8 +333,6 @@ public class ParameterActivity extends Activity implements MyAlertDialogFragment
 		listView.setOnItemClickListener((parent, view, position, id) -> {
 			// Element 'position' was selected
             Pair<String, Fractal.Type> p = adapter.elements.get(position);
-
-            currentEditId = p.a;
 
             switch(p.b) {
                 /*case Label: {
@@ -359,7 +375,9 @@ public class ParameterActivity extends Activity implements MyAlertDialogFragment
 
                     Intent i = new Intent(ParameterActivity.this, PaletteActivity.class);
 
-                    i.putExtra("palette", new PaletteActivity.PaletteWrapper(/*p.label,*/ value));
+                    i.putExtra("palette", new PaletteActivity.PaletteWrapper(value));
+					i.putExtra("id", p.a); // label should also be in here.
+
                     startActivityForResult(i, PaletteActivity.PALETTE_ACTIVITY_RETURN);
                 }
                 return;
@@ -424,17 +442,14 @@ public class ParameterActivity extends Activity implements MyAlertDialogFragment
                     return true;
                 }
                 case Expr: {
-                    showOptionsDialog(exprOptions, new DialogInterface.OnClickListener() {
-                        @Override
-                        public void onClick(DialogInterface dialog, int which) {
-                            switch(which) {
-                                case 0: // Reset
-                                    fb.reset(p.a);
-                                    break;
-                            }
-
-                            adapter.notifyDataSetChanged();
+                    showOptionsDialog(exprOptions, (dialog, which) -> {
+                        switch(which) {
+                            case 0: // Reset
+                                fb.reset(p.a);
+                                break;
                         }
+
+                        adapter.notifyDataSetChanged();
                     });
                     return true;
                 }
@@ -545,7 +560,6 @@ public class ParameterActivity extends Activity implements MyAlertDialogFragment
 	public void onSaveInstanceState(@NotNull Bundle savedInstanceState) {
 		// Save the user's current game state
 		savedInstanceState.putParcelable("fractal", fb);
-		savedInstanceState.putString("edit_id", currentEditId);
 
 		// Always call the superclass so it can save the view hierarchy state
 		super.onSaveInstanceState(savedInstanceState);
@@ -590,8 +604,9 @@ public class ParameterActivity extends Activity implements MyAlertDialogFragment
 		if (requestCode == PaletteActivity.PALETTE_ACTIVITY_RETURN) {
 			if (resultCode == 1) { // = "Ok"
 				PaletteActivity.PaletteWrapper wrapper = data.getParcelableExtra("palette");
+				String id = data.getStringExtra("id");
 
-				fb.setPalette(currentEditId, wrapper.p);
+				fb.setPalette(id, wrapper.p);
 				adapter.notifyDataSetChanged();
 			}
 		} else if (requestCode == PROGRAM_ACTIVITY_RETURN) {

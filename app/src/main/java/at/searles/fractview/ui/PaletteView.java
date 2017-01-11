@@ -1,4 +1,4 @@
-package at.searles.fractview.ui.editors;
+package at.searles.fractview.ui;
 
 import android.app.Activity;
 import android.app.AlertDialog;
@@ -14,7 +14,6 @@ import android.view.MotionEvent;
 import android.view.View;
 
 import at.searles.fractview.R;
-import at.searles.fractview.ui.MyAlertDialogFragment;
 import at.searles.math.color.Colors;
 
 public class PaletteView extends View {

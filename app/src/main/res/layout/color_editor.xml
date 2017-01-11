@@ -15,7 +15,7 @@
         android:layout_column="0" />
 
     <view
-        class="at.searles.fractview.ui.editors.ColorView"
+        class="at.searles.fractview.ui.ColorView"
         android:id="@+id/colorView"
         android:layout_gravity="center_horizontal"
         android:layout_row="0"

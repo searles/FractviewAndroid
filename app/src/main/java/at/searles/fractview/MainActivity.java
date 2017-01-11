@@ -12,6 +12,7 @@ import android.app.WallpaperManager;
 import android.content.ClipData;
 import android.content.ClipboardManager;
 import android.content.Context;
+import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
@@ -51,13 +52,16 @@ import at.searles.fractview.ui.MyAlertDialogFragment;
 import at.searles.fractview.ui.ParameterActivity;
 import at.searles.fractview.ui.PresetsActivity;
 import at.searles.fractview.ui.ScaleableImageView;
+import at.searles.fractview.ui.MyProgressDialogFragment;
 import at.searles.meelan.CompileException;
 
 
 // Activity is the glue between BitmapFragment and Views.
 public class MainActivity extends Activity
 		implements ActivityCompat.OnRequestPermissionsResultCallback,
-		MyAlertDialogFragment.MyAlertFragmentHandler {
+		MyAlertDialogFragment.DialogHandler,
+		BitmapFragment.UpdateListener,
+		MyProgressDialogFragment.DialogHandler {
 
     //public static final int ALPHA_PREFERENCES = 0xaa000000;
 
@@ -81,6 +85,11 @@ public class MainActivity extends Activity
 	SharedPreferences prefs;
 
 	FragmentManager fm;
+
+	@Override
+	public void onSkip(DialogInterface dialog, int id) {
+
+	}
 
 	//int backgroundColor;
     //int textColor;
@@ -274,14 +283,6 @@ public class MainActivity extends Activity
 		super.onSaveInstanceState(savedInstanceState);
 	}
 
-	BitmapFragment.UpdateListener getBitmapFragmentCallback() {
-		if(bitmapFragmentCallback == null) {
-			bitmapFragmentCallback = new BitmapFragmentCallback();
-		}
-
-		return bitmapFragmentCallback;
-	}
-
 	void storeDefaultSize(int width, int height) {
 		SharedPreferences.Editor editor = PreferenceManager.getDefaultSharedPreferences(this).edit();
 		editor.putInt("width", width);
@@ -317,7 +318,7 @@ public class MainActivity extends Activity
 
 			case WALLPAPER_PERMISSIONS: {
 				if(grantResults[0] == PackageManager.PERMISSION_GRANTED) {
-					setWallpaper();
+					setImageAsWallpaper();
 				} else {
 					Toast.makeText(this, "Cannot set image as wallpaper without " +
 							"permissions.", Toast.LENGTH_LONG).show();
@@ -338,11 +339,6 @@ public class MainActivity extends Activity
 						"Add Favorite",
 						R.layout.image_size_editor,
 						IMAGE_SIZE).showDialog(this);
-			} return true;
-
-			case R.id.action_share: {
-				// save/share image
- 				shareImage();
 			} return true;
 
 			case R.id.action_add_favorite: {
@@ -409,30 +405,29 @@ public class MainActivity extends Activity
 				imageView.setShowGrid(checked);
 			} return true;
 
+			case R.id.action_share: {
+				// save/share image
+				if(bitmapFragment.isRunning()) {
+					waitForImageAction(SHARE_IMAGE);
+				} else {
+					shareImage();
+				}
+			} return true;
+
 			case R.id.action_set_wallpaper: {
-				setWallpaper();
+				if(bitmapFragment.isRunning()) {
+					waitForImageAction(SET_IMAGE_AS_WALLPAPER);
+				} else {
+					setImageAsWallpaper();
+				}
 			} return true;
 
 			case R.id.action_save_image: {
-				// create alert dialog with edittext
-				AlertDialog.Builder builder = new AlertDialog.Builder(this);
-
-				builder.setTitle("Enter Filename");
-				builder.setIcon(android.R.drawable.ic_menu_save);
-
-				final EditText titleEdit = new EditText(this);
-				builder.setView(titleEdit);
-
-				builder.setPositiveButton("Ok", (dialogInterface, which) -> {
-					String filename = titleEdit.getText().toString();
-					saveImage(filename);
-				});
-
-				builder.setNegativeButton("Cancel", (dialogInterface, which) -> {
-					dialogInterface.dismiss(); // cancel and dismiss are equivalent
-				});
-
-				builder.show();
+				if(bitmapFragment.isRunning()) {
+					waitForImageAction(SAVE_IMAGE_EXTERN);
+				} else {
+					saveImage();
+				}
 			} return true;
 
             default:
@@ -443,6 +438,7 @@ public class MainActivity extends Activity
 	// Labels for myalertdialogfragment
 	private static final String ADD_FAVORITE = "add_favorite";
 	private static final String IMAGE_SIZE = "image_size";
+	private static final String SAVE_IMAGE = "save_image";
 
 	@Override
 	public void initDialogView(String labelId, View view) {
@@ -542,6 +538,42 @@ public class MainActivity extends Activity
 				bitmapFragment.setSize(w, h, setAsDefault);
 				return true;
 			}
+
+			case SAVE_IMAGE: {
+				EditText editText = (EditText) view.findViewById(R.id.editText);
+				String filename = editText.getText().toString();
+
+				if(filename.isEmpty()) {
+					Toast.makeText(this, "Filename must not be empty", Toast.LENGTH_LONG).show();
+					return false;
+				}
+
+				File directory = new File(
+						Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_PICTURES),
+						"Fractview");
+
+				Log.d("MA", "Saving file: Path is " + directory);
+
+				if(!directory.exists()) {
+					Log.d("MA", "Creating directory");
+					if(!directory.mkdir()) {
+						Toast.makeText(MainActivity.this, "Could not create directory (maybe permission denied?)",
+								Toast.LENGTH_LONG).show();
+					}
+				}
+
+				// loop up index
+				for(int i = 0;; ++i) {
+					final File imageFile = new File(directory, filename
+							+ (i == 0 ? "" : ("(" + i + ")"))
+							+ (filename.endsWith(".png") ? "" : ".png"));
+
+					if(!imageFile.exists()) {
+						// Saving is done in the following background thread
+						bitmapFragment.saveImageInBackground(imageFile, -1);
+					}
+				}
+			}
 			default:
 				throw new IllegalArgumentException("Did not expect this label: " + labelId);
 		}
@@ -640,15 +672,13 @@ public class MainActivity extends Activity
 		} else {
 			warnedAboutHistoryEmpty = false; // reset here.
 
-			bitmapFragment.edit(new Runnable() {
-				@Override
-				public void run() {
-					if(!bitmapFragment.historyIsEmpty()) {
-						// to avoid race condition
-						bitmapFragment.historyBack();
-					}
-				}
-			});
+			// fixme shouldn't history be in here? Problem is that I would have to preserve it...
+			bitmapFragment.edit(() -> {
+                if(!bitmapFragment.historyIsEmpty()) {
+                    // to avoid race condition
+                    bitmapFragment.historyBack();
+                }
+            });
 
 			return true;
 		}
@@ -745,46 +775,54 @@ public class MainActivity extends Activity
 	// ================= Save/Share/Set as Wallpaper ====================
 	// ==================================================================
 
-	interface FileFn { void apply(File f); }
+	private static final int SAVE_IMAGE_EXTERN = 1;
+	private static final int SHARE_IMAGE = 2;
+	private static final int SET_IMAGE_AS_WALLPAPER = 3;
 
-	void saveImage(String filename) {
-		File directory = new File(
-				Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_PICTURES),
-				"Fractview");
+	void waitForImageAction(int actionId) {
+		// if bitmap fragment is not yet done
+		if(bitmapFragment.isRunning()) {
+			// show dialog to wait
+			MyProgressDialogFragment.newInstance(
+					"Image rendering not yet finished...",
+					"Skip to use the incompletely rendered image", true, true, actionId)
+					.showDialog(this, "wait_for_image");
+		} else {
+			// if not running, then save immediately
+			switch(actionId) {
+				case SAVE_IMAGE_EXTERN: {
+					saveImage();
+				} break;
 
-		Log.d("MA", "Saving file: Path is " + directory);
+				case SHARE_IMAGE: {
+					shareImage();
+				} break;
 
-		if(!directory.exists()) {
-			Log.d("MA", "Creating directory");
-			if(!directory.mkdir()) {
-				Toast.makeText(MainActivity.this, "Could not create directory (maybe permission denied?)",
-						Toast.LENGTH_LONG).show();
-			}
-		}
+				case SET_IMAGE_AS_WALLPAPER: {
+					setImageAsWallpaper();
+				} break;
 
-		// loop up index
-		for(int i = 0;; ++i) {
-			final File imageFile = new File(directory, filename
-					+ (i == 0 ? "" : ("(" + i + ")"))
-					+ (filename.endsWith(".png") ? "" : ".png"));
-
-			if(!imageFile.exists()) {
-				// Saving is done in the following background thread
-				bitmapFragment.saveImageInBackground(imageFile, null);
 			}
 		}
 	}
 
-	void saveImageTemporarily(FileFn postAction) {
-		try {
-			File imageFile = File.createTempFile("fractview", "png", getExternalCacheDir());
-			bitmapFragment.saveImageInBackground(imageFile, () -> postAction.apply(imageFile));
-		} catch(IOException e) {
-			Toast.makeText(this, "IO-Error: " + e.getLocalizedMessage(), Toast.LENGTH_LONG).show();
-		}
+	void saveImage() {
+		// create alert dialog with edittext
+		MyAlertDialogFragment.newInstance("Enter filename",
+				R.layout.string_editor, "save_image"
+		).showDialog(this);
 	}
 
 	public void shareImage() {
+		try {
+			File imageFile = File.createTempFile("fractview", "png", getExternalCacheDir());
+			bitmapFragment.saveImageInBackground(imageFile, SHARE_IMAGE);
+		} catch (IOException e) {
+			Toast.makeText(this, e.getMessage(), Toast.LENGTH_LONG).show();
+		}
+
+		// the rest is in imageSaved.
+
 		/*int readPermission = ContextCompat.checkSelfPermission(this, Manifest.permission.READ_EXTERNAL_STORAGE);
 		int writePermission = ContextCompat.checkSelfPermission(this, Manifest.permission.WRITE_EXTERNAL_STORAGE);
 
@@ -799,14 +837,6 @@ public class MainActivity extends Activity
 			// shareAction(wallpaperPermission == PackageManager.PERMISSION_GRANTED);
 		}*/
 
-		// share picture
-		saveImageTemporarily((imageFile) -> {
-			Uri contentUri = Uri.fromFile(imageFile);
-			Intent share = new Intent(Intent.ACTION_SEND);
-			share.setType("image/png");
-			share.putExtra(Intent.EXTRA_STREAM, contentUri);
-			startActivity(Intent.createChooser(share, "Share Image"));
-		});
 
 		/*
 							// do all the sharing part
@@ -832,7 +862,7 @@ public class MainActivity extends Activity
 		 */
 	}
 
-	public void setWallpaper() {
+	public void setImageAsWallpaper() {
 		int wallpaperPermission = ContextCompat.checkSelfPermission(this, Manifest.permission.SET_WALLPAPER);
 
 		if(wallpaperPermission != PackageManager.PERMISSION_GRANTED) {
@@ -859,44 +889,85 @@ public class MainActivity extends Activity
 	// =========== Callbacks from Bitmap Fragment ==================================
 	// =============================================================================
 
+	// FIXME in order to be able to handle multiple bitmap fragments, there should be
+	// FIXME some argument as parameter.
+
+	@Override
+	public void previewGenerated() {
+		// can be called from outside the UI-thread!
+		Log.d("MA", "preview generated");
+		imageView.removeLastScale();
+		imageView.invalidate();
+	}
+
+	@Override
+	public void bitmapUpdated() {
+		// can be called from outside the UI-thread!
+		// Log.d("MA", "bitmap updated");
+		imageView.invalidate();
+	}
+
+	@Override
+	public void calculationStarting() {
+		// this is already called from the ui-thread.
+		// we now start a handler that will update the progress every 25 ms and show it
+		// in the progress bar.
+		startProgressUpdates();
+	}
+
 	/**
-	 * One idea why I create a class for this is that
-	 * I could have multiple bitmap fragment callbacks.
+	 * This is mainly used to see whether there is a progress dialog with a certain
+	 * tag. This indicates that there is some task pending. For instance if someone
+	 * saves an image but wants to wait until the rendering is finished. Using
+	 * fragments means that this one is safe to use even when the activity is
+	 * destroyed eg due to rotation.
+	 * @param tag
+	 * @return
 	 */
-	class BitmapFragmentCallback implements BitmapFragment.UpdateListener {
-		@Override
-		public void previewGenerated() {
-			// can be called from outside the UI-thread!
-			Log.d("MA", "preview generated");
-			imageView.removeLastScale();
-			imageView.invalidate();
+	private boolean fetchAndDismissDialogFragment(String tag) {
+		Fragment dialog = getFragmentManager().findFragmentByTag(tag);
+		if(dialog != null) {
+			((DialogFragment) dialog).dismiss();
+			return true;
+		} else {
+			return false;
 		}
+	}
 
-		@Override
-		public void bitmapUpdated() {
-			// can be called from outside the UI-thread!
-			// Log.d("MA", "bitmap updated");
-			imageView.invalidate();
+	@Override
+	public void calculationFinished(final long ms) {
+		Toast.makeText(MainActivity.this, getString(R.string.label_calc_finished, ms), Toast.LENGTH_SHORT).show();
+
+		if(fetchAndDismissDialogFragment("wait_for_save")) {
+			saveImage(); // but which mode?
+		} else if(fetchAndDismissDialogFragment("wait_for_share")) {
+			shareImage();
+		} else if(fetchAndDismissDialogFragment("wait_for_wallpaper")) {
+			setImageAsWallpaper();
 		}
+	}
 
-		@Override
-		public void calculationStarting() {
-			// this is already called from the ui-thread.
-			// we now start a handler that will update the progress every 25 ms and show it
-			// in the progress bar.
-			startProgressUpdates();
-		}
+	@Override
+	public void newBitmapCreated(Bitmap bitmap) {
+		Log.d("MA", "received newBitmapCreated");
+		imageView.setImageBitmap(bitmap);
+		imageView.requestLayout();
+	}
 
-		@Override
-		public void calculationFinished(final long ms) {
-			Toast.makeText(MainActivity.this, getString(R.string.label_calc_finished, ms), Toast.LENGTH_SHORT).show();
-		}
+	@Override
+	public void imageSaved(File file, int id) {
+		// FIXME
+		// FIXME
+		if(id == SAVE_IMAGE_EXTERN) {
+			// do nothing
+		} else if(id == SHARE_IMAGE) {
+			Uri contentUri = Uri.fromFile(file);
+			Intent share = new Intent(Intent.ACTION_SEND);
+			share.setType("image/png");
+			share.putExtra(Intent.EXTRA_STREAM, contentUri);
+			startActivity(Intent.createChooser(share, "Share Image"));
+		} else if(id == SET_IMAGE_AS_WALLPAPER) {
 
-		@Override
-		public void newBitmapCreated(Bitmap bitmap) {
-			Log.d("MA", "received newBitmapCreated");
-			imageView.setImageBitmap(bitmap);
-			imageView.requestLayout();
 		}
 	}
 

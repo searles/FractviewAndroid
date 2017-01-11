@@ -73,15 +73,18 @@ public class Fractal implements Parcelable {
 		public void add(String id, String type, Tree init) throws CompileException {
 			switch(type) {
 				case "int": {
+					int i;
 					if(init instanceof Value.Int) {
-						elements.put(id, new Pair<>(Type.Int, ((Value.Int) init).value));
+						i = ((Value.Int) init).value;
 					} else if(init instanceof Value.Real) {
-						Log.e("FRACTALS", "An int was parsed as a real");
 						// fixme this is a fix for a bug.
-						elements.put(id, new Pair<>(Type.Int, (int) ((Value.Real) init).value));
+						i = (int) ((Value.Real) init).value;
+						Log.e("FRACTALS", "An int was parsed as a real");
 					} else {
 						throw new CompileException("extern " + id + " = " + init + " is not an int but a " + init.getClass() + "!");
 					}
+
+					elements.put(id, new Pair<>(Type.Int, i));
 				} break;
 				case "real": {
 					double d;
@@ -258,10 +261,12 @@ public class Fractal implements Parcelable {
 				// then all elements.
 
 				// first title
-				dest.writeString(entry.getKey());
+				String title = entry.getKey();
+				dest.writeString(title);
 
+				Type type = entry.getValue().a;
 				// next type
-				dest.writeInt(entry.getValue().a.ordinal());
+				dest.writeInt(type.ordinal());
 
 				Object v = entry.getValue().b;
 

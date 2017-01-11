@@ -1,4 +1,4 @@
-package at.searles.fractview.ui.editors;
+package at.searles.fractview.ui;
 
 import android.graphics.Color;
 import android.util.Log;

@@ -1,4 +1,4 @@
-package at.searles.fractview.ui;
+package at.searles.fractview;
 
 import android.app.Activity;
 import android.app.AlertDialog;

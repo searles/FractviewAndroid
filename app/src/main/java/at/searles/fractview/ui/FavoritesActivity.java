@@ -38,7 +38,7 @@ public class FavoritesActivity extends Activity {
 		// fixme what do the other modes do?
 		persistent = getSharedPreferences("favorites", Context.MODE_PRIVATE);
 
-		manageOldEntries();
+		/*manageOldEntries();*/
 
 		for(Map.Entry<String, ?> entry : persistent.getAll().entrySet()) {
 			try {
@@ -52,9 +52,7 @@ public class FavoritesActivity extends Activity {
 		// and since it is sorted, use it to write label-map.
 		labels = new ArrayList<>(favorites.size());
 
-		for(String label : favorites.keySet()) {
-			labels.add(label);
-		}
+		labels.addAll(favorites.keySet());
 
 		ListView lv = (ListView) findViewById(R.id.bookmarkListView);
 
@@ -136,7 +134,7 @@ public class FavoritesActivity extends Activity {
 	}
 
 	// FIXME Remove after some time
-	@Deprecated
+	/*@Deprecated
 	private void manageOldEntries() {
 		// show menu
 		// old bookmark entries found
@@ -191,6 +189,6 @@ public class FavoritesActivity extends Activity {
 		});
 
 		builder.show();
-	}
+	}*/
 
 }

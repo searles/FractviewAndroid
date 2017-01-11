@@ -15,15 +15,15 @@ import android.widget.Button;
 import android.widget.EditText;
 import android.widget.Toast;
 import at.searles.fractview.R;
+import at.searles.fractview.SaveLoadDeleteSharedPref;
 import at.searles.fractview.fractal.Adapters;
-import at.searles.fractview.ui.editors.*;
 import at.searles.math.color.Colors;
 import at.searles.math.color.Palette;
 import org.jetbrains.annotations.NotNull;
 import org.json.JSONException;
 import org.json.JSONObject;
 
-public class PaletteActivity extends Activity implements MyAlertDialogFragment.MyAlertFragmentHandler {
+public class PaletteActivity extends Activity implements MyAlertDialogFragment.DialogHandler {
 
 	// Editors should contain all the important information because they are retained.
 
@@ -33,11 +33,10 @@ public class PaletteActivity extends Activity implements MyAlertDialogFragment.M
 
 	public static final int PALETTE_ACTIVITY_RETURN = 99;
 
-	PaletteViewModel model = null;
-	PaletteView view = null;
+	private PaletteViewModel model = null;
+	private PaletteView view = null;
 
-	// String label;
-	Palette palette;
+	private String id;
 
 	// if something is currently edited, these two
 	// contain its coordinates
@@ -49,20 +48,22 @@ public class PaletteActivity extends Activity implements MyAlertDialogFragment.M
 		super.onCreate(savedInstanceState);
 		setContentView(R.layout.palette_layout);
 
+		this.id = getIntent().getStringExtra("id");
+
 		PaletteWrapper wrapper;
 
 		if(savedInstanceState == null) {
 			wrapper = getIntent().getParcelableExtra("palette");
 		} else {
 			wrapper = savedInstanceState.getParcelable("palette");
-			//editX = savedInstanceState.getInt("edit_x");
-			//editY = savedInstanceState.getInt("edit_y");
 		}
 
-		palette = wrapper.p;
-		//label = wrapper.label;
+		if(wrapper == null) {
+			// can this happen?
+			throw new IllegalArgumentException("No palette available");
+		}
 
-		model = new PaletteViewModel(palette);
+		model = new PaletteViewModel(wrapper.p);
 
 		view = (PaletteView) findViewById(R.id.paletteView);
 		view.setModel(model);
@@ -70,32 +71,26 @@ public class PaletteActivity extends Activity implements MyAlertDialogFragment.M
 		Button okButton = (Button) findViewById(R.id.okButton);
 		Button cancelButton = (Button) findViewById(R.id.cancelButton);
 
-		cancelButton.setOnClickListener(new View.OnClickListener() {
-			@Override
-			public void onClick(View view) {
-				// don't do anything.
-				setResult(0);
-				finish();
-			}
-		});
+		cancelButton.setOnClickListener(view -> {
+            // don't do anything.
+            setResult(0);
+            finish();
+        });
 
-		okButton.setOnClickListener(new View.OnClickListener() {
-			@Override
-			public void onClick(View view) {
-				Intent data = new Intent();
-				data.putExtra("palette", new PaletteWrapper(/*label, */model.createPalette()));
-				setResult(1, data);
-				finish();
-			}
-		});
+		okButton.setOnClickListener(view -> {
+            Intent data = new Intent();
+            data.putExtra("palette", new PaletteWrapper(model.createPalette()));
+			data.putExtra("id", this.id);
+            setResult(1, data);
+            finish();
+        });
 	}
 
 	@Override
 	public void onSaveInstanceState(@NotNull Bundle savedInstanceState) {
 		// Save the user's current game state
 		savedInstanceState.putParcelable("palette", new PaletteWrapper(/*label, */model.createPalette()));
-		//savedInstanceState.putInt("edit_x", editX);
-		//savedInstanceState.putInt("edit_y", editY);
+		savedInstanceState.putString("id", id);
 
 		// Always call the superclass so it can save the view hierarchy state
 		super.onSaveInstanceState(savedInstanceState);

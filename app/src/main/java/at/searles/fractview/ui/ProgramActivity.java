@@ -15,6 +15,7 @@ import android.widget.Button;
 import android.widget.EditText;
 import android.widget.Toast;
 import at.searles.fractview.R;
+import at.searles.fractview.SaveLoadDeleteSharedPref;
 import at.searles.fractview.fractal.Fractal;
 import at.searles.meelan.CompileException;
 import at.searles.parsing.ParsingError;

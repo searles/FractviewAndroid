@@ -1,4 +1,4 @@
-package at.searles.fractview.ui.editors;
+package at.searles.fractview.ui;
 
 import android.content.Context;
 import android.graphics.*;
