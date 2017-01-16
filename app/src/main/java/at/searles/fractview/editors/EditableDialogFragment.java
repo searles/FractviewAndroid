@@ -7,7 +7,6 @@ import android.content.DialogInterface;
 import android.content.SharedPreferences;
 import android.graphics.Point;
 import android.os.Bundle;
-import android.os.Parcel;
 import android.preference.PreferenceManager;
 import android.util.Log;
 import android.view.View;
@@ -21,7 +20,6 @@ import android.widget.Toast;
 
 import at.searles.fractview.MainActivity;
 import at.searles.fractview.R;
-import at.searles.fractview.fractal.Adapters;
 import at.searles.fractview.ui.ColorView;
 import at.searles.math.Scale;
 import at.searles.math.color.Colors;
@@ -33,7 +31,7 @@ import at.searles.math.color.Colors;
 public class EditableDialogFragment extends GenericDialogFragment {
 
     public static EditableDialogFragment newInstance(int requestCode, String title,
-                                              boolean callFragment, Type type) {
+                                                     boolean callFragment, Type type) {
         Bundle b = GenericDialogFragment.createBundle(requestCode, callFragment, title);
         b.putInt("type", type.ordinal());
 
@@ -41,6 +39,13 @@ public class EditableDialogFragment extends GenericDialogFragment {
         fragment.setArguments(b);
 
         return fragment;
+    }
+
+    private Object initialValue;
+
+    public EditableDialogFragment setInitVal(Object o) {
+        this.initialValue = o;
+        return this;
     }
 
     @Override
@@ -79,8 +84,10 @@ public class EditableDialogFragment extends GenericDialogFragment {
         Dialog dialog = builder.create();
 
         // init values in view of dialog
-        if(savedInstanceState.containsKey("argument")) {
-            type.setValueInView(savedInstanceState.get("argument"), view);
+        if(savedInstanceState == null) {
+            // but only in the first call.
+            // otherwise it is rotated, then we should preserve the values
+            type.setValueInView(initialValue, view);
         }
 
         return dialog;
@@ -218,11 +225,8 @@ public class EditableDialogFragment extends GenericDialogFragment {
         Cplx {
             @Override
             void setValueInView(Object o, View view) {
-                if(!(o instanceof Parcel))
-                    throw new ClassCastException("Cplx expects a parcel but got a " + o.getClass());
-
                 // o is a parcel in this case.
-                at.searles.math.Cplx c = Adapters.cplxAdapter.fromParcel((Parcel) o);
+                at.searles.math.Cplx c = (at.searles.math.Cplx) o;
 
                 EditText tx = (EditText) view.findViewById(R.id.xEditText);
                 EditText ty = (EditText) view.findViewById(R.id.yEditText);
@@ -233,7 +237,7 @@ public class EditableDialogFragment extends GenericDialogFragment {
 
             @Override
             Object getValueInView(Dialog dialog) {
-                // TODO would it be better to return a Parcel here?
+                // TODO would it be better to return a Parcelable here?
                 // TODO In case of an activity I can save some code duplication...
                 EditText tx = (EditText) dialog.findViewById(R.id.xEditText);
                 EditText ty = (EditText) dialog.findViewById(R.id.yEditText);

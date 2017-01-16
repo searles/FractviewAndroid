@@ -72,25 +72,25 @@ public class BitmapFragment extends Fragment implements
 	private enum ProgressDialogValues { Init, RunningSave, RunningShare, RunningWallpaper, Save }
 
     // Allocations and various data
-    int height, width;
-	Fractal fractal;
-	Bitmap bitmap;
+    private int height, width;
+	private Fractal fractal;
+	private Bitmap bitmap;
 
 	// Now the drawing stuff
-	FractalDrawer drawer = null;
-    ExecutorService executorService;
-    Future<?> currentFuture;
+	private FractalDrawer drawer = null;
+    private ExecutorService executorService;
+    private Future<?> currentFuture;
 
     // Locks + variable to cancel a running calculation.
-	ReentrantLock editLock = new ReentrantLock();
+	private ReentrantLock editLock = new ReentrantLock();
 
 	// the next two variables are only changed in the UI thread.
 
 	// the next one counts the cancel requests.
-	volatile int cancelled = 0;
+	private volatile int cancelled = 0;
 
 	// if running.
-	boolean isRunning;
+	private boolean isRunning;
 
 	/**
 	 * Matrices to convert coordinates into value that is
@@ -586,7 +586,7 @@ public class BitmapFragment extends Fragment implements
 			case SHARE_IMAGE: {
 				// create TMP file and call share indent
 				try {
-					File imageFile = File.createTempFile("fractview", "png", getActivity().getExternalCacheDir());
+					File imageFile = File.createTempFile("fractview", ".png", getActivity().getExternalCacheDir());
 					saveImageInBackground(imageFile, new Runnable() {
 						public void run() {
 							Uri contentUri = Uri.fromFile(imageFile);

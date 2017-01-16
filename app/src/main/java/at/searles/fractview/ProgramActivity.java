@@ -156,16 +156,14 @@ public class ProgramActivity extends Activity implements EditableDialogFragment.
 			case R.id.action_load_program: {
 				EditableDialogFragment ft = EditableDialogFragment.newInstance(LOAD_PROGRAM,
 						"Load Program", false, EditableDialogFragment.Type.LoadSharedPref);
-				ft.getArguments().putString("prefs_name", PREFS_NAME);
-
 				ft.show(getFragmentManager(), "dialog");
+				ft.getArguments().putString("prefs_name", PREFS_NAME);
 			} return true;
 			case R.id.action_save_program: {
 				EditableDialogFragment ft = EditableDialogFragment.newInstance(SAVE_PROGRAM,
 						"Save Program", false, EditableDialogFragment.Type.SaveSharedPref);
-				ft.getArguments().putString("prefs_name", PREFS_NAME);
-
 				ft.show(getFragmentManager(), "dialog");
+				ft.getArguments().putString("prefs_name", PREFS_NAME);
 			} return true;
 			case R.id.action_compile: {
 				if(apply()) {

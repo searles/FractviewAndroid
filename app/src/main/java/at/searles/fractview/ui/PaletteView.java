@@ -67,7 +67,6 @@ public class PaletteView extends View {
 		//detector.
 	}
 
-
 	public void setModel(PaletteViewModel model) {
 		this.model = model;
 		model.setView(this);
@@ -420,7 +419,8 @@ public class PaletteView extends View {
 						// to the editor which is again stuck to the dialog fragment)
 						EditableDialogFragment ft =
 								EditableDialogFragment.newInstance(x + model.width() * y,
-										"Edit Color", false, EditableDialogFragment.Type.Color);
+										"Edit Color", false, EditableDialogFragment.Type.Color)
+										.setInitVal(model.get(x, y));
 
 						ft.show(((Activity) getContext()).getFragmentManager(), "dialog");
 					}

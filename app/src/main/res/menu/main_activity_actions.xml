@@ -45,7 +45,4 @@
     <item android:id="@+id/action_wallpaper"
           android:title="@string/action_wallpaper"
         />
-    <item android:id="@+id/action_testing"
-          android:title="TESTING"
-        />
 </menu>

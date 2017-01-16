@@ -113,9 +113,8 @@ public class ParameterActivity extends Activity implements EditableDialogFragmen
 
 					// and reopen dialog.
 					EditableDialogFragment ft = EditableDialogFragment.newInstance(
-							resourceCode, "Error in Expression!", false, EditableDialogFragment.Type.Name);
-
-					ft.getArguments().putString("arguments", (String) o);
+							resourceCode, "Error in Expression!", false,
+							EditableDialogFragment.Type.Name).setInitVal(o);
 
 					ft.show(getFragmentManager(), "dialog");
 				}
@@ -207,7 +206,6 @@ public class ParameterActivity extends Activity implements EditableDialogFragmen
 		builder.show();
 	}
 
-
 	@Override
 	public void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
@@ -250,13 +248,15 @@ public class ParameterActivity extends Activity implements EditableDialogFragmen
                 } return;*/
 					case Scale: {
 						EditableDialogFragment ft = EditableDialogFragment.newInstance(
-								position, "Edit Scale", false, EditableDialogFragment.Type.Scale);
+								position, "Edit Scale", false, EditableDialogFragment.Type.Scale)
+								.setInitVal(fb.scale());
 
 						ft.show(getFragmentManager(), "dialog");
 					} return;
 					case Expr: {
 						EditableDialogFragment ft = EditableDialogFragment.newInstance(
-								position, "Edit Expression", false, EditableDialogFragment.Type.Name);
+								position, "Edit Expression", false, EditableDialogFragment.Type.Name)
+								.setInitVal(fb.get(p.a).b);
 
 						ft.show(getFragmentManager(), "dialog");
 					} return;
@@ -272,27 +272,31 @@ public class ParameterActivity extends Activity implements EditableDialogFragmen
 					}
 					case Int: {
 						EditableDialogFragment ft = EditableDialogFragment.newInstance(
-								position, "Edit Integer Value", false, EditableDialogFragment.Type.Int);
+								position, "Edit Integer Value", false, EditableDialogFragment.Type.Int)
+								.setInitVal(fb.get(p.a).b);
 
 						ft.show(getFragmentManager(), "dialog");
 					} return;
 					case Real: {
 						EditableDialogFragment ft = EditableDialogFragment.newInstance(
-								position, "Edit Real Value", false, EditableDialogFragment.Type.Real);
+								position, "Edit Real Value", false, EditableDialogFragment.Type.Real)
+								.setInitVal(fb.get(p.a).b);
 
 						ft.show(getFragmentManager(), "dialog");
 					}
 					return;
 					case Cplx: {
 						EditableDialogFragment ft = EditableDialogFragment.newInstance(
-								position, "Edit Complex Value", false, EditableDialogFragment.Type.Cplx);
+								position, "Edit Complex Value", false, EditableDialogFragment.Type.Cplx)
+								.setInitVal(fb.get(p.a).b);
 
 						ft.show(getFragmentManager(), "dialog");
 					}
 					return;
 					case Color: {
 						EditableDialogFragment ft = EditableDialogFragment.newInstance(
-								position, "Edit Color", false, EditableDialogFragment.Type.Color);
+								position, "Edit Color", false, EditableDialogFragment.Type.Color)
+								.setInitVal(fb.get(p.a).b);
 
 						ft.show(getFragmentManager(), "dialog");
 					}

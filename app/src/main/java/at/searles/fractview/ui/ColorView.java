@@ -63,6 +63,18 @@ public class ColorView extends View {
 	}
 
 	/**
+	 * We need to avoid that a change in color changes the text which in change will
+	 * change the color.
+	 */
+	static abstract class MixedListener implements TextWatcher, ColorView.ColorListener {
+		@Override
+		public void beforeTextChanged(CharSequence s, int start, int count, int after) {}
+
+		@Override
+		public void onTextChanged(CharSequence s, int start, int before, int count) {}
+	}
+
+	/**
 	 * The following method initializes the listeners of the colorview. Better to put this one
 	 * into a viewgroup. It is static so that there is no reference to the Actitivy.
 	 * @param webcolorEditor
@@ -71,17 +83,13 @@ public class ColorView extends View {
 
 		if(listener != null) throw new IllegalArgumentException("there can be only one listener");
 
-		webcolorEditor.addTextChangedListener(new TextWatcher() {
-			@Override
-			public void beforeTextChanged(CharSequence s, int start, int before, int count) {
-			}
-
-			@Override
-			public void onTextChanged(CharSequence s, int start, int before, int count) {
-			}
+		MixedListener l = new MixedListener() {
+			boolean avoidTextCallback = false;
 
 			@Override
 			public void afterTextChanged(Editable s) {
+				if(avoidTextCallback) return;
+
 				String cs = s.toString().trim();
 
 				try {
@@ -93,16 +101,20 @@ public class ColorView extends View {
 					// fixme bug in android - really annoying one, makes
 					// me wonder about the quality of google'string android
 					// code...
+					Log.e("CV", "Yes, the android bug that causes an error when parsing a color is still there");
 				}
 			}
-		});
 
-		setListener(new ColorView.ColorListener() {
 			@Override
 			public void onColorChanged(int color) {
+				avoidTextCallback = true;
 				webcolorEditor.setText(Colors.toColorString(color));
+				avoidTextCallback = false;
 			}
-		});
+		};
+
+		webcolorEditor.addTextChangedListener(l);
+		setListener(l);
 	}
 
 
@@ -111,7 +123,7 @@ public class ColorView extends View {
 	protected void onMeasure(int widthMeasureSpec, int heightMeasureSpec) {
 		// thanks to http://stackoverflow.com/questions/12266899/onmeasure-custom-view-explanation
 
-		// fixme constraints: right brightness bar must have dotRad on top and
+		// todo constraints: right brightness bar must have dotRad on top and
 		// bottom for the rectangle.
 
 		// height of cube is 2*base + 2*dotRad
@@ -237,6 +249,7 @@ public class ColorView extends View {
 
 
 	private void updateBarSelection(float y) {
+		Log.d("CV", "calling update bar selection with " + y);
 		float d = 1f - (bar.y0 - y) / (bar.y0 - bar.y1);
 
 		// clamp.
@@ -349,6 +362,8 @@ public class ColorView extends View {
 	}
 
 	public void setColor(int color) {
+		Log.d("CV", "Setting color to " + color);
+
 		// we do not call the listener here.
 		this.color = color;
 		setBackgroundColor(this.color);
@@ -358,6 +373,7 @@ public class ColorView extends View {
 
 		// warning: l may be NaN
 		if(!Float.isNaN(l)) {
+			// FIXME is the problem of chaning brightness levels here?
 			this.brightness = l;
 			cube.updateGradients();
 		}

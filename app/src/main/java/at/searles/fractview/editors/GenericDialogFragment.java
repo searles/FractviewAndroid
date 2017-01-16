@@ -13,8 +13,7 @@ public class GenericDialogFragment extends DialogFragment {
     public static Bundle createBundle(
             int requestCode,
             boolean callFragment,
-            String title
-            ) {
+            String title) {
         Bundle b = new Bundle();
         b.putInt("request_code", requestCode);
         b.putBoolean("call_fragment", callFragment);

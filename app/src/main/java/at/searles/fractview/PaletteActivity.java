@@ -117,22 +117,23 @@ public class PaletteActivity extends Activity implements EditableDialogFragment.
 		// Handle presses on the action bar items
 		switch (item.getItemId()) {
 			case R.id.action_load_palette: {
+				// the fragment needs the name of the prefs as an argument.
+
 				EditableDialogFragment ft = EditableDialogFragment.newInstance(
 						LOAD_PALETTE, "Load Palette", false,
 						EditableDialogFragment.Type.LoadSharedPref);
 
-				// the fragment needs the name of the prefs as an argument.
-				ft.getArguments().putString("prefs_name", PaletteActivity.PREFS_NAME);
-
 				ft.show(getFragmentManager(), "dialog");
+				ft.getArguments().putString("prefs_name", PaletteActivity.PREFS_NAME);
 			} return true;
 			case R.id.action_save_palette: {
-				EditableDialogFragment ft = EditableDialogFragment.newInstance(SAVE_PALETTE, "Save Palette", false, EditableDialogFragment.Type.SaveSharedPref);
+				EditableDialogFragment ft = EditableDialogFragment.newInstance(SAVE_PALETTE,
+						"Save Palette", false, EditableDialogFragment.Type.SaveSharedPref);
+
+				ft.show(getFragmentManager(), "dialog");
 
 				// the fragment needs the name of the prefs as an argument.
 				ft.getArguments().putString("prefs_name", PaletteActivity.PREFS_NAME);
-
-				ft.show(getFragmentManager(), "dialog");
 			} return true;
 			default:
 				return super.onOptionsItemSelected(item);

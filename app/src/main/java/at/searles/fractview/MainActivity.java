@@ -330,7 +330,8 @@ public class MainActivity extends Activity
 			case R.id.action_size: {
 				// change size of the image
 				EditableDialogFragment ft = EditableDialogFragment.newInstance(IMAGE_SIZE,
-						"Change Image Size", false, EditableDialogFragment.Type.ImageSize);
+						"Change Image Size", false, EditableDialogFragment.Type.ImageSize)
+						.setInitVal(new int[]{ bitmapFragment.width(), bitmapFragment.height() });
 
 				ft.show(getFragmentManager(), "dialog");
 			} return true;
