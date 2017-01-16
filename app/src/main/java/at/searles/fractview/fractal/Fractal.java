@@ -423,6 +423,8 @@ public class Fractal implements Parcelable {
 
 				Parameters p = new Parameters();
 
+				// FIXME!!
+
 				if(ints != null) {
 					for(Iterator<String> i = ints.keys(); i.hasNext(); ) {
 						String id = i.next();
@@ -440,7 +442,7 @@ public class Fractal implements Parcelable {
 				if(cplxs != null) {
 					for(Iterator<String> i = cplxs.keys(); i.hasNext(); ) {
 						String id = i.next();
-						p.add(id, Type.Cplx, cplxs.get(id));
+						p.add(id, Type.Cplx, Adapters.cplxAdapter.fromJSON(cplxs.get(id)));
 					}
 				}
 
@@ -468,7 +470,7 @@ public class Fractal implements Parcelable {
 				if(palettes != null) {
 					for(Iterator<String> i = palettes.keys(); i.hasNext(); ) {
 						String id = i.next();
-						p.add(id, Type.Palette, palettes.get(id));
+						p.add(id, Type.Palette, Adapters.paletteAdapter.fromJSON(palettes.get(id)));
 					}
 				}
 

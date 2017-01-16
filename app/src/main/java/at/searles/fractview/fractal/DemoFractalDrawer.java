@@ -14,9 +14,9 @@ public class DemoFractalDrawer implements FractalDrawer {
 
     // FIXME Structure: The controller can be some activity or a fragment.
 
-    Controller controller;
-    int progress;
-    int maxProgress;
+    private Controller controller;
+    private int progress;
+    private int maxProgress;
 
     public DemoFractalDrawer(Controller controller) {
         this.controller = controller;

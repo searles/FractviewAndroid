@@ -3,22 +3,16 @@ package at.searles.fractview;
 import android.Manifest;
 import android.annotation.SuppressLint;
 import android.app.Activity;
-import android.app.AlertDialog;
-import android.app.DialogFragment;
-import android.app.Fragment;
 import android.app.FragmentManager;
 import android.app.FragmentTransaction;
-import android.app.WallpaperManager;
 import android.content.ClipData;
 import android.content.ClipboardManager;
 import android.content.Context;
-import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
 import android.graphics.Bitmap;
 import android.graphics.Point;
-import android.net.Uri;
 import android.os.Bundle;
 import android.os.Environment;
 import android.os.Handler;
@@ -31,9 +25,6 @@ import android.view.MenuInflater;
 import android.view.MenuItem;
 import android.view.View;
 import android.view.WindowManager;
-import android.widget.Button;
-import android.widget.CheckBox;
-import android.widget.EditText;
 import android.widget.ProgressBar;
 import android.widget.Toast;
 
@@ -44,24 +35,19 @@ import org.json.JSONObject;
 import java.io.File;
 import java.io.IOException;
 
+import at.searles.fractview.editors.EditableDialogFragment;
 import at.searles.fractview.fractal.FavoriteEntry;
 import at.searles.fractview.fractal.Fractal;
 import at.searles.fractview.fractal.PresetFractals;
-import at.searles.fractview.ui.FavoritesActivity;
-import at.searles.fractview.ui.MyAlertDialogFragment;
-import at.searles.fractview.ui.ParameterActivity;
-import at.searles.fractview.ui.PresetsActivity;
 import at.searles.fractview.ui.ScaleableImageView;
-import at.searles.fractview.ui.MyProgressDialogFragment;
 import at.searles.meelan.CompileException;
 
 
 // Activity is the glue between BitmapFragment and Views.
 public class MainActivity extends Activity
 		implements ActivityCompat.OnRequestPermissionsResultCallback,
-		MyAlertDialogFragment.DialogHandler,
 		BitmapFragment.UpdateListener,
-		MyProgressDialogFragment.DialogHandler {
+		EditableDialogFragment.Callback {
 
     //public static final int ALPHA_PREFERENCES = 0xaa000000;
 
@@ -71,25 +57,16 @@ public class MainActivity extends Activity
 	public static final int PRESETS_ACTIVITY_RETURN = 102;
 	public static final int BOOKMARK_ACTIVITY_RETURN = 103;
 
-	public static final int IMAGE_PERMISSIONS = 104;
-	public static final int WALLPAPER_PERMISSIONS = 105;
-
 	public static final long PROGRESS_UPDATE_MILLIS = 500; // update the progress bar every ... ms.
 
 	ScaleableImageView imageView; // fixme don't forget to change size of this one.
 	ProgressBar progressBar;
 
     BitmapFragment bitmapFragment;
-	BitmapFragment.UpdateListener bitmapFragmentCallback;
 
 	SharedPreferences prefs;
 
 	FragmentManager fm;
-
-	@Override
-	public void onSkip(DialogInterface dialog, int id) {
-
-	}
 
 	//int backgroundColor;
     //int textColor;
@@ -239,7 +216,7 @@ public class MainActivity extends Activity
 			bundle.putInt("width", w); // Bundle because that is what I get in onCreate.
 			bundle.putInt("height", h);
 
-			String sourceCode = null;
+			String sourceCode;
 
 			try {
 				sourceCode = PresetFractals.readSourcecode(this, "Default.fv");
@@ -264,6 +241,7 @@ public class MainActivity extends Activity
 
 		// now we have a valid bitmap fragment, but careful! it is not yet initialized.
 		imageView.setBitmapFragment(bitmapFragment);
+
 		updateAction.schedule(); // start progress if necessary
 	}
 
@@ -276,6 +254,8 @@ public class MainActivity extends Activity
 
 	@Override
 	public void onSaveInstanceState(@NotNull Bundle savedInstanceState) {
+		Log.d("MA", "on save instance called in MA");
+
 		// FIXME make sure that fractal is compilable!
 		bitmapFragment.getArguments().putParcelable("fractal", bitmapFragment.fractal());
 
@@ -299,17 +279,32 @@ public class MainActivity extends Activity
 		// Inflate the menu items for use in the action bar
 		MenuInflater inflater = getMenuInflater();
 		inflater.inflate(R.menu.main_activity_actions, menu);
+
+		// set the grid flag.
+		MenuItem gridMenu = menu.findItem(R.id.action_show_grid);
+		gridMenu.setChecked(imageView.getShowGrid());
+
 		return super.onCreateOptionsMenu(menu);
 	}
+
+	public static final int IMAGE_PERMISSIONS_SHARE = 104;
+	public static final int IMAGE_PERMISSIONS_SAVE = 105;
+	public static final int WALLPAPER_PERMISSIONS = 106;
+
 
 	//FIXME Override in API 23
 	@SuppressLint("Override")
 	public void onRequestPermissionsResult(int requestCode,
 										   @NotNull String permissions[], @NotNull int[] grantResults) {
 		switch (requestCode) {
-			case IMAGE_PERMISSIONS: {
+			case IMAGE_PERMISSIONS_SAVE:
+			case IMAGE_PERMISSIONS_SHARE: {
 				if(grantResults[0] == PackageManager.PERMISSION_GRANTED && grantResults[1] == PackageManager.PERMISSION_GRANTED) {
-					shareImage();
+					if(requestCode == IMAGE_PERMISSIONS_SAVE) {
+						saveImage();
+					} else {
+						bitmapFragment.shareImage();
+					}
 				} else {
 					Toast.makeText(this, "Cannot share/save images without " +
 							"read or write permissions.", Toast.LENGTH_LONG).show();
@@ -318,7 +313,7 @@ public class MainActivity extends Activity
 
 			case WALLPAPER_PERMISSIONS: {
 				if(grantResults[0] == PackageManager.PERMISSION_GRANTED) {
-					setImageAsWallpaper();
+					bitmapFragment.setAsWallpaper();
 				} else {
 					Toast.makeText(this, "Cannot set image as wallpaper without " +
 							"permissions.", Toast.LENGTH_LONG).show();
@@ -328,24 +323,23 @@ public class MainActivity extends Activity
 	}
 
 
-
 	@Override
     public boolean onOptionsItemSelected(MenuItem item) {
         // Handle presses on the action bar items
         switch (item.getItemId()) {
 			case R.id.action_size: {
 				// change size of the image
-				MyAlertDialogFragment.newInstance(
-						"Add Favorite",
-						R.layout.image_size_editor,
-						IMAGE_SIZE).showDialog(this);
+				EditableDialogFragment ft = EditableDialogFragment.newInstance(IMAGE_SIZE,
+						"Change Image Size", false, EditableDialogFragment.Type.ImageSize);
+
+				ft.show(getFragmentManager(), "dialog");
 			} return true;
 
 			case R.id.action_add_favorite: {
-				MyAlertDialogFragment.newInstance(
-						"Add Favorite",
-						R.layout.add_favorite_layout,
-						ADD_FAVORITE).showDialog(this);
+				EditableDialogFragment ft = EditableDialogFragment.newInstance(ADD_FAVORITE,
+						"Add Favorite", false, EditableDialogFragment.Type.Name);
+
+				ft.show(getFragmentManager(), "dialog");
 			} return true;
 
 			case R.id.action_parameters: {
@@ -405,147 +399,116 @@ public class MainActivity extends Activity
 				imageView.setShowGrid(checked);
 			} return true;
 
+			case R.id.action_wallpaper: {
+				int wallpaperPermission = ContextCompat.checkSelfPermission(this, Manifest.permission.SET_WALLPAPER);
+
+				if(wallpaperPermission != PackageManager.PERMISSION_GRANTED) {
+					ActivityCompat.requestPermissions(this,
+							new String[]{
+									Manifest.permission.SET_WALLPAPER
+							}, WALLPAPER_PERMISSIONS);
+				} else {
+					bitmapFragment.setAsWallpaper();
+				}
+			} return true;
+
 			case R.id.action_share: {
 				// save/share image
-				if(bitmapFragment.isRunning()) {
-					waitForImageAction(SHARE_IMAGE);
+				int readPermission = ContextCompat.checkSelfPermission(this, Manifest.permission.READ_EXTERNAL_STORAGE);
+				int writePermission = ContextCompat.checkSelfPermission(this, Manifest.permission.WRITE_EXTERNAL_STORAGE);
+
+				if(readPermission != PackageManager.PERMISSION_GRANTED || writePermission != PackageManager.PERMISSION_GRANTED) {
+					// I am anyways showing a Toast that I can't write if I can't write.
+					ActivityCompat.requestPermissions(this,
+							new String[]{
+									Manifest.permission.READ_EXTERNAL_STORAGE,
+									Manifest.permission.WRITE_EXTERNAL_STORAGE
+							}, IMAGE_PERMISSIONS_SHARE);
 				} else {
-					shareImage();
+					bitmapFragment.shareImage();
 				}
 			} return true;
 
-			case R.id.action_set_wallpaper: {
-				if(bitmapFragment.isRunning()) {
-					waitForImageAction(SET_IMAGE_AS_WALLPAPER);
-				} else {
-					setImageAsWallpaper();
-				}
-			} return true;
+			case R.id.action_save: {
+				int readPermission = ContextCompat.checkSelfPermission(this, Manifest.permission.READ_EXTERNAL_STORAGE);
+				int writePermission = ContextCompat.checkSelfPermission(this, Manifest.permission.WRITE_EXTERNAL_STORAGE);
 
-			case R.id.action_save_image: {
-				if(bitmapFragment.isRunning()) {
-					waitForImageAction(SAVE_IMAGE_EXTERN);
+				if(readPermission != PackageManager.PERMISSION_GRANTED || writePermission != PackageManager.PERMISSION_GRANTED) {
+					// I am anyways showing a Toast that I can't write if I can't write.
+					ActivityCompat.requestPermissions(this,
+							new String[]{
+									Manifest.permission.READ_EXTERNAL_STORAGE,
+									Manifest.permission.WRITE_EXTERNAL_STORAGE
+							}, IMAGE_PERMISSIONS_SAVE);
 				} else {
 					saveImage();
 				}
 			} return true;
-
+			/*case R.id.action_testing: {
+				EditableDialogFragment ft = EditableDialogFragment.newInstance(1, "testing 1", false, EditableDialogFragment.Type.Int);
+				ft.show(getFragmentManager(), "dialog");
+				//ProgressDialogFragment ft = ProgressDialogFragment.newInstance(1, false, "testing", "bla", false);
+				//ft.show(getFragmentManager(), "dialog");
+			} return true;*/
             default:
                 return super.onOptionsItemSelected(item);
         }
     }
 
-	// Labels for myalertdialogfragment
-	private static final String ADD_FAVORITE = "add_favorite";
-	private static final String IMAGE_SIZE = "image_size";
-	private static final String SAVE_IMAGE = "save_image";
-
-	@Override
-	public void initDialogView(String labelId, View view) {
-		switch (labelId) {
-			case ADD_FAVORITE: {
-				// do nothing.
+	/*@Override
+	public void initValueRequest(int requestCode, EditableDialogFragment fragment, View view) {
+		switch(requestCode) {
+			case 1: {
+				fragment.setValue(12, view);
 			} break;
-			case IMAGE_SIZE: {
-				// insert current size
-				EditText widthView = (EditText) view.findViewById(R.id.widthEditText);
-				widthView.setText(Integer.toString(bitmapFragment.width()));
-
-				EditText heightView = (EditText) view.findViewById(R.id.heightEditText);
-				heightView.setText(Integer.toString(bitmapFragment.height()));
-
-				// listener to button
-				Button resetButton = (Button) view.findViewById(R.id.resetSizeButton);
-
-				resetButton.setOnClickListener(view1 -> {
-                    SharedPreferences prefs1 =
-							PreferenceManager.getDefaultSharedPreferences(view1.getContext());
-
-                    Point dim = new Point();
-
-                    dim.set(prefs1.getInt("width", -1), prefs1.getInt("height", -1));
-
-                    if(dim.x <= 0 || dim.y <= 0) {
-                        dim = MainActivity.screenDimensions(view1.getContext());
-                    }
-
-                    widthView.setText(Integer.toString(dim.x));
-                    heightView.setText(Integer.toString(dim.y));
-                });
-
+			case 2: {
+				fragment.setValue(24, view);
 			} break;
 			default:
-				throw new IllegalArgumentException("Did not expect this label: " + labelId);
+				throw new IllegalArgumentException("bad request code: " + requestCode);
 		}
+	}*/
+
+	private void saveImage() {
+		EditableDialogFragment.newInstance(SAVE_IMAGE,
+				"Enter filename", false, EditableDialogFragment.Type.Name)
+				.show(getFragmentManager(), "dialog");
 	}
 
+	// Labels for EditableDialogFragment
+	private static final int ADD_FAVORITE = 1; // dialog to enter a name for a favorite
+	private static final int IMAGE_SIZE = 2; // dialog to change image resolution
+	private static final int SAVE_IMAGE = 3; // dialog to save the image
+
 	@Override
-	public boolean applyDialogView(String labelId, View view) {
-		switch (labelId) {
+	public void apply(int resourceCode, Object o) {
+		switch (resourceCode) {
 			case ADD_FAVORITE: {
-				String name = ((EditText) view.findViewById(R.id.editText)).getText().toString();
-				return saveFavorite(name); // returns false if the name is invalid
-			}
+				saveFavorite((String) o);
+			} break;
 			case IMAGE_SIZE: {
 				// it requires amazingly much code to simply
 				// check whether a string contains a parseable
 				// positive integer...
-				EditText widthView = (EditText) view.findViewById(R.id.widthEditText);
-				String sWidth = widthView.getText().toString();
+				int[] retVal = (int[]) o;
 
-				EditText heightView = (EditText) view.findViewById(R.id.heightEditText);
-				String sHeight = heightView.getText().toString();
-
-				boolean setAsDefault = ((CheckBox) view.findViewById(R.id.defaultCheckBox)).isChecked();
-
-				int w, h;
-
-				try {
-					w = Integer.parseInt(sWidth);
-				} catch(NumberFormatException e) {
-					// FIXME add focus to edittext.
-					Toast.makeText(this, "invalid width", Toast.LENGTH_LONG).show();
-					return false;
-				}
-
-				try {
-					h = Integer.parseInt(sHeight);
-				} catch(NumberFormatException e) {
-					// FIXME add focus to edittext.
-					Toast.makeText(this, "invalid height", Toast.LENGTH_LONG).show();
-					return false;
-				}
-
-				if(w < 1) {
-					Toast.makeText(this, "width must be >= 1", Toast.LENGTH_LONG).show();
-					return false;
-				}
-
-				if(h < 1) {
-					Toast.makeText(this, "height must be >= 1", Toast.LENGTH_LONG).show();
-					return false;
-				}
+				int w = retVal[0], h = retVal[1];
+				boolean setAsDefault = retVal[2] == 1;
 
 				if(w == bitmapFragment.width() && h == bitmapFragment.height()) {
 					Toast.makeText(this, "size not changed", Toast.LENGTH_SHORT).show();
 
 					if(setAsDefault) storeDefaultSize(w, h);
-
-					return true;
+				} else {
+					// call editor
+					bitmapFragment.setSize(w, h, setAsDefault);
 				}
-
-				// call editor
-				bitmapFragment.setSize(w, h, setAsDefault);
-				return true;
-			}
-
+			} break;
 			case SAVE_IMAGE: {
-				EditText editText = (EditText) view.findViewById(R.id.editText);
-				String filename = editText.getText().toString();
+				String filename = (String) o;
 
 				if(filename.isEmpty()) {
-					Toast.makeText(this, "Filename must not be empty", Toast.LENGTH_LONG).show();
-					return false;
+					Toast.makeText(this, "Error: Filename must not be empty.", Toast.LENGTH_LONG).show();
 				}
 
 				File directory = new File(
@@ -557,7 +520,7 @@ public class MainActivity extends Activity
 				if(!directory.exists()) {
 					Log.d("MA", "Creating directory");
 					if(!directory.mkdir()) {
-						Toast.makeText(MainActivity.this, "Could not create directory (maybe permission denied?)",
+						Toast.makeText(this, "Error: Could not create directory.",
 								Toast.LENGTH_LONG).show();
 					}
 				}
@@ -570,19 +533,22 @@ public class MainActivity extends Activity
 
 					if(!imageFile.exists()) {
 						// Saving is done in the following background thread
-						bitmapFragment.saveImageInBackground(imageFile, -1);
+						bitmapFragment.saveImage(imageFile);
+						return;
 					}
 				}
+
+				// unreachable code.
 			}
 			default:
-				throw new IllegalArgumentException("Did not expect this label: " + labelId);
+				throw new IllegalArgumentException("Did not expect this: " + resourceCode);
 		}
 	}
 
-	boolean saveFavorite(String name) {
+	void saveFavorite(String name) {
 		if(name.isEmpty()) {
 			Toast.makeText(MainActivity.this, "Name must not be empty", Toast.LENGTH_LONG).show();
-			return false;
+			return;
 		}
 
 		// Fetch icon from bitmap fragment
@@ -609,11 +575,9 @@ public class MainActivity extends Activity
 			editor.apply();
 
 			Toast.makeText(MainActivity.this, "Added " + name, Toast.LENGTH_SHORT).show();
-			return true;
 		} catch (JSONException e) {
 			e.printStackTrace();
 			Toast.makeText(MainActivity.this, "Error storing favorite: " + e.getLocalizedMessage(), Toast.LENGTH_LONG).show();
-			return false;
 		}
 	}
 
@@ -625,7 +589,12 @@ public class MainActivity extends Activity
 
 			// yay, success
 
-			bitmapFragment.edit(() -> bitmapFragment.setFractal(newFractal));
+			bitmapFragment.edit(new Runnable() {
+				@Override
+				public void run() {
+					bitmapFragment.setFractal(newFractal);
+				}
+			});
 		} catch(CompileException e) {
 			e.printStackTrace();
 			Toast.makeText(this, e.getMessage(), Toast.LENGTH_LONG).show();
@@ -673,12 +642,15 @@ public class MainActivity extends Activity
 			warnedAboutHistoryEmpty = false; // reset here.
 
 			// fixme shouldn't history be in here? Problem is that I would have to preserve it...
-			bitmapFragment.edit(() -> {
-                if(!bitmapFragment.historyIsEmpty()) {
-                    // to avoid race condition
-                    bitmapFragment.historyBack();
-                }
-            });
+			bitmapFragment.edit(new Runnable() {
+				@Override
+				public void run() {
+					if(!bitmapFragment.historyIsEmpty()) {
+						// to avoid race condition
+						bitmapFragment.historyBack();
+					}
+				}
+			});
 
 			return true;
 		}
@@ -771,119 +743,7 @@ public class MainActivity extends Activity
     }*/
 
 
-	// ==================================================================
-	// ================= Save/Share/Set as Wallpaper ====================
-	// ==================================================================
 
-	private static final int SAVE_IMAGE_EXTERN = 1;
-	private static final int SHARE_IMAGE = 2;
-	private static final int SET_IMAGE_AS_WALLPAPER = 3;
-
-	void waitForImageAction(int actionId) {
-		// if bitmap fragment is not yet done
-		if(bitmapFragment.isRunning()) {
-			// show dialog to wait
-			MyProgressDialogFragment.newInstance(
-					"Image rendering not yet finished...",
-					"Skip to use the incompletely rendered image", true, true, actionId)
-					.showDialog(this, "wait_for_image");
-		} else {
-			// if not running, then save immediately
-			switch(actionId) {
-				case SAVE_IMAGE_EXTERN: {
-					saveImage();
-				} break;
-
-				case SHARE_IMAGE: {
-					shareImage();
-				} break;
-
-				case SET_IMAGE_AS_WALLPAPER: {
-					setImageAsWallpaper();
-				} break;
-
-			}
-		}
-	}
-
-	void saveImage() {
-		// create alert dialog with edittext
-		MyAlertDialogFragment.newInstance("Enter filename",
-				R.layout.string_editor, "save_image"
-		).showDialog(this);
-	}
-
-	public void shareImage() {
-		try {
-			File imageFile = File.createTempFile("fractview", "png", getExternalCacheDir());
-			bitmapFragment.saveImageInBackground(imageFile, SHARE_IMAGE);
-		} catch (IOException e) {
-			Toast.makeText(this, e.getMessage(), Toast.LENGTH_LONG).show();
-		}
-
-		// the rest is in imageSaved.
-
-		/*int readPermission = ContextCompat.checkSelfPermission(this, Manifest.permission.READ_EXTERNAL_STORAGE);
-		int writePermission = ContextCompat.checkSelfPermission(this, Manifest.permission.WRITE_EXTERNAL_STORAGE);
-
-		if(readPermission != PackageManager.PERMISSION_GRANTED || writePermission != PackageManager.PERMISSION_GRANTED) {
-			// I am anyways showing a Toast that I can't write if I can't write.
-			ActivityCompat.requestPermissions(this,
-					new String[]{
-							Manifest.permission.READ_EXTERNAL_STORAGE,
-							Manifest.permission.WRITE_EXTERNAL_STORAGE
-					}, IMAGE_PERMISSIONS);
-		} else {
-			// shareAction(wallpaperPermission == PackageManager.PERMISSION_GRANTED);
-		}*/
-
-
-		/*
-							// do all the sharing part
-					// this is executed after saving was successful
-					// Add it to the gallery
-					Intent mediaScanIntent = new Intent(Intent.ACTION_MEDIA_SCANNER_SCAN_FILE);
-					Uri contentUri = Uri.fromFile(imageFile);
-					mediaScanIntent.setData(contentUri);
-					getActivity().sendBroadcast(mediaScanIntent);
-
-					// If share is selected share it
-					if(share) {
-						Intent share = new Intent(Intent.ACTION_SEND);
-						share.setType("image/png");
-						share.putExtra(Intent.EXTRA_STREAM, contentUri);
-						startActivity(Intent.createChooser(share, "Share Image"));
-					}
-
-					// If wallpaper is selected, set as wallpaper
-					if(setAsWallpaper) {
-					}
-
-		 */
-	}
-
-	public void setImageAsWallpaper() {
-		int wallpaperPermission = ContextCompat.checkSelfPermission(this, Manifest.permission.SET_WALLPAPER);
-
-		if(wallpaperPermission != PackageManager.PERMISSION_GRANTED) {
-			ActivityCompat.requestPermissions(this,
-					new String[]{
-							Manifest.permission.SET_WALLPAPER
-					}, IMAGE_PERMISSIONS);
-		} else {
-			WallpaperManager wallpaperManager = WallpaperManager.getInstance(this);
-			try {
-				// FIXME
-				//FIXME
-				throw new IOException("not yet implemented!");
-				//wallpaperManager.setBitmap(getBitmap());
-			} catch (IOException e) {
-				Toast.makeText(this, e.getLocalizedMessage(),
-						Toast.LENGTH_LONG).show();
-				// could not set it as wallpaper
-			}
-		}
-	}
 
 	// =============================================================================
 	// =========== Callbacks from Bitmap Fragment ==================================
@@ -893,7 +753,7 @@ public class MainActivity extends Activity
 	// FIXME some argument as parameter.
 
 	@Override
-	public void previewGenerated() {
+	public void previewGenerated(BitmapFragment source) {
 		// can be called from outside the UI-thread!
 		Log.d("MA", "preview generated");
 		imageView.removeLastScale();
@@ -901,75 +761,30 @@ public class MainActivity extends Activity
 	}
 
 	@Override
-	public void bitmapUpdated() {
+	public void bitmapUpdated(BitmapFragment source) {
 		// can be called from outside the UI-thread!
 		// Log.d("MA", "bitmap updated");
 		imageView.invalidate();
 	}
 
 	@Override
-	public void calculationStarting() {
+	public void calculationStarting(BitmapFragment source) {
 		// this is already called from the ui-thread.
 		// we now start a handler that will update the progress every 25 ms and show it
 		// in the progress bar.
 		startProgressUpdates();
 	}
 
-	/**
-	 * This is mainly used to see whether there is a progress dialog with a certain
-	 * tag. This indicates that there is some task pending. For instance if someone
-	 * saves an image but wants to wait until the rendering is finished. Using
-	 * fragments means that this one is safe to use even when the activity is
-	 * destroyed eg due to rotation.
-	 * @param tag
-	 * @return
-	 */
-	private boolean fetchAndDismissDialogFragment(String tag) {
-		Fragment dialog = getFragmentManager().findFragmentByTag(tag);
-		if(dialog != null) {
-			((DialogFragment) dialog).dismiss();
-			return true;
-		} else {
-			return false;
-		}
+	@Override
+	public void calculationFinished(final long ms, BitmapFragment source) {
+		Toast.makeText(MainActivity.this,
+				getString(R.string.label_calc_finished, ms), Toast.LENGTH_SHORT).show();
 	}
 
 	@Override
-	public void calculationFinished(final long ms) {
-		Toast.makeText(MainActivity.this, getString(R.string.label_calc_finished, ms), Toast.LENGTH_SHORT).show();
-
-		if(fetchAndDismissDialogFragment("wait_for_save")) {
-			saveImage(); // but which mode?
-		} else if(fetchAndDismissDialogFragment("wait_for_share")) {
-			shareImage();
-		} else if(fetchAndDismissDialogFragment("wait_for_wallpaper")) {
-			setImageAsWallpaper();
-		}
-	}
-
-	@Override
-	public void newBitmapCreated(Bitmap bitmap) {
+	public void newBitmapCreated(Bitmap bitmap, BitmapFragment source) {
 		Log.d("MA", "received newBitmapCreated");
 		imageView.setImageBitmap(bitmap);
 		imageView.requestLayout();
 	}
-
-	@Override
-	public void imageSaved(File file, int id) {
-		// FIXME
-		// FIXME
-		if(id == SAVE_IMAGE_EXTERN) {
-			// do nothing
-		} else if(id == SHARE_IMAGE) {
-			Uri contentUri = Uri.fromFile(file);
-			Intent share = new Intent(Intent.ACTION_SEND);
-			share.setType("image/png");
-			share.putExtra(Intent.EXTRA_STREAM, contentUri);
-			startActivity(Intent.createChooser(share, "Share Image"));
-		} else if(id == SET_IMAGE_AS_WALLPAPER) {
-
-		}
-	}
-
-
 }

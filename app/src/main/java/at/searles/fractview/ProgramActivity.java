@@ -1,9 +1,7 @@
-package at.searles.fractview.ui;
+package at.searles.fractview;
 
 import android.app.Activity;
-import android.content.Context;
 import android.content.Intent;
-import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.text.Editable;
 import android.text.TextWatcher;
@@ -14,18 +12,21 @@ import android.view.View;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.Toast;
-import at.searles.fractview.R;
-import at.searles.fractview.SaveLoadDeleteSharedPref;
+
+import at.searles.fractview.editors.EditableDialogFragment;
 import at.searles.fractview.fractal.Fractal;
 import at.searles.meelan.CompileException;
 import at.searles.parsing.ParsingError;
 
-public class ProgramActivity extends Activity {
+public class ProgramActivity extends Activity implements EditableDialogFragment.Callback {
 
 	public static final String PREFS_NAME = "SavedPrograms";
 	EditText editor;
 
 	String source; // if source is null, sth changed...
+
+	private static final int LOAD_PROGRAM = -1;
+	private static final int SAVE_PROGRAM = -2;
 
 	@Override
 	public void onCreate(Bundle savedInstanceState) {
@@ -103,7 +104,7 @@ public class ProgramActivity extends Activity {
 		// red background with 25% coverage
 		int bgColor = Color.argb(64, 255, 128, 128);
 		*/
-		int cursor = 0;
+		int cursor;
 
 		// there must have been an exception
 		if(compilerException != null) {
@@ -134,7 +135,7 @@ public class ProgramActivity extends Activity {
 			editor.setSelection(cursor, cursor);
 		}
 
-		// fixme next line needed?
+		// todo next line needed?
 		source = null;
 
 		return false;
@@ -151,19 +152,20 @@ public class ProgramActivity extends Activity {
 	@Override
 	public boolean onOptionsItemSelected(MenuItem item) {
 		// Handle presses on the action bar items
-		SharedPreferences sharedPrefs = getSharedPreferences(
-				PREFS_NAME, Context.MODE_PRIVATE);
 		switch (item.getItemId()) {
 			case R.id.action_load_program: {
-				SaveLoadDeleteSharedPref.openLoadDialog(this, sharedPrefs, "Load Program", new SaveLoadDeleteSharedPref.StringFn() {
-					@Override
-					public void apply(String key, SharedPreferences sharedPrefs) {
-						editor.setText(sharedPrefs.getString(key, ""));
-					}
-				});
+				EditableDialogFragment ft = EditableDialogFragment.newInstance(LOAD_PROGRAM,
+						"Load Program", false, EditableDialogFragment.Type.LoadSharedPref);
+				ft.getArguments().putString("prefs_name", PREFS_NAME);
+
+				ft.show(getFragmentManager(), "dialog");
 			} return true;
 			case R.id.action_save_program: {
-				SaveLoadDeleteSharedPref.openSaveDialog(this, sharedPrefs, "Save Program", editor.getText().toString());
+				EditableDialogFragment ft = EditableDialogFragment.newInstance(SAVE_PROGRAM,
+						"Save Program", false, EditableDialogFragment.Type.SaveSharedPref);
+				ft.getArguments().putString("prefs_name", PREFS_NAME);
+
+				ft.show(getFragmentManager(), "dialog");
 			} return true;
 			case R.id.action_compile: {
 				if(apply()) {
@@ -216,6 +218,23 @@ public class ProgramActivity extends Activity {
 			//}
 			default:
 				return super.onOptionsItemSelected(item);
+		}
+	}
+
+	@Override
+	public void apply(int requestCode, Object o) {
+		switch(requestCode) {
+			case SAVE_PROGRAM: {
+				String name = (String) o;
+				SharedPrefsHelper.saveToSharedPref(this, PREFS_NAME, name, source);
+			} break;
+			case LOAD_PROGRAM: {
+				String name = (String) o;
+				source = SharedPrefsHelper.loadFromSharedPref(this, PREFS_NAME, name);
+				editor.setText(source);
+			} break;
+			default:
+				throw new IllegalArgumentException("Bad call to apply, code: " + requestCode);
 		}
 	}
 }

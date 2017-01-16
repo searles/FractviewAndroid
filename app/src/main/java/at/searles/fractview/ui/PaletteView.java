@@ -13,7 +13,7 @@ import android.view.GestureDetector;
 import android.view.MotionEvent;
 import android.view.View;
 
-import at.searles.fractview.R;
+import at.searles.fractview.editors.EditableDialogFragment;
 import at.searles.math.color.Colors;
 
 public class PaletteView extends View {
@@ -126,7 +126,8 @@ public class PaletteView extends View {
 		padding = 12;
 		heightBox = bounds.height() * 5;
 		widthBox = bounds.width() + 4 * bounds.height();
-		headerWidth = heightBox; // heightbox is used as universal size
+		//noinspection SuspiciousNameCombination
+		headerWidth = heightBox; // heightBox is used as universal size
 
 		offsetX = headerWidth;
 		offsetY = heightBox;
@@ -151,12 +152,12 @@ public class PaletteView extends View {
 		if (heightMode == MeasureSpec.EXACTLY || heightMode == MeasureSpec.AT_MOST) {
 			height = MeasureSpec.getSize(heightMeasureSpec);
 		} else {
-			height = Math.max(3, model.h) * (heightBox + padding) + padding + heightBox;
+			height = Math.max(3, model.height()) * (heightBox + padding) + padding + heightBox;
 		}
 		if (widthMode == MeasureSpec.EXACTLY || widthMode == MeasureSpec.AT_MOST) {
 			width = MeasureSpec.getSize(widthMeasureSpec);
 		} else {
-			width = Math.max(3, model.w) * (widthBox + padding) + padding + headerWidth;
+			width = Math.max(3, model.width()) * (widthBox + padding) + padding + headerWidth;
 		}
 
 		//MUST CALL THIS
@@ -176,11 +177,11 @@ public class PaletteView extends View {
 	}
 
 	int totalWidth() {
-		return model.w * (widthBox + padding) + headerWidth + padding;
+		return model.width() * (widthBox + padding) + headerWidth + padding;
 	}
 
 	int totalHeight() {
-		return model.h * (heightBox + padding) + heightBox + padding;
+		return model.height() * (heightBox + padding) + heightBox + padding;
 	}
 
 	void getRect(int x, int y, Rect bounds) {
@@ -218,9 +219,9 @@ public class PaletteView extends View {
 	@Override
 	public void onDraw(Canvas canvas) {
 		// draw color buttons
-		for(int y = 0; y < model.h; ++y) {
+		for(int y = 0; y < model.height(); ++y) {
 			//boolean isSelected = selectedRows.contains(y);
-			for(int x = 0; x < model.w; ++x) {
+			for(int x = 0; x < model.width(); ++x) {
 				int color = model.get(x, y);
 
 				colorPaint.setColor(color);
@@ -240,14 +241,14 @@ public class PaletteView extends View {
 		}
 
 		// draw left first column
-		for(int y = 0; y < model.h; ++y) {
+		for(int y = 0; y < model.height(); ++y) {
 			getLeftHeaderRect(y, bounds);
 			canvas.drawRect(bounds.left, bounds.top, bounds.right - 3, bounds.bottom - 3, headerPaint1);
 			canvas.drawRect(bounds.left + 3, bounds.top + 3, bounds.right, bounds.bottom, headerPaint2);
 		}
 
 		// draw header top
-		for(int x = 0; x < model.w; ++x) {
+		for(int x = 0; x < model.width(); ++x) {
 			getTopHeaderRect(x, bounds);
 			canvas.drawRect(bounds.left, bounds.top, bounds.right - 3, bounds.bottom - 3, headerPaint1);
 			canvas.drawRect(bounds.left + 3, bounds.top + 3, bounds.right, bounds.bottom, headerPaint2);
@@ -309,7 +310,7 @@ public class PaletteView extends View {
 	void selectTablePart(final int index, final boolean isRow) {
 		// delete is only allowed if there is more than one element to be deleted
 		// move is not possible in these cases either
-		boolean hasDeleteMoveOption = (isRow && model.h > 1) || (!isRow && model.w > 1);
+		boolean hasDeleteMoveOption = (isRow && model.height() > 1) || (!isRow && model.width() > 1);
 
 		CharSequence options[];
 
@@ -350,13 +351,13 @@ public class PaletteView extends View {
 					}
 					break;
 					case 3: {// move ahead
-						if (isRow) model.moveRow(index, (index + model.h - 1) % model.h);
-						else model.moveColumn(index, (index + model.w - 1) % model.w);
+						if (isRow) model.moveRow(index, (index + model.height() - 1) % model.height());
+						else model.moveColumn(index, (index + model.width() - 1) % model.width());
 					}
 					break;
 					case 4: {// move behind
-						if (isRow) model.moveRow(index, (index + 1) % model.h);
-						else model.moveColumn(index, (index + 1) % model.w);
+						if (isRow) model.moveRow(index, (index + 1) % model.height());
+						else model.moveColumn(index, (index + 1) % model.width());
 					}
 					break;
 					default:
@@ -386,7 +387,7 @@ public class PaletteView extends View {
 				if(px <= headerWidth) {
 					// a row was selected.
 					final int y = (int) getY(py);
-					if(y >= 0 && y < model.h) {
+					if(y >= 0 && y < model.height()) {
 						selectTablePart(y, true);
 						/*if(selectedRows.contains(y)) {
 							selectedRows.remove(y);
@@ -399,7 +400,7 @@ public class PaletteView extends View {
 				} else if(py <= heightBox) {
 					// a column was selected
 					final int x = (int) getX(px);
-					if(x >= 0 && x < model.w) {
+					if(x >= 0 && x < model.width()) {
 						/*if(selectedColumns.contains(x)) {
 							selectedColumns.remove(x);
 						} else {
@@ -413,11 +414,15 @@ public class PaletteView extends View {
 					final int x = (int) getX(px);
 					final int y = (int) getY(py);
 
-					if(x >= 0 && x < model.w && y >= 0 && y < model.h) {
+					if(x >= 0 && x < model.width() && y >= 0 && y < model.height()) {
 						// create color editor that modifies the model
 						// this way we survive rotations (since model is stuck
 						// to the editor which is again stuck to the dialog fragment)
-						MyAlertDialogFragment.newInstance("Edit Color", R.layout.color_editor, x + "," + y).showDialog((Activity) getContext());
+						EditableDialogFragment ft =
+								EditableDialogFragment.newInstance(x + model.width() * y,
+										"Edit Color", false, EditableDialogFragment.Type.Color);
+
+						ft.show(((Activity) getContext()).getFragmentManager(), "dialog");
 					}
 				}
 

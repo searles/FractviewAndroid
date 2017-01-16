@@ -54,4 +54,5 @@
     <string name="error_read_presets">Error reading presets:\n</string>
     <string name="action_set_wallpaper">Set as Wallpaper</string>
     <string name="action_save_image">Save Image</string>
+    <string name="action_wallpaper">Set as wallpaper</string>
 </resources>

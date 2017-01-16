@@ -7,7 +7,7 @@
         android:layout_height="wrap_content"
         android:inputType="text"
         android:ems="10"
-        android:id="@+id/stringEditText"
+        android:id="@+id/editText"
         android:layout_gravity="center_horizontal"
         android:layout_row="0"
         android:layout_column="1" />

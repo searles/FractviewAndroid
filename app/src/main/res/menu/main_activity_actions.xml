@@ -1,9 +1,9 @@
 <?xml version="1.0" encoding="utf-8"?>
 <menu xmlns:android="http://schemas.android.com/apk/res/android">
     <item android:id="@+id/action_share"
-        android:title="@string/action_share"
-        android:icon="@drawable/ic_share_white_24dp"
-        android:showAsAction="ifRoom"
+          android:title="@string/action_share"
+          android:icon="@drawable/ic_share_white_24dp"
+          android:showAsAction="ifRoom"
         />
     <item android:id="@+id/action_parameters"
         android:title="@string/action_parameters"
@@ -35,14 +35,17 @@
         android:title="@string/action_size"
         android:icon="@drawable/ic_photo_size_select_large_white_24dp"
         />
-    <item android:id="@+id/action_set_wallpaper"
-          android:title="@string/action_set_wallpaper"
-        />
-    <item android:id="@+id/action_save_image"
-          android:title="@string/action_save_image"
-        />
     <item android:id="@+id/action_show_grid"
           android:title="@string/action_show_grid"
           android:checkable="true"
+        />
+    <item android:id="@+id/action_save"
+          android:title="@string/action_save"
+        />
+    <item android:id="@+id/action_wallpaper"
+          android:title="@string/action_wallpaper"
+        />
+    <item android:id="@+id/action_testing"
+          android:title="TESTING"
         />
 </menu>

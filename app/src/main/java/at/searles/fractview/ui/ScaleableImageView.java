@@ -49,6 +49,10 @@ public class ScaleableImageView extends ImageView {
 		BOUNDS_PAINT.setStyle(Paint.Style.FILL_AND_STROKE);
 	}
 
+	public boolean getShowGrid() {
+		return showGrid;
+	}
+
 
 	/**
 	 * To save the state of this view over rotation etc...
@@ -528,10 +532,13 @@ public class ScaleableImageView extends ImageView {
 		final Scale sc = Scale.fromMatrix(values);
 
 		// update scale and restart calculation.
-		bitmapFragment.edit(() -> {
-            Fractal fb = bitmapFragment.fractal();
-            bitmapFragment.setScale(fb.scale().relative(sc));
-        });
+		bitmapFragment.edit(new Runnable() {
+			@Override
+			public void run() {
+				Fractal fb = bitmapFragment.fractal();
+				bitmapFragment.setScale(fb.scale().relative(sc));
+			}
+		});
 
 		// If there are multiple scales pending, then
 		// we combine them into one. This is important for the preview.

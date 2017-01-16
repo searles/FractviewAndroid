@@ -2,22 +2,23 @@ package at.searles.fractview.ui;
 
 import android.graphics.Color;
 import android.util.Log;
-import at.searles.math.color.Palette;
 
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Random;
 
+import at.searles.math.color.Palette;
+
 /**
- * Created by searles on 16.03.16.
+ * Model for a palette view
  */
 public class PaletteViewModel {
-	int w;
-	int h;
+	private int w;
+	private int h;
 
 	private ArrayList<ArrayList<Integer>> table = new ArrayList<ArrayList<Integer>>();
 
-	PaletteView view = null;
+	private PaletteView view = null;
 
 	public PaletteViewModel(Palette palette) {
 		this.w = palette.width();
@@ -123,5 +124,13 @@ public class PaletteViewModel {
 			row.set(dstIndex, tmp);
 		}
 		if (view != null) view.invalidate();
+	}
+
+	public int width() {
+		return w;
+	}
+
+	public int height() {
+		return h;
 	}
 }

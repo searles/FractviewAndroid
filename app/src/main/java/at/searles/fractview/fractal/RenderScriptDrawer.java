@@ -1,5 +1,6 @@
 package at.searles.fractview.fractal;
 
+import android.app.Fragment;
 import android.graphics.Bitmap;
 import android.renderscript.*;
 import android.util.Log;
@@ -137,7 +138,6 @@ public class RenderScriptDrawer implements FractalDrawer {
 			}
 		}
 	};
-
 
 	public void run() {
 		long dur = System.currentTimeMillis();

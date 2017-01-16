@@ -1,4 +1,4 @@
-package at.searles.fractview.ui;
+package at.searles.fractview;
 
 import android.app.Activity;
 import android.app.AlertDialog;
@@ -6,8 +6,7 @@ import android.content.*;
 import android.os.Bundle;
 import android.view.View;
 import android.widget.*;
-import at.searles.fractview.MainActivity;
-import at.searles.fractview.R;
+
 import at.searles.fractview.fractal.FavoriteEntry;
 import org.json.JSONException;
 import org.json.JSONObject;
