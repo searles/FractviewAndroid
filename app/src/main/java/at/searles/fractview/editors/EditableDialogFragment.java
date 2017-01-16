@@ -87,7 +87,7 @@ public class EditableDialogFragment extends GenericDialogFragment {
         if(savedInstanceState == null) {
             // but only in the first call.
             // otherwise it is rotated, then we should preserve the values
-            type.setValueInView(initialValue, view);
+            if(initialValue != null) type.setValueInView(initialValue, view);
         }
 
         return dialog;
@@ -261,11 +261,8 @@ public class EditableDialogFragment extends GenericDialogFragment {
         Name {
             @Override
             void setValueInView(Object o, View view) {
-                if(!(o instanceof String))
-                    throw new ClassCastException("Expr expects a string but got a " + o.getClass());
-
                 EditText v = (EditText) view.findViewById(R.id.editText);
-                v.setText(o.toString());
+                v.setText((String) o);
             }
 
             @Override
@@ -341,7 +338,7 @@ public class EditableDialogFragment extends GenericDialogFragment {
 
                         // successfully got sth.
                         ft.dismiss();
-                        ft.getCallback().apply(ft.requestCode(), prefs.getString(selected, null));
+                        ft.getCallback().apply(ft.requestCode(), selected);
                     }
                 });
 
@@ -411,8 +408,8 @@ public class EditableDialogFragment extends GenericDialogFragment {
                 // This one reads a parcel
                 int[] size = ((int[]) o);
 
-                widthView.setText(size[0]);
-                heightView.setText(size[1]);
+                widthView.setText(Integer.toString(size[0]));
+                heightView.setText(Integer.toString(size[1]));
             }
 
             @Override

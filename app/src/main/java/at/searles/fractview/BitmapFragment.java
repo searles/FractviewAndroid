@@ -528,7 +528,7 @@ public class BitmapFragment extends Fragment implements
 	}
 
 	public void setAsWallpaper() {
-		waitForImageRendering(ProgressDialogValues.RunningSave);
+		waitForImageRendering(ProgressDialogValues.RunningWallpaper);
 	}
 
 	public void saveImage(File imageFile) {

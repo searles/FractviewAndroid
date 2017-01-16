@@ -58,7 +58,12 @@ public class ParameterActivity extends Activity implements EditableDialogFragmen
 
 	@Override
 	public void apply(int resourceCode, Object o) {
-		// TODO Should this move into the adapter?
+		// TODO Should this method move into the adapter?
+		if(o == null) {
+			// There was an error in the input
+			Toast.makeText(this, "ERROR: Bad input", Toast.LENGTH_LONG).show();
+			return;
+		}
 
 		// The resourceCode is the position in the element list
 		Pair<String, Fractal.Type> p = adapter.elements.get(resourceCode);
