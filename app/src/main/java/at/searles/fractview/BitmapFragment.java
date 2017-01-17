@@ -151,9 +151,14 @@ public class BitmapFragment extends Fragment implements
 						public void run() {
 							Log.d("BF", "Calling dismiss of waiting dialog");
 							// check whether there is some pending action
-							if(waiting != null) {
+							if(waitingDialog != null) {
+								// this check is due to a possible race condition
 								// yes, there is some action missing. Dismiss dialog and do it.
 								waitingDialog.closeDialogRequest();
+								waitingDialog = null;
+							}
+
+							if(waiting != null) {
 								ProgressDialogValues tmp = waiting;
 								waiting = null;
 								doImageAction(tmp);

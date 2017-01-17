@@ -1,7 +1,11 @@
 package at.searles.fractview.ui;
 
 import android.content.Context;
-import android.graphics.*;
+import android.graphics.Canvas;
+import android.graphics.Matrix;
+import android.graphics.Paint;
+import android.graphics.PointF;
+import android.graphics.RectF;
 import android.os.Parcel;
 import android.os.Parcelable;
 import android.util.AttributeSet;
@@ -9,13 +13,15 @@ import android.util.Log;
 import android.view.GestureDetector;
 import android.view.MotionEvent;
 import android.widget.ImageView;
+
+import org.jetbrains.annotations.NotNull;
+
+import java.util.LinkedList;
+
 import at.searles.fractview.BitmapFragment;
 import at.searles.fractview.MultiTouchController;
 import at.searles.fractview.fractal.Fractal;
 import at.searles.math.Scale;
-import org.jetbrains.annotations.NotNull;
-
-import java.util.LinkedList;
 
 public class ScaleableImageView extends ImageView {
 
@@ -49,11 +55,6 @@ public class ScaleableImageView extends ImageView {
 		BOUNDS_PAINT.setStyle(Paint.Style.FILL_AND_STROKE);
 	}
 
-	public boolean getShowGrid() {
-		return showGrid;
-	}
-
-
 	/**
 	 * To save the state of this view over rotation etc...
 	 */
@@ -63,20 +64,23 @@ public class ScaleableImageView extends ImageView {
 		 * Should the grid be shown or not?
 		 */
 		boolean showGrid = false;
+		boolean rotationLock = false;
 
-		protected ViewState(Parcelable in) {
+		ViewState(Parcelable in) {
 			super(in);
 		}
 
 		private ViewState(Parcel in) {
 			super(in);
 			this.showGrid = in.readInt() == 1;
+			this.rotationLock = in.readInt() == 1;
 		}
 
 		@Override
 		public void writeToParcel(Parcel dest, int flags) {
 			super.writeToParcel(dest, flags);
 			dest.writeInt(showGrid ? 1 : 0);
+			dest.writeInt(rotationLock ? 1 : 0);
 		}
 
 		public static final Creator<ViewState> CREATOR = new Creator<ViewState>() {
@@ -93,7 +97,7 @@ public class ScaleableImageView extends ImageView {
 	}
 
 	private boolean showGrid; // FIXME shouldn't I rather have one state object?
-
+	private boolean rotationLock;
 
 	// Here, we also have some gesture control
 	// Scroll-Events are handled as multitouch scale-events
@@ -144,6 +148,19 @@ public class ScaleableImageView extends ImageView {
 		invalidate();
 	}
 
+	public boolean getShowGrid() {
+		return showGrid;
+	}
+
+	public void setRotationLock(boolean rotationLock) {
+		this.rotationLock = rotationLock;
+		// does not change the view.
+	}
+
+	public boolean getRotationLock() {
+		return rotationLock;
+	}
+
 	@Override
 	public Parcelable onSaveInstanceState() {
 		//begin boilerplate code that allows parent classes to save state
@@ -151,6 +168,7 @@ public class ScaleableImageView extends ImageView {
 
 		ViewState vs = new ViewState(superState);
 		vs.showGrid = this.showGrid;
+		vs.rotationLock = rotationLock;
 
 		return vs;
 	}
@@ -667,7 +685,7 @@ public class ScaleableImageView extends ImageView {
 
 			PointF p = new PointF(event.getX(index), event.getY(index));
 
-			controller = new MultiTouchController();
+			controller = new MultiTouchController(rotationLock);
 			controller.addPoint(id, norm(p));
 
 			// isScrollEvent is false here!

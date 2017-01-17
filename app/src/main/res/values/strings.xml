@@ -57,4 +57,5 @@
     <string name="action_wallpaper">Set as wallpaper</string>
     <string name="action_import_palette">Paste from Clipboard</string>
     <string name="action_export_palette">Copy to Clipboard</string>
+    <string name="rotation_lock">Rotation Lock</string>
 </resources>

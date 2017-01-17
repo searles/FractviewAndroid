@@ -268,6 +268,9 @@ public class MainActivity extends Activity
 		MenuItem gridMenu = menu.findItem(R.id.action_show_grid);
 		gridMenu.setChecked(imageView.getShowGrid());
 
+		MenuItem rotationLockMenu =menu.findItem(R.id.action_rotation_lock);
+		rotationLockMenu.setChecked(imageView.getRotationLock());
+
 		return super.onCreateOptionsMenu(menu);
 	}
 
@@ -364,6 +367,12 @@ public class MainActivity extends Activity
 				boolean checked = !item.isChecked();
 				item.setChecked(checked);
 				imageView.setShowGrid(checked);
+			} return true;
+
+			case R.id.action_rotation_lock: {
+				boolean checked = !item.isChecked();
+				item.setChecked(checked);
+				imageView.setRotationLock(checked);
 			} return true;
 
 			case R.id.action_wallpaper: {

@@ -10,16 +10,17 @@ import java.util.TreeMap;
 
 public class MultiTouchController {
 
-	Matrix matrix;
+	private Matrix matrix;
+	private Map<Integer, Pair<PointF, PointF>> points;
+	private boolean rotationLock; // the matrix should not rotate the image.
 
-	Map<Integer, Pair<PointF, PointF>> points;
-
-	public MultiTouchController() {
-		points = new TreeMap<Integer, Pair<PointF, PointF>>();
+	public MultiTouchController(boolean rotationLock) {
+		points = new TreeMap<>();
 		matrix = new Matrix(); // identity matrix
+		this.rotationLock = rotationLock;
 	}
 
-	protected Matrix createCurrentMatrix() {
+	private Matrix createCurrentMatrix() {
 		if(points.size() >= 3) {
 			Iterator<Pair<PointF, PointF>> i = points.values().iterator();
 			Pair<PointF, PointF> pq0 = i.next();
@@ -65,6 +66,11 @@ public class MultiTouchController {
 			float d  = detD / det;
 			float ty  = detTy / det;
 
+			if(rotationLock) {
+				// if it is a rotation lock these two are set to 0.
+				b = c = 0.f;
+			}
+
 			Matrix m = new Matrix();
 			m.setValues(new float[]{a, b, tx, c, d, ty, 0.f, 0.f, 1.f});
 			return m;
@@ -106,6 +112,11 @@ public class MultiTouchController {
 			float tx = q0x - r * p0x - s * p0y;
 			float ty = q0y - r * p0y + s * p0x;
 
+			if(rotationLock) {
+				// if it is a rotation lock this one is set to 0.
+				s = 0.f;
+			}
+
 			Matrix m = new Matrix();
 			m.setValues(new float[]{r, s, tx, -s, r, ty, 0.f, 0.f, 1.f});
 			return m;
@@ -139,13 +150,13 @@ public class MultiTouchController {
 		return m;
 	}
 
-	protected void commit() {
+	private void commit() {
 		// commit current changes.
 		this.matrix = getMatrix();
 
 		// reset points
 		for(Map.Entry<Integer, Pair<PointF, PointF>> p : points.entrySet()) {
-			p.setValue(new Pair<PointF, PointF>(p.getValue().second, p.getValue().second));
+			p.setValue(new Pair<>(p.getValue().second, p.getValue().second));
 		}
 	}
 
@@ -157,7 +168,7 @@ public class MultiTouchController {
 
 			if(pos == null) throw new NullPointerException();
 
-			points.put(pointerId, new Pair<PointF, PointF>(pos, pos));
+			points.put(pointerId, new Pair<>(pos, pos));
 		}
 	}
 
@@ -166,7 +177,7 @@ public class MultiTouchController {
 			throw new IllegalArgumentException("trying to update non-existent index");
 		} else {
 			Pair<PointF, PointF> entry = points.get(pointerId);
-			points.put(pointerId, new Pair<PointF, PointF>(entry.first, pos));
+			points.put(pointerId, new Pair<>(entry.first, pos));
 		}
 	}
 

@@ -49,4 +49,8 @@
           android:title="@string/action_show_grid"
           android:checkable="true"
         />
+    <item android:id="@+id/action_rotation_lock"
+          android:title="@string/rotation_lock"
+          android:checkable="true"
+          />
 </menu>
