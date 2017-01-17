@@ -12,15 +12,15 @@ import android.widget.Button;
 import android.widget.ListView;
 import android.widget.Toast;
 
-import at.searles.fractview.fractal.FavoriteEntry;
-import at.searles.fractview.fractal.Fractal;
-import at.searles.fractview.fractal.PresetFractals;
-
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.TreeMap;
+
+import at.searles.fractview.fractal.FavoriteEntry;
+import at.searles.fractview.fractal.Fractal;
+import at.searles.fractview.fractal.PresetFractals;
 
 /**
  *
@@ -69,7 +69,7 @@ public class PresetsActivity extends Activity {
 				sb.append(s).append("\n");
 			}
 
-			Toast.makeText(this, sb.toString(), Toast.LENGTH_LONG).show();
+			Toast.makeText(this, "ERROR: " + sb.toString(), Toast.LENGTH_LONG).show();
 		}
 
 		// and since it is sorted, use it to write label-map.

@@ -11,6 +11,11 @@ import android.util.Log;
  * There can be an optional skip button. If there
  * is one, then there is also a cancel button that
  * will dismiss the dialog.
+ *
+ * Progress dialogs can appear any time and also disappear any time,
+ * even if the activity is not showing. That is the difference to
+ * EditableDialogFragments (they are always triggered by some user
+ * interaction, thus naturally there is some action).
  */
 public class ProgressDialogFragment extends GenericDialogFragment {
 

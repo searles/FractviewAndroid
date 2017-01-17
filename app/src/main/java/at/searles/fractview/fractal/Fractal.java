@@ -3,12 +3,6 @@ package at.searles.fractview.fractal;
 import android.os.Parcel;
 import android.os.Parcelable;
 import android.util.Log;
-import at.searles.math.Cplx;
-import at.searles.math.Scale;
-import at.searles.math.color.Palette;
-import at.searles.meelan.*;
-import at.searles.parsing.ParsingError;
-import at.searles.utils.Pair;
 
 import org.json.JSONArray;
 import org.json.JSONException;
@@ -22,7 +16,19 @@ import java.util.LinkedHashMap;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
-import java.util.Objects;
+
+import at.searles.math.Cplx;
+import at.searles.math.Scale;
+import at.searles.math.color.Palette;
+import at.searles.meelan.CompileException;
+import at.searles.meelan.ExternalData;
+import at.searles.meelan.Meelan;
+import at.searles.meelan.Op;
+import at.searles.meelan.ScopeTable;
+import at.searles.meelan.Tree;
+import at.searles.meelan.Value;
+import at.searles.parsing.ParsingError;
+import at.searles.utils.Pair;
 
 // FIXME
 // FIXME
@@ -273,10 +279,10 @@ public class Fractal implements Parcelable {
 				// finally, element.
 				switch(entry.getValue().a) {
 					case Int:
-						dest.writeInt((Integer) v);
+						dest.writeInt(((Number) v).intValue());
 						break;
 					case Real:
-						dest.writeDouble((Double) v);
+						dest.writeDouble(((Number) v).doubleValue());
 						break;
 					case Cplx:
 						Adapters.cplxAdapter.toParcel((Cplx) v, dest, flags);
@@ -373,10 +379,10 @@ public class Fractal implements Parcelable {
 
 				switch(entry.getValue().a) {
 					case Int:
-						ints.put(id, (Integer) v);
+						ints.put(id, ((Number) v).intValue());
 						break;
 					case Real:
-						reals.put(id, (Double) v);
+						reals.put(id, ((Number) v).doubleValue());
 						break;
 					case Cplx:
 						cplxs.put(id, Adapters.cplxAdapter.toJSON((Cplx) v));
@@ -629,10 +635,10 @@ public class Fractal implements Parcelable {
 
 			switch(element.a) {
 				case Int:
-					table.addDef(id, new Value.Int((Integer) element.b));
+					table.addDef(id, new Value.Int(((Number) element.b).intValue()));
 					break;
 				case Real:
-					table.addDef(id, new Value.Real((Double) element.b));
+					table.addDef(id, new Value.Real(((Number) element.b).doubleValue()));
 					break;
 				case Cplx:
 					table.addDef(id, new Value.CplxVal((Cplx) element.b));

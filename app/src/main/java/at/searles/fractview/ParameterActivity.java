@@ -68,11 +68,6 @@ public class ParameterActivity extends Activity implements EditableDialogFragmen
 		// The resourceCode is the position in the element list
 		Pair<String, Fractal.Type> p = adapter.elements.get(resourceCode);
 
-		if(o == null) {
-			// There was an error
-			Toast.makeText(this, "Error entering " + p.a, Toast.LENGTH_LONG).show();
-		}
-
 		switch(p.b) {
 			case Scale: {
 				Scale sc = (Scale) o;

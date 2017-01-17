@@ -11,7 +11,7 @@
         android:showAsAction="ifRoom"
         />
     <item android:id="@+id/action_compile"
-        android:title="@string/action_comile"
+        android:title="@string/action_compile"
         android:showAsAction="ifRoom"
         />
 </menu>

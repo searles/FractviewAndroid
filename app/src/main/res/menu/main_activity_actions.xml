@@ -1,23 +1,32 @@
 <?xml version="1.0" encoding="utf-8"?>
 <menu xmlns:android="http://schemas.android.com/apk/res/android">
+    <item android:id="@+id/action_parameters"
+          android:title="@string/action_parameters"
+          android:icon="@drawable/ic_mode_edit_white_24dp"
+          android:showAsAction="ifRoom"
+        />
+    <item android:id="@+id/action_presets"
+          android:title="@string/action_presets"
+          android:icon="@drawable/ic_collections_white_24dp"
+          android:showAsAction="ifRoom"
+        />
     <item android:id="@+id/action_share"
           android:title="@string/action_share"
           android:icon="@drawable/ic_share_white_24dp"
           android:showAsAction="ifRoom"
         />
-    <item android:id="@+id/action_parameters"
-        android:title="@string/action_parameters"
-        android:icon="@drawable/ic_mode_edit_white_24dp"
-        android:showAsAction="ifRoom"
+    <item android:id="@+id/action_save"
+          android:title="@string/action_save"
+          android:icon="@android:drawable/ic_menu_save"
+          android:showAsAction="ifRoom"
         />
-    <item android:id="@+id/action_presets"
-        android:title="@string/action_presets"
-        android:icon="@drawable/ic_collections_white_24dp"
-        android:showAsAction="ifRoom"
+    <item android:id="@+id/action_wallpaper"
+          android:title="@string/action_wallpaper"
         />
     <item android:id="@+id/action_add_favorite"
-        android:title="@string/action_add_bookmark"
-        android:icon="@drawable/ic_add_to_photos_white_24dp"
+          android:title="@string/action_add_bookmark"
+          android:icon="@drawable/ic_add_to_photos_white_24dp"
+          android:showAsAction="ifRoom"
         />
     <item android:id="@+id/action_favorites"
         android:icon="@drawable/ic_collections_bookmark_white_24dp"
@@ -35,14 +44,9 @@
         android:title="@string/action_size"
         android:icon="@drawable/ic_photo_size_select_large_white_24dp"
         />
+
     <item android:id="@+id/action_show_grid"
           android:title="@string/action_show_grid"
           android:checkable="true"
-        />
-    <item android:id="@+id/action_save"
-          android:title="@string/action_save"
-        />
-    <item android:id="@+id/action_wallpaper"
-          android:title="@string/action_wallpaper"
         />
 </menu>

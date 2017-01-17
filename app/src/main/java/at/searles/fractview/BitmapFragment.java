@@ -36,8 +36,6 @@ import at.searles.meelan.CompileException;
  *
  * History should not be part of this class!
  *
- * FIXME: How does edit work and do I need an action string.
- *
  * Possible Edit-Actions:
  *     * There is a new fractal (Bookmark/ParameterEdit/Source/History)
  *     ==> call setFractal
@@ -264,10 +262,7 @@ public class BitmapFragment extends Fragment implements
 							ft.show(getFragmentManager(), "dialog");
 						}
 					}
-					// FIXME
-					// FIXME
-					// FIXME put 1250 in here!
-                }, 0); // show dialog after 1250ms
+                }, 1250); // show dialog after 1250ms
 			}
 
 			@Override
@@ -372,7 +367,7 @@ public class BitmapFragment extends Fragment implements
 			return true;
 		} catch(OutOfMemoryError e) {
 			// fixme not super-nice, but it works
-			Toast.makeText(getActivity(), "Out of memory", Toast.LENGTH_LONG).show();
+			Toast.makeText(getActivity(), "ERROR: Out of memory", Toast.LENGTH_LONG).show();
 			return false;
 		}
 	}
@@ -571,46 +566,20 @@ public class BitmapFragment extends Fragment implements
 	private void doImageAction(int actionId) {
 		switch(actionId) {
 			case SAVE_IMAGE: {
-				saveImageInBackground(saveFile, new Runnable() {
-					@Override
-					public void run() {
-						// this is executed after saving was successful
-						// Add it to the gallery
-						Intent mediaScanIntent = new Intent(Intent.ACTION_MEDIA_SCANNER_SCAN_FILE);
-						Uri contentUri = Uri.fromFile(saveFile);
-						mediaScanIntent.setData(contentUri);
-						getActivity().sendBroadcast(mediaScanIntent);
-					}
-				});
+				saveImageInBackground(saveFile, actionId);
 			} break;
 			case SHARE_IMAGE: {
 				// create TMP file and call share indent
 				try {
 					File imageFile = File.createTempFile("fractview", ".png", getActivity().getExternalCacheDir());
-					saveImageInBackground(imageFile, new Runnable() {
-						public void run() {
-							Uri contentUri = Uri.fromFile(imageFile);
-							// after it was successfully saved, share it.
-							Intent share = new Intent(Intent.ACTION_SEND);
-							share.setType("image/png");
-							share.putExtra(Intent.EXTRA_STREAM, contentUri);
-							startActivity(Intent.createChooser(share, "Share Image"));
-						}
-					});
+					saveImageInBackground(imageFile, actionId);
 				} catch (IOException e) {
-					Toast.makeText(getActivity(), e.getMessage(), Toast.LENGTH_LONG).show();
+					Toast.makeText(getActivity(), "ERROR: " + e.getMessage(), Toast.LENGTH_LONG).show();
 				}
 
 			} break;
 			case SET_WALLPAPER: {
-				WallpaperManager wallpaperManager = WallpaperManager.getInstance(getActivity());
-				try {
-					// FIXME this blocks the ui currently! Not nice.
-					wallpaperManager.setBitmap(getBitmap());
-				} catch (IOException e) {
-					e.printStackTrace();
-					Toast.makeText(getActivity(), e.getMessage(), Toast.LENGTH_LONG).show();
-				}
+				saveImageInBackground(null, actionId);
 			} break;
 
 			// in all other cases, do nothing.
@@ -648,38 +617,61 @@ public class BitmapFragment extends Fragment implements
 	 * saves the image instantly, Cancel cancels the whole thing.
 	 * @param imageFile File object in which the image should be saved.
 	 */
-	private void saveImageInBackground(final File imageFile, Runnable postAction) {
+	private void saveImageInBackground(final File imageFile, int action) {
 		// We are in the UI-Thread.
+		// Check whether there is some active Activity to store a savingsdialog
+		Log.d("BF", "isFinishing in activity: " + getActivity().isFinishing());
+
+		ProgressDialogFragment ft = ProgressDialogFragment.newInstance(ProgressDialogValues.Save.ordinal(),
+				true,
+				"Please wait...",
+				"Saving image...", false);
+
+		try {
+			// TODO if this is called when the activity is not showing,
+			// it causes a crash.
+			ft.show(getFragmentManager(), "dialog");
+		} catch(IllegalStateException e) {
+			e.printStackTrace();
+		}
+		// no need for target because it is not skippable
+		// ft.setTargetFragment(BitmapFragment.this, -1);
 
 		// Create task that will save the image
 		new AsyncTask<Void, Void, Boolean>() {
-			ProgressDialogFragment ft;
 
 			@Override
-			protected void onPreExecute() {
-				this.ft = ProgressDialogFragment.newInstance(ProgressDialogValues.Init.ordinal(),
-						true,
-						"Please wait...",
-						"Saving image...", false);
-				ft.show(getFragmentManager(), "dialog");
-				// no need for target because it is not skippable
-				// ft.setTargetFragment(BitmapFragment.this, -1);
-			}
+			protected void onPreExecute() {}
 
 			@Override
 			protected Boolean doInBackground(Void... params) {
 				String errorMsg;
 				try {
-					FileOutputStream fos = new FileOutputStream(imageFile);
+					// either put it into the file or set it as wallpaper
+					if(action == SET_WALLPAPER) {
+						// image file is ignored here.
+						if(imageFile != null) {
+							throw new IllegalArgumentException("image file should be null here!");
+						}
 
-					if (bitmap.compress(Bitmap.CompressFormat.PNG, 100, fos)) {
-						// Successfully written picture
-						fos.close();
+						// set bitmap
+						WallpaperManager wallpaperManager =
+								WallpaperManager.getInstance(getActivity());
 
+						wallpaperManager.setBitmap(getBitmap());
 						return true;
 					} else {
-						errorMsg = "Error calling \"compress\".";
-						fos.close();
+						FileOutputStream fos = new FileOutputStream(imageFile);
+
+						if (bitmap.compress(Bitmap.CompressFormat.PNG, 100, fos)) {
+							// Successfully written picture
+							fos.close();
+
+							return true;
+						} else {
+							errorMsg = "Error calling \"compress\".";
+							fos.close();
+						}
 					}
 				} catch(IOException e) {
 					errorMsg = e.getLocalizedMessage();
@@ -691,7 +683,7 @@ public class BitmapFragment extends Fragment implements
 				getActivity().runOnUiThread(new Runnable() {
 					@Override
 					public void run() {
-						Toast.makeText(getActivity(), "Error: " + finalErrorMsg,
+						Toast.makeText(getActivity(), "ERROR: " + finalErrorMsg,
 								Toast.LENGTH_LONG).show();
 					}
 				});
@@ -701,15 +693,26 @@ public class BitmapFragment extends Fragment implements
 
 			@Override
 			protected void onPostExecute(Boolean saved) {
-				ft.closeDialogRequest();
+				if(ft != null) ft.closeDialogRequest();
 
 				if(saved) {
-					if(postAction != null) {
-						postAction.run();
-					} else {
-						Log.d("BF", "Image was saved.");
-						// Show toast
-						Toast.makeText(getActivity(), "Image successfully saved", Toast.LENGTH_SHORT).show();
+					if(action == SAVE_IMAGE) {
+						// this is executed after saving was successful
+						// Add it to the gallery
+						Intent mediaScanIntent = new Intent(Intent.ACTION_MEDIA_SCANNER_SCAN_FILE);
+						Uri contentUri = Uri.fromFile(saveFile);
+						mediaScanIntent.setData(contentUri);
+						getActivity().sendBroadcast(mediaScanIntent);
+
+						saveFile = null; // just to be save...
+					} else if(action == SHARE_IMAGE) {
+						// Share image
+						Uri contentUri = Uri.fromFile(imageFile);
+						// after it was successfully saved, share it.
+						Intent share = new Intent(Intent.ACTION_SEND);
+						share.setType("image/png");
+						share.putExtra(Intent.EXTRA_STREAM, contentUri);
+						startActivity(Intent.createChooser(share, "Share Image"));
 					}
 				}
 			}

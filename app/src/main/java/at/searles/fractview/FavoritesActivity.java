@@ -2,12 +2,16 @@ package at.searles.fractview;
 
 import android.app.Activity;
 import android.app.AlertDialog;
-import android.content.*;
+import android.content.Context;
+import android.content.DialogInterface;
+import android.content.Intent;
+import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.view.View;
-import android.widget.*;
+import android.widget.AdapterView;
+import android.widget.Button;
+import android.widget.ListView;
 
-import at.searles.fractview.fractal.FavoriteEntry;
 import org.json.JSONException;
 import org.json.JSONObject;
 
@@ -15,6 +19,8 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.TreeMap;
+
+import at.searles.fractview.fractal.FavoriteEntry;
 
 /**
  *
@@ -101,7 +107,7 @@ public class FavoritesActivity extends Activity {
 							break;
 							case 1: {
 								// copy to clipboard
-								MainActivity.copyToClipboard(view.getContext(), favorites.get(l).fractal);
+								ClipboardHelper.copyFractal(view.getContext(), favorites.get(l).fractal);
 							}
 							break;
 						}

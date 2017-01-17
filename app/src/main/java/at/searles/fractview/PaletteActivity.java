@@ -135,6 +135,31 @@ public class PaletteActivity extends Activity implements EditableDialogFragment.
 				// the fragment needs the name of the prefs as an argument.
 				ft.getArguments().putString("prefs_name", PaletteActivity.PREFS_NAME);
 			} return true;
+			case R.id.action_export_palette: {
+				// copy
+				try {
+					JSONObject o = (JSONObject) Adapters.paletteAdapter.toJSON(model.createPalette());
+					ClipboardHelper.copy(this, o.toString(2));
+				} catch (JSONException e) {
+					e.printStackTrace();
+					Toast.makeText(this, "ERROR: " + e.getMessage(), Toast.LENGTH_LONG).show();
+				}
+			} return true;
+			case R.id.action_import_palette: {
+				// paste
+				CharSequence pastedText = ClipboardHelper.paste(this);
+				try {
+					Palette p = Adapters.paletteAdapter.fromJSON(new JSONObject(pastedText.toString()));
+
+					if(p != null) {
+						model = new PaletteViewModel(p);
+						view.setModel(model);
+					}
+				} catch (JSONException e) {
+					e.printStackTrace();
+					Toast.makeText(this, "ERROR: " + e.getMessage(), Toast.LENGTH_LONG).show();
+				}
+			} return true;
 			default:
 				return super.onOptionsItemSelected(item);
 		}

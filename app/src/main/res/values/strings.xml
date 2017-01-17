@@ -3,14 +3,14 @@
     <string name="app_name">Fractview</string>
     <string name="action_parameters">Parameters</string>
     <string name="action_add_bookmark">Add Favorite</string>
-    <string name="action_share">Share</string>
-    <string name="action_save">Save</string>
+    <string name="action_share">Share Image</string>
+    <string name="action_save">Save Image</string>
     <string name="action_bookmarks">Favorites</string>
     <string name="label_width">Width</string>
     <string name="label_height">Height</string>
     <string name="label_keepratio">Keep Ratio</string>
     <string name="label_display_size">Reset to Display Size</string>
-    <string name="size">Image Size</string>
+    <string name="size">Change Image Size</string>
     <string name="size_summ">Enter the size of the image</string>
     <string name="maxdepth_summ">Maximum Number of Iterations</string>
     <string name="maxdepth">Iteration Depth</string>
@@ -37,16 +37,16 @@
     <string name="action_program">Program</string>
     <string name="action_save_program">Save</string>
     <string name="action_load_program">Load</string>
-    <string name="action_comile">Compile</string>
+    <string name="action_compile">Compile</string>
     <string name="action_scale">Scale</string>
     <string name="action_export_bookmarks">Export Bookmarks</string>
     <string name="action_import_bookmarks">Import Bookmarks</string>
     <string name="action_load_palette">Load Palette</string>
     <string name="action_save_palette">Save Palette</string>
-    <string name="action_import_bookmark">Import Bookmark From Clipboard</string>
-    <string name="action_import">Paste</string>
-    <string name="action_export">Copy</string>
-    <string name="action_presets">Presets</string>
+    <string name="action_import_bookmark">Paste Bookmark From Clipboard</string>
+    <string name="action_import">Paste from Clipboard</string>
+    <string name="action_export">Copy to Clipboard</string>
+    <string name="action_presets">Samples</string>
     <string name="action_reset">\"Reset All\"</string>
     <string name="action_show_grid">Show Grid</string>
     <string name="label_default_size">Reset to Default</string>
@@ -55,4 +55,6 @@
     <string name="action_set_wallpaper">Set as Wallpaper</string>
     <string name="action_save_image">Save Image</string>
     <string name="action_wallpaper">Set as wallpaper</string>
+    <string name="action_import_palette">Paste from Clipboard</string>
+    <string name="action_export_palette">Copy to Clipboard</string>
 </resources>

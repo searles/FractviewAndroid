@@ -5,8 +5,6 @@ import android.annotation.SuppressLint;
 import android.app.Activity;
 import android.app.FragmentManager;
 import android.app.FragmentTransaction;
-import android.content.ClipData;
-import android.content.ClipboardManager;
 import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
@@ -30,7 +28,6 @@ import android.widget.Toast;
 
 import org.jetbrains.annotations.NotNull;
 import org.json.JSONException;
-import org.json.JSONObject;
 
 import java.io.File;
 import java.io.IOException;
@@ -144,19 +141,6 @@ public class MainActivity extends Activity
 		}
 
 		return dim;
-	}
-
-	public static void copyToClipboard(Context context, Fractal fractal) {
-		try {
-			String export = fractal.toJSON().toString(2);
-			ClipboardManager clipboard = (ClipboardManager) context.getSystemService(CLIPBOARD_SERVICE);
-			ClipData clip = ClipData.newPlainText("fractview", export);
-			clipboard.setPrimaryClip(clip);
-			Toast.makeText(context, "Copied specification to clipboard", Toast.LENGTH_SHORT).show();
-		} catch (JSONException e) {
-			e.printStackTrace();
-			Toast.makeText(context, "Could not create JSON", Toast.LENGTH_LONG).show();
-		}
 	}
 
     @Override
@@ -306,7 +290,7 @@ public class MainActivity extends Activity
 						bitmapFragment.shareImage();
 					}
 				} else {
-					Toast.makeText(this, "Cannot share/save images without " +
+					Toast.makeText(this, "ERROR: Cannot share/save images without " +
 							"read or write permissions.", Toast.LENGTH_LONG).show();
 				}
 			} break;
@@ -364,34 +348,16 @@ public class MainActivity extends Activity
 
 			case R.id.action_import: {
 				// paste from clipboard
-				ClipboardManager clipboard = (ClipboardManager) getSystemService(CLIPBOARD_SERVICE);
+				Fractal newFractal = ClipboardHelper.pasteFractal(this);
 
-				if(!clipboard.hasPrimaryClip()) {
-					Toast.makeText(this, "Clipboard is empty", Toast.LENGTH_LONG).show();
-					return false;
-				}
-
-				/*if(!clipboard.getPrimaryClipDescription().hasMimeType(ClipDescription.MIMETYPE_TEXT_PLAIN)) {
-					Toast.makeText(this, "Clipboard does not contain text", Toast.LENGTH_LONG).show();
-					return false;
-				}*/
-
-				CharSequence pasteText = clipboard.getPrimaryClip().getItemAt(0).getText();
-
-				try {
-					final Fractal newFractal = Fractal.fromJSON(new JSONObject(pasteText.toString()));
+				if(newFractal != null) {
 					setNewFractal(newFractal);
-					Toast.makeText(this, "Pasted from clipboard", Toast.LENGTH_SHORT).show();
-				} catch (JSONException e) {
-					e.printStackTrace();
-					Toast.makeText(this, "Could not parse content of clipboard", Toast.LENGTH_LONG).show();
 				}
-
 			} return true;
 
 			case R.id.action_export: {
 				// copy to clipboard
-				MainActivity.copyToClipboard(this, bitmapFragment.fractal());
+				ClipboardHelper.copyFractal(this, bitmapFragment.fractal());
 			} return true;
 
 			case R.id.action_show_grid: {
@@ -509,7 +475,7 @@ public class MainActivity extends Activity
 				String filename = (String) o;
 
 				if(filename.isEmpty()) {
-					Toast.makeText(this, "Error: Filename must not be empty.", Toast.LENGTH_LONG).show();
+					Toast.makeText(this, "ERROR: Filename must not be empty.", Toast.LENGTH_LONG).show();
 				}
 
 				File directory = new File(
@@ -521,7 +487,7 @@ public class MainActivity extends Activity
 				if(!directory.exists()) {
 					Log.d("MA", "Creating directory");
 					if(!directory.mkdir()) {
-						Toast.makeText(this, "Error: Could not create directory.",
+						Toast.makeText(this, "ERROR: Could not create directory.",
 								Toast.LENGTH_LONG).show();
 					}
 				}
@@ -548,7 +514,7 @@ public class MainActivity extends Activity
 
 	void saveFavorite(String name) {
 		if(name.isEmpty()) {
-			Toast.makeText(MainActivity.this, "Name must not be empty", Toast.LENGTH_LONG).show();
+			Toast.makeText(MainActivity.this, "ERROR: Name must not be empty", Toast.LENGTH_LONG).show();
 			return;
 		}
 
@@ -574,11 +540,9 @@ public class MainActivity extends Activity
 			// and put it into shared preferences and store it thus.
 			editor.putString(name, fav.toJSON().toString());
 			editor.apply();
-
-			Toast.makeText(MainActivity.this, "Added " + name, Toast.LENGTH_SHORT).show();
 		} catch (JSONException e) {
 			e.printStackTrace();
-			Toast.makeText(MainActivity.this, "Error storing favorite: " + e.getLocalizedMessage(), Toast.LENGTH_LONG).show();
+			Toast.makeText(MainActivity.this, "ERROR: " + e.getLocalizedMessage(), Toast.LENGTH_LONG).show();
 		}
 	}
 
@@ -598,7 +562,7 @@ public class MainActivity extends Activity
 			});
 		} catch(CompileException e) {
 			e.printStackTrace();
-			Toast.makeText(this, e.getMessage(), Toast.LENGTH_LONG).show();
+			Toast.makeText(this, "ERROR: " + e.getMessage(), Toast.LENGTH_LONG).show();
 		}
 	}
 

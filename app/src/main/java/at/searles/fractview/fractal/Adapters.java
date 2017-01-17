@@ -2,22 +2,22 @@ package at.searles.fractview.fractal;
 
 import android.os.Parcel;
 import android.util.Log;
-import at.searles.math.Cplx;
-import at.searles.math.Scale;
-import at.searles.math.color.Palette;
+
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
-import java.util.HashMap;
-import java.util.Iterator;
-import java.util.Map;
+import at.searles.math.Cplx;
+import at.searles.math.Scale;
+import at.searles.math.color.Palette;
 
 /**
  * This class is rather a namespace that contains the Adapter-Interface plus some static adapters.
  * Preferred way is to extend Adapter.
  */
 public class Adapters {
+
+	// TODO: Maybe this should rather be an enum...
 
 	private Adapters() { throw new IllegalArgumentException(); }
 
@@ -104,7 +104,7 @@ public class Adapters {
 		}
 
 		@Override
-		public Object toJSON(Scale scale) throws JSONException {
+		public JSONArray toJSON(Scale scale) throws JSONException {
 			return new JSONArray().put(scale.xx).put(scale.xy).put(scale.yx).put(scale.yy).put(scale.cx).put(scale.cy);
 		}
 	};
@@ -174,7 +174,7 @@ public class Adapters {
 		}
 
 		@Override
-		public Object toJSON(Palette palette) throws JSONException {
+		public JSONObject toJSON(Palette palette) throws JSONException {
 			JSONObject obj = new JSONObject();
 
 			int h = palette.height();

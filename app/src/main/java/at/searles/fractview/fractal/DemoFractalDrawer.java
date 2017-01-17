@@ -2,7 +2,6 @@ package at.searles.fractview.fractal;
 
 import android.graphics.Bitmap;
 
-import at.searles.math.Cplx;
 import at.searles.math.Scale;
 
 /**
@@ -12,8 +11,6 @@ public class DemoFractalDrawer implements FractalDrawer {
 
     public static final int factor = 2; // 2^INIT_PIX_SIZE = 16
 
-    // FIXME Structure: The controller can be some activity or a fragment.
-
     private Controller controller;
     private int progress;
     private int maxProgress;
@@ -22,9 +19,9 @@ public class DemoFractalDrawer implements FractalDrawer {
         this.controller = controller;
     }
 
-    Fractal f;
-    Bitmap b;
-    Scale sc;
+    private Fractal f;
+    private Bitmap b;
+    private Scale sc;
 
     @Override
     public void init(Bitmap bitmap, Fractal fractal) {
