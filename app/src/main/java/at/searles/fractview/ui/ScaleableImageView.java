@@ -79,6 +79,7 @@ public class ScaleableImageView extends ImageView {
 		@Override
 		public void writeToParcel(Parcel dest, int flags) {
 			super.writeToParcel(dest, flags);
+
 			dest.writeInt(showGrid ? 1 : 0);
 			dest.writeInt(rotationLock ? 1 : 0);
 		}
@@ -168,7 +169,7 @@ public class ScaleableImageView extends ImageView {
 
 		ViewState vs = new ViewState(superState);
 		vs.showGrid = this.showGrid;
-		vs.rotationLock = rotationLock;
+		vs.rotationLock = this.rotationLock;
 
 		return vs;
 	}
@@ -186,6 +187,7 @@ public class ScaleableImageView extends ImageView {
 		//end
 
 		setShowGrid(vs.showGrid);
+		setRotationLock(vs.rotationLock);
 	}
 
 	/**
