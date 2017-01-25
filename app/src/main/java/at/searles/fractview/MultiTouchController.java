@@ -113,8 +113,13 @@ public class MultiTouchController {
 			float ty = q0y - r * p0y + s * p0x;
 
 			if(rotationLock) {
-				// if it is a rotation lock this one is set to 0.
-				s = 0.f;
+				// if it is rotation lock I allow rotations
+				// around 90 degrees with 2 fingers.
+				if(Math.abs(r) > Math.abs(s)) {
+					s = 0.f;
+				} else {
+					r = 0.f;
+				}
 			}
 
 			Matrix m = new Matrix();

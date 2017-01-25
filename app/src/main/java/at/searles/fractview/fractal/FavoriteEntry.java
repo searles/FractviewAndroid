@@ -7,15 +7,18 @@ import org.json.JSONObject;
 
 import java.io.ByteArrayOutputStream;
 
+import at.searles.fractview.FractalEntry;
+
 /**
  *
  */
-public class FavoriteEntry {
+public class FavoriteEntry implements FractalEntry {
 
 	static final int ICON_LEN = 64;
 
-	public Fractal fractal;
-	public Bitmap icon; // icon may be null!
+	private Fractal fractal;
+	private Bitmap icon; // icon may be null!
+	private String title;
 
 	/**
 	 * creates a new bitmap with size 64x64 containing the center of the current image
@@ -72,11 +75,12 @@ public class FavoriteEntry {
 		return BitmapFactory.decodeByteArray(decodedString, 0, decodedString.length);
 	}
 
-	public static FavoriteEntry create(Fractal fractal, Bitmap bitmap) {
-		return new FavoriteEntry(fractal, createIcon(bitmap));
+	public static FavoriteEntry create(String title, Fractal fractal, Bitmap bitmap) {
+		return new FavoriteEntry(title, fractal, createIcon(bitmap));
 	}
 
-	public FavoriteEntry(Fractal fractal, Bitmap icon) {
+	public FavoriteEntry(String title, Fractal fractal, Bitmap icon) {
+		this.title = title;
 		this.fractal = fractal;
 		this.icon = icon;
 	}
@@ -88,15 +92,35 @@ public class FavoriteEntry {
 		return obj;
 	}
 
-	public static FavoriteEntry fromJSON(Object o) throws JSONException {
+	public static FavoriteEntry fromJSON(String title, Object o) throws JSONException {
 		if(o instanceof JSONObject) {
 			JSONObject obj = (JSONObject) o;
 			Fractal f = Fractal.fromJSON(obj.getJSONObject("fractal"));
 			Bitmap bm = getBitmapFromString(obj.getString("icon"));
 
-			return new FavoriteEntry(f, bm);
+			return new FavoriteEntry(title, f, bm);
 		}
 
 		throw new JSONException("not a JSON-Object???");
+	}
+
+	@Override
+	public String title() {
+		return title;
+	}
+
+	@Override
+	public Bitmap icon() {
+		return icon;
+	}
+
+	@Override
+	public String description() {
+		// FIXME add some description like date.
+		return "";
+	}
+
+	public Fractal fractal() {
+		return fractal;
 	}
 }

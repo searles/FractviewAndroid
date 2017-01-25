@@ -18,6 +18,8 @@ import android.widget.EditText;
 import android.widget.ListView;
 import android.widget.Toast;
 
+import java.util.TreeSet;
+
 import at.searles.fractview.MainActivity;
 import at.searles.fractview.R;
 import at.searles.fractview.ui.ColorView;
@@ -599,9 +601,10 @@ public class EditableDialogFragment extends GenericDialogFragment {
         lv.setAdapter(adapter);
 
         // add all elements to it.
-        adapter.addAll(prefs.getAll().keySet());
-
-
+        // but have them sorted.
+        TreeSet<String> set = new TreeSet<>();
+        set.addAll(prefs.getAll().keySet()); // FIXME, there should be an easier way?
+        adapter.addAll(set);
 
         lv.setOnItemLongClickListener(new AdapterView.OnItemLongClickListener() {
             @Override

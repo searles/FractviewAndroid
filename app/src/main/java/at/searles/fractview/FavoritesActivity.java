@@ -15,10 +15,8 @@ import android.widget.ListView;
 import org.json.JSONException;
 import org.json.JSONObject;
 
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
-import java.util.TreeMap;
 
 import at.searles.fractview.fractal.FavoriteEntry;
 
@@ -26,12 +24,13 @@ import at.searles.fractview.fractal.FavoriteEntry;
  *
  */
 public class FavoritesActivity extends Activity {
+	// TODO: Copy collection to clipboard
+	// TODO: Import collection from clipboard
 
 	// fixme menus import from clipboard
 	static final String[] options = {"Delete", "Copy To Clipboard"};
 
-	TreeMap<String, FavoriteEntry> favorites = new TreeMap<>();
-	List<String> labels;
+	List<FavoriteEntry> entries;
 	SharedPreferences persistent;
 
 	@Override
@@ -47,21 +46,16 @@ public class FavoritesActivity extends Activity {
 
 		for(Map.Entry<String, ?> entry : persistent.getAll().entrySet()) {
 			try {
-				favorites.put(entry.getKey(), FavoriteEntry.fromJSON(new JSONObject((String) entry.getValue())));
+				entries.add(FavoriteEntry.fromJSON(entry.getKey(), new JSONObject((String) entry.getValue())));
 			} catch (JSONException e) {
 				e.printStackTrace();
 				// FIXME Error message in this case
 			}
 		}
 
-		// and since it is sorted, use it to write label-map.
-		labels = new ArrayList<>(favorites.size());
-
-		labels.addAll(favorites.keySet());
-
 		ListView lv = (ListView) findViewById(R.id.bookmarkListView);
 
-		final FavoritesAdapter adapter = new FavoritesAdapter(this, labels, favorites);
+		final FavoritesAdapter adapter = new FavoritesAdapter(this, entries);
 
 		lv.setAdapter(adapter);
 
@@ -69,10 +63,10 @@ public class FavoritesActivity extends Activity {
 			@Override
 			public void onItemClick(AdapterView<?> parent, View view, int index, long id) {
 				// get bookmark
-				FavoriteEntry fav = favorites.get(labels.get(index));
+				FavoriteEntry fav = entries.get(index);
 
 				Intent data = new Intent();
-				data.putExtra("fractal", fav.fractal);
+				data.putExtra("fractal", fav.fractal());
 				setResult(1, data);
 				finish();
 			}
@@ -87,18 +81,17 @@ public class FavoritesActivity extends Activity {
 				builder.setItems(options, new DialogInterface.OnClickListener() {
 					@Override
 					public void onClick(DialogInterface dialog, int which) {
-						String l = labels.get(index);
+						FavoriteEntry entry = entries.get(index);
 
 						switch (which) {
 							case 0: {
 								// delete fav
 								// first from internal DSs
-								labels.remove(l);
-								favorites.remove(l);
+								entries.remove(index);
 
 								// then from shared prefs
 								SharedPreferences.Editor editor = persistent.edit();
-								editor.remove(l);
+								editor.remove(entry.title());
 								editor.apply();
 
 								// and update view.
@@ -107,7 +100,7 @@ public class FavoritesActivity extends Activity {
 							break;
 							case 1: {
 								// copy to clipboard
-								ClipboardHelper.copyFractal(view.getContext(), favorites.get(l).fractal);
+								ClipboardHelper.copyFractal(view.getContext(), entry.fractal());
 							}
 							break;
 						}
@@ -171,7 +164,7 @@ public class FavoritesActivity extends Activity {
 				} else if(which == 1) {
 					StringBuilder sb = new StringBuilder();
 
-					for(Map.Entry<String, ?> entry : oldEntries.entrySet()) {
+					for(Map.ProgramAsset<String, ?> entry : oldEntries.entrySet()) {
 						sb.append(entry.getKey()).append("\n");
 						sb.append(String.valueOf(entry.getValue()));
 

@@ -37,6 +37,10 @@ import at.searles.utils.Pair;
 
 public class ParameterActivity extends Activity implements EditableDialogFragment.Callback {
 
+	// TODO: Load from sample
+	// TODO: Load (like in palette)
+	// TODO: Save (like in palette)
+
 	public static final int PROGRAM_ACTIVITY_RETURN = 100;
 
 	static final CharSequence[] scaleOptions = { "Reset to Default", "Center on Origin", "Orthogonalize", "Straighten" };
@@ -624,7 +628,7 @@ public class ParameterActivity extends Activity implements EditableDialogFragmen
 				return true;
 			}
 			case R.id.action_edit_source: {
-				Intent i = new Intent(this, ProgramActivity.class);
+				Intent i = new Intent(this, EditProgramActivity.class);
 				i.putExtra("source", this.fb.sourceCode());
 				startActivityForResult(i, PROGRAM_ACTIVITY_RETURN);
 			} return true;

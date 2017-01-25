@@ -21,8 +21,8 @@
         <activity android:name=".FavoritesActivity"/>
         <activity android:name=".PaletteActivity"/>
         <activity android:name=".ParameterActivity"/>
-        <activity android:name=".PresetsActivity"/>
-        <activity android:name=".ProgramActivity"/>
+        <activity android:name=".PresetProgramsActivity"/>
+        <activity android:name=".EditProgramActivity"/>
     </application>
 
 </manifest>

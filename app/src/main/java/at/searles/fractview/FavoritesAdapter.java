@@ -6,35 +6,30 @@ import android.view.ViewGroup;
 import android.widget.BaseAdapter;
 import android.widget.ImageView;
 import android.widget.TextView;
-import at.searles.fractview.R;
-import at.searles.fractview.fractal.FavoriteEntry;
 
 import java.util.List;
-import java.util.Map;
 
 /**
- * Created by searles on 13.03.16.
+ * Adapter for fractals with bitmaps
  */
 public class FavoritesAdapter extends BaseAdapter {
 
-	final Activity context;
-	final List<String> labels;
-	final Map<String, FavoriteEntry> favorites;
+	private final Activity context;
+	private final List<? extends FractalEntry> entries;
 
-	public FavoritesAdapter(Activity context, List<String> labels, Map<String, FavoriteEntry> favorites) {
+	public FavoritesAdapter(Activity context, List<? extends FractalEntry> entries) {
 		this.context = context;
-		this.labels = labels;
-		this.favorites = favorites;
+		this.entries = entries;
 	}
 
 	@Override
 	public int getCount() {
-		return labels.size();
+		return entries.size();
 	}
 
 	@Override
-	public FavoriteEntry getItem(int index) {
-		return favorites.get(labels.get(index));
+	public FractalEntry getItem(int index) {
+		return entries.get(index);
 	}
 
 	@Override
@@ -52,11 +47,11 @@ public class FavoritesAdapter extends BaseAdapter {
 		ImageView iconView = (ImageView) view.findViewById(R.id.iconView);
 		TextView titleView = (TextView) view.findViewById(R.id.titleView);
 
-		FavoriteEntry fav = getItem(index);
+		FractalEntry entry = getItem(index);
 
-		iconView.setImageBitmap(fav.icon);
+		iconView.setImageBitmap(entry.icon());
 		iconView.setScaleType(ImageView.ScaleType.CENTER_INSIDE);
-		titleView.setText(labels.get(index));
+		titleView.setText(entry.title());
 
 		return view;
 	}

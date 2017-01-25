@@ -1,17 +1,8 @@
 package at.searles.fractview.fractal;
 
-import android.app.Activity;
-import android.graphics.Bitmap;
-import android.graphics.BitmapFactory;
-import android.util.Log;
 import at.searles.math.Cplx;
 import at.searles.math.Scale;
 import at.searles.math.color.Palette;
-
-import java.io.BufferedReader;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.InputStreamReader;
 
 /**
  * Class to manage preset fractals and their default values.
@@ -35,64 +26,6 @@ public class PresetFractals {
 		}
 	}
 
-	/**
-	 * Try to read content of assets-folder
-	 * @param activity The activity that wants to read it
-	 * @param filename The filename to be read
-     * @return The content of the file as a string
-	 * @throws IOException in case of an error.
-     */
-	public static String readSourcecode(Activity activity, String filename) throws IOException {
-		BufferedReader reader = null;
-		String program = null;
-		try {
-			reader = new BufferedReader(
-					new InputStreamReader(activity.getAssets().open(filename)));
-
-			StringBuilder sb = new StringBuilder();
-
-			String mLine;
-			while ((mLine = reader.readLine()) != null) {
-				//process line
-				sb.append(mLine).append("\n");
-			}
-
-			program = sb.toString();
-		} finally {
-			if (reader != null) {
-				try {
-					reader.close();
-				} catch (IOException e) {
-					//log the exception
-					Log.e("PF", "close failed: " + e.getMessage());
-				}
-			}
-		}
-
-		return program;
-	}
-
-	public static Bitmap readIcon(Activity activity, Preset preset) {
-		Bitmap icon = null;
-		InputStream is = null;
-		try {
-			is = activity.getAssets().open(preset.iconFilename);
-			icon = BitmapFactory.decodeStream(is);
-		} catch (IOException e) {
-			e.printStackTrace();
-			//Toast.makeText(this, "Could not read icon", Toast.LENGTH_LONG).show();
-		} finally {
-			if(is != null) {
-				try {
-					is.close();
-				} catch(IOException e) {
-					e.printStackTrace();
-				}
-			}
-		}
-
-		return icon;
-	}
 
 
 

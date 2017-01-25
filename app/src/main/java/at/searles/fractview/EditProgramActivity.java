@@ -19,7 +19,9 @@ import at.searles.fractview.fractal.PresetFractals;
 import at.searles.meelan.CompileException;
 import at.searles.parsing.ParsingError;
 
-public class ProgramActivity extends Activity implements EditableDialogFragment.Callback {
+public class EditProgramActivity extends Activity implements EditableDialogFragment.Callback {
+
+	// TODO: Load from sample!
 
 	public static final String PREFS_NAME = "SavedPrograms";
 	EditText editor;
