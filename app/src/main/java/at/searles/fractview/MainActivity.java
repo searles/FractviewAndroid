@@ -30,7 +30,6 @@ import org.jetbrains.annotations.NotNull;
 import org.json.JSONException;
 
 import java.io.File;
-import java.io.IOException;
 
 import at.searles.fractview.editors.EditableDialogFragment;
 import at.searles.fractview.fractal.FavoriteEntry;
@@ -202,11 +201,10 @@ public class MainActivity extends Activity
 
 			String sourceCode;
 
-			try {
-				sourceCode = PresetFractals.readSourcecode(this, "Default.fv");
-			} catch (IOException e) {
-				throw new IllegalArgumentException("Default.fv is missing?!");
-			}
+			sourceCode = AssetsHelper.readSourcecode(getAssets(), "Default.fv");
+
+			if(sourceCode == null)
+				throw new IllegalArgumentException("init fractal is null??");
 
 			Fractal initFractal = new Fractal(
 					PresetFractals.INIT_SCALE,
@@ -529,7 +527,7 @@ public class MainActivity extends Activity
 
 		// Fetch icon from bitmap fragment
 		Fractal fractal = bitmapFragment.fractal();
-		FavoriteEntry fav = FavoriteEntry.create(fractal, bitmapFragment.getBitmap());
+		FavoriteEntry fav = FavoriteEntry.create(name, fractal, bitmapFragment.getBitmap());
 
 		SharedPreferences favoritesPrefs = getSharedPreferences("favorites", Context.MODE_PRIVATE);
 

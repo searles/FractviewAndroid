@@ -6,11 +6,13 @@ import android.os.Bundle;
 import android.view.View;
 import android.widget.AdapterView;
 import android.widget.Button;
+import android.widget.CheckBox;
 import android.widget.ListView;
 
 import java.util.List;
 
 import at.searles.fractview.fractal.Fractal;
+import at.searles.math.Scale;
 
 /**
  * This activity is used to load parameter sets from
@@ -27,12 +29,13 @@ public class PresetParametersActivity extends Activity {
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.favorite_layout);
+        setContentView(R.layout.preset_parameters);
 
         Intent intent = getIntent();
         this.inFractal = intent.getParcelableExtra("fractal"); // FIXME test whether this is preserved on termination
 
-        // and since it is sorted, use it to write label-map.
+        CheckBox mergeCB = (CheckBox) findViewById(R.id.mergeCheckBox);
+
         ListView lv = (ListView) findViewById(R.id.bookmarkListView);
 
         List<AssetsHelper.ParametersAsset> entries = AssetsHelper.parameterEntries(getAssets());
@@ -46,10 +49,22 @@ public class PresetParametersActivity extends Activity {
             public void onItemClick(AdapterView<?> parent, View view, int index, long id) {
                 AssetsHelper.ParametersAsset entry = entries.get(index);
 
-                // Fetch checkbox status to know whether we should merge or keep
-                // original.
+                boolean merge = mergeCB.isChecked();
 
-                //returnFractal(new Fractal(inFractal);
+                // use old scale if merge is checked, otherwise either the one
+                // of this setting or the default scale.
+                Scale sc = merge ? inFractal.scale()
+                        : entry.scale == null ? AssetsHelper.DEFAULT_SCALE : entry.scale;
+
+                Fractal.Parameters p = entry.parameters;
+
+                if(merge) {
+                    p = p.merge(inFractal.parameters());
+                }
+
+                Fractal retVal = new Fractal(sc, inFractal.sourceCode(), p);
+
+                returnFractal(retVal);
             }
         });
 

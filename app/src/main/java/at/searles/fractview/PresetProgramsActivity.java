@@ -17,9 +17,9 @@ import at.searles.fractview.fractal.Fractal;
  */
 public class PresetProgramsActivity extends Activity {
 
-	private Fractal inFractal;
-	private List<String> labels;
+	public static final int PRESETS_PARAMETERS_RETURN = 102;
 
+	private Fractal inFractal;
 
 	@Override
 	public void onCreate(Bundle savedInstanceState) {
@@ -42,7 +42,14 @@ public class PresetProgramsActivity extends Activity {
 			@Override
 			public void onItemClick(AdapterView<?> parent, View view, int index, long id) {
 				String sourceCode = entries.get(index).source;
-				returnFractal(new Fractal(inFractal.scale(), sourceCode, inFractal.parameters()));
+
+				Fractal f = new Fractal(inFractal.scale(), sourceCode, inFractal.parameters());
+
+				// Start new Parameter activity and put this source code inside.
+				Intent i = new Intent(PresetProgramsActivity.this,
+						PresetParametersActivity.class);
+				i.putExtra("fractal", f);
+				startActivityForResult(i, PRESETS_PARAMETERS_RETURN);
 			}
 		});
 
@@ -126,11 +133,13 @@ public class PresetProgramsActivity extends Activity {
 		});
 	}
 
-	void returnFractal(Fractal f) {
-		Intent data = new Intent();
-		data.putExtra("fractal", f);
-		setResult(1, data);
-		finish();
-	}
+	@Override
+	protected void onActivityResult(int requestCode, int resultCode, Intent data) {
+		super.onActivityResult(requestCode, resultCode, data);
 
+		if (requestCode == PRESETS_PARAMETERS_RETURN) {
+			setResult(1, data);
+			finish();
+		}
+	}
 }

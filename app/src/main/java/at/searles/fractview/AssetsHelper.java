@@ -13,6 +13,7 @@ import java.util.ArrayList;
 
 import at.searles.fractview.fractal.Fractal;
 import at.searles.math.Cplx;
+import at.searles.math.Scale;
 import at.searles.math.color.Palette;
 
 /**
@@ -20,6 +21,8 @@ import at.searles.math.color.Palette;
  */
 
 public class AssetsHelper {
+    public static final Scale DEFAULT_SCALE = new Scale(2, 0, 0, 2, 0, 0);
+
     /**
      * Try to read content of assets-folder
      * @param am The asset manager that should be used
@@ -95,7 +98,7 @@ public class AssetsHelper {
         String sourceCode = AssetsHelper.readSourcecode(am, sourceFilename);
         Bitmap icon = AssetsHelper.readIcon(am, iconFilename);
 
-        if(sourceCode == null || icon == null) {
+        if(sourceCode == null/* || icon == null*/) {
             throw new IllegalArgumentException("bad asset: " + title);
         }
 
@@ -144,7 +147,7 @@ public class AssetsHelper {
             _ENTRIES.add(e(am, "Julia Map", "JuliaMap.png", "Variation of \"Default\" that shows a map of julia sets.", "JuliaMap.fv"));
             _ENTRIES.add(e(am, "Branching", "Branching.png", "\"Default\" with an addend for average coloring methods for polynom formulas", "Branching.fv"));
             _ENTRIES.add(e(am, "Fold", "Fold.png", "\"Default\" with a more general addend (fold), also suitable for stripe coloring methods of non-polynomial fractals", "Fold.fv"));
-            _ENTRIES.add(e(am, "Double Fold", "TwpFold.png", "\"Default\" with two fold functions", "TwoFold.fv"));
+            _ENTRIES.add(e(am, "Double Fold", "TwoFold.png", "\"Default\" with two fold functions", "TwoFold.fv"));
             _ENTRIES.add(e(am, "Orbit Trap", "OrbitTrap.png", "\"Default\" with an orbit trap", "OrbitTrap.fv"));
             _ENTRIES.add(e(am, "Min/Max Orbit Trap", "MinMaxOrbitTrap.png", "Picks the maximum distance to the orbit trap", "MinMaxOrbitTrap.fv"));
 
@@ -167,11 +170,21 @@ public class AssetsHelper {
     private static ParametersAsset e(AssetManager am, String title, String iconFilename, String description, Fractal.Parameters parameters) {
         Bitmap icon = AssetsHelper.readIcon(am, iconFilename);
 
-        if(icon == null) {
+        /*if(icon == null) {
             throw new IllegalArgumentException("bad asset: " + title);
-        }
+        }*/
 
-        return new ParametersAsset(title, icon, description, parameters);
+        return new ParametersAsset(title, icon, description, null, parameters);
+    }
+
+    private static ParametersAsset e(AssetManager am, String title, String iconFilename, String description, Scale scale, Fractal.Parameters parameters) {
+        Bitmap icon = AssetsHelper.readIcon(am, iconFilename);
+
+        /*if(icon == null) {
+            throw new IllegalArgumentException("bad asset: " + title);
+        }*/
+
+        return new ParametersAsset(title, icon, description, scale, parameters);
     }
 
     // And now for the presets.
@@ -179,18 +192,20 @@ public class AssetsHelper {
         public final String title;
         public final Bitmap icon;
         public final String description;
+        public final Scale scale; // may be null
         public final Fractal.Parameters parameters;
 
-        private ParametersAsset(String title, Bitmap icon, String description, Fractal.Parameters parameters) {
+        private ParametersAsset(String title, Bitmap icon, String description, Scale scale, Fractal.Parameters parameters) {
             this.title = title;
             this.icon = icon;
             this.description = description;
+            this.scale = scale;
             this.parameters = parameters;
         }
 
         @Override
         public String title() {
-            return title();
+            return title;
         }
 
         @Override
@@ -258,19 +273,6 @@ public class AssetsHelper {
             );
 
             // CURSOR
-
-            _PARAMETER_ENTRIES.add(e(am, " Ship", "BurningShip.png", "Burning Ship Fractal",
-                    new Fractal.Parameters()
-                            .add("function", Fractal.Type.Expr, "mandelbrot(abs z, p)")
-                            .add("mandelinit", Fractal.Type.Expr, "0")
-            ));
-
-            _PARAMETER_ENTRIES.add(e(am, "Burning Ship", "BurningShip.png", "Burning Ship Fractal",
-                    new Fractal.Parameters()
-                            .add("function", Fractal.Type.Expr, "mandelbrot(abs z, p)")
-                            .add("mandelinit", Fractal.Type.Expr, "0")
-            ));
-
 
 
         }
