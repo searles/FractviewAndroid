@@ -1,0 +1,42 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:id="@+id/ms_layout">
+
+    <view
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        class="at.searles.fractview.ui.NewPaletteView"
+        android:id="@+id/paletteView"
+        android:layout_gravity="center_horizontal" />
+
+    <HorizontalScrollView
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:id="@+id/hscroll">
+
+        <View
+            android:layout_width="1px"
+            android:layout_height="1px"
+            android:minWidth="1px"
+            android:orientation="vertical"
+            android:id="@+id/hspace"
+            android:background="#00000000"/>
+
+    </HorizontalScrollView>
+
+    <ScrollView
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:id="@+id/vscroll">
+
+        <View
+            android:layout_width="1px"
+            android:layout_height="1px"
+            android:minHeight="1px"
+            android:orientation="vertical"
+            android:id="@+id/vspace"
+            android:background="#00000000"/>
+    </ScrollView>
+</RelativeLayout>

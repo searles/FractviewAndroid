@@ -18,8 +18,8 @@ import org.json.JSONObject;
 
 import at.searles.fractview.editors.EditableDialogFragment;
 import at.searles.fractview.fractal.Adapters;
-import at.searles.fractview.ui.PaletteView;
-import at.searles.fractview.ui.PaletteViewModel;
+import at.searles.fractview.ui.NewPaletteView;
+import at.searles.fractview.ui.NewPaletteViewModel;
 import at.searles.math.color.Palette;
 
 public class PaletteActivity extends Activity implements EditableDialogFragment.Callback {
@@ -35,8 +35,8 @@ public class PaletteActivity extends Activity implements EditableDialogFragment.
 	private static final int SAVE_PALETTE = -1; // because positive numbers are for indices
 	private static final int LOAD_PALETTE = -2; // because positive numbers are for indices
 
-	private PaletteViewModel model = null;
-	private PaletteView view = null;
+	private NewPaletteViewModel model = null;
+	private NewPaletteView view = null;
 
 	private String id;
 
@@ -65,10 +65,15 @@ public class PaletteActivity extends Activity implements EditableDialogFragment.
 			throw new IllegalArgumentException("No palette available");
 		}
 
-		model = new PaletteViewModel(wrapper.p);
+		// create model and palette view
+		model = new NewPaletteViewModel(wrapper.p);
 
-		view = (PaletteView) findViewById(R.id.paletteView);
+		view = (NewPaletteView) findViewById(R.id.paletteView);
+		// must set model
 		view.setModel(model);
+
+		// the paletteview is embedded into a multiscrollview
+		// MultiScrollView msView = (MultiScrollView) findViewById(R.id.multiScrollView);
 
 		Button okButton = (Button) findViewById(R.id.okButton);
 		Button cancelButton = (Button) findViewById(R.id.cancelButton);
@@ -152,7 +157,7 @@ public class PaletteActivity extends Activity implements EditableDialogFragment.
 					Palette p = Adapters.paletteAdapter.fromJSON(new JSONObject(pastedText.toString()));
 
 					if(p != null) {
-						model = new PaletteViewModel(p);
+						model = new NewPaletteViewModel(p);
 						view.setModel(model);
 					}
 				} catch (JSONException e) {
@@ -204,7 +209,7 @@ public class PaletteActivity extends Activity implements EditableDialogFragment.
 					try {
 						Palette p = Adapters.paletteAdapter.fromJSON(new JSONObject(paletteString));
 						// set the palette.
-						model = new PaletteViewModel(p);
+						model = new NewPaletteViewModel(p);
 						view.setModel(model);
 					} catch (JSONException e) {
 						e.printStackTrace();
@@ -235,7 +240,8 @@ public class PaletteActivity extends Activity implements EditableDialogFragment.
 		}
 	}
 
-
+	// fixme this one should move into adapter.
+	// fixme also create such wrappers for other types.
 	public static class PaletteWrapper implements Parcelable {
 
 		//public final String label;

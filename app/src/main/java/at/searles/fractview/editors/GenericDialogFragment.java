@@ -33,6 +33,8 @@ public class GenericDialogFragment extends DialogFragment {
         getArguments().putBoolean("closed", true);
 
         Dialog d = getDialog();
+        // FIXME In some cases, the dialog is still showing
+        // FIXME because getDialog returns null...
 
         if(d != null) {
             Log.d("GDF", "and since dialog is not null I dismiss it");
