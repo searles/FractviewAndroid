@@ -170,6 +170,25 @@ public class Colors {
 		return lab;
 	}
 
+	/**
+	 * Returns the distance of these two colurs. It uses the lab colorspace
+	 * @param color1
+	 * @param color2
+     * @return
+     */
+	public static float dist(int color1, int color2) {
+		float[] rgb1 = int2rgb(color1);
+		float[] rgb2 = int2rgb(color2);
+		float[] lab1 = rgb2lab(rgb1, rgb1);
+		float[] lab2 = rgb2lab(rgb2, rgb2);
+
+		float dl = lab1[0] - lab2[0];
+		float da = lab1[1] - lab2[1];
+		float db = lab1[2] - lab2[2];
+
+		return (float) Math.sqrt(dl * dl + da * da + db * db);
+	}
+
 	public static class ColorFormatException extends RuntimeException {
 		public ColorFormatException(String msg) {
 			super(msg);

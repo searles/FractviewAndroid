@@ -12,7 +12,7 @@
         android:text="Merge with current parameters"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:checked="true"
+        android:checked="false"
         android:id="@+id/mergeCheckBox"/>
 
     <Button

@@ -3,9 +3,11 @@ package at.searles.fractview;
 import android.Manifest;
 import android.annotation.SuppressLint;
 import android.app.Activity;
+import android.app.AlertDialog;
 import android.app.FragmentManager;
 import android.app.FragmentTransaction;
 import android.content.Context;
+import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
@@ -373,57 +375,74 @@ public class MainActivity extends Activity
 				imageView.setRotationLock(checked);
 			} return true;
 
-			case R.id.action_wallpaper: {
-				int wallpaperPermission = ContextCompat.checkSelfPermission(this, Manifest.permission.SET_WALLPAPER);
-
-				if(wallpaperPermission != PackageManager.PERMISSION_GRANTED) {
-					ActivityCompat.requestPermissions(this,
-							new String[]{
-									Manifest.permission.SET_WALLPAPER
-							}, WALLPAPER_PERMISSIONS);
-				} else {
-					bitmapFragment.setAsWallpaper();
-				}
-			} return true;
-
 			case R.id.action_share: {
-				// save/share image
-				int readPermission = ContextCompat.checkSelfPermission(this, Manifest.permission.READ_EXTERNAL_STORAGE);
-				int writePermission = ContextCompat.checkSelfPermission(this, Manifest.permission.WRITE_EXTERNAL_STORAGE);
+				AlertDialog.Builder builder = new AlertDialog.Builder(this);
 
-				if(readPermission != PackageManager.PERMISSION_GRANTED || writePermission != PackageManager.PERMISSION_GRANTED) {
-					// I am anyways showing a Toast that I can't write if I can't write.
-					ActivityCompat.requestPermissions(this,
-							new String[]{
-									Manifest.permission.READ_EXTERNAL_STORAGE,
-									Manifest.permission.WRITE_EXTERNAL_STORAGE
-							}, IMAGE_PERMISSIONS_SHARE);
-				} else {
-					bitmapFragment.shareImage();
-				}
+				String[] items = {"Share Image", "Save Image", "Set Image as Wallpaper"};
+
+				builder.setItems(items,
+						new DialogInterface.OnClickListener() {
+							@Override
+							public void onClick(DialogInterface dialog, int which) {
+								switch (which) {
+									case 0: { // Share
+										// save/share image
+										int readPermission = ContextCompat.checkSelfPermission(MainActivity.this, Manifest.permission.READ_EXTERNAL_STORAGE);
+										int writePermission = ContextCompat.checkSelfPermission(MainActivity.this, Manifest.permission.WRITE_EXTERNAL_STORAGE);
+
+										if(readPermission != PackageManager.PERMISSION_GRANTED || writePermission != PackageManager.PERMISSION_GRANTED) {
+											// I am anyways showing a Toast that I can't write if I can't write.
+											ActivityCompat.requestPermissions(MainActivity.this,
+													new String[]{
+															Manifest.permission.READ_EXTERNAL_STORAGE,
+															Manifest.permission.WRITE_EXTERNAL_STORAGE
+													}, IMAGE_PERMISSIONS_SHARE);
+										} else {
+											bitmapFragment.shareImage();
+										}
+									}
+									break;
+									case 1: { // save
+										int readPermission = ContextCompat.checkSelfPermission(MainActivity.this, Manifest.permission.READ_EXTERNAL_STORAGE);
+										int writePermission = ContextCompat.checkSelfPermission(MainActivity.this, Manifest.permission.WRITE_EXTERNAL_STORAGE);
+
+										if(readPermission != PackageManager.PERMISSION_GRANTED || writePermission != PackageManager.PERMISSION_GRANTED) {
+											// I am anyways showing a Toast that I can't write if I can't write.
+											ActivityCompat.requestPermissions(MainActivity.this,
+													new String[]{
+															Manifest.permission.READ_EXTERNAL_STORAGE,
+															Manifest.permission.WRITE_EXTERNAL_STORAGE
+													}, IMAGE_PERMISSIONS_SAVE);
+										} else {
+											saveImage();
+										}
+									}
+									break;
+									case 2: { // set as wallpaper
+										int wallpaperPermission = ContextCompat.checkSelfPermission(MainActivity.this, Manifest.permission.SET_WALLPAPER);
+
+										if(wallpaperPermission != PackageManager.PERMISSION_GRANTED) {
+											ActivityCompat.requestPermissions(MainActivity.this,
+													new String[]{
+															Manifest.permission.SET_WALLPAPER
+													}, WALLPAPER_PERMISSIONS);
+										} else {
+											bitmapFragment.setAsWallpaper();
+										}
+									}
+									break;
+									default:
+										throw new IllegalArgumentException("no such selection: " + which);
+								}
+							}
+						});
+				builder.setCancelable(true);
+
+				builder.show();
+
+
 			} return true;
 
-			case R.id.action_save: {
-				int readPermission = ContextCompat.checkSelfPermission(this, Manifest.permission.READ_EXTERNAL_STORAGE);
-				int writePermission = ContextCompat.checkSelfPermission(this, Manifest.permission.WRITE_EXTERNAL_STORAGE);
-
-				if(readPermission != PackageManager.PERMISSION_GRANTED || writePermission != PackageManager.PERMISSION_GRANTED) {
-					// I am anyways showing a Toast that I can't write if I can't write.
-					ActivityCompat.requestPermissions(this,
-							new String[]{
-									Manifest.permission.READ_EXTERNAL_STORAGE,
-									Manifest.permission.WRITE_EXTERNAL_STORAGE
-							}, IMAGE_PERMISSIONS_SAVE);
-				} else {
-					saveImage();
-				}
-			} return true;
-			/*case R.id.action_testing: {
-				EditableDialogFragment ft = EditableDialogFragment.newInstance(1, "testing 1", false, EditableDialogFragment.Type.Int);
-				ft.show(getFragmentManager(), "dialog");
-				//ProgressDialogFragment ft = ProgressDialogFragment.newInstance(1, false, "testing", "bla", false);
-				//ft.show(getFragmentManager(), "dialog");
-			} return true;*/
             default:
                 return super.onOptionsItemSelected(item);
         }
@@ -577,20 +596,22 @@ public class MainActivity extends Activity
 	protected void onActivityResult(int requestCode, int resultCode, Intent data) {
 		super.onActivityResult(requestCode, resultCode, data);
 
-		if(requestCode == PARAMETER_ACTIVITY_RETURN) {
-			if(resultCode == 1) { // = "Ok"
-				Fractal newFractal = data.getParcelableExtra("parameters");
-				setNewFractal(newFractal);
-			}
-		} else if(requestCode == BOOKMARK_ACTIVITY_RETURN) {
-			if(resultCode == 1) { // = "a fractal was selected"
-				Fractal newFractal = data.getParcelableExtra("fractal");
-				setNewFractal(newFractal);
-			}
-		} else if(requestCode == PRESETS_ACTIVITY_RETURN) {
-			if(resultCode == 1) {
-				Fractal newFractal = data.getParcelableExtra("fractal");
-				setNewFractal(newFractal);
+		if(data != null) {
+			if (requestCode == PARAMETER_ACTIVITY_RETURN) {
+				if (resultCode == 1) { // = "Ok"
+					Fractal newFractal = data.getParcelableExtra("parameters");
+					setNewFractal(newFractal);
+				}
+			} else if (requestCode == BOOKMARK_ACTIVITY_RETURN) {
+				if (resultCode == 1) { // = "a fractal was selected"
+					Fractal newFractal = data.getParcelableExtra("fractal");
+					setNewFractal(newFractal);
+				}
+			} else if (requestCode == PRESETS_ACTIVITY_RETURN) {
+				if (resultCode == 1) {
+					Fractal newFractal = data.getParcelableExtra("fractal");
+					setNewFractal(newFractal);
+				}
 			}
 		}
 	}

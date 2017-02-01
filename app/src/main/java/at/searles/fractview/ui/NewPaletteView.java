@@ -14,6 +14,7 @@ import android.view.View;
 
 import at.searles.fractview.PaletteActivity;
 import at.searles.fractview.editors.EditableDialogFragment;
+import at.searles.math.Commons;
 import at.searles.math.color.Colors;
 
 import static at.searles.fractview.ui.NewPaletteView.SelectionType.BoundX;
@@ -80,6 +81,10 @@ public class NewPaletteView extends View implements MultiScrollView.InternalView
 
         int x; // coordinates in terms of columns/rows
         int y; // [not used if BoundBoth]
+
+        public String toString() {
+            return type + ": " + x + ", " + y;
+        }
     }
 
     // Geometry stuff
@@ -250,6 +255,8 @@ public class NewPaletteView extends View implements MultiScrollView.InternalView
     public boolean singleTap(MotionEvent evt) {
         Selection s = at(evt.getX(), evt.getY());
 
+        if(s == null) return false;
+
         Log.d("NPV", "single tab at " + evt + " = " + s.type);
 
         switch(s.type) {
@@ -267,7 +274,6 @@ public class NewPaletteView extends View implements MultiScrollView.InternalView
             case Column: {
                 // delete/duplicate
                 AlertDialog.Builder builder = new AlertDialog.Builder(getContext());
-                //builder.setTitle("Pick a color");
 
                 String[] items;
 
@@ -278,7 +284,7 @@ public class NewPaletteView extends View implements MultiScrollView.InternalView
                     items = new String[]{"Duplicate"};
                 }
 
-                builder.setItems(new String[]{"Duplicate", "Delete"},
+                builder.setItems(items,
                         new DialogInterface.OnClickListener() {
                     @Override
                     public void onClick(DialogInterface dialog, int which) {
@@ -346,7 +352,7 @@ public class NewPaletteView extends View implements MultiScrollView.InternalView
             lastPtX = currentPtX = evt.getX() + left;
             lastPtY = currentPtY = evt.getY() + top;
 
-            Log.d("NPV", "selected is " + sel.type);
+            Log.d("NPV", "selected is " + sel);
             invalidate();
             return true;
         } else {
@@ -400,8 +406,16 @@ public class NewPaletteView extends View implements MultiScrollView.InternalView
         // row/column is always determined by currentPt{X,Y}.
 
         // where are we now?
-        int sx = (int) index(lastPtX), sy = (int) index(lastPtY);
-        int tx = (int) index(currentPtX), ty = (int) index(currentPtY);
+        int sx = (int) Math.floor(index(lastPtX)), sy = (int) Math.floor(index(lastPtY));
+        int tx = (int) Math.floor(index(currentPtX)), ty = (int) Math.floor(index(currentPtY));
+
+        Log.d("NPV", "last = " + lastPtX + ", " + lastPtY);
+        Log.d("NPV", "sx, sy, tx, ty = " + sx + ", " + sy + ", " + tx + ", " + ty);
+
+        sx = Commons.clamp(sx, 0, model().width() - 1);
+        tx = Commons.clamp(tx, 0, model().width() - 1);
+        sy = Commons.clamp(sy, 0, model().height() - 1);
+        ty = Commons.clamp(ty, 0, model().height() - 1);
 
         // get distance travelled
         int dx = tx - sx;
@@ -451,7 +465,7 @@ public class NewPaletteView extends View implements MultiScrollView.InternalView
                 model().moveDown(y);
             }
 
-            for(int y = sy; y > sy; --y) {
+            for(int y = sy; y > ty; --y) {
                 model().moveUp(y);
             }
         }
@@ -605,10 +619,10 @@ public class NewPaletteView extends View implements MultiScrollView.InternalView
                 // this was stored in sel.x/sel.y.
                 //
                 // thus, get the current tile
-                int ix = (int) index(currentPtX);
-                int iy = (int) index(currentPtY);
+                int ix = Commons.clamp((int) Math.floor(index(currentPtX)), 0, model().width() - 1);
+                int iy = Commons.clamp((int) Math.floor(index(currentPtY)), 0, model().height() - 1);
 
-                // and calculate where the
+                // and calculate where the first tile is
                 int square1X = ix - sel.x - 1;
                 int square1Y = iy - sel.y - 1;
 

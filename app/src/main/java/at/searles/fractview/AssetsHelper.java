@@ -70,6 +70,8 @@ public class AssetsHelper {
      * @return null if there is no such file. The error message is logged
      */
     public static Bitmap readIcon(AssetManager am, String iconFilename) {
+        if(iconFilename == null) return null;
+
         Bitmap icon = null;
         InputStream is = null;
 
@@ -226,6 +228,21 @@ public class AssetsHelper {
             // create entries.
             _PARAMETER_ENTRIES = new ArrayList<>();
 
+            _PARAMETER_ENTRIES.add(e(am, "Wikipedia", "DefaultMBWiki.png", "Parameters from the Wikipedia - Mandelbrot - Entry",
+                    new Fractal.Parameters()
+                            .add("bailoutvalue", Fractal.Type.Expr, "i + smooth_i")
+                            .add("bailouttransfer", Fractal.Type.Expr, "log(1 + value * (0.42 / 28))")
+                            .add("laketransfer", Fractal.Type.Expr, "0")
+                            .add("lakepalette", Fractal.Type.Palette, new Palette(new int[][]{{0xff000000}}))
+                            .add("bailoutpalette", Fractal.Type.Palette, new Palette(new int[][]{{0xff000764, 0xff206bcb, 0xffedffff, 0xffffaa00, 0xff310231}})))
+            );
+
+            _PARAMETER_ENTRIES.add(e(am, "Mandelbrot Set", "Mandelbrot.png", "Mandelbrot SetBurning Ship Fractal",
+                    new Fractal.Parameters()
+                            .add("function", Fractal.Type.Expr, "mandelbrot(z, p)")
+                            .add("mandelinit", Fractal.Type.Expr, "0")
+            ));
+
             _PARAMETER_ENTRIES.add(e(am, "Burning Ship", "BurningShip.png", "Burning Ship Fractal",
                     new Fractal.Parameters()
                             .add("function", Fractal.Type.Expr, "mandelbrot(abs z, p)")
@@ -264,13 +281,43 @@ public class AssetsHelper {
                             .add("juliapoint", Fractal.Type.Cplx, new Cplx(0.5666, -0.5))
             ));
 
-            _PARAMETER_ENTRIES.add(e(am, "Wikipedia", "DefaultMBWiki.png", "Parameters from the Wikipedia - Mandelbrot - Entry",
+            _PARAMETER_ENTRIES.add(e(am, "Glynn", "Glynn.png", "Glynn fractal (a julia set of mandel^1.6",
                     new Fractal.Parameters()
-                            .add("bailouttransfer", Fractal.Type.Expr, "log(1 + value * (0.42 / 28))")
-                            .add("laketransfer", Fractal.Type.Expr, "0")
-                            .add("lakepalette", Fractal.Type.Palette, new Palette(new int[][]{{0xff000000}}))
-                            .add("bailoutpalette", Fractal.Type.Palette, new Palette(new int[][]{{0xff000764, 0xff206bcb, 0xffedffff, 0xffffaa00, 0xff310231}})))
-            );
+                            .add("function", Fractal.Type.Expr, "z ^ 1.6 + p")
+                            .add("max_power", Fractal.Type.Real, "3")
+                            .add("mandelinit", Fractal.Type.Expr, "0")
+                            .add("juliaset", Fractal.Type.Bool, true)
+                            .add("juliapoint", Fractal.Type.Cplx, new Cplx())
+            ));
+
+            _PARAMETER_ENTRIES.add(e(am, "Mandel^3", "Mandel3.png", "Mandelbrot Set to the power of 3",
+                    new Fractal.Parameters()
+                            .add("function", Fractal.Type.Expr, "z^3 + p")
+                            .add("max_power", Fractal.Type.Real, "3")
+                            .add("mandelinit", Fractal.Type.Expr, "0")
+            ));
+
+            _PARAMETER_ENTRIES.add(e(am, "Mandel^4", "Mandel3.png", "Mandelbrot Set to the power of 3",
+                    new Fractal.Parameters()
+                            .add("function", Fractal.Type.Expr, "z^4 + p")
+                            .add("max_power", Fractal.Type.Real, "4")
+                            .add("mandelinit", Fractal.Type.Expr, "0")
+            ));
+
+            _PARAMETER_ENTRIES.add(e(am, "Steiner Circles Trap", null, "Orbit Trap of 6 Steiner Circles",
+                    new Fractal.Parameters()
+                            .add("trapfn", Fractal.Type.Expr, "min(circle(0:0, 3, znext), circle(-2:0, 1, znext), circle(2:0, 1, znext), circle(-1:-1.73205, 1, znext), circle(-1:1.73205, 1, znext), circle(1:-1.73205, 1, znext), circle(1:1.73205, 1, znext))")
+            ));
+
+            _PARAMETER_ENTRIES.add(e(am, "Zirkony Zity", "ZirkonyZity.png", "Part of Lyapunov fractal called Zirkony Zity",
+                    new Fractal.Parameters()
+                            .add("Scale", Fractal.Type.Scale, new Scale(0.45, 0, 0, -0.3, 3.05, 3.7))
+            ));
+
+            _PARAMETER_ENTRIES.add(e(am, "Domain Coloring", "DomainColoring.png", "Domain Coloring for Complex Functions",
+                    new Fractal.Parameters()
+                            .add("transfer", Fractal.Type.Expr, "arcnorm z : (0.6 fract (log rad z / log 2) + 0.0667)")
+            ));
 
             // CURSOR
 
