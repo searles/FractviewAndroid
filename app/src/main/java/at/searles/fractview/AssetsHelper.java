@@ -94,7 +94,7 @@ public class AssetsHelper {
 
     // Create a list of assets and icons that come with it.
     // Read private entries
-    private static ProgramAsset e(AssetManager am, String title, String iconFilename, String description, String sourceFilename) {
+    public static ProgramAsset e(AssetManager am, String title, String iconFilename, String description, String sourceFilename) {
         String sourceCode = AssetsHelper.readSourcecode(am, sourceFilename);
         Bitmap icon = AssetsHelper.readIcon(am, iconFilename);
 
@@ -177,7 +177,7 @@ public class AssetsHelper {
         return new ParametersAsset(title, icon, description, null, parameters);
     }
 
-    private static ParametersAsset e(AssetManager am, String title, String iconFilename, String description, Scale scale, Fractal.Parameters parameters) {
+    public static ParametersAsset e(AssetManager am, String title, String iconFilename, String description, Scale scale, Fractal.Parameters parameters) {
         Bitmap icon = AssetsHelper.readIcon(am, iconFilename);
 
         /*if(icon == null) {

@@ -2,12 +2,14 @@ package at.searles.fractview;
 
 import android.app.Activity;
 import android.content.Intent;
+import android.graphics.Bitmap;
 import android.os.Bundle;
 import android.view.View;
 import android.widget.AdapterView;
 import android.widget.Button;
 import android.widget.ListView;
 
+import java.util.ArrayList;
 import java.util.List;
 
 import at.searles.fractview.fractal.Fractal;
@@ -21,6 +23,23 @@ public class PresetProgramsActivity extends Activity {
 
 	private Fractal inFractal;
 
+	private static final FractalEntry KEEP = new FractalEntry() {
+		@Override
+		public String title() {
+			return "Keep current program";
+		}
+
+		@Override
+		public Bitmap icon() {
+			return null;
+		}
+
+		@Override
+		public String description() {
+			return "Reuses the current program";
+		}
+	};
+
 	@Override
 	public void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
@@ -32,8 +51,18 @@ public class PresetProgramsActivity extends Activity {
 		// and since it is sorted, use it to write label-map.
 		ListView lv = (ListView) findViewById(R.id.bookmarkListView);
 
-		List<AssetsHelper.ProgramAsset> entries = AssetsHelper.entries(getAssets());
+		// fetch assets
+		List<AssetsHelper.ProgramAsset> assets = AssetsHelper.entries(getAssets());
 
+		// entries contain a first empty dummy
+		List<FractalEntry> entries = new ArrayList<>(assets.size() + 1);
+
+		// first, add the 'keep'-entry
+		entries.add(KEEP);
+
+		entries.addAll(assets);
+
+		// wrap the favorites-adapter so that first
 		final FavoritesAdapter adapter = new FavoritesAdapter(this, entries);
 
 		lv.setAdapter(adapter);
@@ -41,9 +70,16 @@ public class PresetProgramsActivity extends Activity {
 		lv.setOnItemClickListener(new AdapterView.OnItemClickListener() {
 			@Override
 			public void onItemClick(AdapterView<?> parent, View view, int index, long id) {
-				String sourceCode = entries.get(index).source;
+				Fractal f;
 
-				Fractal f = new Fractal(inFractal.scale(), sourceCode, inFractal.parameters());
+				if(index == 0) {
+					// means 'keep'
+					f = inFractal;
+				} else {
+					String sourceCode =
+							((AssetsHelper.ProgramAsset) entries.get(index)).source;
+					f = new Fractal(inFractal.scale(), sourceCode, inFractal.parameters());
+				}
 
 				// Start new Parameter activity and put this source code inside.
 				Intent i = new Intent(PresetProgramsActivity.this,

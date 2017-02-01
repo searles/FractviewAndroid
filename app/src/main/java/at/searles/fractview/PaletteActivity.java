@@ -18,10 +18,21 @@ import org.json.JSONObject;
 
 import at.searles.fractview.editors.EditableDialogFragment;
 import at.searles.fractview.fractal.Adapters;
+import at.searles.fractview.ui.MultiScrollView;
 import at.searles.fractview.ui.NewPaletteView;
 import at.searles.fractview.ui.NewPaletteViewModel;
 import at.searles.math.color.Palette;
 
+/**
+ * This activity is tightly coupled with the PaletteView. The palette view
+ * starts dialogs that call back to either here or to the view. It would
+ * be better to, well, what? Store the model in a fragment
+ * and call back to there?
+ * It is not so bad, but it should be clearly stated that the
+ * owner of the model is the activity and not the view.
+ *
+ * Therefore, it would be better if the view did not hold the model.
+ */
 public class PaletteActivity extends Activity implements EditableDialogFragment.Callback {
 
 	// Editors should contain all the important information because they are retained.
@@ -68,12 +79,10 @@ public class PaletteActivity extends Activity implements EditableDialogFragment.
 		// create model and palette view
 		model = new NewPaletteViewModel(wrapper.p);
 
-		view = (NewPaletteView) findViewById(R.id.paletteView);
-		// must set model
-		view.setModel(model);
+		// now that the model is set, we can update the size of the scrollviews
+		((MultiScrollView) findViewById(R.id.multiScrollView)).updateSize();
 
 		// the paletteview is embedded into a multiscrollview
-		// MultiScrollView msView = (MultiScrollView) findViewById(R.id.multiScrollView);
 
 		Button okButton = (Button) findViewById(R.id.okButton);
 		Button cancelButton = (Button) findViewById(R.id.cancelButton);
@@ -158,7 +167,7 @@ public class PaletteActivity extends Activity implements EditableDialogFragment.
 
 					if(p != null) {
 						model = new NewPaletteViewModel(p);
-						view.setModel(model);
+						view.invalidate();
 					}
 				} catch (JSONException e) {
 					e.printStackTrace();
@@ -168,6 +177,10 @@ public class PaletteActivity extends Activity implements EditableDialogFragment.
 			default:
 				return super.onOptionsItemSelected(item);
 		}
+	}
+
+	public NewPaletteViewModel model() {
+		return model;
 	}
 
 	/*@Override
@@ -210,7 +223,7 @@ public class PaletteActivity extends Activity implements EditableDialogFragment.
 						Palette p = Adapters.paletteAdapter.fromJSON(new JSONObject(paletteString));
 						// set the palette.
 						model = new NewPaletteViewModel(p);
-						view.setModel(model);
+						view.invalidate();
 					} catch (JSONException e) {
 						e.printStackTrace();
 						Toast.makeText(PaletteActivity.this, "JSON-Error", Toast.LENGTH_LONG).show();
@@ -236,8 +249,16 @@ public class PaletteActivity extends Activity implements EditableDialogFragment.
 
 				// todo alpha!
 				model.set(x, y, ((Integer) o) | 0xff000000);
+
+				// redraw palette
+				findViewById(R.id.paletteView).invalidate();
 			}
 		}
+	}
+
+	public void dimensionChanged() {
+		MultiScrollView msView = (MultiScrollView) findViewById(R.id.multiScrollView);
+		msView.updateSize();
 	}
 
 	// fixme this one should move into adapter.

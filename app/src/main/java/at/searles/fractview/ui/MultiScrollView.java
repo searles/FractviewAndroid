@@ -22,7 +22,7 @@ import at.searles.fractview.R;
  * Thanks to http://stackoverflow.com/questions/12074950/android-horizontalscrollview-inside-scrollview
  */
 
-public class MultiScrollView extends LinearLayout implements DimensionListener {
+public class MultiScrollView extends LinearLayout {
 
 
     public interface InternalView {
@@ -37,8 +37,6 @@ public class MultiScrollView extends LinearLayout implements DimensionListener {
         boolean moveTo(MotionEvent evt);
 
         boolean tapUp(MotionEvent event);
-
-        void setDimensionListener(DimensionListener listener);
     }
 
     private HorizontalScrollView hscroll;
@@ -61,11 +59,6 @@ public class MultiScrollView extends LinearLayout implements DimensionListener {
         init(context);
     }
 
-    @Override
-    public void onDimensionChanged(NewPaletteView v) {
-        updateSize();
-    }
-
     private void init(Context context) {
         inflate(context, R.layout.multiscroll_layout, this);
 
@@ -79,9 +72,6 @@ public class MultiScrollView extends LinearLayout implements DimensionListener {
 
         // TODO if a generalization is needed, here this should be modified.
         content = (InternalView) findViewById(R.id.paletteView);
-
-        // Listen if the size of the content changes
-        content.setDimensionListener(this);
 
         updateSize();
 
@@ -129,7 +119,7 @@ public class MultiScrollView extends LinearLayout implements DimensionListener {
         content.setLeftTop(hscroll.getScrollX(), vscroll.getScrollY());
     }
 
-    private void updateSize() {
+    public void updateSize() {
         // force it
         int width = content.getIntendedWidth();
         hspace.setMinimumWidth(content.getIntendedWidth());

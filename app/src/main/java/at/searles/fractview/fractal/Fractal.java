@@ -214,6 +214,9 @@ public class Fractal implements Parcelable {
 	}
 
 	public static class Parameters implements Parcelable, Iterable<String> {
+
+		public static final Parameters EMPTY = new Parameters();
+
 		private HashMap<String, Pair<Type, Object>> elements;
 
 		public Parameters() {

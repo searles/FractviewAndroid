@@ -2,15 +2,15 @@ package at.searles.math;
 
 public class Commons {
 	public static double clamp(double d, double min, double max) {
-		return Math.min(max, Math.min(min, d));
+		return Math.min(max, Math.max(min, d));
 	}
 
 	public static float clamp(float d, float min, float max) {
-		return Math.min(max, Math.min(min, d));
+		return Math.min(max, Math.max(min, d));
 	}
 
 	public static int clamp(int d, int min, int max) {
-		return Math.min(max, Math.min(min, d));
+		return Math.min(max, Math.max(min, d));
 	}
 
 

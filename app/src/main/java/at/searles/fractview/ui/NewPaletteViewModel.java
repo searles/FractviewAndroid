@@ -193,6 +193,31 @@ public class NewPaletteViewModel {
         return h;
     }
 
+    public void rotateAll(int dx, int dy) {
+        // shift colors
+        for(int x = 0; x < width(); ++x) {
+            // rotate all columns
+            for(int i = 0; i < dy; ++i) {
+                rotateDown(x);
+            }
+
+            // in both directions.
+            for(int i = 0; i > dy; --i) {
+                rotateUp(x);
+            }
+        }
+
+        for(int y = 0; y < height(); ++y) {
+            for(int i = 0; i < dx; ++i) {
+                rotateRight(y);
+            }
+
+            for(int i = 0; i > dx; --i) {
+                rotateLeft(y);
+            }
+        }
+    }
+
     public void rotateUp(int x) {
         int i = get(x, 0);
 
@@ -259,5 +284,36 @@ public class NewPaletteViewModel {
 
     public void moveLeft(int colIndex) {
         moveRight(colIndex - 1);
+    }
+
+    public void duplicateColumn(int x) {
+        for(ArrayList<Integer> row : table) {
+            row.add(x, row.get(x));
+        }
+        this.w++;
+    }
+
+    public void duplicateRow(int y) {
+        ArrayList<Integer> newRow = new ArrayList<>(table.get(0).size());
+
+        for(int x = 0; x < table.get(0).size(); ++x) {
+            newRow.add(get(x, y));
+        }
+
+        table.add(y, newRow);
+        this.h++;
+    }
+
+    public void removeColumn(int x) {
+        for(ArrayList<Integer> row : table) {
+            row.remove(x);
+        }
+
+        this.w--;
+    }
+
+    public void removeRow(int y) {
+        table.remove(y);
+        this.h--;
     }
 }
