@@ -106,4 +106,19 @@ public class Commons {
 
 		return ret;
 	}
+
+	/**
+	 * Always positive modulo.
+	 * @param i
+	 * @param divisor
+     * @return
+     */
+	public static int mod(int i, int divisor) {
+		int m = i % divisor;
+
+		// now, m is in between -divisor + 1 and divisor - 1
+
+		if(m < 0) m += divisor;
+		return m;
+	}
 }

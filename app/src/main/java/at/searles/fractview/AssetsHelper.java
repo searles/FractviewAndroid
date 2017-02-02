@@ -284,7 +284,7 @@ public class AssetsHelper {
             _PARAMETER_ENTRIES.add(e(am, "Glynn", "Glynn.png", "Glynn fractal (a julia set of mandel^1.6",
                     new Fractal.Parameters()
                             .add("function", Fractal.Type.Expr, "z ^ 1.6 + p")
-                            .add("max_power", Fractal.Type.Real, "3")
+                            .add("max_power", Fractal.Type.Real, 3)
                             .add("mandelinit", Fractal.Type.Expr, "0")
                             .add("juliaset", Fractal.Type.Bool, true)
                             .add("juliapoint", Fractal.Type.Cplx, new Cplx())
@@ -293,14 +293,14 @@ public class AssetsHelper {
             _PARAMETER_ENTRIES.add(e(am, "Mandel^3", "Mandel3.png", "Mandelbrot Set to the power of 3",
                     new Fractal.Parameters()
                             .add("function", Fractal.Type.Expr, "z^3 + p")
-                            .add("max_power", Fractal.Type.Real, "3")
+                            .add("max_power", Fractal.Type.Real, 3)
                             .add("mandelinit", Fractal.Type.Expr, "0")
             ));
 
             _PARAMETER_ENTRIES.add(e(am, "Mandel^4", "Mandel3.png", "Mandelbrot Set to the power of 3",
                     new Fractal.Parameters()
                             .add("function", Fractal.Type.Expr, "z^4 + p")
-                            .add("max_power", Fractal.Type.Real, "4")
+                            .add("max_power", Fractal.Type.Real, 4)
                             .add("mandelinit", Fractal.Type.Expr, "0")
             ));
 
@@ -310,8 +310,9 @@ public class AssetsHelper {
             ));
 
             _PARAMETER_ENTRIES.add(e(am, "Zirkony Zity", "ZirkonyZity.png", "Part of Lyapunov fractal called Zirkony Zity",
+                    new Scale(0.45, 0, 0, -0.3, 3.05, 3.7),
                     new Fractal.Parameters()
-                            .add("Scale", Fractal.Type.Scale, new Scale(0.45, 0, 0, -0.3, 3.05, 3.7))
+                            .add("lyastring", Fractal.Type.Expr, "[a,a,a,a,a,a,b,b,b,b,b,b]")
             ));
 
             _PARAMETER_ENTRIES.add(e(am, "Domain Coloring", "DomainColoring.png", "Domain Coloring for Complex Functions",

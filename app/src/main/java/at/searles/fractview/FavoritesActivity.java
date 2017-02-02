@@ -15,6 +15,7 @@ import android.widget.ListView;
 import org.json.JSONException;
 import org.json.JSONObject;
 
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 
@@ -30,7 +31,7 @@ public class FavoritesActivity extends Activity {
 	// fixme menus import from clipboard
 	static final String[] options = {"Delete", "Copy To Clipboard"};
 
-	List<FavoriteEntry> entries;
+	List<FavoriteEntry> entries = new LinkedList<>();
 	SharedPreferences persistent;
 
 	@Override
@@ -41,8 +42,6 @@ public class FavoritesActivity extends Activity {
 		// read bookmark-map from shared preferences
 		// fixme what do the other modes do?
 		persistent = getSharedPreferences("favorites", Context.MODE_PRIVATE);
-
-		/*manageOldEntries();*/
 
 		for(Map.Entry<String, ?> entry : persistent.getAll().entrySet()) {
 			try {
@@ -130,63 +129,4 @@ public class FavoritesActivity extends Activity {
 			}
 		});
 	}
-
-	// FIXME Remove after some time
-	/*@Deprecated
-	private void manageOldEntries() {
-		// show menu
-		// old bookmark entries found
-		// copy to clipboard
-		// delete them
-
-		CharSequence options[] = new CharSequence[] {
-				"Delete old bookmarks",
-				"Copy old bookmarks to clipboard"};
-
-		SharedPreferences oldPreferences = getSharedPreferences("bookmarks", Context.MODE_PRIVATE);
-
-		final Map<String, ?> oldEntries = oldPreferences.getAll();
-
-		if(oldEntries.isEmpty()) {
-			return;
-		}
-
-		AlertDialog.Builder builder = new AlertDialog.Builder(this);
-		builder.setTitle("Unfortunately old bookmarks cannot be supported");
-		builder.setItems(options, new DialogInterface.OnClickListener() {
-			@Override
-			public void onClick(DialogInterface dialog, int which) {
-				// the user clicked on colors[which]
-				if(which == 0) {
-					SharedPreferences.Editor editor = getSharedPreferences("bookmarks", Context.MODE_PRIVATE).edit();
-					editor.clear();
-					editor.apply();
-				} else if(which == 1) {
-					StringBuilder sb = new StringBuilder();
-
-					for(Map.ProgramAsset<String, ?> entry : oldEntries.entrySet()) {
-						sb.append(entry.getKey()).append("\n");
-						sb.append(String.valueOf(entry.getValue()));
-
-						sb.append("\n\n");
-					}
-
-					ClipboardManager clipboard = (ClipboardManager) getSystemService(CLIPBOARD_SERVICE);
-					ClipData clip = ClipData.newPlainText("fractview_old_bookmarks", sb.toString());
-					clipboard.setPrimaryClip(clip);
-				}
-			}
-		});
-
-		builder.setNegativeButton("Close", new DialogInterface.OnClickListener() {
-			@Override
-			public void onClick(DialogInterface dialogInterface, int i) {
-				// Do nothing.
-				dialogInterface.dismiss();
-			}
-		});
-
-		builder.show();
-	}*/
-
 }

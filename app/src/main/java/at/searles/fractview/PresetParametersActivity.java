@@ -12,10 +12,13 @@ import android.widget.CheckBox;
 import android.widget.ListView;
 
 import java.util.ArrayList;
+import java.util.Iterator;
 import java.util.List;
+import java.util.TreeSet;
 
 import at.searles.fractview.fractal.Fractal;
 import at.searles.math.Scale;
+import at.searles.meelan.CompileException;
 
 /**
  * This activity is used to load parameter sets from
@@ -44,6 +47,23 @@ public class PresetParametersActivity extends Activity {
         }
     };
 
+    private static final FractalEntry MERGE_DEFAULTS = new FractalEntry() {
+        @Override
+        public String title() {
+            return "Merge current parameters with defaults";
+        }
+
+        @Override
+        public Bitmap icon() {
+            return null;
+        }
+
+        @Override
+        public String description() {
+            return "Uses the current parameters, merged with defaults";
+        }
+    };
+
     Fractal inFractal;
 
     @Override
@@ -62,12 +82,43 @@ public class PresetParametersActivity extends Activity {
         List<AssetsHelper.ParametersAsset> assets = AssetsHelper.parameterEntries(getAssets());
 
         // entries contain a first empty dummy
-        List<FractalEntry> entries = new ArrayList<>(assets.size() + 1);
+        List<FractalEntry> entries = new ArrayList<>(assets.size() + 2);
 
         // first, add the 'keep'-entry
         entries.add(USE_DEFAULTS);
+        entries.add(MERGE_DEFAULTS);
 
-        entries.addAll(assets);
+        // parse fractal
+        try {
+            inFractal.parse();
+        } catch (CompileException e) {
+            e.printStackTrace();
+        }
+
+        // take all parameterIds, and only if a preset
+        // is fully contained, it is accepted.
+        TreeSet<String> ids = new TreeSet<>();
+
+        for(String id : inFractal.parameterIds()) {
+            ids.add(id);
+        }
+
+        next_asset: for(AssetsHelper.ParametersAsset entry : AssetsHelper.parameterEntries(getAssets())) {
+            Iterator<String> i = entry.parameters.iterator();
+
+            while(i.hasNext()) {
+                String id = i.next();
+
+                if (!id.startsWith("__")) {
+                    if (!ids.contains(id)) {
+                        continue next_asset; // next entry in for loop...
+                    }
+                }
+            }
+
+            // everything is contained
+            entries.add(entry);
+        }
 
         final FavoritesAdapter adapter = new FavoritesAdapter(this, entries);
 
@@ -79,19 +130,19 @@ public class PresetParametersActivity extends Activity {
                 Fractal.Parameters p;
                 Scale sc;
 
-                if(index == 0) {
+                if(index == 0 || index == 1) {
                     // Use defaults, therefore use empty parameters.
                     p = Fractal.Parameters.EMPTY;
                     // use default
                     sc = AssetsHelper.DEFAULT_SCALE;
                 } else {
                     AssetsHelper.ParametersAsset entry = (AssetsHelper.ParametersAsset) entries.get(index);
-                    sc = entry.scale == null ? inFractal.scale() : entry.scale;
+                    sc = entry.scale == null ? AssetsHelper.DEFAULT_SCALE : entry.scale;
                     p = entry.parameters;
                 }
 
                 // use old scale if merge is checked.
-                if(mergeCheckBox.isChecked()) {
+                if(mergeCheckBox.isChecked() || index == 1) {
                     sc = inFractal.scale();
                     p = p.merge(inFractal.parameters());
                 }
