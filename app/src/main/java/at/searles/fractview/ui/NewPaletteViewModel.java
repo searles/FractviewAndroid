@@ -1,5 +1,6 @@
 package at.searles.fractview.ui;
 
+import android.graphics.Color;
 import android.util.Log;
 
 import java.util.ArrayList;
@@ -7,7 +8,6 @@ import java.util.Arrays;
 import java.util.Iterator;
 import java.util.Random;
 
-import at.searles.math.color.Colors;
 import at.searles.math.color.Palette;
 
 /**
@@ -121,84 +121,46 @@ public class NewPaletteViewModel {
      */
     private Iterator<Integer> randomColorStream = new Iterator<Integer>() {
         Random rnd = new Random();
-        float avgL = 0, avgA = 0, avgB = 0;
-        float[] lab = new float[4];
-
-        {
-            // initialize with some random color
-            rndColor();
-            avgL = lab[0]; avgB = lab[1]; avgA = lab[2];
-        }
+        float[] tmp = new float[3];
 
         @Override
         public boolean hasNext() {
             return true;
         }
 
-        float[] rndColor() {
-            float r = rnd.nextFloat();
-            float y = rnd.nextFloat(); // yellow
-            float g = rnd.nextFloat();
-            float b = rnd.nextFloat();
+        int rndColor() {
+            // tmp[0] will be hue [0-360]
+            // tmp[1] will be sat [0-1]
+            // tmp[2] will be val [0-1]
 
+            // hue: 0 red, 60 yellow, 120 green, 240 is blue.
+            // Since yellow is culturally more important, I will scale
+            // it up.
+            float hue = rnd.nextFloat();
 
-            lab[0] = Math.max(r, y);
-            lab[1] = Math.max(g, y);
-            lab[2] = b;
+            if(hue < 0.5f) {
+                // gradient red-yellow-green
+                hue *= 360;
+            } else {
+                // gradient green-blue-red
+                hue = hue * 480 - 120;
+            }
 
-            Colors.rgb2lab(lab, lab);
+            float sat = rnd.nextFloat();
 
-            // 3 passes to create more dark/bright colors
-            lab[0] /= 100;
+            float val = rnd.nextFloat();
+            val = 1 - val * val; // more natural
 
-            lab[0] = ((-2) * lab[0] + 3) * lab[0] * lab[0];
-            lab[0] = ((-2) * lab[0] + 3) * lab[0] * lab[0];
+            // FIXME maybe more for others.
 
-            lab[0] *= 100;
+            tmp[0] = hue; tmp[1] = sat; tmp[2] = val;
 
-            return lab;
-        }
-
-        float d() {
-            float dl = avgL - lab[0];
-            float da = avgA - lab[1];
-            float db = avgB - lab[2];
-
-            return (float) Math.sqrt(dl * dl + da * da + db * db);
-        }
-
-        int current() {
-            return Colors.rgb2int(Colors.lab2rgb(lab, lab));
+            return Color.HSVToColor(tmp);
         }
 
         @Override
         public Integer next() {
-            rndColor(); // create random color in lab
-            float dist = d();
-            int next = current();
-
-            for(int i = 1; i < 6; ++i) {
-                rndColor();
-                float dist2 = d();
-
-                if(dist2 > dist) {
-                    dist = dist2;
-                    next = current();
-                }
-            }
-
-            // we picked a color, now pick brightness with emphasis
-            // on either very bright or very dark.
-
-            // we picked a color.
-            Colors.rgb2lab(Colors.int2rgb(next, lab), lab); // get back lab.
-
-            // add to average
-            avgL = (avgL * 1f + lab[0]) / 2f;
-            avgA = (avgA * 1f + lab[1]) / 2f;
-            avgB = (avgB * 1f + lab[2]) / 2f;
-
-            return next | 0xff000000;
+            return rndColor(); // create random color in lab
         }
     };
 

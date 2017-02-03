@@ -267,6 +267,20 @@ public class AssetsHelper {
                             .add("mandelinit", Fractal.Type.Expr, "0")
             ));
 
+            _PARAMETER_ENTRIES.add(e(am, "Mandel^3", "Mandel3.png", "Mandelbrot Set to the power of 3",
+                    new Fractal.Parameters()
+                            .add("function", Fractal.Type.Expr, "z^3 + p")
+                            .add("max_power", Fractal.Type.Real, 3)
+                            .add("mandelinit", Fractal.Type.Expr, "0")
+            ));
+
+            _PARAMETER_ENTRIES.add(e(am, "Mandel^4", "Mandel3.png", "Mandelbrot Set to the power of 3",
+                    new Fractal.Parameters()
+                            .add("function", Fractal.Type.Expr, "z^4 + p")
+                            .add("max_power", Fractal.Type.Real, 4)
+                            .add("mandelinit", Fractal.Type.Expr, "0")
+            ));
+
             _PARAMETER_ENTRIES.add(e(am, "Lambda", "Lambda.png", "Lambda Fractal",
                     new Fractal.Parameters()
                             .add("function", Fractal.Type.Expr, "p (1 - z) z")
@@ -283,31 +297,75 @@ public class AssetsHelper {
 
             _PARAMETER_ENTRIES.add(e(am, "Glynn", "Glynn.png", "Glynn fractal (a julia set of mandel^1.6",
                     new Fractal.Parameters()
-                            .add("function", Fractal.Type.Expr, "z ^ 1.6 + p")
+                            .add("function", Fractal.Type.Expr, "z ^ 1.75 + p")
                             .add("max_power", Fractal.Type.Real, 3)
                             .add("mandelinit", Fractal.Type.Expr, "0")
                             .add("juliaset", Fractal.Type.Bool, true)
-                            .add("juliapoint", Fractal.Type.Cplx, new Cplx())
+                            .add("juliapoint", Fractal.Type.Cplx, new Cplx(-0.4))
             ));
 
-            _PARAMETER_ENTRIES.add(e(am, "Mandel^3", "Mandel3.png", "Mandelbrot Set to the power of 3",
+            _PARAMETER_ENTRIES.add(e(am, "Magnet1", "Magnet1.png", "Magnet 1 Fractal",
                     new Fractal.Parameters()
-                            .add("function", Fractal.Type.Expr, "z^3 + p")
-                            .add("max_power", Fractal.Type.Real, 3)
+                            .add("function", Fractal.Type.Expr, "sqr((sqr z + p - 1) / (2z + p - 2))")
+                            .add("max_power", Fractal.Type.Real, 2)
                             .add("mandelinit", Fractal.Type.Expr, "0")
             ));
 
-            _PARAMETER_ENTRIES.add(e(am, "Mandel^4", "Mandel3.png", "Mandelbrot Set to the power of 3",
+            _PARAMETER_ENTRIES.add(e(am, "Magnet2", "Magnet2.png", "Magnet 2 Fractal",
                     new Fractal.Parameters()
-                            .add("function", Fractal.Type.Expr, "z^4 + p")
+                            .add("function", Fractal.Type.Expr, "sqr((z^3 + 3(p - 1)z + (p - 1)(p - 2)) / (3 sqr z + 3(p - 2)z + (p - 1)(p - 2) + 1))")
                             .add("max_power", Fractal.Type.Real, 4)
                             .add("mandelinit", Fractal.Type.Expr, "0")
             ));
+
+            _PARAMETER_ENTRIES.add(e(am, "SinH+P (for newton)", "SinHNewton.png", "A nice variation for newton",
+                    new Fractal.Parameters()
+                            .add("function", Fractal.Type.Expr, "sinh z + p")
+                            .add("mandelinit", Fractal.Type.Expr, "0")
+            ));
+
+
+            // Stop Fractal Types.
+
+            // Next: Branching Specialities
+
+            _PARAMETER_ENTRIES.add(e(am, "Curvature Inequality", "SinHNewton.png", "A nice variation for newton",
+                    new Fractal.Parameters()
+                            .add("addend", Fractal.Type.Expr, "arcnorm((znext - z) / (z - zlast))")
+                            .add("interpolate_smooth_i", Fractal.Type.Bool, true)
+            ));
+
+            _PARAMETER_ENTRIES.add(e(am, "Triange Inequality", "SinHNewton.png", "A nice variation for newton",
+                    new Fractal.Parameters()
+                            .add("addend", Fractal.Type.Expr, "{ var t1 = rad z ^ max_power, t2 = rad p, M = abs(t1 - t2), m = t1 + t2; (rad znext - m) / (M - m) }")
+            ));
+
+            _PARAMETER_ENTRIES.add(e(am, "Branching for Fold", "SinHNewton.png", "A nice variation for newton",
+                    new Fractal.Parameters()
+                            .add("foldfn", Fractal.Type.Expr, "(1 + sin 6 arc znext) / 2 (rad znext + 4) + foldvalue")
+            ));
+
+            _PARAMETER_ENTRIES.add(e(am, "Exponential Smoothing", "SinHNewton.png", "A nice variation for newton",
+                    new Fractal.Parameters()
+                            .add("foldfn", Fractal.Type.Expr, "/cosh(rad znext + /rad(z - znext)) + foldvalue")
+                            .add("lakevalue", Fractal.Type.Expr, "re foldvalue")
+            ));
+
+            _PARAMETER_ENTRIES.add(e(am, "Two-Fold Branching", "twobranch.png", "A nice variation for newton",
+                    new Fractal.Parameters()
+                            .add("foldfn", Fractal.Type.Expr, "(1 + sin 6 arc znext) / 2 (rad znext + 4) + foldvalue")
+                            .add("foldfn2", Fractal.Type.Expr, "{ var dz = z - znext; (0.5 + 0.5 sin 6 arc dz) rad dz + foldvalue2 }")
+            ));
+
+
+            // Next: Orbit Traps
 
             _PARAMETER_ENTRIES.add(e(am, "Steiner Circles Trap", null, "Orbit Trap of 6 Steiner Circles",
                     new Fractal.Parameters()
                             .add("trapfn", Fractal.Type.Expr, "min(circle(0:0, 3, znext), circle(-2:0, 1, znext), circle(2:0, 1, znext), circle(-1:-1.73205, 1, znext), circle(-1:1.73205, 1, znext), circle(1:-1.73205, 1, znext), circle(1:1.73205, 1, znext))")
             ));
+
+            // Next Lyapunov Fractals
 
             _PARAMETER_ENTRIES.add(e(am, "Zirkony Zity", "ZirkonyZity.png", "Part of Lyapunov fractal called Zirkony Zity",
                     new Scale(0.45, 0, 0, -0.3, 3.05, 3.7),
@@ -320,8 +378,12 @@ public class AssetsHelper {
                             .add("transfer", Fractal.Type.Expr, "arcnorm z : (0.6 fract (log rad z / log 2) + 0.0667)")
             ));
 
-            // CURSOR
-
+            // TODO: Curvature Average, Triangle Inequality Average
+            // TODO: Fold with stripes
+            // TODO: Replace newton/secant by OnlyLake
+            // TODO: Add solve2 and solve3
+            // TODO: nova!
+            // TODO: pendulum with arbitrary many magnets that all have the same arguments
 
         }
 

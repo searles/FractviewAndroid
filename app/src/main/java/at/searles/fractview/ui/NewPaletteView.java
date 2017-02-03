@@ -54,11 +54,6 @@ public class NewPaletteView extends View implements MultiScrollView.InternalView
     int left = 0, top = 0;
 
     /**
-     * the following variable indicates if something is dragged currently in here.
-     */
-    private boolean dragging;
-
-    /**
      * When dragging there are three points of importance.
      * lastPt is the last point of an event, currentPt is
      * the current one.
@@ -132,10 +127,6 @@ public class NewPaletteView extends View implements MultiScrollView.InternalView
      * @return
      */
     boolean isOnBorderAt(float s, int index) {
-        Log.d("NPV", "on border? " + s + ", " + index);
-        Log.d("NPV", "case 1: " + index(s + padding / 2));
-        Log.d("NPV", "case 2: " + index(s - padding / 2));
-
         return index(s + padding / 2) == index + 1 && index(s - padding / 2) == index;
     }
 
@@ -255,8 +246,6 @@ public class NewPaletteView extends View implements MultiScrollView.InternalView
 
         if(s == null) return false;
 
-        Log.d("NPV", "single tab at " + evt + " = " + s.type);
-
         switch(s.type) {
             case Color: {
                 // color dialog
@@ -326,13 +315,11 @@ public class NewPaletteView extends View implements MultiScrollView.InternalView
 
     @Override
     public boolean doubleTap(MotionEvent evt) {
-        Log.d("NPV", "double tab at " + evt);
         return startSelect(evt);
     }
 
     @Override
     public boolean longPress(MotionEvent evt) {
-        Log.d("NPV", "long press at " + evt);
         return startSelect(evt);
     }
     
@@ -344,16 +331,14 @@ public class NewPaletteView extends View implements MultiScrollView.InternalView
             // The selection object may be modified in
             // update-selection!
             
-            dragging = true;
-            
             // these two are for dragging.
             lastPtX = currentPtX = evt.getX() + left;
             lastPtY = currentPtY = evt.getY() + top;
 
-            Log.d("NPV", "selected is " + sel);
             invalidate();
             return true;
         } else {
+            sel = null;
             return false;
         }
     }
@@ -367,11 +352,8 @@ public class NewPaletteView extends View implements MultiScrollView.InternalView
     public boolean moveTo(MotionEvent evt) {
         //Log.d("NPV", "dragging something to " + evt);
 
-        if(dragging) {
-            currentPtX = evt.getX() + left;
-            currentPtY = evt.getY() + top;
-
-            updateSelection();
+        if(sel != null) {
+            updateSelection(evt.getX() + left, evt.getY() + top);
 
             return true;
         } else {
@@ -381,8 +363,9 @@ public class NewPaletteView extends View implements MultiScrollView.InternalView
 
     @Override
     public boolean tapUp(MotionEvent event) {
-        Log.d("NPV", "tap is up" + event);
-        if(dragging) {
+        Log.d("NPV", "up");
+        if(sel != null) {
+            Log.d("NPV", "up and dragging");
             // confirm drag event
             if(sel.type == SelectionType.BoundBoth
                     || sel.type == BoundX
@@ -390,9 +373,20 @@ public class NewPaletteView extends View implements MultiScrollView.InternalView
                 // changing the dimension in moveTo is not a good idea
                 // because it will mess with relative points.
                 ((PaletteActivity) getContext()).dimensionChanged();
+            } else if(sel.type == SelectionType.Color) {
+                Log.d("NPV", "up and dragging and color");
+                int x = index(currentPtX);
+                int y = index(currentPtY);
+
+                Log.d("NPV", "up and dragging and color " + x + ", " + y);
+
+                // if in range
+                if(x >= 0 && y >= 0 && x < model().width() && y < model().height()) {
+                    model().set(x, y, model().get(sel.initX, sel.initY));
+                }
             }
 
-            dragging = false;
+            sel = null;
             invalidate();
             return true;
         } else {
@@ -407,7 +401,6 @@ public class NewPaletteView extends View implements MultiScrollView.InternalView
      */
     public void setLeftTop(int left, int top) {
         // FIXME bad name!
-        //Log.d("NPV", "setLeftTop " + left + " - " + top);
         this.left = left;
         this.top = top;
         invalidate();
@@ -453,7 +446,13 @@ public class NewPaletteView extends View implements MultiScrollView.InternalView
     }
 
 
-    private void updateSelection() {
+    private void updateSelection(float x0, float y0) {
+        currentPtX = x0; currentPtY = y0;
+
+        if(sel.type == SelectionType.Color) {
+            invalidate();
+            return;
+        }
         // If this was a bound selection type, where would width and height be?
         int w = index(currentPtX + padding + iconSize / 2);
         int h = index(currentPtY + padding + iconSize / 2);
@@ -498,9 +497,6 @@ public class NewPaletteView extends View implements MultiScrollView.InternalView
         int sx = index(lastPtX), sy = index(lastPtY);
         int tx = index(currentPtX), ty = index(currentPtY);
 
-        Log.d("NPV", "last = " + lastPtX + ", " + lastPtY);
-        Log.d("NPV", "sx, sy, tx, ty = " + sx + ", " + sy + ", " + tx + ", " + ty);
-
         // get distance travelled
         int dx = tx - sx;
         int dy = ty - sy;
@@ -517,8 +513,6 @@ public class NewPaletteView extends View implements MultiScrollView.InternalView
             // rotate all
             model().rotateAll(dx, dy);
         } else if(sel.type == SelectionType.Column) {
-            Log.d("NPV", "Column " + dx + " | " + sx + "->" + tx);
-
             // first rotate old one
             while(dy > 0) {
                 model().rotateDown(sx);
@@ -541,7 +535,6 @@ public class NewPaletteView extends View implements MultiScrollView.InternalView
                 model().moveLeft(x);
             }
         } else if(sel.type == SelectionType.Row) {
-            Log.d("NPV", "Row " + dx + " | " + sy + " -> " + ty);
             while(dx > 0) {
                 model().rotateRight(sy);
                 dx--;
@@ -572,7 +565,6 @@ public class NewPaletteView extends View implements MultiScrollView.InternalView
 
     @Override
     public void onDraw(Canvas canvas) {
-        Log.d("NPV", "onDraw");
         // Look:
         // + Frame around header with transparent gray background.
         // + Header should be a white empty frame.
@@ -581,11 +573,9 @@ public class NewPaletteView extends View implements MultiScrollView.InternalView
         //   that indicates where the original 0 is.
 
 
-        if(dragging) {
+        if(sel != null) {
             // feedback on the action:
             // first if the bounds are dragged
-
-            Log.d("NPV", "some selection is here...");
 
             if (sel.type == SelectionType.BoundX
                     || sel.type == SelectionType.BoundY
@@ -632,28 +622,33 @@ public class NewPaletteView extends View implements MultiScrollView.InternalView
                         bx - left - padding / 4f, by - top - padding / 4f,
                         padding, padding, borderPaint);
 
-            } else if(sel.type == SelectionType.Color) {
+            } else if (sel.type == SelectionType.Color) {
                 // in case of a color, we gray out everything
                 canvas.drawRoundRect(
-                        margin - padding / 2f, margin - padding / 4f,
-                        pix(model().width()) + padding / 4f - left, pix(model().height()) + padding / 4f - top,
+                        margin - padding / 2f, margin - padding / 2f,
+                        pix(model().width()) - left, pix(model().height()) - top,
                         padding, padding, outsideSelectionPaint);
 
                 canvas.drawRoundRect(
-                        margin - padding / 2f, margin - padding / 4f,
-                        pix(model().width()) + padding / 4f - left, pix(model().height()) + padding / 4f - top,
+                        margin - padding / 2f, margin - padding / 2f,
+                        pix(model().width()) - left, pix(model().height()) - top,
                         padding, padding, borderPaint);
 
-                float x0 = pix(sel.initX) + padding / 4f - left;
-                float y0 = pix(sel.initY) + padding / 4f - top;
+                int ix = index(currentPtX);
+                int iy = index(currentPtY);
 
-                canvas.drawRoundRect(
-                        x0, y0, x0 + iconSize + padding / 2f, y0 + iconSize + padding / 2f,
-                        padding, padding, insideSelectionPaint);
+                if(ix >= 0 && iy >= 0 && ix < model().width() && iy < model().height()) {
+                    float x0 = pix(ix) + padding / 4f - left;
+                    float y0 = pix(iy) + padding / 4f - top;
 
-                canvas.drawRoundRect(
-                        x0, y0, x0 + iconSize + padding / 2f, y0 + iconSize + padding / 2f,
-                        padding, padding, borderPaint);
+                    canvas.drawRoundRect(
+                            x0, y0, x0 + iconSize + padding / 2f, y0 + iconSize + padding / 2f,
+                            padding, padding, insideSelectionPaint);
+
+                    canvas.drawRoundRect(
+                            x0, y0, x0 + iconSize + padding / 2f, y0 + iconSize + padding / 2f,
+                            padding, padding, borderPaint);
+                }
             } else {
                 // we draw a selection.
                 //
@@ -687,19 +682,19 @@ public class NewPaletteView extends View implements MultiScrollView.InternalView
                 float mx = pix(square1X);
                 float my = pix(square1Y);
 
-                if(sel.type == SelectionType.Column) {
+                if (sel.type == SelectionType.Column) {
                     //  change x0/x1. mx wont be used.
                     x0 = pix(ix);
                     x1 = x0 + iconSize + padding;
 
                     // one big rectangle around the whole column
                     canvas.drawRoundRect(
-                            x0 - left - padding / 4f, margin - padding / 2f - top  - padding / 4f,
+                            x0 - left - padding / 4f, margin - padding / 2f - top - padding / 4f,
                             x1 - left + padding / 4f, y1 - top + padding / 4f,
                             padding, padding, outsideSelectionPaint);
 
                     canvas.drawRoundRect(
-                            x0 - left - padding / 4f, margin - padding / 2f - top  - padding / 4f,
+                            x0 - left - padding / 4f, margin - padding / 2f - top - padding / 4f,
                             x1 - left + padding / 4f, y1 - top + padding / 4f,
                             padding, padding, borderPaint);
 
@@ -723,7 +718,7 @@ public class NewPaletteView extends View implements MultiScrollView.InternalView
                             x0 - left + padding / 4f, my - top + padding / 4f,
                             x1 - left - padding / 4f, y1 - top - padding / 4f,
                             padding, padding, borderPaint);
-                } else if(sel.type == SelectionType.Row) {
+                } else if (sel.type == SelectionType.Row) {
                     //  change y0/y1. my wont be used.
                     y0 = pix(iy);
                     y1 = y0 + iconSize + padding;
@@ -814,7 +809,7 @@ public class NewPaletteView extends View implements MultiScrollView.InternalView
                             padding, padding, borderPaint);
                 }
             }
-        } else {
+        } else { // sel is null
             // draw two normal frames to show where dragging can happen.
             canvas.drawRoundRect(
                     margin + iconSize + padding / 2f - left,
@@ -856,11 +851,11 @@ public class NewPaletteView extends View implements MultiScrollView.InternalView
             }
         }
 
-        if(dragging && sel.type == SelectionType.Color) {
+        if(sel != null && sel.type == SelectionType.Color) {
             // draw the dragged color
             drawColor(canvas,
-                    (int) (currentPtX - iconSize / 2f - padding / 2f),
-                    (int) (currentPtY - iconSize / 2f - padding / 2f),
+                    (int) (currentPtX - iconSize / 2f - padding / 2f - left),
+                    (int) (currentPtY - iconSize / 2f - padding / 2f - top),
                     model().get(sel.initX, sel.initY),
                     ButtonType.Color);
         }
