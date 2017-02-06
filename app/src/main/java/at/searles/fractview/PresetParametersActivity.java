@@ -50,7 +50,7 @@ public class PresetParametersActivity extends Activity {
     private static final FractalEntry MERGE_DEFAULTS = new FractalEntry() {
         @Override
         public String title() {
-            return "Merge current parameters with defaults";
+            return "Use current parameters";
         }
 
         @Override

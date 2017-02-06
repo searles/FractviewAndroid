@@ -47,7 +47,6 @@ public class PaletteActivity extends Activity implements EditableDialogFragment.
 	private static final int LOAD_PALETTE = -2; // because positive numbers are for indices
 
 	private NewPaletteViewModel model = null;
-	private NewPaletteView view = null;
 
 	private String id;
 
@@ -167,6 +166,9 @@ public class PaletteActivity extends Activity implements EditableDialogFragment.
 
 					if(p != null) {
 						model = new NewPaletteViewModel(p);
+
+						NewPaletteView view = (NewPaletteView) findViewById(R.id.paletteView);
+
 						view.invalidate();
 					}
 				} catch (JSONException e) {
@@ -223,6 +225,7 @@ public class PaletteActivity extends Activity implements EditableDialogFragment.
 						Palette p = Adapters.paletteAdapter.fromJSON(new JSONObject(paletteString));
 						// set the palette.
 						model = new NewPaletteViewModel(p);
+						NewPaletteView view = (NewPaletteView) findViewById(R.id.paletteView);
 						view.invalidate();
 					} catch (JSONException e) {
 						e.printStackTrace();

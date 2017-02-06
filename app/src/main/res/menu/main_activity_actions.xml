@@ -36,12 +36,7 @@
         android:title="@string/action_size"
         android:icon="@drawable/ic_photo_size_select_large_white_24dp"
         />
-    <item android:id="@+id/action_show_grid"
-          android:title="@string/action_show_grid"
-          android:checkable="true"
+    <item android:id="@+id/action_gui_settings"
+          android:title="@string/action_gui_settings"
         />
-    <item android:id="@+id/action_rotation_lock"
-          android:title="@string/rotation_lock"
-          android:checkable="true"
-          />
 </menu>

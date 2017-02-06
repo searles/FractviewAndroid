@@ -16,6 +16,7 @@ func escapetime(c, p, breakcondition) {
         z cplx,
         znext cplx = 0;
 
+    extern mandelinit expr = "0";
     z = c;
 
     extern function expr = "mandelbrot(z, p)";

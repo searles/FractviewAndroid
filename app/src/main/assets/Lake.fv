@@ -5,7 +5,7 @@ extern maxdepth int = 120;
 
 // some further arguments
 extern juliaset bool = false;
-extern juliapoint cplx = -1:0;
+extern juliapoint cplx = 0.4:-1.5;
 
 func escapetime(c, breakcondition) {
     var i int = 0,
@@ -18,15 +18,12 @@ func escapetime(c, breakcondition) {
 
     z = c if juliaset else mandelinit;
 
-    func fn(z) {
-        extern function expr = "z^3 + p";
-        newton(function, z)
-    }
+    extern function expr = "newton(z^4 + p, z)";
 
     var color quat;
 
     while {
-        znext = fn z;
+        znext = function;
         not breakcondition(i, znext, z, zlast, c, p, color)
     } do {
         // advance to next values
@@ -48,7 +45,7 @@ func get_color(c, value) {
     // draw single pixel
     func breakcondition(i, znext, z, zlast, c, p, color) {
         // if true, color contains the lab color (quat)
-        extern foldfn expr = "dist(z, znext) + foldvalue";
+        extern foldfn expr = "dist(znext, z) + foldvalue";
 
         func lakecolor() {
             extern epsilon real = 1e-9;
@@ -58,7 +55,7 @@ func get_color(c, value) {
             value = lakevalue;
 
             extern laketransfer expr =
-                    "arcnorm znext : (1.5 / PI) atan log(1 + value) ";
+                    "arcnorm znext : atan(value / rad znext)";
 
             extern lakepalette palette = [
                     [#fff, #fff, #fff, #fff],
@@ -69,8 +66,8 @@ func get_color(c, value) {
             color = lakepalette laketransfer
         }
 
-        { foldvalue = foldfn; false } if next(i, maxdepth) and dist2(z, znext) > sqr epsilon else 
-        { lakecolor() ; true } 
+        { foldvalue = foldfn; false } if next(i, maxdepth) and dist2(z, znext) > sqr epsilon else
+        { lakecolor() ; true }
     }
 
     escapetime(c, breakcondition)

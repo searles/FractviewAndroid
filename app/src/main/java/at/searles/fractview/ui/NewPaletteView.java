@@ -8,6 +8,7 @@ import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.Paint;
 import android.util.AttributeSet;
+import android.util.DisplayMetrics;
 import android.util.Log;
 import android.view.MotionEvent;
 import android.view.View;
@@ -39,12 +40,12 @@ import static at.searles.fractview.ui.NewPaletteView.SelectionType.BoundY;
 public class NewPaletteView extends View implements MultiScrollView.InternalView {
 
     // some arguments
-    int margin = 40; // space at borders
-    int padding = 60; // space between items
-    int iconSize = 160; // size of icons.
+    int margin; // space at borders
+    int padding; // space between items
+    int iconSize; // size of icons.
 
-    Paint framePaint = null;
-    Paint fillPaint = null;
+    Paint framePaint;
+    Paint fillPaint;
 
     // done with constants.
     
@@ -212,6 +213,41 @@ public class NewPaletteView extends View implements MultiScrollView.InternalView
     }
 
     private void init() {
+        /*
+        LDPI - 36 x 36
+        MDPI - 48 x 48
+        HDPI - 72 x 72
+        XHDPI - 96 x 96
+        XXHDPI - 144 x 144
+        XXXHDPI - 192 x 192.
+         */
+        DisplayMetrics metrics = getResources().getDisplayMetrics();
+
+        /*switch(metrics.densityDpi) {
+            case DisplayMetrics.DENSITY_LOW:
+                iconSize = 36; break;
+            case DisplayMetrics.DENSITY_MEDIUM:
+                iconSize = 48; break;
+            case DisplayMetrics.DENSITY_HIGH:
+                iconSize = 72; break;
+            case DisplayMetrics.DENSITY_XHIGH:
+                iconSize = 96; break;
+            case DisplayMetrics.DENSITY_XXHIGH:
+                iconSize = 144; break;
+            case DisplayMetrics.DENSITY_XXXHIGH:
+                iconSize = 192; break;
+            default:
+                Log.e("NPV", "Unknown display metrics: " + metrics.densityDpi);
+                iconSize = 48; // compromise
+        }*/
+
+        Log.d("NPV", metrics.density + " dpi");
+
+        iconSize = (int) (metrics.density * 48);
+
+        padding = iconSize / 3;
+        margin = padding / 2;
+
         framePaint = new Paint();
         framePaint.setStrokeWidth(padding / 12f);
         framePaint.setColor(Color.GRAY);
@@ -315,7 +351,7 @@ public class NewPaletteView extends View implements MultiScrollView.InternalView
 
     @Override
     public boolean doubleTap(MotionEvent evt) {
-        return startSelect(evt);
+        return false; // confusion with tab...
     }
 
     @Override

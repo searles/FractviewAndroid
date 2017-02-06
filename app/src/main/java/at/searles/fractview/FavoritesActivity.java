@@ -15,9 +15,10 @@ import android.widget.ListView;
 import org.json.JSONException;
 import org.json.JSONObject;
 
-import java.util.LinkedList;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.TreeSet;
 
 import at.searles.fractview.fractal.FavoriteEntry;
 
@@ -31,7 +32,7 @@ public class FavoritesActivity extends Activity {
 	// fixme menus import from clipboard
 	static final String[] options = {"Delete", "Copy To Clipboard"};
 
-	List<FavoriteEntry> entries = new LinkedList<>();
+	List<FavoriteEntry> entries;
 	SharedPreferences persistent;
 
 	@Override
@@ -43,12 +44,21 @@ public class FavoritesActivity extends Activity {
 		// fixme what do the other modes do?
 		persistent = getSharedPreferences("favorites", Context.MODE_PRIVATE);
 
-		for(Map.Entry<String, ?> entry : persistent.getAll().entrySet()) {
+		Map<String, ?> sharedPrefs = persistent.getAll();
+		entries = new ArrayList<>(sharedPrefs.size());
+
+		// sort alphabetically
+		TreeSet<String> keys = new TreeSet<>();
+		keys.addAll(sharedPrefs.keySet());
+
+		for(String key : keys) {
 			try {
-				entries.add(FavoriteEntry.fromJSON(entry.getKey(), new JSONObject((String) entry.getValue())));
+				entries.add(FavoriteEntry.fromJSON(key, new JSONObject((String) sharedPrefs.get(key))));
 			} catch (JSONException e) {
 				e.printStackTrace();
-				// FIXME Error message in this case
+				// should not happen.
+				// FIXME but seriously think of using a different JSON.
+				throw new IllegalArgumentException(e);
 			}
 		}
 

@@ -264,13 +264,6 @@ public class MainActivity extends Activity
 		MenuInflater inflater = getMenuInflater();
 		inflater.inflate(R.menu.main_activity_actions, menu);
 
-		// set the grid flag.
-		MenuItem gridMenu = menu.findItem(R.id.action_show_grid);
-		gridMenu.setChecked(imageView.getShowGrid());
-
-		MenuItem rotationLockMenu =menu.findItem(R.id.action_rotation_lock);
-		rotationLockMenu.setChecked(imageView.getRotationLock());
-
 		return super.onCreateOptionsMenu(menu);
 	}
 
@@ -363,16 +356,36 @@ public class MainActivity extends Activity
 				ClipboardHelper.copyFractal(this, bitmapFragment.fractal());
 			} return true;
 
-			case R.id.action_show_grid: {
-				boolean checked = !item.isChecked();
-				item.setChecked(checked);
-				imageView.setShowGrid(checked);
-			} return true;
+			case R.id.action_gui_settings: {
+				// show alert dialog with two checkboxes
+				final CharSequence[] items = {"Show Grid","Rotation Lock"};
 
-			case R.id.action_rotation_lock: {
-				boolean checked = !item.isChecked();
-				item.setChecked(checked);
-				imageView.setRotationLock(checked);
+				new AlertDialog.Builder(this)
+						.setTitle("Select The Difficulty Level")
+						.setCancelable(true)
+						.setMultiChoiceItems(items,
+								new boolean[]{
+										imageView.getShowGrid(),
+										imageView.getRotationLock()
+								},
+								new DialogInterface.OnMultiChoiceClickListener() {
+							@Override
+							public void onClick(DialogInterface dialog, int indexSelected, boolean isChecked) {
+								switch(indexSelected) {
+									case 0: {
+										// show/hide grid
+										imageView.setShowGrid(isChecked);
+									} break;
+									case 1: {
+										// rotation lock
+										imageView.setRotationLock(isChecked);
+									} break;
+								}
+							}
+						}).setPositiveButton("Close", new DialogInterface.OnClickListener() {
+							@Override
+							public void onClick(DialogInterface dialog, int id) {}
+						}).create().show();
 			} return true;
 
 			case R.id.action_share: {
