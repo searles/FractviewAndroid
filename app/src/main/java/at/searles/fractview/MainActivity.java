@@ -193,20 +193,7 @@ public class MainActivity extends Activity
 			// create bitmap fragment
 			Log.d("MA", "Creating new BitmapFragment");
 
-			bitmapFragment = new BitmapFragment();
-
-			// set initial size
-			Bundle bundle = new Bundle();
-
-			bundle.putInt("width", w); // Bundle because that is what I get in onCreate.
-			bundle.putInt("height", h);
-
-			String sourceCode;
-
-			sourceCode = AssetsHelper.readSourcecode(getAssets(), "Default.fv");
-
-			if(sourceCode == null)
-				throw new IllegalArgumentException("init fractal is null??");
+			String sourceCode = AssetsHelper.readSourcecode(getAssets(), "Default.fv");
 
 			Fractal initFractal = new Fractal(
 					PresetFractals.INIT_SCALE,
@@ -214,9 +201,8 @@ public class MainActivity extends Activity
 					new Fractal.Parameters()
 			);
 
-			bundle.putParcelable("fractal", initFractal);
+			bitmapFragment = BitmapFragment.newInstance(w, h, initFractal);
 
-			bitmapFragment.setArguments(bundle);
 
 			FragmentTransaction transaction = getFragmentManager().beginTransaction();
 			transaction.add(bitmapFragment, "bitmap_fragment");
@@ -361,7 +347,6 @@ public class MainActivity extends Activity
 				final CharSequence[] items = {"Show Grid","Rotation Lock"};
 
 				new AlertDialog.Builder(this)
-						.setTitle("Select The Difficulty Level")
 						.setCancelable(true)
 						.setMultiChoiceItems(items,
 								new boolean[]{

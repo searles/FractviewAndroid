@@ -1,9 +1,14 @@
 package at.searles.meelan;
 
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.Iterator;
+import java.util.LinkedList;
+import java.util.List;
+
 import at.searles.math.Cplx;
 import at.searles.math.Quat;
-
-import java.util.*;
 
 public enum Op implements Operation {
 	// New ops: labs, floor, ceil, round, only_decimals ...
@@ -184,6 +189,7 @@ public enum Op implements Operation {
 			throw new UnsupportedOperationException();
 		}
 	},
+	// FIXME: solve2, solve3, secant, general_newton
 	whileOp {
 		@Override
 		public void linearizeStmt(List<Tree> args, DataScope currentScope, Program program) throws CompileException {

@@ -14,11 +14,11 @@ func escapetime(c, breakcondition) {
         z cplx,
         znext cplx = 0;
 
-    extern mandelinit expr = "c";
+    extern mandelinit expr = "-1";
 
     z = c if juliaset else mandelinit;
 
-    extern function expr = "newton(z^4 + p, z)";
+    extern function expr = "newton(z ^ 4 - 6 * z^2 - 2 p z + p, z)";
 
     var color quat;
 
@@ -55,7 +55,7 @@ func get_color(c, value) {
             value = lakevalue;
 
             extern laketransfer expr =
-                    "arcnorm znext : log(1 + value)";
+                    "arcnorm znext : atan(value / rad znext)";
 
             extern lakepalette palette = [
                     [#fff, #fff, #fff, #fff],

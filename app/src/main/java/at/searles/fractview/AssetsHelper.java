@@ -155,7 +155,8 @@ public class AssetsHelper {
             _ENTRIES.add(e(am, "Orbit Trap", "OrbitTrap.png", "\"Default\" with an orbit trap", "OrbitTrap.fv"));
             _ENTRIES.add(e(am, "Min/Max Trap", "MinMaxOrbitTrap.png", "Picks the maximum distance to the orbit trap", "MinMaxOrbitTrap.fv"));
 
-            // _ENTRIES.add(e(am, "Newton", "Newton.png", "Newton method for root finding fractals", "Newton.fv"));
+            _ENTRIES.add(e(am, "Newton", "Newton.png", "Newton method for root finding fractals", "Newton.fv"));
+            _ENTRIES.add(e(am, "Nova", "Nova.png", "Newton method for root finding fractals", "Nova.fv"));
             _ENTRIES.add(e(am, "Secant", "Secant.png", "Secant method for root finding fractals", "Secant.fv"));
 
             _ENTRIES.add(e(am, "Lyapunov", "Lyapunov.png", "Lyapunov fractals", "Lyapunov.fv"));
@@ -319,9 +320,23 @@ public class AssetsHelper {
                             .add("mandelinit", Fractal.Type.Expr, "0")
             ));
 
-            _PARAMETER_ENTRIES.add(e(am, "ZtanZ", "Magnet2.png", "Magnet 2 Fractal",
+            /*_PARAMETER_ENTRIES.add(e(am, "ZtanZ", "Magnet2.png", "Magnet 2 Fractal",
                     new Fractal.Parameters()
-                            .add("function", Fractal.Type.Expr, "z tan z + c")
+                            .add("function", Fractal.Type.Expr, "z tan z + p")
+                            .add("bailout", Fractal.Type.Real, 32)
+                            .add("mandelinit", Fractal.Type.Expr, "0")
+            ));*/
+
+            _PARAMETER_ENTRIES.add(e(am, "SinhZ", "Magnet2.png", "Magnet 2 Fractal",
+                    new Fractal.Parameters()
+                            .add("function", Fractal.Type.Expr, "sinh z * p")
+                            .add("bailout", Fractal.Type.Real, 32)
+                            .add("mandelinit", Fractal.Type.Expr, "I")
+            ));
+
+            _PARAMETER_ENTRIES.add(e(am, "CoshZ", "Magnet2.png", "Magnet 2 Fractal",
+                    new Fractal.Parameters()
+                            .add("function", Fractal.Type.Expr, "cosh z * p")
                             .add("bailout", Fractal.Type.Real, 32)
                             .add("mandelinit", Fractal.Type.Expr, "0")
             ));
@@ -378,61 +393,21 @@ public class AssetsHelper {
                             .add("lakevalue", Fractal.Type.Expr, "re foldvalue")
             ));
 
-            _PARAMETER_ENTRIES.add(e(am, "Exponential Smoothing p * cosh z", "SinHNewton.png", "A nice variation for newton",
-                    new Fractal.Parameters()
-                            .add("function", Fractal.Type.Expr, "p * cosh z")
-                            .add("mandelinit", Fractal.Type.Expr, "0")
-                            .add("bailout", Fractal.Type.Real, 64)
-                            .add("foldfn", Fractal.Type.Expr, "/cosh(rad znext + /rad(z - znext)) + foldvalue")
-            ));
-
             _PARAMETER_ENTRIES.add(e(am, "Branching", "SinHNewton.png", "A nice variation for newton",
                     new Fractal.Parameters()
-                            .add("foldfn", Fractal.Type.Expr, "(1 + sin 6 arc znext) / 2 (rad znext + 4) + foldvalue")
-            ));
-
-            _PARAMETER_ENTRIES.add(e(am, "Branching p * sinh z", "SinHNewton.png", "A nice variation for newton",
-                    new Fractal.Parameters()
-                            .add("function", Fractal.Type.Expr, "p * sinh z")
-                            .add("mandelinit", Fractal.Type.Expr, "I")
-                            .add("bailout", Fractal.Type.Real, 64)
-                            .add("foldfn", Fractal.Type.Expr, "(1 + sin 6 arc znext) / 2 (rad znext + 4) + foldvalue")
+                            .add("foldfn", Fractal.Type.Expr, "(0.5 + 0.5 cos 6 arc znext) (1 - 2 atan(12 + rad znext) / PI) + foldvalue")
             ));
 
             _PARAMETER_ENTRIES.add(e(am, "Lake Branching", "SinHNewton.png", "A nice variation for newton",
                     new Fractal.Parameters()
-                            .add("foldfn", Fractal.Type.Expr, "{ var dz = z - znext; (0.5 + 0.5 sin 6 arc dz) rad dz + foldvalue }")
-            ));
-
-            _PARAMETER_ENTRIES.add(e(am, "Lake Branching Newton z^3 + p", "SinHNewton.png", "A nice variation for newton",
-                    new Fractal.Parameters()
-                            .add("function", Fractal.Type.Expr, "newton(z^3 + p, z)")
-                            .add("mandelinit", Fractal.Type.Expr, "c")
-                            .add("foldfn", Fractal.Type.Expr, "{ var dz = z - znext; (0.5 + 0.5 sin 6 arc dz) rad dz + foldvalue }")
+                            .add("foldfn", Fractal.Type.Expr, "(0.5 + 0.5 cos 6 arc(/(z - znext))) (1 - 2 atan(12 + /dist(z, znext)) / PI) + foldvalue")
             ));
 
             _PARAMETER_ENTRIES.add(e(am, "Two-Fold Branching", "twobranch.png", "A nice variation for newton",
                     new Fractal.Parameters()
-                            .add("foldfn", Fractal.Type.Expr, "(1 + sin 6 arc znext) / 2 (rad znext + 4) + foldvalue")
-                            .add("foldfn2", Fractal.Type.Expr, "{ var dz = z - znext; (0.5 + 0.5 sin 6 arc dz) rad dz + foldvalue2 }")
+                            .add("foldfn", Fractal.Type.Expr, "(0.5 + 0.5 cos 6 arc znext) (1 - 2 atan(12 + rad znext) / PI) + foldvalue")
+                            .add("foldfn2", Fractal.Type.Expr, "(0.5 + 0.5 cos 6 arc(/(z - znext))) (1 - 2 atan(12 + /dist(z, znext)) / PI) + foldvalue2")
             ));
-
-            _PARAMETER_ENTRIES.add(e(am, "Two-Fold Branching Magnet 1", "twobranch.png", "A nice variation for newton",
-                    new Fractal.Parameters()
-                            .add("function", Fractal.Type.Expr, "sqr((sqr z + p - 1) / (2z + p - 2))")
-                            .add("mandelinit", Fractal.Type.Expr, "0")
-                            .add("foldfn", Fractal.Type.Expr, "(1 + sin 6 arc znext) / 2 (rad znext + 4) + foldvalue")
-                            .add("foldfn2", Fractal.Type.Expr, "{ var dz = z - znext; (0.5 + 0.5 sin 6 arc dz) rad dz + foldvalue2 }")
-            ));
-
-            _PARAMETER_ENTRIES.add(e(am, "Two-Fold Branching Magnet 2", "twobranch.png", "A nice variation for newton",
-                    new Fractal.Parameters()
-                            .add("function", Fractal.Type.Expr, "sqr((z^3 + 3(p - 1)z + (p - 1)(p - 2)) / (3 sqr z + 3(p - 2)z + (p - 1)(p - 2) + 1))")
-                            .add("mandelinit", Fractal.Type.Expr, "0")
-                            .add("foldfn", Fractal.Type.Expr, "(1 + sin 6 arc znext) / 2 (rad znext + 4) + foldvalue")
-                            .add("foldfn2", Fractal.Type.Expr, "{ var dz = z - znext; (0.5 + 0.5 sin 6 arc dz) rad dz + foldvalue2 }")
-            ));
-
 
             // Next: Orbit Traps
 

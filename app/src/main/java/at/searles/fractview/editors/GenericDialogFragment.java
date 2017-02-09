@@ -1,14 +1,12 @@
 package at.searles.fractview.editors;
 
-import android.app.Dialog;
 import android.app.DialogFragment;
 import android.os.Bundle;
-import android.util.Log;
 
 /**
  * General purpose dialog fragment
  */
-public class GenericDialogFragment extends DialogFragment {
+public abstract class GenericDialogFragment extends DialogFragment {
 
     public static Bundle createBundle(
             int requestCode,
@@ -24,28 +22,6 @@ public class GenericDialogFragment extends DialogFragment {
         // exist.
 
         return b;
-    }
-
-    public void closeDialogRequest() {
-        // in createDialog, the dialog must be dismissed at creation time if this one is set.
-        Log.d("GDF", "Setting closed to true.");
-
-        getArguments().putBoolean("closed", true);
-
-        Dialog d = getDialog();
-        // FIXME In some cases, the dialog is still showing
-        // FIXME because getDialog returns null...
-
-        if(d != null) {
-            Log.d("GDF", "and since dialog is not null I dismiss it");
-            d.dismiss();
-        } else {
-            Log.d("GDF", "dialog is null");
-        }
-    }
-
-    protected boolean isClosed() {
-        return getArguments().getBoolean("closed");
     }
 
     protected boolean callbackFragment() {
@@ -66,6 +42,4 @@ public class GenericDialogFragment extends DialogFragment {
     protected int requestCode() {
         return getArguments().getInt("request_code");
     }
-
-
 }

@@ -18,8 +18,6 @@ import android.util.Log;
  * interaction, thus naturally there is some action).
  */
 public class ProgressDialogFragment extends GenericDialogFragment {
-
-
     public static ProgressDialogFragment newInstance(int requestCode, boolean callFragment, String title,
                                                      String message, boolean skippable) {
         Bundle b = GenericDialogFragment.createBundle(requestCode, callFragment, title);
@@ -48,25 +46,8 @@ public class ProgressDialogFragment extends GenericDialogFragment {
     }
 
     @Override
-    public void onStart() {
-        super.onStart();
-        Log.d("PDF", "onStart");
-    }
-
-    @Override
-    public void onResume() {
-        Log.d("PDF", "onResume");
-        super.onResume();
-
-        if(isClosed()) {
-            Log.d("PDF", "isClosed is true. Just created new dialog, but I have to dismiss it");
-            getDialog().dismiss(); // dismiss it right away.
-        }
-    }
-
-    @Override
     public Dialog onCreateDialog(Bundle savedInstanceState) {
-        Log.d("PDF", "onCreateDialog was called");
+        Log.d("PDF " + title(), "onCreateDialog was called");
         ProgressDialog dialog = new ProgressDialog(getActivity());
 
         dialog.setIndeterminate(true);

@@ -14,11 +14,17 @@ func escapetime(c, breakcondition) {
         z cplx,
         znext cplx = 0;
 
-    extern mandelinit expr = "c";
+    // This fractal is defined by z - R * f(z) / f'(z) + p
+
+    extern R expr = "2";
+    extern power expr = "6";
+    extern argument expr = "c";
+
+    extern mandelinit expr = "(argument * (R power - R)/(R - power))^/power";
 
     z = c if juliaset else mandelinit;
 
-    extern function expr = "newton(z^4 + p, z)";
+    extern function expr = "z - R * (z ^ power + argument) / derive(z ^ power + argument, z) + p";
 
     var color quat;
 
@@ -55,7 +61,7 @@ func get_color(c, value) {
             value = lakevalue;
 
             extern laketransfer expr =
-                    "arcnorm znext : log(1 + value)";
+                    "arcnorm znext : atan(value / rad znext)";
 
             extern lakepalette palette = [
                     [#fff, #fff, #fff, #fff],

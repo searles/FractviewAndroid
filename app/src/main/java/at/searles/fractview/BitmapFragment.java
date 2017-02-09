@@ -64,6 +64,21 @@ import at.searles.meelan.CompileException;
 public class BitmapFragment extends Fragment implements
 						ProgressDialogFragment.Callback {
 
+	public static BitmapFragment newInstance(int width, int height, Fractal fractal) {
+		// set initial size
+		Bundle bundle = new Bundle();
+
+		bundle.putInt("width", width);
+		bundle.putInt("height", height);
+
+		bundle.putParcelable("fractal", fractal);
+
+		BitmapFragment ft = new BitmapFragment();
+		ft.setArguments(bundle);
+
+		return ft;
+	}
+
 	/**
 	 * There are three types of progressdialogs in this one.
 	 */
@@ -117,6 +132,7 @@ public class BitmapFragment extends Fragment implements
 		// the RS-Object because it needs the activity and we are
 		// in the UI-thread, so no race-conditions.
 		if(this.drawer == null) {
+			Log.d("BMF", "First time, onAttach was called...");
 			this.drawer = new RenderScriptDrawer(new FractalDrawer.Controller() {
 				@Override
 				public void previewGenerated() {
@@ -144,18 +160,20 @@ public class BitmapFragment extends Fragment implements
 
 				@Override
 				public void finished(final long ms) {
-					Log.d("BF", "finished was called");
+					Log.d("BMF", "finished was called");
 					isRunning = false;
 					getActivity().runOnUiThread(new Runnable() {
 						@Override
 						public void run() {
-							Log.d("BF", "Calling dismiss of waiting dialog");
+							Log.d("BMF", "Calling dismiss of waiting dialog");
 							// check whether there is some pending action
+							ProgressDialogFragment waitingDialog =
+									(ProgressDialogFragment) getFragmentManager().findFragmentByTag("waitingDialog");
+
 							if(waitingDialog != null) {
 								// this check is due to a possible race condition
 								// yes, there is some action missing. Dismiss dialog and do it.
-								waitingDialog.closeDialogRequest();
-								waitingDialog = null;
+								waitingDialog.dismiss();
 							}
 
 							if(waiting != null) {
@@ -240,7 +258,6 @@ public class BitmapFragment extends Fragment implements
 		// this might take some time after a fresh install, hence do it in the background
 		new AsyncTask<Void, Void, Void>() {
 			boolean finished = false;
-			ProgressDialogFragment ft = null; // it will only be instantiated if it takes more than 1.25 seconds
 
 			@Override
 			protected Void doInBackground(Void...ignore) {
@@ -256,15 +273,14 @@ public class BitmapFragment extends Fragment implements
 					public void run() {
 						// start in UI-thread (unless we are already done)
 						if(!finished) {
-							Log.d("BF", "Creating dialog");
-							ft = ProgressDialogFragment.newInstance(ProgressDialogValues.Init.ordinal(),
+							Log.d("BMF", "Creating dialog");
+							ProgressDialogFragment.newInstance(ProgressDialogValues.Init.ordinal(),
 									true,
 									"Please wait...",
 									"Initializing program (this may take a few seconds "
 											+ "after the program cache was cleaned because"
-											+ " the GPU scripts are compiled by Android)", false);
-
-							ft.show(getFragmentManager(), "dialog");
+											+ " the GPU scripts are compiled by Android)", false)
+									.show(getFragmentManager(), "initRSDialog");
 						}
 					}
                 }, 1250); // show dialog after 1250ms
@@ -274,11 +290,11 @@ public class BitmapFragment extends Fragment implements
 			protected void onPostExecute(Void ignore) {
 				finished = true;
 
+				ProgressDialogFragment ft = (ProgressDialogFragment) getFragmentManager().findFragmentByTag("initRSDialog");
+
 				if(ft != null) {
 					Log.d("BF", "Trying to close dialog");
-					ft.closeDialogRequest();
-
-					ft = null;
+					ft.dismiss();
 				}
 
 				Log.d("BMF", "Init Fractal");
@@ -595,7 +611,6 @@ public class BitmapFragment extends Fragment implements
 	 * Variable indicates that there is someone waiting...
 	 */
 	private ProgressDialogValues waiting = null; // null = no waiting dialog.
-	private ProgressDialogFragment waitingDialog;
 
 	private File saveFile;
 
@@ -603,12 +618,12 @@ public class BitmapFragment extends Fragment implements
 		// if bitmap fragment is not yet done
 		if(isRunning()) {
 			// show dialog to wait
-			waitingDialog = ProgressDialogFragment.newInstance(postAction.ordinal(),
+			ProgressDialogFragment waitingDialog = ProgressDialogFragment.newInstance(postAction.ordinal(),
 					true,
 					"Image rendering not yet finished...",
 					"Skip to use the incompletely rendered image", true);
 			waitingDialog.setTargetFragment(this, -1);
-			waitingDialog.show(getFragmentManager(), "dialog");
+			waitingDialog.show(getFragmentManager(), "waitingDialog");
 			waiting = postAction;
 		} else {
 			// if not running, then save immediately
@@ -635,7 +650,7 @@ public class BitmapFragment extends Fragment implements
 		try {
 			// TODO if this is called when the activity is not showing,
 			// it causes a crash.
-			ft.show(getFragmentManager(), "dialog");
+			ft.show(getFragmentManager(), "saveDialog");
 		} catch(IllegalStateException e) {
 			e.printStackTrace();
 		}
@@ -698,7 +713,9 @@ public class BitmapFragment extends Fragment implements
 
 			@Override
 			protected void onPostExecute(Boolean saved) {
-				if(ft != null) ft.closeDialogRequest();
+				ProgressDialogFragment ft = (ProgressDialogFragment) getFragmentManager().findFragmentByTag("saveDialog");
+
+				if(ft != null) ft.dismiss();
 
 				if(saved) {
 					if(action == SAVE_IMAGE) {

@@ -54,6 +54,7 @@ func get_color(c, value) {
     
         func bailoutcolor() {
             extern bailout real = 128;
+            extern max_power real = 2;
 
             // the next ones are only used in 3d-fractals
             extern bailoutvalue expr = "trapmin";
