@@ -8,9 +8,9 @@ extern juliaset bool = false;
 extern juliapoint cplx = 0.4:0.4;
 
 extern alpha expr = "1";
-extern beta expr = "3";
+extern beta expr = "2";
 extern gamma expr = "1";
-extern delta expr = "-1";
+extern delta expr = "-2";
 
 func escapetime(c, breakcondition) {
     var i int = 0,

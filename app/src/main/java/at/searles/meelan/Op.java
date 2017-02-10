@@ -176,9 +176,55 @@ public enum Op implements Operation {
 
 				Tree t = sub.eval(var, div.eval(fun, dfun));
 
-				System.out.println(t);
-
 				return t;
+			}
+
+			// an error will be given later.
+			return new Tree.OpApp(this, arguments);
+		}
+		@Override
+		String generateCase(Signature signature, List<Value> values) {
+			throw new UnsupportedOperationException();
+		}
+	},
+	solve2 {
+		@Override
+		public Tree eval(List<Tree> arguments) {
+			// solve2 solves quadratic equations
+			// a*x^2+b*x+c = 0.
+			// arguments are a, b, c, x, {1,2}
+
+			if(arguments.size() == 4) {
+				Tree a = arguments.get(0);
+				Tree b = arguments.get(1);
+				Tree c = arguments.get(2);
+				Tree index = arguments.get(3);
+
+				// Solution is
+				// (b +/- sqrt(b * b - 4 a c)) / 2a
+
+				Tree dis =
+						sqrt.eval(
+							sub.eval(
+									sqr.eval(b), // b^2
+									mul.eval(new Value.Int(4), mul.eval(a, c)) // 4ac
+							));
+
+				Tree nom = null;
+
+				if(index instanceof Value.Int) {
+					if(((Value.Int) index).value == 1) {
+						nom = add.eval(neg.eval(b), dis);
+					} else if(((Value.Int) index).value == 2) {
+						nom = sub.eval(neg.eval(b), dis);
+					}
+				}
+
+				if(nom != null) {
+					// nom / 2d
+					Tree result = div.eval(nom, mul.eval(new Value.Int(2), a));
+					return result;
+				}
 			}
 
 			// an error will be given later.

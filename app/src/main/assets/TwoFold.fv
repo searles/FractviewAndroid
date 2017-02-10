@@ -58,11 +58,11 @@ func get_color(c, value) {
     var foldvalue2 cplx = foldinit;
 
     func breakcondition(i, znext, z, zlast, c, p, color) {
-        extern foldfn expr = "/(rad znext + 1) + foldvalue";
-        extern foldfn2 expr = "dist(z, znext) + foldvalue2";
+        extern foldfn expr = "/cosh(/rad(znext)) + foldvalue";
+        extern foldfn2 expr = "/cosh(/dist(znext, z)) + foldvalue2";
 
         func bailoutcolor() {
-            extern bailout real = 512;
+            extern bailout real = 65536;
             extern max_power real = 2;
 
             // the next ones are only used in 3d-fractals
@@ -85,7 +85,7 @@ func get_color(c, value) {
             value = lakevalue;
 
             extern laketransfer expr =
-                    "arcnorm znext : log(1 + log(1 + value)) ";
+                    "arcnorm znext : log(1 + value)";
 
             extern lakepalette palette = [
                 [#fff, #fff, #fff, #fff, #fff, #fff],

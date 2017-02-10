@@ -51,7 +51,7 @@ func get_color(c, value) {
     // draw single pixel
     func breakcondition(i, znext, z, zlast, c, p, color) {
         // if true, color contains the lab color (quat)
-        extern foldfn expr = "dist(znext, z) + foldvalue";
+        extern foldfn expr = "/cosh(/dist(znext, z)) + foldvalue";
 
         func lakecolor() {
             extern epsilon real = 1e-9;
@@ -61,7 +61,7 @@ func get_color(c, value) {
             value = lakevalue;
 
             extern laketransfer expr =
-                    "arcnorm znext : atan(value / rad znext)";
+                    "arcnorm znext : log(1 + value)";
 
             extern lakepalette palette = [
                     [#fff, #fff, #fff, #fff],

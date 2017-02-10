@@ -18,7 +18,7 @@ func escapetime(c, breakcondition) {
 
     z = c if juliaset else mandelinit;
 
-    extern function expr = "newton(z^4 + p, z)";
+    extern function expr = "z ^ -3 + p";
 
     var color quat;
 
@@ -45,7 +45,7 @@ func get_color(c, value) {
     // draw single pixel
     func breakcondition(i, znext, z, zlast, c, p, color) {
         // if true, color contains the lab color (quat)
-        extern foldfn expr = "dist(znext, z) + foldvalue";
+        extern foldfn expr = "/cosh(/dist(znext, z)) + foldvalue";
 
         func lakecolor() {
             extern epsilon real = 1e-9;

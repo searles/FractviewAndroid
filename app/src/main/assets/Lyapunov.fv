@@ -17,7 +17,7 @@ func get_color(c, value) {
     def a = step(c.x);
     def b = step(c.y);
 
-    extern lyastring expr = "[a,a,a,a,a,a,b,b,b,b,b,b]";
+    extern lyastring expr = "[a,a,b,b]";
 
     extern pluspalette palette = [[#000, #800, #fa0, #fd4, #ff8, #fff]];
     extern minuspalette palette = [[#000, #8af, #acf, #28f]];

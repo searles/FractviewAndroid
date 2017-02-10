@@ -173,7 +173,7 @@ public class BitmapFragment extends Fragment implements
 							if(waitingDialog != null) {
 								// this check is due to a possible race condition
 								// yes, there is some action missing. Dismiss dialog and do it.
-								waitingDialog.dismiss();
+								waitingDialog.dismissAllowingStateLoss();
 							}
 
 							if(waiting != null) {
@@ -294,7 +294,7 @@ public class BitmapFragment extends Fragment implements
 
 				if(ft != null) {
 					Log.d("BF", "Trying to close dialog");
-					ft.dismiss();
+					ft.dismissAllowingStateLoss();
 				}
 
 				Log.d("BMF", "Init Fractal");
@@ -715,7 +715,7 @@ public class BitmapFragment extends Fragment implements
 			protected void onPostExecute(Boolean saved) {
 				ProgressDialogFragment ft = (ProgressDialogFragment) getFragmentManager().findFragmentByTag("saveDialog");
 
-				if(ft != null) ft.dismiss();
+				if(ft != null) ft.dismissAllowingStateLoss();
 
 				if(saved) {
 					if(action == SAVE_IMAGE) {
