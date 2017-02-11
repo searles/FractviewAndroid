@@ -7,7 +7,7 @@
     <view
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        class="at.searles.fractview.ui.NewPaletteView"
+        class="at.searles.fractview.ui.PaletteView"
         android:id="@+id/paletteView"
         android:layout_gravity="center_horizontal" />
 

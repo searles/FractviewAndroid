@@ -144,23 +144,31 @@ public class AssetsHelper {
             // create entries.
             _ENTRIES = new ArrayList<>();
 
+            // grouped : the ones with maxpower
             _ENTRIES.add(e(am, "Default", "Default.png", "Basic fractal with bailout and lake coloring", "Default.fv"));
-            _ENTRIES.add(e(am, "Lake", "Lake.png", "Draws only the lake of a fractal, thus useful for bounded fractals like Duck or Newton", "Lake.fv"));
             _ENTRIES.add(e(am, "Julia Map", "JuliaMap.png", "Variation of \"Default\" that shows a map of julia sets.", "JuliaMap.fv"));
-
-            _ENTRIES.add(e(am, "Cczcpaczcp", "Cczcpaczcp.png", "Default with a built-in special formula by Mark R Eggleston, called Cczcpaczcp", "Cczcpaczcp.fv"));
             _ENTRIES.add(e(am, "Branching", "Branching.png", "\"Default\" with an addend for average coloring methods for polynom formulas", "Branching.fv"));
-            _ENTRIES.add(e(am, "Fold", "Fold.png", "\"Default\" with a more general addend (fold), also suitable for stripe coloring methods of non-polynomial fractals", "Fold.fv"));
-            _ENTRIES.add(e(am, "Two Folds", "TwoFold.png", "\"Default\" with two fold functions", "TwoFold.fv"));
+            _ENTRIES.add(e(am, "Cczcpaczcp", "Cczcpaczcp.png", "Default with a built-in special formula by Mark R Eggleston, called Cczcpaczcp", "Cczcpaczcp.fv"));
+
+            // the ones with orbit traps
             _ENTRIES.add(e(am, "Orbit Trap", "OrbitTrap.png", "\"Default\" with an orbit trap", "OrbitTrap.fv"));
+            _ENTRIES.add(e(am, "Frame Orbit Trap", "FrameOrbitTrap.png", "\"Default\" with an orbit trap", "FrameOrbitTrap.fv"));
             _ENTRIES.add(e(am, "Min/Max Trap", "MinMaxOrbitTrap.png", "Picks the maximum distance to the orbit trap", "MinMaxOrbitTrap.fv"));
 
-            //_ENTRIES.add(e(am, "Newton", "Newton.png", "Newton method for root finding fractals", "Newton.fv"));
-            _ENTRIES.add(e(am, "Nova", "Nova.png", "Newton method for root finding fractals", "Nova.fv"));
+            // the ones with fold
+            _ENTRIES.add(e(am, "Fold", "Fold.png", "\"Default\" with a more general addend (fold), also suitable for stripe coloring methods of non-polynomial fractals", "Fold.fv"));
+            _ENTRIES.add(e(am, "Two Folds", "TwoFold.png", "\"Default\" with two fold functions", "TwoFold.fv"));
+            _ENTRIES.add(e(am, "Lake Fold", "Lake.png", "Draws only the lake of a fractal, thus useful for bounded fractals like Duck or Newton", "Lake.fv"));
+
+            // Special Lake Fold ones
+            _ENTRIES.add(e(am, "Newton", "Newton.png", "Newton method for root finding fractals", "Newton.fv"));
+            _ENTRIES.add(e(am, "Nova", "Nova.png", "Nova fractal defined by z - R * (z^power + argument) / (z^power + argument)' + p", "Nova.fv"));
             _ENTRIES.add(e(am, "Secant", "Secant.png", "Secant method for root finding fractals", "Secant.fv"));
 
+            // Completely different onces
             _ENTRIES.add(e(am, "Lyapunov", "Lyapunov.png", "Lyapunov fractals", "Lyapunov.fv"));
 
+            _ENTRIES.add(e(am, "Pendulum (Multiple Magnets)", "Pendulum.png", "Magnetic Pendulum Simulation with 3 Magnets", "Pendulum.fv"));
             _ENTRIES.add(e(am, "Pendulum (3 Magnets)", "Pendulum3.png", "Magnetic Pendulum Simulation with 3 Magnets", "Pendulum3.fv"));
 
             _ENTRIES.add(e(am, "Complex Function", "ComplexFn.png", "Drawing of Complex function (Color Wheel method by default)", "ComplexFn.fv"));
@@ -297,6 +305,13 @@ public class AssetsHelper {
                             .add("juliapoint", Fractal.Type.Cplx, new Cplx(0.5666, -0.5))
             ));
 
+            _PARAMETER_ENTRIES.add(e(am, "Cczcpaczcp", "Buffalo.png", "Buffalo Fractal",
+                    new Fractal.Parameters()
+                            .add("function", Fractal.Type.Expr, "p (z^3 + z^-1)")
+                            .add("mandelinit", Fractal.Type.Expr, "{ def alpha = 1; def beta = 3; def gamma = 1; def delta = -1; (-gamma delta / alpha beta)^/(beta - delta)}")
+                            .add("max_power", Fractal.Type.Real, 3)
+            ));
+
             _PARAMETER_ENTRIES.add(e(am, "Glynn", "Glynn.png", "Glynn fractal (a julia set of mandel^1.6",
                     new Fractal.Parameters()
                             .add("function", Fractal.Type.Expr, "z ^ 1.75 + p")
@@ -361,7 +376,7 @@ public class AssetsHelper {
                             .add("mandelinit", Fractal.Type.Expr, "c")
             ));
 
-            _PARAMETER_ENTRIES.add(e(am, "(Lake) Newton of more complex polynom", "newton.png", "A nice variation for newton",
+            _PARAMETER_ENTRIES.add(e(am, "(Lake) Newton of z^4 - 6 * z^2 - 2 p z + p", "newton.png", "A nice variation for newton",
                     new Fractal.Parameters()
                             .add("function", Fractal.Type.Expr, "newton(z^4 - 6 * z^2 - 2 p z + p, z)")
                             .add("mandelinit", Fractal.Type.Expr, "-1")
@@ -373,16 +388,16 @@ public class AssetsHelper {
                             .add("mandelinit", Fractal.Type.Expr, "0")
             ));
 
-            _PARAMETER_ENTRIES.add(e(am, "(Lake) Nova of z^6 - 1", "SinHNewton.png", "A nice variation for newton",
+            _PARAMETER_ENTRIES.add(e(am, "(Lake) Nova of z^3 - 1", "SinHNewton.png", "A nice variation for newton",
                     new Fractal.Parameters()
-                            .add("function", Fractal.Type.Expr, "newton(z^6 - 1, z) + p")
+                            .add("function", Fractal.Type.Expr, "newton(z^3 - 1, z) + p")
                             .add("mandelinit", Fractal.Type.Expr, "1")
             ));
 
-            _PARAMETER_ENTRIES.add(e(am, "(Lake) Nova z - a f(z)/f'(z) + p with a=2 and f=z^4 + p", "SinHNewton.png", "Mandelinit should be \"(p(a n-a)/(a-n))^/n\", provided p does not depend on z.",
+            _PARAMETER_ENTRIES.add(e(am, "(Lake) Nova z - R f(z)/f'(z) + p with R=2 and f = z^power - 1", "SinHNewton.png", "Mandelinit should be \"(p(a n-a)/(a-n))^/n\", provided p does not depend on z.",
                     new Fractal.Parameters()
-                            .add("function", Fractal.Type.Expr, "z - 2 (z^4 + p) / derive(z^4 + p, z) + p")
-                            .add("mandelinit", Fractal.Type.Expr, "{ def a=2; def n=4; def p=c; (p(a n-a)/(a-n))^/n}")
+                            .add("function", Fractal.Type.Expr, "z - 2 (z^4 - 1) / derive(z^4 - 1, z) + p")
+                            .add("mandelinit", Fractal.Type.Expr, "{ def R=2; def power=4; (-(R power-R)/(R-power))^/power}")
             ));
 
             // Stop Fractal Types.
@@ -400,30 +415,83 @@ public class AssetsHelper {
                             .add("addend", Fractal.Type.Expr, "{ var t1 = rad z ^ max_power, t2 = rad p, M = abs(t1 - t2), m = t1 + t2; (rad znext - m) / (M - m) }")
             ));
 
-            _PARAMETER_ENTRIES.add(e(am, "Exponential Smoothing", "SinHNewton.png", "A nice variation for newton",
+            // Exponential Smoothing
+
+            _PARAMETER_ENTRIES.add(e(am, "Exponential Smoothing (Bailout and Lake)", "SinHNewton.png", "A nice variation for newton",
                     new Fractal.Parameters()
                             .add("foldfn", Fractal.Type.Expr, "/cosh(rad znext + /dist(znext, z)) + foldvalue")
-                            .add("bailoutvalue", Fractal.Type.Expr, "foldvalue.x")
-                            .add("lakevalue", Fractal.Type.Expr, "foldvalue.x")
+                            .add("bailoutvalue", Fractal.Type.Expr, "log(E^2 + foldvalue.x)")
+                            .add("lakevalue", Fractal.Type.Expr, "log(1 + foldvalue.x)")
             ));
 
-            _PARAMETER_ENTRIES.add(e(am, "Bailout Branching", "SinHNewton.png", "A nice variation for newton",
+            _PARAMETER_ENTRIES.add(e(am, "Exponential Smoothing (Bailout)", "SinHNewton.png", "A nice variation for newton",
                     new Fractal.Parameters()
-                            .add("foldfn", Fractal.Type.Expr, "(0.5 + 0.5 cos 12 arc znext) / (12 + rad znext) + foldvalue")
+                            .add("foldfn", Fractal.Type.Expr, "/cosh rad znext + foldvalue")
+                            .add("bailoutvalue", Fractal.Type.Expr, "log(E^2 + foldvalue.x)")
             ));
 
-            _PARAMETER_ENTRIES.add(e(am, "Lake Branching", "SinHNewton.png", "A nice variation for newton",
+            _PARAMETER_ENTRIES.add(e(am, "Exponential Smoothing (Lake)", "SinHNewton.png", "A nice variation for newton",
                     new Fractal.Parameters()
-                            .add("foldfn", Fractal.Type.Expr, "(0.5 + 0.5 cos 12 arc(z - znext)) dist(znext, z) + foldvalue")
+                            .add("foldfn", Fractal.Type.Expr, "/cosh(/dist(znext, z)) + foldvalue")
+                            .add("lakevalue", Fractal.Type.Expr, "log(1 + foldvalue.x)")
             ));
 
-            _PARAMETER_ENTRIES.add(e(am, "Two-Fold Branching", "twobranch.png", "A nice variation for newton",
+            _PARAMETER_ENTRIES.add(e(am, "Exponential Smoothing (Two Fold)", "twobranch.png", "A nice variation for newton",
                     new Fractal.Parameters()
-                            .add("foldfn", Fractal.Type.Expr, "(0.5 + 0.5 cos 12 arc znext) / (12 + rad znext) + foldvalue")
-                            .add("foldfn2", Fractal.Type.Expr, "(0.5 + 0.5 cos 12 arc(z - znext)) dist(znext, z) + foldvalue2")
+                            .add("foldfn", Fractal.Type.Expr, "/cosh rad znext + foldvalue")
+                            .add("bailoutvalue", Fractal.Type.Expr, "log(E^2 + foldvalue.x)")
+                            .add("foldfn2", Fractal.Type.Expr, "/cosh(/dist(znext, z)) + foldvalue2")
+                            .add("lakevalue", Fractal.Type.Expr, "log(1 + foldvalue.x)")
             ));
+
+            _PARAMETER_ENTRIES.add(e(am, "Branching (Bailout and Lake)", "SinHNewton.png", "A nice variation for newton",
+                    new Fractal.Parameters()
+                            .add("foldfn", Fractal.Type.Expr, "(0.5 + 0.5 cos 6 arc (z - znext)) / (12 + rad znext + /dist(znext, z)) + foldvalue")
+                            .add("bailoutvalue", Fractal.Type.Expr, "log(1 + foldvalue.x)")
+                            .add("lakevalue", Fractal.Type.Expr, "log(1 + foldvalue.x)")
+            ));
+
+            _PARAMETER_ENTRIES.add(e(am, "Branching (Bailout)", "SinHNewton.png", "A nice variation for newton",
+                    new Fractal.Parameters()
+                            .add("foldfn", Fractal.Type.Expr, "(0.5 + 0.5 cos 6 arc znext) / (12 + rad znext) + foldvalue")
+                            .add("bailoutvalue", Fractal.Type.Expr, "log(1 + foldvalue.x)")
+            ));
+
+            _PARAMETER_ENTRIES.add(e(am, "Branching (Lake)", "SinHNewton.png", "A nice variation for newton",
+                    new Fractal.Parameters()
+                            .add("foldfn", Fractal.Type.Expr, "(0.5 + 0.5 cos 6 arc(z - znext)) / (12 + /dist(znext, z)) + foldvalue")
+                            .add("lakevalue", Fractal.Type.Expr, "log(1 + foldvalue.x)")
+            ));
+
+            _PARAMETER_ENTRIES.add(e(am, "Branching (Two Fold)", "twobranch.png", "A nice variation for newton",
+                    new Fractal.Parameters()
+                            .add("foldfn", Fractal.Type.Expr, "(0.5 + 0.5 cos 6 arc znext) / (12 + rad znext) + foldvalue")
+                            .add("foldfn2", Fractal.Type.Expr, "(0.5 + 0.5 cos 6 arc(z - znext)) / (12 + /dist(znext, z)) + foldvalue2")
+                            .add("bailoutvalue", Fractal.Type.Expr, "log(1 + foldvalue.x)")
+                            .add("lakevalue", Fractal.Type.Expr, "log(1 + foldvalue2.x)")
+            ));
+
+            _PARAMETER_ENTRIES.add(e(am, "Exponential Smoothing and Branching (Two Fold)", "twobranch.png", "A nice variation for newton",
+                    new Fractal.Parameters()
+                            .add("foldfn", Fractal.Type.Expr, "/cosh(rad znext + /dist(znext, z)) + foldvalue")
+                            .add("bailoutvalue", Fractal.Type.Expr, "log(E^2 + foldvalue.x)")
+                            .add("foldfn2", Fractal.Type.Expr, "(0.5 + 0.5 cos 6 arc (z - znext)) / (12 + rad znext + /dist(znext, z)) + foldvalue2")
+                            .add("lakevalue", Fractal.Type.Expr, "log(1 + foldvalue.x)")
+                            .add("bailouttransfer", Fractal.Type.Expr, "log(1 + foldvalue2.x) : value")
+                            .add("laketransfer", Fractal.Type.Expr, "log(1 + foldvalue2.x) : value")
+            ));
+
 
             // Next: Orbit Traps
+            _PARAMETER_ENTRIES.add(e(am, "Cross Trap", null, "Orbit Trap of 6 Steiner Circles",
+                    new Fractal.Parameters()
+                            .add("trapfn", Fractal.Type.Expr, "min(line(0:0, 1:0, znext), line(0:0, 0:1, znext))")
+            ));
+
+            _PARAMETER_ENTRIES.add(e(am, "Two Boxes Trap", null, "Orbit Trap of 6 Steiner Circles",
+                    new Fractal.Parameters()
+                            .add("trapfn", Fractal.Type.Expr, "min(box(-2:-2, 0.5:0.5, znext), box(2:2, -0.5:-0.5, znext))")
+            ));
 
             _PARAMETER_ENTRIES.add(e(am, "Steiner Circles Trap", null, "Orbit Trap of 6 Steiner Circles",
                     new Fractal.Parameters()
@@ -431,6 +499,17 @@ public class AssetsHelper {
             ));
 
             // Next Lyapunov Fractals
+            _PARAMETER_ENTRIES.add(e(am, "Edge of BA-Lyapunov Fractal", "ZirkonyZity.png", "Part of Lyapunov fractal called Zirkony Zity",
+                    new Scale(1, 0, 0, -1, 3, 3),
+                    new Fractal.Parameters()
+                            .add("lyastring", Fractal.Type.Expr, "[b,a]")
+            ));
+
+            _PARAMETER_ENTRIES.add(e(am, "Edge of BBABA-Lyapunov Fractal", "ZirkonyZity.png", "Part of Lyapunov fractal called Zirkony Zity",
+                    new Scale(1, 0, 0, -1, 3, 3),
+                    new Fractal.Parameters()
+                            .add("lyastring", Fractal.Type.Expr, "[b,b,a,b,a]")
+            ));
 
             _PARAMETER_ENTRIES.add(e(am, "Zirkony Zity", "ZirkonyZity.png", "Part of Lyapunov fractal called Zirkony Zity",
                     new Scale(0.45, 0, 0, -0.3, 3.05, 3.7),

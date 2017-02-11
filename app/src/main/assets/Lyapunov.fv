@@ -17,7 +17,7 @@ func get_color(c, value) {
     def a = step(c.x);
     def b = step(c.y);
 
-    extern lyastring expr = "[a,a,b,b]";
+    extern lyastring expr = "[a,a,a,a,b,b,b,b]";
 
     extern pluspalette palette = [[#000, #800, #fa0, #fd4, #ff8, #fff]];
     extern minuspalette palette = [[#000, #8af, #acf, #28f]];
@@ -29,7 +29,7 @@ func get_color(c, value) {
     lyaexp = lyaexp / i;
     
     // and get values
-    extern plusvalue expr = "sqrt atan log (1 - lyaexp) * (3 / PI)";
+    extern plusvalue expr = "sqrt(atan(-lyaexp) (2 / PI))";
     extern plustransfer expr = "value";
 
     extern minusvalue expr = "0";

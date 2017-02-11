@@ -1,11 +1,12 @@
-// Preset for Convergent fractals like the Duck or Newton fractals
+// Min/Max Orbit trap: determines the minimum and maximum distance
+// to the given trap.
 var x int, y int, color int;
 
 extern maxdepth int = 120;
 
 // some further arguments
 extern juliaset bool = false;
-extern juliapoint cplx = -1:0 ;
+extern juliapoint cplx = -0.8:0.16;
 
 func escapetime(c, breakcondition) {
     var i int = 0,
@@ -14,73 +15,137 @@ func escapetime(c, breakcondition) {
         z cplx,
         znext cplx = 0;
 
-    extern init0 expr = "0";
-    extern init1 expr = "c";
+    extern mandelinit expr = "0";
 
-    extern function expr = "z^3 + p";
+    z = c if juliaset else mandelinit;
+
+    extern function expr = "mandelbrot(z, p)";
 
     var color quat;
 
-    p = juliapoint if juliaset else c;
-
-    z = init0;
-    var fn_zlast = function;
-
-    zlast = z;
-
-    z = c if juliaset else init1;
-    var fn_z cplx = function;
-
     while {
-        znext = z - fn_z * (z - zlast) / (fn_z - fn_zlast);
+        znext = function;
         not breakcondition(i, znext, z, zlast, c, p, color)
     } do {
         // advance to next values
         zlast = z;
         z = znext;
-
-        // and advance to next function.
-        fn_zlast = fn_z;
-        fn_z = function;
     }
 
     // return color
     color
 }
 
-// Here starts the script specific part
+func framed(v, color) {
+    // 0.1 white
+    // 0.4 black
+    // 0.5 while
+    //   1 color
+    var ret quat;
+    var alpha real;
+    
+    // hat function; peak at 0.5, min at 0 and 1.
+    func hat(x) { 2 x if x < 0.5 else 2 (1 - x) };
+    
+    { ret = 100:0:0:1 ; alpha = hat 10 v  } if v < 0.1 else
+    { ret = 0:0:0:1 ; alpha = hat 3.3333333333333 (v - 0.1) } if v < 0.4 else
+    { ret = 100:0:0:1 ; alpha = hat 10 (v - 0.4) } if v < 0.5 else
+    { ret = color ; alpha = 2 (v - 0.5) };
+    
+    ret.d = opacity circlefn (1 - alpha);
+    ret
+}
+
+
 
 func get_color(c, value) { 
+    var trapcolorfront quat = 0:0:0:0; // later traps in front
+    var trapcolorback quat = 0:0:0:0; // later traps behind
 
-    extern foldinit expr = "0";
-    var foldvalue cplx = foldinit;
+    var trapfirst real, trapindex = -1;
+    var traplast real;
 
     // draw single pixel
     func breakcondition(i, znext, z, zlast, c, p, color) {
         // if true, color contains the lab color (quat)
-        extern foldfn expr = "dist(z, znext) + foldvalue";
     
-        func lakecolor() {
-            extern epsilon real = 1e-9;
+        func bailoutcolor() {
+            extern bailout real = 128;
+            extern max_power real = 2;
+            var smooth_i = smoothen(znext, bailout, max_power) ;
 
             // the next ones are only used in 3d-fractals
-            extern lakevalue expr = "1.3 atan foldvalue.x / PI";
-            value = lakevalue;
+            extern bailoutvalue expr = "log(20 + i + smooth_i)";
+            value = bailoutvalue ;
+
+            extern bailouttransfer expr = "value";
+
+            extern bailoutpalette palette = [
+                    [#006, #26c, #fff, #fa0, #303]];
         
-            extern laketransfer expr = 
-                    "arcnorm znext : value";
-
-            extern lakepalette palette = [
-                    [#fff, #fff, #fff, #fff],
-                    [#f88, #ff8, #8fc, #88f],
-                    [#f00, #ff0, #0f8, #00f],
-                    [#000, #000, #000, #000]];
-
-            color = lakepalette laketransfer
+            color = over(trapcolorfront, bailoutpalette bailouttransfer);
+            if trapindex >= 0 then value = traplast;
         }
 
-        { foldvalue = foldfn; false } if next(i, maxdepth) and dist2(z, znext) > sqr epsilon else 
-        { lakecolor() ; true } 
+        func lakecolor() {
+            extern epsilon real = 1e-9;
+        
+            // the next ones are only used in 3d-fractals
+            extern lakevalue expr = "log(1 + rad znext)";
+            value = lakevalue;
+
+            extern laketransfer expr = "arcnorm znext : value";
+
+            extern lakepalette palette = [
+                [#000, #000, #000, #000],
+                [#f00, #ff0, #0f8, #00f],
+                [#f88, #ff8, #afc, #88f]];
+
+            color = over(trapcolorback, lakepalette laketransfer);
+            if trapindex >= 0 then value = trapfirst;
+        }
+
+        // update trap
+        func updatetrap() {
+            extern trapwidth real = 0.1;
+
+            extern trapfn expr = "line(0:0, 1:0, znext)";
+            
+            var trapdist real = 1 - trapfn / trapwidth;
+
+            if trapdist > 0 then {
+                // we are inside the trap
+                extern trapvalue expr = "trapdist";
+                
+                extern traptransfer expr = "log(i + 1)";
+                
+                extern trappalette palette = [
+                        [#4b0082, #800000, #ffd700, #000080, #f5deb3]];
+
+                extern opacity real = 0.67;
+                
+                var fg = framed(trapdist, trappalette traptransfer);
+                
+                trapcolorfront = over(fg, trapcolorfront);
+                trapcolorback = over(trapcolorback, fg);
+                
+                if trapindex < 0 then {
+                    trapfirst = trapvalue;
+                    traplast = trapfirst;
+                    trapindex = i
+                } else {
+                    traplast = trapvalue;
+                };
+                
+                trapindex = i;
+            }           
+        }
+
+        updatetrap();
+
+        { lakecolor() ; true } if not next(i, maxdepth) else
+        radrange(znext, z, bailout, epsilon, bailoutcolor(), lakecolor())
+
     }
 
     escapetime(c, breakcondition)

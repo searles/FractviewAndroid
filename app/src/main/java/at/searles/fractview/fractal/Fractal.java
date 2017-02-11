@@ -17,6 +17,7 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 
+import at.searles.fractview.AssetsHelper;
 import at.searles.math.Cplx;
 import at.searles.math.Scale;
 import at.searles.math.color.Palette;
@@ -569,7 +570,7 @@ public class Fractal implements Parcelable {
 	}
 
 	public void resetScale() {
-		setScale(PresetFractals.INIT_SCALE);
+		setScale(AssetsHelper.DEFAULT_SCALE);
 	}
 
 	public Pair<Type, Object> get(String labelId) {

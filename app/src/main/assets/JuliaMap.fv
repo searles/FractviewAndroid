@@ -44,10 +44,10 @@ func get_color(c, p, value) {
             var smooth_i = smoothen(znext, bailout, max_power) ;
 
             // the next ones are only used in 3d-fractals
-            extern bailoutvalue expr = "i + smooth_i";
+            extern bailoutvalue expr = "log(20 + i + smooth_i)";
             value = bailoutvalue ;
         
-            extern bailouttransfer expr = "log(value + 19)";
+            extern bailouttransfer expr = "value";
 
             extern bailoutpalette palette = [
                     [#006, #26c, #fff, #fa0, #303]];
@@ -59,11 +59,11 @@ func get_color(c, p, value) {
             extern epsilon real = 1e-9;
         
             // the next ones are only used in 3d-fractals
-            extern lakevalue expr = "rad znext";
+            extern lakevalue expr = "log(1 + rad znext)";
             value = lakevalue;
 
             extern laketransfer expr =
-                "arcnorm znext : log(1 + value)";
+                "arcnorm znext : value";
 
             extern lakepalette palette = [
                 [#000, #000, #000, #000],

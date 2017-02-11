@@ -47,20 +47,17 @@ func get_color(c, value) {
             extern max_power real = 2;
             var smooth_i = smoothen(znext, bailout, max_power) ;
             
-            // smooth_i is interpolated here
-            extern interpolate_smooth_i bool = false;
-            if interpolate_smooth_i then smooth_i = 0.5 - 0.5 cos PI smooth_i;
-
             // and also add addend according to smooth_i value
             branch_avg = (branch_avg + smooth_i addend) / 
                 (i + smooth_i - addend_start);
                 
             // the next ones are only used in 3d-fractals
             extern bailoutvalue expr = "branch_avg";
-            value = bailoutvalue ;
+            value = bailoutvalue;
 
             extern bailouttransfer expr =
-                "branch_avg : log(i + smooth_i)";
+                "value : log(i + smooth_i)";
+                
             extern bailoutpalette palette = [
                 [#f80, #f22, #40f, #008, #080, #ff8],
                 [#fff, #000, #fff, #000, #fff, #000]];

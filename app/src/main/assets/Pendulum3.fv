@@ -3,9 +3,9 @@ var x int, y int, color int;
 
 func get_color(c, value) {
     extern pal palette = [
-            [#fff, #fff, #fff, #fff], 
-            [#f00, #ff0, #0f8, #00f], 
-            [#000, #000, #000, #000]];
+            [#fff, #fff, #fff],
+            [#f00, #ff0, #00f],
+            [#000, #000, #000]];
 
     extern stepcount int = 250;
 

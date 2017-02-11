@@ -63,10 +63,10 @@ func get_color(c, value) {
             extern max_power real = 2; // just for compatibility
 
             // the next ones are only used in 3d-fractals
-            extern bailoutvalue expr = "foldvalue.x";
+            extern bailoutvalue expr = "log(1 + foldvalue.x)";
             value = bailoutvalue ;
 
-            extern bailouttransfer expr = "log(value + 1)";
+            extern bailouttransfer expr = "value";
 
             extern bailoutpalette palette = [
                 [#0f8, #080, #ff8, #f80, #f20, #008]];
@@ -78,11 +78,10 @@ func get_color(c, value) {
             extern epsilon real = 1e-9;
 
             // the next ones are only used in 3d-fractals
-            extern lakevalue expr = "rad znext";
+            extern lakevalue expr = "log(1 + rad znext)";
             value = lakevalue;
 
-            extern laketransfer expr =
-                "arcnorm znext : log(value + 1)";
+            extern laketransfer expr = "arcnorm znext : value";
 
             extern lakepalette palette = [
                 [#000, #000, #000, #000, #000, #000],

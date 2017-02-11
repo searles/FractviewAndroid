@@ -1,5 +1,7 @@
 package at.searles.meelan;
 
+import android.support.annotation.NonNull;
+
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -141,6 +143,7 @@ public enum Op implements Operation {
 			return t;
 		}
 
+		@NonNull
 		@Override
 		public Tree eval(List<Tree> arguments) {
 			// we only can use this with three elements
@@ -163,8 +166,16 @@ public enum Op implements Operation {
 		String generateCase(Signature signature, List<Value> values) {
 			throw new UnsupportedOperationException();
 		}
+
+		@Override
+		public String usage() {
+			return this.toString() + ": Returns the derivate of a function.\n" +
+					"Example: derive(x^2, x) would return 2x.\n" +
+					"Error: If the function does not have a derivative (eg abs).";
+		}
 	},
 	newton {
+		@NonNull
 		@Override
 		public Tree eval(List<Tree> arguments) {
 			// we only can use this with three elements
@@ -182,12 +193,21 @@ public enum Op implements Operation {
 			// an error will be given later.
 			return new Tree.OpApp(this, arguments);
 		}
+
 		@Override
 		String generateCase(Signature signature, List<Value> values) {
 			throw new UnsupportedOperationException();
 		}
+
+		@Override
+		public String usage() {
+			return this.toString() + ": Generates the formula for the newton approximation.\n" +
+					"Example: newton(x^2, x) would return x - x^2/2x.\n" +
+					"Error: If the function does not have a derivative (eg abs).";
+		}
 	},
 	solve2 {
+		@NonNull
 		@Override
 		public Tree eval(List<Tree> arguments) {
 			// solve2 solves quadratic equations
@@ -234,6 +254,13 @@ public enum Op implements Operation {
 		String generateCase(Signature signature, List<Value> values) {
 			throw new UnsupportedOperationException();
 		}
+
+		@Override
+		public String usage() {
+			return this.toString() + ": Solves the quadratic equation a * x^2 + b*x + c.\n" +
+					"Usage: solve2(a, b, c, index) where \"index\" is in {1, 2}\n" +
+					"Example: solve2(1, 0, 1, 2) would return -1.\n";
+		}
 	},
 	// FIXME: solve2, solve3, secant, general_newton
 	whileOp {
@@ -261,7 +288,7 @@ public enum Op implements Operation {
 				Value.Label conditionLabel = new Value.Label();
 
 				// first, jump to the condition.
-				__jump.addToProgram(Collections.singletonList((Value) conditionLabel), null, program);
+				__jump.addToProgram(Collections.singletonList(conditionLabel), null, program);
 
 				// but if it is true, we return here.
 				program.addLabel(trueLabel);
@@ -283,8 +310,15 @@ public enum Op implements Operation {
 		String generateCase(Signature signature, List<Value> values) {
 			throw new IllegalArgumentException("not a C-instruction");
 		}
+
+		@Override
+		public String usage() {
+			return this.toString() + ": Internal while-loop, executed while condition is satisfied. \n" +
+					"Usage: whileOp(condition) or whileOp(condition, body)\n";
+		}
 	},
 	ifOp {
+		@NonNull
 		@Override
 		public Tree eval(List<Tree> arguments) {
 			// we only can use this with three elements
@@ -307,7 +341,6 @@ public enum Op implements Operation {
 
 		@Override
 		public void linearizeStmt(List<Tree> args, DataScope currentScope, Program program) throws CompileException {
-			// two possible versions: one argument is like do-while, two arguments is a while.
 			if(args.size() == 2) {
 				Tree cond = args.get(0);
 				Tree thenPart = args.get(1);
@@ -334,7 +367,7 @@ public enum Op implements Operation {
 				program.addLabel(trueLabel);
 				thenPart.linearizeStmt(currentScope.newScope(), program);
 
-				__jump.addToProgram(Collections.singletonList((Value) endLabel), null, program);
+				__jump.addToProgram(Collections.singletonList(endLabel), null, program);
 
 				program.addLabel(falseLabel);
 				elsePart.linearizeStmt(currentScope.newScope(), program);
@@ -347,7 +380,6 @@ public enum Op implements Operation {
 
 		@Override
 		public void linearizeBool(List<Tree> args, Value.Label trueLabel, Value.Label falseLabel, DataScope currentScope, Program program) throws CompileException {
-			//
 			if(args.size() == 3) {
 				Tree cond = args.get(0);
 				Tree thenPart = args.get(1);
@@ -393,6 +425,9 @@ public enum Op implements Operation {
 
 				program.addLabel(trueLabel);
 
+				// FIXME Check the next lines!
+				// FIXME Again, do it.
+
 				Value thenValue = null;
 				Value elseValue = null;
 
@@ -403,7 +438,7 @@ public enum Op implements Operation {
 
 				thenValue = thenPart.linearizeExpr(target != null && target.type() != null ? target : null, null, currentScope.newScope(), program);
 
-				__jump.addToProgram(Collections.singletonList((Value) thenAssignmentLabel), null, program);
+				__jump.addToProgram(Collections.singletonList(thenAssignmentLabel), null, program);
 
 				program.addLabel(falseLabel);
 
@@ -425,21 +460,18 @@ public enum Op implements Operation {
 				}
 
 				if(elseValue != target) { // this also means that thenTarget != target
-					Op.mov.addToProgram(Arrays.asList((Value) elseValue, target), currentScope, program);
-					Op.__jump.addToProgram(Collections.singletonList((Value) endLabel), null, program);
+					Op.mov.addToProgram(Arrays.asList(elseValue, target), currentScope, program);
+					Op.__jump.addToProgram(Collections.singletonList(endLabel), null, program);
 					// no need to jump if the then-assignment does not need any assignment.
 				}
 
 				program.addLabel(thenAssignmentLabel);
 
 				if(thenValue != target) { // and elseValue != target
-					Op.mov.addToProgram(Arrays.asList((Value) thenValue, target), currentScope, program);
+					Op.mov.addToProgram(Arrays.asList(thenValue, target), currentScope, program);
 				}
 
 				program.addLabel(endLabel);
-
-
-				// FIXME click-zoom should be higher
 
 				return target;
 			} else {
@@ -451,42 +483,90 @@ public enum Op implements Operation {
 		String generateCase(Signature signature, List<Value> values) {
 			throw new IllegalArgumentException("not a C-instruction");
 		}
+
+		@Override
+		public String usage() {
+			return this.toString() + ": Internal if-branch. \n" +
+					"Usage: ifOp(condition, thenBody) or ifOp(condition, thenBody, elseBody). " +
+					"Only the ternary operator can return values.\n";
+		}
+	},
+	length {
+		@NonNull
+		@Override
+		public Tree eval(List<Tree> args) {
+			if(args.size() == 1) {
+				Tree range = args.get(0);
+
+				/*if(range instanceof Tree.Range) {
+					Tree.Range r = (Tree.Range) range;
+
+					if(r.a instanceof Value.Int && r.b instanceof Value.Int) {
+						return new Value.Int(((Value.Int) r.b).value - ((Value.Int) r.a).value);
+					}
+				} else*/ if(range instanceof Tree.Vec) {
+					Tree.Vec r = (Tree.Vec) range;
+					return new Value.Int(r.size());
+				}
+			}
+
+			return super.eval(args);
+		}
+
+		@Override
+		String generateCase(Signature signature, List<Value> values) {
+			throw new IllegalArgumentException("not a C-instruction");
+		}
+
+		@Override
+		public String usage() {
+			return this.toString() + ": Internal length operation for ranges and vectors\n" +
+					"Usage: length(range or vector).\n";
+		}
 	},
 	select {
 		// selects one single argument in the vector that is in argument 2.
-		Tree.Vec checkArgs(List<Tree> args) throws CompileException {
+		Tree checkArgs(List<Tree> args) throws CompileException {
 			if(args.size() != 2) throw new CompileException("select requires two arguments");
 			if(args.get(1) instanceof Tree.Vec) {
-				return (Tree.Vec) args.get(1);
-			} else {
+				return args.get(1);
+			} else /*if(args.get(1) instanceof Tree.Range) {
+				return args.get(1);
+			} else */{
 				throw new CompileException("2nd argument to select not a vector: " + args.get(1));
 			}
 		}
 
 		List<Value.Label> linearize(List<Tree> args, DataScope currentScope, Program program) throws CompileException {
-			Tree.Vec v = checkArgs(args);
+			Tree t = checkArgs(args);
+			Tree var = args.get(0);
 
-			// create one label for all elements in vec
+			if(t instanceof Tree.Vec) {
+				Tree.Vec v = (Tree.Vec) t;
+				// create one label for all elements in vec
 
-			// add modulo-instruction
-			Value index = mod.linearizeExpr(Arrays.asList(args.get(0), new Value.Int(v.size())), null, null, currentScope.newScope(), program);
+				// add modulo-instruction
+				Value index = mod.linearizeExpr(Arrays.asList(var, new Value.Int(v.size())), null, null, currentScope.newScope(), program);
 
-			// the modulo also makes sure that this is an integer!
+				// the modulo also makes sure that this is an integer!
 
-			List<Value.Label> labels = new ArrayList<>(v.size());
+				List<Value.Label> labels = new ArrayList<>(v.size());
 
-			for(Tree t : v) {
-				labels.add(new Value.Label());
+				for (Tree ignored : v) {
+					labels.add(new Value.Label());
+				}
+
+				// relative jump to label
+				List<Value> jRelArgs = new ArrayList<>(labels.size() + 1);
+				jRelArgs.add(index);
+				jRelArgs.addAll(labels);
+
+				program.addRaw(__jumprel, __jumprel.signatures[0], jRelArgs);
+
+				return labels;
+			} else {
+				throw new CompileException("Cannot apply select to range yet :(");
 			}
-
-			// relative jump to label
-			List<Value> jRelArgs = new ArrayList<>(labels.size() + 1);
-			jRelArgs.add(index);
-			jRelArgs.addAll(labels);
-
-			program.addRaw(__jumprel, __jumprel.signatures[0], jRelArgs);
-
-			return labels;
 		}
 
 		@Override
@@ -512,57 +592,54 @@ public enum Op implements Operation {
 		String generateCase(Signature signature, List<Value> values) {
 			throw new IllegalArgumentException("not a C-instruction");
 		}
+
+		@Override
+		public String usage() {
+			return this.toString() + ": selects element from a vector. \n" +
+					"Usage: select(index, vector) where indices start with 0. If" +
+					"index is larger than the vector size \n" +
+					"Example: select((condition) or whileOp(condition, body)\n";
+		}
 	},
 	forOp {
+		@NonNull
 		@Override
 		public Tree eval(List<Tree> args) {
-			if(args.size() == 3 &&  args.get(0) instanceof Tree.Id) {
-				// then we transform this one into sth else.
-				if(args.get(1) instanceof Tree.Vec) {
-					Tree.Vec v = (Tree.Vec) args.get(1);
+			System.out.println("eval in for");
+			if(args.size() == 3 && args.get(0) instanceof Tree.Id) {
+				// for v in range do body
+				// is converted
+				//
+				// var $forindex$ = 0
+				// while {
+				//     var v = select($forindex, range)
+				//     body
+				//     next($forindex$, range.length)
+				// }
 
-					// we need a new integer variable
-					Value.Int start = new Value.Int(0);
-					Value.Int end = new Value.Int(v.size());
+				// first argument
+				String indexId = "$for_index$"; // internal variable
+				Tree.Id index = new Tree.Id(indexId);
+				Tree.Var indexInit = new Tree.Var(indexId, null, new Value.Int(0));
 
-					String indexId = "__index";
+				// now to the body of the while loop
+				Tree.Id v = (Tree.Id) args.get(0);
+				Tree range = args.get(1); // can be a range or a vector
+				Tree.Var vInit = new Tree.Var(v.id, null,
+						select.eval(index, range));
 
-					Tree.Id index = new Tree.Id(indexId);
+				Tree body = args.get(2);
 
-					String varId = ((Tree.Id) args.get(0)).id;
-					Tree.Var varSelectInit = new Tree.Var(varId, null, select.eval(index, v));
+				Tree next = Op.next.eval(index, Op.length.eval(range));
 
-					Tree whileCond = new Tree.Scope(new Tree.Block(Arrays.asList(
-							varSelectInit, // var = select(__index, v)
-							args.get(2), // body
-							Op.next.eval(index, end) // check
-					)));
+				Tree whileStmt = whileOp.eval(
+						new Tree.Block(vInit, body, next)
+				);
 
-					Tree whileStmt = whileOp.eval(whileCond);
-
-					return new Tree.Scope(new Tree.Block(Arrays.asList(
-							new Tree.Var(indexId, "int", start),
-							whileStmt
-					)));
-				} else if(args.get(1) instanceof Tree.Range) {
-					// these two cases are very similar, but the differences are sublte
-					// thus a bit of violation of DRY
-					Tree.Range r = (Tree.Range) args.get(1);
-
-					Tree whileCond = new Tree.Scope(new Tree.Block(Arrays.asList(
-							args.get(2), // body
-							Op.next.eval(args.get(0), r.b) // check
-					)));
-
-					Tree whileStmt = whileOp.eval(whileCond);
-
-					String varId = ((Tree.Id) args.get(0)).id;
-
-					return new Tree.Scope(new Tree.Block(Arrays.asList(
-							new Tree.Var(varId, null, r.a),
-							whileStmt
-					)));
-				}
+				return new Tree.Scope(new Tree.Block(
+						indexInit,
+						whileStmt
+				));
 			}
 
 			return super.eval(args);
@@ -572,8 +649,16 @@ public enum Op implements Operation {
 		String generateCase(Signature signature, List<Value> values) {
 			throw new IllegalArgumentException("not a C-instruction");
 		}
+
+
+		@Override
+		public String usage() {
+			return this.toString() + ": Internal for-loop.\n" +
+					"Usage: forOp(var, vector) or forOp(var, range).\n";
+		}
 	},
 	and {
+		@NonNull
 		@Override
 		public Tree eval(List<Tree> arguments) {
 			return binaryEval(arguments);
@@ -588,7 +673,7 @@ public enum Op implements Operation {
 			}
 
 			// all were satisfied, thus go to true.
-			__jump.addToProgram(Collections.singletonList((Value) trueLabel), currentScope, program);
+			__jump.addToProgram(Collections.singletonList(trueLabel), currentScope, program);
 		}
 
 
@@ -598,6 +683,7 @@ public enum Op implements Operation {
 		}
 	},
 	or {
+		@NonNull
 		@Override
 		public Tree eval(List<Tree> arguments) {
 			return binaryEval(arguments);
@@ -613,7 +699,7 @@ public enum Op implements Operation {
 			}
 
 			// non was satisfied, thus go to false.
-			__jump.addToProgram(Collections.singletonList((Value) falseLabel), currentScope, program);
+			__jump.addToProgram(Collections.singletonList(falseLabel), currentScope, program);
 		}
 
 		@Override
@@ -622,6 +708,7 @@ public enum Op implements Operation {
 		}
 	},
 	not {
+		@NonNull
 		@Override
 		public Tree eval(List<Tree> arguments) {
 			return unaryEval(arguments);
@@ -711,6 +798,7 @@ public enum Op implements Operation {
 			new Signature().r(Type.integer).r(Type.integer).label().label(),
 			new Signature().r(Type.real).r(Type.real).label().label()
 	) {
+		@NonNull
 		@Override
 		public Tree eval(List<Tree> arguments) {
 			return binaryEval(arguments);
@@ -725,6 +813,7 @@ public enum Op implements Operation {
 			new Signature().r(Type.integer).r(Type.integer).label().label(),
 			new Signature().r(Type.real).r(Type.real).label().label()
 	) {
+		@NonNull
 		@Override
 		public Tree eval(List<Tree> arguments) {
 			return binaryEval(arguments);
@@ -739,6 +828,7 @@ public enum Op implements Operation {
 			new Signature().r(Type.integer).r(Type.integer).label().label(),
 			new Signature().r(Type.real).r(Type.real).label().label()
 	) {
+		@NonNull
 		@Override
 		public Tree eval(List<Tree> arguments) {
 			return binaryEval(arguments);
@@ -753,6 +843,7 @@ public enum Op implements Operation {
 			new Signature().r(Type.integer).r(Type.integer).label().label(),
 			new Signature().r(Type.real).r(Type.real).label().label()
 	) {
+		@NonNull
 		@Override
 		public Tree eval(List<Tree> arguments) {
 			return binaryEval(arguments);
@@ -767,6 +858,7 @@ public enum Op implements Operation {
 			new Signature().r(Type.integer).r(Type.integer).label().label(),
 			new Signature().r(Type.real).r(Type.real).label().label()
 	) {
+		@NonNull
 		@Override
 		public Tree eval(List<Tree> arguments) {
 			return binaryEval(arguments);
@@ -781,6 +873,7 @@ public enum Op implements Operation {
 			new Signature().r(Type.integer).r(Type.integer).label().label(),
 			new Signature().r(Type.real).r(Type.real).label().label()
 	) {
+		@NonNull
 		@Override
 		public Tree eval(List<Tree> arguments) {
 			return binaryEval(arguments);
@@ -893,12 +986,12 @@ public enum Op implements Operation {
 			program.addLabel(bailoutLabel);
 			bailoutStmtTree.linearizeStmt(currentScope.newScope(), program);
 
-			__jump.addToProgram(Collections.singletonList((Value) trueLabel), null, program);
+			__jump.addToProgram(Collections.singletonList(trueLabel), null, program);
 
 			program.addLabel(epsilonLabel);
 
 			epsilonStmtTree.linearizeStmt(currentScope.newScope(), program);
-			__jump.addToProgram(Collections.singletonList((Value) trueLabel), null, program);
+			__jump.addToProgram(Collections.singletonList(trueLabel), null, program);
 
 			// and this is it.
 		}
@@ -913,6 +1006,7 @@ public enum Op implements Operation {
 			new Signature().r(Type.cplx).r(Type.cplx).w(Type.cplx),
 			new Signature().r(Type.quat).r(Type.quat).w(Type.quat)
 	) {
+		@NonNull
 		@Override
 		public Tree eval(List<Tree> arguments) {
 			if(arguments.size() == 2) {
@@ -942,6 +1036,7 @@ public enum Op implements Operation {
 			new Signature().r(Type.cplx).r(Type.cplx).w(Type.cplx),
 			new Signature().r(Type.quat).r(Type.quat).w(Type.quat)
 	) {
+		@NonNull
 		@Override
 		public Tree eval(List<Tree> arguments) {
 			if(arguments.size() == 2) {
@@ -971,6 +1066,7 @@ public enum Op implements Operation {
 			new Signature().r(Type.cplx).r(Type.cplx).w(Type.cplx),
 			new Signature().r(Type.quat).r(Type.quat).w(Type.quat)
 	) {
+		@NonNull
 		@Override
 		public Tree eval(List<Tree> arguments) {
 			if(arguments.size() == 2) {
@@ -1010,6 +1106,7 @@ public enum Op implements Operation {
 	scalarmul(
 			new Signature().r(Type.cplx).r(Type.cplx).w(Type.cplx)
 	) {
+		@NonNull
 		@Override
 		public Tree eval(List<Tree> arguments) {
 			return binaryEval(arguments);
@@ -1027,6 +1124,7 @@ public enum Op implements Operation {
 			new Signature().r(Type.cplx).r(Type.cplx).w(Type.cplx),
 			new Signature().r(Type.quat).r(Type.quat).w(Type.quat)
 	) {
+		@NonNull
 		@Override
 		public Tree eval(List<Tree> arguments) {
 			if(arguments.size() == 2) {
@@ -1065,6 +1163,7 @@ public enum Op implements Operation {
 	mod(
 			new Signature().r(Type.integer).r(Type.integer).w(Type.integer)
 	) {
+		@NonNull
 		@Override
 		public Tree eval(List<Tree> arguments) {
 			return binaryEval(arguments);
@@ -1083,6 +1182,7 @@ public enum Op implements Operation {
 			new Signature().r(Type.real).r(Type.real).w(Type.real),
 			new Signature().r(Type.cplx).r(Type.cplx).w(Type.cplx)
 	) {
+		@NonNull
 		@Override
 		public Tree eval(List<Tree> arguments) {
 			return binaryEval(arguments);
@@ -1103,6 +1203,7 @@ public enum Op implements Operation {
 			new Signature().r(Type.cplx).r(Type.cplx).w(Type.cplx),
 			new Signature().r(Type.quat).r(Type.quat).w(Type.quat)
 	) {
+		@NonNull
 		@Override
 		public Tree eval(List<Tree> arguments) {
 			return binaryEval(arguments);
@@ -1119,6 +1220,7 @@ public enum Op implements Operation {
 			new Signature().r(Type.cplx).r(Type.cplx).w(Type.cplx),
 			new Signature().r(Type.quat).r(Type.quat).w(Type.quat)
 	) {
+		@NonNull
 		@Override
 		public Tree eval(List<Tree> arguments) {
 			return binaryEval(arguments);
@@ -1133,6 +1235,7 @@ public enum Op implements Operation {
 			new Signature().r(Type.real).r(Type.real).w(Type.cplx),
 			new Signature().r(Type.real).r(Type.real).r(Type.real).r(Type.real).w(Type.quat)
 	) {
+		@NonNull
 		@Override
 		public Tree eval(List<Tree> arguments) {
 			// create either cplx or quat
@@ -1177,6 +1280,7 @@ public enum Op implements Operation {
 			new Signature().r(Type.cplx).w(Type.cplx),
 			new Signature().r(Type.quat).w(Type.quat)
 	) {
+		@NonNull
 		@Override
 		public Tree eval(List<Tree> arguments) {
 			return unaryEval(arguments);
@@ -1193,6 +1297,7 @@ public enum Op implements Operation {
 			new Signature().r(Type.cplx).w(Type.cplx),
 			new Signature().r(Type.quat).w(Type.quat)
 	) {
+		@NonNull
 		@Override
 		public Tree eval(List<Tree> arguments) {
 			return unaryEval(arguments);
@@ -1209,6 +1314,7 @@ public enum Op implements Operation {
 			new Signature().r(Type.cplx).w(Type.cplx),
 			new Signature().r(Type.quat).w(Type.quat)
 	) {
+		@NonNull
 		@Override
 		public Tree eval(List<Tree> arguments) {
 			return unaryEval(arguments);
@@ -1225,6 +1331,7 @@ public enum Op implements Operation {
 			new Signature().r(Type.cplx).w(Type.cplx),
 			new Signature().r(Type.quat).w(Type.quat)
 	) {
+		@NonNull
 		@Override
 		public Tree eval(List<Tree> arguments) {
 			return unaryEval(arguments);
@@ -1238,6 +1345,7 @@ public enum Op implements Operation {
 	conj(
 			new Signature().r(Type.cplx).w(Type.cplx)
 	) {
+		@NonNull
 		@Override
 		public Tree eval(List<Tree> arguments) {
 			return unaryEval(arguments);
@@ -1252,6 +1360,7 @@ public enum Op implements Operation {
 			new Signature().r(Type.real).w(Type.real),
 			new Signature().r(Type.cplx).w(Type.cplx)
 	) {
+		@NonNull
 		@Override
 		public Tree eval(List<Tree> arguments) {
 			return unaryEval(arguments);
@@ -1266,6 +1375,7 @@ public enum Op implements Operation {
 			new Signature().r(Type.real).w(Type.real),
 			new Signature().r(Type.cplx).w(Type.cplx)
 	) {
+		@NonNull
 		@Override
 		public Tree eval(List<Tree> arguments) {
 			return unaryEval(arguments);
@@ -1280,6 +1390,7 @@ public enum Op implements Operation {
 			new Signature().r(Type.real).w(Type.real),
 			new Signature().r(Type.cplx).w(Type.cplx)
 	) {
+		@NonNull
 		@Override
 		public Tree eval(List<Tree> arguments) {
 			return unaryEval(arguments);
@@ -1294,6 +1405,7 @@ public enum Op implements Operation {
 			new Signature().r(Type.real).w(Type.real),
 			new Signature().r(Type.cplx).w(Type.cplx)
 	) {
+		@NonNull
 		@Override
 		public Tree eval(List<Tree> arguments) {
 			return unaryEval(arguments);
@@ -1308,6 +1420,7 @@ public enum Op implements Operation {
 			new Signature().r(Type.real).w(Type.real),
 			new Signature().r(Type.cplx).w(Type.cplx)
 	) {
+		@NonNull
 		@Override
 		public Tree eval(List<Tree> arguments) {
 			return unaryEval(arguments);
@@ -1322,6 +1435,7 @@ public enum Op implements Operation {
 			new Signature().r(Type.real).w(Type.real),
 			new Signature().r(Type.cplx).w(Type.cplx)
 	) {
+		@NonNull
 		@Override
 		public Tree eval(List<Tree> arguments) {
 			return unaryEval(arguments);
@@ -1336,6 +1450,7 @@ public enum Op implements Operation {
 			new Signature().r(Type.real).w(Type.real),
 			new Signature().r(Type.cplx).w(Type.cplx)
 	) {
+		@NonNull
 		@Override
 		public Tree eval(List<Tree> arguments) {
 			return unaryEval(arguments);
@@ -1350,6 +1465,7 @@ public enum Op implements Operation {
 			new Signature().r(Type.real).w(Type.real),
 			new Signature().r(Type.cplx).w(Type.cplx)
 	) {
+		@NonNull
 		@Override
 		public Tree eval(List<Tree> arguments) {
 			return unaryEval(arguments);
@@ -1364,6 +1480,7 @@ public enum Op implements Operation {
 			new Signature().r(Type.real).w(Type.real),
 			new Signature().r(Type.cplx).w(Type.cplx)
 	) {
+		@NonNull
 		@Override
 		public Tree eval(List<Tree> arguments) {
 			return unaryEval(arguments);
@@ -1378,6 +1495,7 @@ public enum Op implements Operation {
 			new Signature().r(Type.real).w(Type.real),
 			new Signature().r(Type.cplx).w(Type.cplx)
 	) {
+		@NonNull
 		@Override
 		public Tree eval(List<Tree> arguments) {
 			return unaryEval(arguments);
@@ -1392,6 +1510,7 @@ public enum Op implements Operation {
 			new Signature().r(Type.real).w(Type.real),
 			new Signature().r(Type.cplx).w(Type.cplx)
 	) {
+		@NonNull
 		@Override
 		public Tree eval(List<Tree> arguments) {
 			return unaryEval(arguments);
@@ -1406,6 +1525,7 @@ public enum Op implements Operation {
 			new Signature().r(Type.real).w(Type.real),
 			new Signature().r(Type.cplx).w(Type.cplx)
 	) {
+		@NonNull
 		@Override
 		public Tree eval(List<Tree> arguments) {
 			return unaryEval(arguments);
@@ -1420,6 +1540,7 @@ public enum Op implements Operation {
 			new Signature().r(Type.real).w(Type.real),
 			new Signature().r(Type.cplx).w(Type.cplx)
 	) {
+		@NonNull
 		@Override
 		public Tree eval(List<Tree> arguments) {
 			return unaryEval(arguments);
@@ -1434,6 +1555,7 @@ public enum Op implements Operation {
 			new Signature().r(Type.real).w(Type.real),
 			new Signature().r(Type.cplx).w(Type.cplx)
 	) {
+		@NonNull
 		@Override
 		public Tree eval(List<Tree> arguments) {
 			return unaryEval(arguments);
@@ -1448,6 +1570,7 @@ public enum Op implements Operation {
 			new Signature().r(Type.real).w(Type.real),
 			new Signature().r(Type.cplx).w(Type.cplx)
 	) {
+		@NonNull
 		@Override
 		public Tree eval(List<Tree> arguments) {
 			return unaryEval(arguments);
@@ -1461,6 +1584,7 @@ public enum Op implements Operation {
 	real2int(
 			new Signature().r(Type.real).w(Type.integer)
 	) {
+		@NonNull
 		@Override
 		public Tree eval(List<Tree> arguments) {
 			return unaryEval(arguments);
@@ -1476,6 +1600,7 @@ public enum Op implements Operation {
 	re(
 			new Signature().r(Type.cplx).w(Type.real)
 	) {
+		@NonNull
 		@Override
 		public Tree eval(List<Tree> arguments) {
 			return unaryEval(arguments);
@@ -1489,6 +1614,7 @@ public enum Op implements Operation {
 	im(
 			new Signature().r(Type.cplx).w(Type.real)
 	) {
+		@NonNull
 		@Override
 		public Tree eval(List<Tree> arguments) {
 			return unaryEval(arguments);
@@ -1502,6 +1628,7 @@ public enum Op implements Operation {
 	mandelbrot(
 			new Signature().r(Type.cplx).r(Type.cplx).w(Type.cplx)
 	) {
+		@NonNull
 		@Override
 		public Tree eval(List<Tree> arguments) {
 			return unaryEval(arguments);
@@ -1515,6 +1642,7 @@ public enum Op implements Operation {
 	dot(
 			new Signature().r(Type.cplx).r(Type.cplx).w(Type.real)
 	) {
+		@NonNull
 		@Override
 		public Tree eval(List<Tree> arguments) {
 			return unaryEval(arguments);
@@ -1528,6 +1656,7 @@ public enum Op implements Operation {
 	rad2(
 			new Signature().r(Type.cplx).w(Type.real)
 	) {
+		@NonNull
 		@Override
 		public Tree eval(List<Tree> arguments) {
 			return unaryEval(arguments);
@@ -1541,6 +1670,7 @@ public enum Op implements Operation {
 	rad(
 			new Signature().r(Type.cplx).w(Type.real)
 	) {
+		@NonNull
 		@Override
 		public Tree eval(List<Tree> arguments) {
 			return unaryEval(arguments);
@@ -1554,6 +1684,7 @@ public enum Op implements Operation {
 	arc(
 			new Signature().r(Type.cplx).w(Type.real)
 	) {
+		@NonNull
 		@Override
 		public Tree eval(List<Tree> arguments) {
 			return unaryEval(arguments);
@@ -1567,6 +1698,7 @@ public enum Op implements Operation {
 	arcnorm(
 			new Signature().r(Type.cplx).w(Type.real)
 	) {
+		@NonNull
 		@Override
 		public Tree eval(List<Tree> arguments) {
 			return unaryEval(arguments);
@@ -1580,6 +1712,7 @@ public enum Op implements Operation {
 	dist2(
 			new Signature().r(Type.cplx).r(Type.cplx).w(Type.real)
 	) {
+		@NonNull
 		@Override
 		public Tree eval(List<Tree> arguments) {
 			return unaryEval(arguments);
@@ -1593,6 +1726,7 @@ public enum Op implements Operation {
 	dist(
 			new Signature().r(Type.cplx).r(Type.cplx).w(Type.real)
 	) {
+		@NonNull
 		@Override
 		public Tree eval(List<Tree> arguments) {
 			return unaryEval(arguments);
@@ -1607,6 +1741,7 @@ public enum Op implements Operation {
 	rabs(
 			new Signature().r(Type.cplx).w(Type.cplx)
 			) {
+		@NonNull
 		@Override
 		public Tree eval(List<Tree> arguments) {
 			return unaryEval(arguments);
@@ -1620,6 +1755,7 @@ public enum Op implements Operation {
 	iabs(
 			new Signature().r(Type.cplx).w(Type.cplx)
 			) {
+		@NonNull
 		@Override
 		public Tree eval(List<Tree> arguments) {
 			return unaryEval(arguments);
@@ -1633,6 +1769,7 @@ public enum Op implements Operation {
 	flip(
 			new Signature().r(Type.cplx).w(Type.cplx)
 			) {
+		@NonNull
 		@Override
 		public Tree eval(List<Tree> arguments) {
 			return unaryEval(arguments);
@@ -1646,6 +1783,7 @@ public enum Op implements Operation {
 	polar(
 			new Signature().r(Type.cplx).w(Type.cplx)
 	) {
+		@NonNull
 		@Override
 		public Tree eval(List<Tree> arguments) {
 			return unaryEval(arguments);
@@ -1659,6 +1797,7 @@ public enum Op implements Operation {
 	rect(
 			new Signature().r(Type.cplx).w(Type.cplx)
 	) {
+		@NonNull
 		@Override
 		public Tree eval(List<Tree> arguments) {
 			return unaryEval(arguments);
@@ -1713,6 +1852,7 @@ public enum Op implements Operation {
 			new Signature().r(Type.real).r(Type.real).w(Type.cplx),
 			new Signature().r(Type.cplx).w(Type.cplx)
 	) {
+		@NonNull
 		@Override
 		public Tree eval(List<Tree> arguments) {
 			return unaryEval(arguments);
@@ -1726,6 +1866,7 @@ public enum Op implements Operation {
 	smooth( // bad smooth function, only kept for compatibility
 			new Signature().r(Type.cplx).r(Type.real).r(Type.real).w(Type.real)
 	) {
+		@NonNull
 		@Override
 		public Tree eval(List<Tree> arguments) {
 			return unaryEval(arguments);
@@ -1739,6 +1880,7 @@ public enum Op implements Operation {
 	smoothen(
 			new Signature().r(Type.cplx).r(Type.real).r(Type.real).w(Type.real)
 	) {
+		@NonNull
 		@Override
 		public Tree eval(List<Tree> arguments) {
 			return unaryEval(arguments);
@@ -1752,6 +1894,7 @@ public enum Op implements Operation {
 	over(
 			new Signature().r(Type.quat).r(Type.quat).w(Type.quat)
 	) {
+		@NonNull
 		@Override
 		public Tree eval(List<Tree> arguments) {
 			return unaryEval(arguments);
@@ -1765,6 +1908,7 @@ public enum Op implements Operation {
 	lab2rgb(
 			new Signature().r(Type.quat).w(Type.quat)
 	) {
+		@NonNull
 		@Override
 		public Tree eval(List<Tree> arguments) {
 			return unaryEval(arguments);
@@ -1778,6 +1922,7 @@ public enum Op implements Operation {
 	rgb2lab(
 			new Signature().r(Type.quat).w(Type.quat)
 	) {
+		@NonNull
 		@Override
 		public Tree eval(List<Tree> arguments) {
 			return unaryEval(arguments);
@@ -1791,6 +1936,7 @@ public enum Op implements Operation {
 	int2rgb(
 			new Signature().r(Type.integer).w(Type.quat)
 	) {
+		@NonNull
 		@Override
 		public Tree eval(List<Tree> arguments) {
 			return unaryEval(arguments);
@@ -1804,6 +1950,7 @@ public enum Op implements Operation {
 	rgb2int(
 			new Signature().r(Type.quat).w(Type.integer)
 	) {
+		@NonNull
 		@Override
 		public Tree eval(List<Tree> arguments) {
 			return unaryEval(arguments);
@@ -1817,6 +1964,7 @@ public enum Op implements Operation {
 	int2lab(
 			new Signature().r(Type.integer).w(Type.quat)
 	) {
+		@NonNull
 		@Override
 		public Tree eval(List<Tree> arguments) {
 			return unaryEval(arguments);
@@ -1830,6 +1978,7 @@ public enum Op implements Operation {
 	lab2int(
 			new Signature().r(Type.quat).w(Type.integer)
 	) {
+		@NonNull
 		@Override
 		public Tree eval(List<Tree> arguments) {
 			return unaryEval(arguments);
@@ -1912,7 +2061,7 @@ public enum Op implements Operation {
 		}
 	}
 
-	Tree apply(int...args) {
+	/*Tree apply(int...args) {
 		return null;
 	}
 
@@ -1926,12 +2075,14 @@ public enum Op implements Operation {
 
 	Tree apply(Quat...args) {
 		return null;
-	}
+	}*/
 
 	Tree eval(Tree...args) {
+		System.out.println("OP: Called eval for " + this);
 		return eval(Arrays.asList(args));
 	}
 
+	@NonNull
 	@Override
 	public Tree eval(List<Tree> args) /*throws CompileException*/ {
 		return new Tree.OpApp(this, args);
@@ -2224,6 +2375,13 @@ public enum Op implements Operation {
 	}
 
 
+	/**
+	 * To generate the C-code for the renderscript VM
+	 * @param infixCOp
+	 * @param signature
+	 * @param values
+     * @return
+     */
 	String generateCmpCase(String infixCOp, Signature signature, List<Value> values) {
 		// Steps:
 		// 1. calculate Argument-Indices
@@ -2247,5 +2405,9 @@ public enum Op implements Operation {
 				+ values.get(2).vmAccessCode(indices[2]) + " : " + values.get(3).vmAccessCode(indices[3]) + "; ";
 	}
 
+	public String usage() {
+		// TODO I really need this
+		throw new UnsupportedOperationException();
+	}
 
 }

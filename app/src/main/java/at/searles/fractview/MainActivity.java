@@ -36,7 +36,6 @@ import java.io.File;
 import at.searles.fractview.editors.EditableDialogFragment;
 import at.searles.fractview.fractal.FavoriteEntry;
 import at.searles.fractview.fractal.Fractal;
-import at.searles.fractview.fractal.PresetFractals;
 import at.searles.fractview.ui.ScaleableImageView;
 import at.searles.meelan.CompileException;
 
@@ -196,7 +195,7 @@ public class MainActivity extends Activity
 			String sourceCode = AssetsHelper.readSourcecode(getAssets(), "Default.fv");
 
 			Fractal initFractal = new Fractal(
-					PresetFractals.INIT_SCALE,
+					AssetsHelper.DEFAULT_SCALE,
 					sourceCode,
 					new Fractal.Parameters()
 			);

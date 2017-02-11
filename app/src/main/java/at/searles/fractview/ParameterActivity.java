@@ -28,7 +28,6 @@ import java.util.ArrayList;
 
 import at.searles.fractview.editors.EditableDialogFragment;
 import at.searles.fractview.fractal.Fractal;
-import at.searles.fractview.fractal.PresetFractals;
 import at.searles.math.Cplx;
 import at.searles.math.Scale;
 import at.searles.math.color.Palette;
@@ -771,7 +770,7 @@ public class ParameterActivity extends Activity implements EditableDialogFragmen
 					TextView text1 = (TextView) view.findViewById(android.R.id.text1);
 					text1.setText("Scale"); // FIXME there is only one. Thus use a string.
 
-					if(!fb.scale().equals(PresetFractals.INIT_SCALE)) {
+					if(!fb.scale().equals(AssetsHelper.DEFAULT_SCALE)) {
 						//Log.d("PA", e.label + " is not default");
 						text1.setTypeface(Typeface.DEFAULT_BOLD);
 					} else {

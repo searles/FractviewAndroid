@@ -15,7 +15,6 @@ import android.widget.Toast;
 
 import at.searles.fractview.editors.EditableDialogFragment;
 import at.searles.fractview.fractal.Fractal;
-import at.searles.fractview.fractal.PresetFractals;
 import at.searles.meelan.CompileException;
 import at.searles.parsing.ParsingError;
 
@@ -92,7 +91,7 @@ public class EditProgramActivity extends Activity implements EditableDialogFragm
 		source = editor.getText().toString();
 
 		try {
-			Fractal fractal = new Fractal(PresetFractals.INIT_SCALE, source, new Fractal.Parameters());
+			Fractal fractal = new Fractal(AssetsHelper.DEFAULT_SCALE, source, new Fractal.Parameters());
 			fractal.parse(); // Check whether parsing works
 			fractal.compile(); // Also checks default-values for external data.
 			return true;

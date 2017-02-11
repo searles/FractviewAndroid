@@ -1,89 +1,59 @@
-// Preset for Convergent fractals like the Duck or Newton fractals
+// Pendulum with 3 magnets
 var x int, y int, color int;
 
-extern maxdepth int = 120;
+func get_color(c, value) {
+    extern pal palette = [
+            [#fff, #fff, #fff, #fff], 
+            [#f00, #ff0, #0f0, #00f],
+            [#000, #000, #000, #000]];
 
-// some further arguments
-extern juliaset bool = false;
-extern juliapoint cplx = -1:0 ;
+    extern stepcount int = 250;
 
-func escapetime(c, breakcondition) {
-    var i int = 0,
-        p cplx = juliapoint if juliaset else c,
-        zlast cplx = 0,
-        z cplx,
-        znext cplx = 0;
+    extern stepsize real = 0.05;
+    extern friction real = 0.07;
+    extern gravity real = 0.2;
+    extern height real = 0.25;
 
-    extern init0 expr = "0";
-    extern init1 expr = "c";
+    // here, strength is the same for all.
+    extern strength real = 1;
 
-    extern function expr = "z^3 + p";
+    extern magnets expr = "[2:0, 0:1, -2:0, 0:-1]"
 
-    var color quat;
+    var len real = 0;
+    var pos = c;
+    var vel = 0:0;
+    var acc_prev = 0:0;
+    var acc = 0:0;
 
-    p = juliapoint if juliaset else c;
+    func do_magnet(strength, m) {
+        var d cplx = m - pos;
+        var dist = sqrt(rad2 d + sqr height);
+        var factor = strength / (dist * dist * dist);
+        d * factor
+    }
 
-    z = init0;
-    var fn_zlast = function;
-
-    zlast = z;
-
-    z = c if juliaset else init1;
-    var fn_z cplx = function;
+    var i = 0;
 
     while {
-        znext = z - fn_z * (z - zlast) / (fn_z - fn_zlast);
-        not breakcondition(i, znext, z, zlast, c, p, color)
-    } do {
-        // advance to next values
-        zlast = z;
-        z = znext;
+        var acc_next = -gravity * pos - vel * friction;
 
-        // and advance to next function.
-        fn_zlast = fn_z;
-        fn_z = function;
-    }
-
-    // return color
-    color
-}
-
-// Here starts the script specific part
-
-func get_color(c, value) { 
-
-    extern foldinit expr = "0";
-    var foldvalue cplx = foldinit;
-
-    // draw single pixel
-    func breakcondition(i, znext, z, zlast, c, p, color) {
-        // if true, color contains the lab color (quat)
-        extern foldfn expr = "dist(z, znext) + foldvalue";
-    
-        func lakecolor() {
-            extern epsilon real = 1e-9;
-
-            // the next ones are only used in 3d-fractals
-            extern lakevalue expr = "1.3 atan foldvalue.x / PI";
-            value = lakevalue;
-        
-            extern laketransfer expr = 
-                    "arcnorm znext : value";
-
-            extern lakepalette palette = [
-                    [#fff, #fff, #fff, #fff],
-                    [#f88, #ff8, #8fc, #88f],
-                    [#f00, #ff0, #0f8, #00f],
-                    [#000, #000, #000, #000]];
-
-            color = lakepalette laketransfer
+        for magnet in magnets do {
+            acc_next = acc_next + do_magnet(strength, magnet);
         }
 
-        { foldvalue = foldfn; false } if next(i, maxdepth) and dist2(z, znext) > sqr epsilon else 
-        { lakecolor() ; true } 
+        vel = vel + stepsize * (2 * acc_next + 5 * acc - acc_prev) / 6;
+        var dir = vel * stepsize + sqr stepsize * (4 * acc_next - acc) / 6;
+        len = len + rad dir;
+        pos = pos + dir;
+
+        acc_prev = acc;
+        acc = acc_next;
+
+        next(i, stepcount)
     }
 
-    escapetime(c, breakcondition)
+    value = len;
+    pal (arcnorm pos : (0.42442 * atan log(1 + log(1 + len))))
 }
 
 // ******************************************

@@ -1,11 +1,18 @@
 package at.searles.meelan;
 
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.LinkedList;
+import java.util.List;
+
 import at.searles.parsing.ParsingError;
-import at.searles.parsing.parser.*;
+import at.searles.parsing.parser.Buffer;
+import at.searles.parsing.parser.Concat;
+import at.searles.parsing.parser.Parser;
+import at.searles.parsing.parser.Rep;
 import at.searles.parsing.regex.Acceptor;
 import at.searles.parsing.regex.Lexer;
-
-import java.util.*;
 
 /**
  * Parser for the syntax of meelan.
@@ -445,10 +452,7 @@ class Syntax {
 
 
 	private static final Parser<Tree.Extern> externstmt = lexer.tok("extern").thenRight(id).then(id).then(lexer.tok("=").thenRight(expr)).adapter(
-		t -> {
-			System.out.println("FINDTHIS: " + t.a.a + " " + t.a.b + " " + t.b);
-			return new Tree.Extern(t.a.a, t.a.b, t.b);
-		});
+		t -> new Tree.Extern(t.a.a, t.a.b, t.b));
 
 	// this is not top-level.
 	private static final Parser<Tree> vardecl = id.then(id.opt()).then(lexer.tok("=").thenRight(expr).opt()).adapter(

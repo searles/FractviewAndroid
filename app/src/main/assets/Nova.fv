@@ -14,11 +14,11 @@ func escapetime(c, breakcondition) {
         z cplx,
         znext cplx = 0;
 
-    // This fractal is defined by z - R * f(z) / f'(z) + p
+    // This fractal is defined by z - R * (z^power + argument) / (z^power + argument)' + p
 
-    extern R expr = "2";
-    extern power expr = "6";
-    extern argument expr = "c";
+    extern R cplx = 2;
+    extern power cplx = 4;
+    extern argument expr = "1";
 
     extern mandelinit expr = "(argument * (R power - R)/(R - power))^/power";
 
@@ -51,17 +51,17 @@ func get_color(c, value) {
     // draw single pixel
     func breakcondition(i, znext, z, zlast, c, p, color) {
         // if true, color contains the lab color (quat)
-        extern foldfn expr = "/cosh(/dist(znext, z)) + foldvalue";
+        extern foldfn expr = "dist(znext, z) + foldvalue";
 
         func lakecolor() {
             extern epsilon real = 1e-9;
 
             // the next ones are only used in 3d-fractals
-            extern lakevalue expr = "foldvalue.x";
+            extern lakevalue expr = "1.3 atan foldvalue.x / PI";
             value = lakevalue;
 
             extern laketransfer expr =
-                    "arcnorm znext : log(1 + value)";
+                    "arcnorm znext : value";
 
             extern lakepalette palette = [
                     [#fff, #fff, #fff, #fff],

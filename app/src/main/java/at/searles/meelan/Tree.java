@@ -1,10 +1,12 @@
 package at.searles.meelan;
 
-import at.searles.parsing.parser.Buffer;
-import at.searles.parsing.parser.Parser;
-// import at.searles.syntax.ListValue;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.Iterator;
+import java.util.LinkedList;
+import java.util.List;
 
-import java.util.*;
+// import at.searles.syntax.ListValue;
 
 public abstract class Tree {
 
@@ -476,6 +478,10 @@ public abstract class Tree {
 
 		public Block(List<Tree> block) {
 			this.block = block;
+		}
+
+		public Block(Tree...trees) {
+			this(Arrays.asList(trees));
 		}
 
 		public String toString() {

@@ -57,11 +57,11 @@ func get_color(c, value) {
             extern max_power real = 2;
 
             // the next ones are only used in 3d-fractals
-            extern bailoutvalue expr = "trapmin";
+            extern bailoutvalue expr = "log(1 + trapmin)";
             value = bailoutvalue ;
 
             extern bailouttransfer expr =
-                "arcnorm trapminpoint : log(1 + value)";
+                "arcnorm trapminpoint : value";
 
             extern bailoutpalette palette = [
                 [#260126, #59323c, #f2eeb3, #bfaf80, #8c6954],

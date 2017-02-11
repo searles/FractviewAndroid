@@ -19,8 +19,8 @@ import org.json.JSONObject;
 import at.searles.fractview.editors.EditableDialogFragment;
 import at.searles.fractview.fractal.Adapters;
 import at.searles.fractview.ui.MultiScrollView;
-import at.searles.fractview.ui.NewPaletteView;
-import at.searles.fractview.ui.NewPaletteViewModel;
+import at.searles.fractview.ui.PaletteView;
+import at.searles.fractview.ui.PaletteViewModel;
 import at.searles.math.color.Palette;
 
 /**
@@ -46,7 +46,7 @@ public class PaletteActivity extends Activity implements EditableDialogFragment.
 	private static final int SAVE_PALETTE = -1; // because positive numbers are for indices
 	private static final int LOAD_PALETTE = -2; // because positive numbers are for indices
 
-	private NewPaletteViewModel model = null;
+	private PaletteViewModel model = null;
 
 	private String id;
 
@@ -76,7 +76,7 @@ public class PaletteActivity extends Activity implements EditableDialogFragment.
 		}
 
 		// create model and palette view
-		model = new NewPaletteViewModel(wrapper.p);
+		model = new PaletteViewModel(wrapper.p);
 
 		// now that the model is set, we can update the size of the scrollviews
 		((MultiScrollView) findViewById(R.id.multiScrollView)).updateSize();
@@ -165,9 +165,9 @@ public class PaletteActivity extends Activity implements EditableDialogFragment.
 					Palette p = Adapters.paletteAdapter.fromJSON(new JSONObject(pastedText.toString()));
 
 					if(p != null) {
-						model = new NewPaletteViewModel(p);
+						model = new PaletteViewModel(p);
 
-						NewPaletteView view = (NewPaletteView) findViewById(R.id.paletteView);
+						PaletteView view = (PaletteView) findViewById(R.id.paletteView);
 
 						view.invalidate();
 					}
@@ -181,7 +181,7 @@ public class PaletteActivity extends Activity implements EditableDialogFragment.
 		}
 	}
 
-	public NewPaletteViewModel model() {
+	public PaletteViewModel model() {
 		return model;
 	}
 
@@ -224,8 +224,8 @@ public class PaletteActivity extends Activity implements EditableDialogFragment.
 					try {
 						Palette p = Adapters.paletteAdapter.fromJSON(new JSONObject(paletteString));
 						// set the palette.
-						model = new NewPaletteViewModel(p);
-						NewPaletteView view = (NewPaletteView) findViewById(R.id.paletteView);
+						model = new PaletteViewModel(p);
+						PaletteView view = (PaletteView) findViewById(R.id.paletteView);
 						view.invalidate();
 					} catch (JSONException e) {
 						e.printStackTrace();
