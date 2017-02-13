@@ -13,6 +13,9 @@ import android.util.Log;
 import android.view.MotionEvent;
 import android.view.View;
 
+import java.util.ArrayList;
+import java.util.Iterator;
+
 import at.searles.fractview.PaletteActivity;
 import at.searles.fractview.editors.EditableDialogFragment;
 import at.searles.math.Commons;
@@ -302,9 +305,9 @@ public class PaletteView extends View implements MultiScrollView.InternalView {
 
                 if((s.type == SelectionType.Column && model().width() > 1)
                         || (s.type == SelectionType.Row && model().height() > 1)) {
-                    items = new String[]{"Duplicate", "Delete"};
+                    items = new String[]{"Duplicate", "Randomize", "Delete"};
                 } else {
-                    items = new String[]{"Duplicate"};
+                    items = new String[]{"Duplicate", "Randomize"};
                 }
 
                 builder.setItems(items,
@@ -322,7 +325,21 @@ public class PaletteView extends View implements MultiScrollView.InternalView {
                                 invalidate();
                             }
                             break;
-                            case 1: {// insert after
+                            case 1: {// randomize
+                                if(s.type == SelectionType.Column) {
+                                    for(int y = 0; y < model().height(); ++y) {
+                                        model().set(s.initX, y, model().randomColor());
+                                    }
+                                } else {
+                                    for(int x = 0; x < model().width(); ++x) {
+                                        model().set(x, s.initY, model().randomColor());
+                                    }
+                                }
+
+                                invalidate();
+                            }
+                            break;
+                            case 2: {// delete
                                 if(s.type == SelectionType.Column) {
                                     model().removeColumn(s.initX);
                                 } else {
@@ -343,6 +360,78 @@ public class PaletteView extends View implements MultiScrollView.InternalView {
             } return true;
             case TopLeft: {
                 // context menu to transpose
+                // delete/duplicate
+                AlertDialog.Builder builder = new AlertDialog.Builder(getContext());
+
+                String[] items;
+
+                if(model().width() > 1 || model().height() > 1) {
+                    items = new String[]{"Transpose", "Randomize", "Clear"};
+                } else {
+                    items = new String[]{"Transpose", "Randomize"};
+                }
+
+                builder.setItems(items,
+                        new DialogInterface.OnClickListener() {
+                            @Override
+                            public void onClick(DialogInterface dialog, int which) {
+                                switch (which) {
+                                    case 0: {// transpose
+                                        int w = model().width();
+                                        int h = model().height();
+
+                                        ArrayList<Integer> l = new ArrayList<>(model().width() * model().height());
+
+                                        for(int y = 0; y < h; ++y) {
+                                            for(int x = 0; x < w; ++x) {
+                                                l.add(model().get(x, y));
+                                            }
+                                        }
+
+                                        Iterator<Integer> it = l.iterator();
+
+                                        model().setHeight(w);
+                                        model().setWidth(h);
+
+                                        for(int x = 0; x < h; ++x) {
+                                            for(int y = 0; y < w; ++y) {
+                                                model().set(x, y, it.next());
+                                            }
+                                        }
+
+                                        invalidate();
+                                    }
+                                    break;
+                                    case 1: {// randomize
+                                        for(int y = 0; y < model().height(); ++y) {
+                                            for(int x = 0; x < model().width(); ++x) {
+                                                model().set(x, y, model().randomColor());
+                                            }
+                                        }
+
+                                        invalidate();
+                                    }
+                                    break;
+                                    case 2: {// delete
+                                        while(model().width() > 1) {
+                                            model().removeColumn(model().width() - 1);
+                                        }
+
+                                        while(model().height() > 1) {
+                                            model().removeRow(model().height() - 1);
+                                        }
+
+                                        invalidate();
+                                    }
+                                    break;
+                                    default:
+                                        throw new IllegalArgumentException("no such selection: " + which);
+                                }
+                            }
+                        });
+                builder.setCancelable(true);
+
+                builder.show();
             } return true;
         }
 

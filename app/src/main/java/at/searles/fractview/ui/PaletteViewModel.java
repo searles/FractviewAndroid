@@ -164,6 +164,10 @@ public class PaletteViewModel {
         }
     };
 
+    public int randomColor() {
+        return randomColorStream.next();
+    }
+
     /**
      * Set Width adds columns. Missing ones are filled up with random
      * colors

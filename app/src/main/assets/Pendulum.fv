@@ -4,13 +4,13 @@ var x int, y int, color int;
 func get_color(c, value) {
     extern pal palette = [
             [#fff, #fff, #fff, #fff], 
-            [#f00, #ff0, #0f0, #00f],
+            [#008, #ff0, #080, #f00],
             [#000, #000, #000, #000]];
 
     extern stepcount int = 250;
 
     extern stepsize real = 0.05;
-    extern friction real = 0.07;
+    extern friction real = 0.1;
     extern gravity real = 0.2;
     extern height real = 0.25;
 

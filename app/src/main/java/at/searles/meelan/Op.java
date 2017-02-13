@@ -168,10 +168,15 @@ public enum Op implements Operation {
 		}
 
 		@Override
-		public String usage() {
-			return this.toString() + ": Returns the derivate of a function.\n" +
+		public String title() {
+			return "Derivation of a function.";
+		}
+
+		@Override
+		public String description() {
+			return "Returns the derivate of a function.\n" +
 					"Example: derive(x^2, x) would return 2x.\n" +
-					"Error: If the function does not have a derivative (eg abs).";
+					"Error: If the function does not have a derivative (eg \"abs\").";
 		}
 	},
 	newton {
@@ -200,8 +205,8 @@ public enum Op implements Operation {
 		}
 
 		@Override
-		public String usage() {
-			return this.toString() + ": Generates the formula for the newton approximation.\n" +
+		public String description() {
+			return "Generates the formula for the newton approximation.\n" +
 					"Example: newton(x^2, x) would return x - x^2/2x.\n" +
 					"Error: If the function does not have a derivative (eg abs).";
 		}
@@ -256,7 +261,7 @@ public enum Op implements Operation {
 		}
 
 		@Override
-		public String usage() {
+		public String description() {
 			return this.toString() + ": Solves the quadratic equation a * x^2 + b*x + c.\n" +
 					"Usage: solve2(a, b, c, index) where \"index\" is in {1, 2}\n" +
 					"Example: solve2(1, 0, 1, 2) would return -1.\n";
@@ -312,7 +317,7 @@ public enum Op implements Operation {
 		}
 
 		@Override
-		public String usage() {
+		public String description() {
 			return this.toString() + ": Internal while-loop, executed while condition is satisfied. \n" +
 					"Usage: whileOp(condition) or whileOp(condition, body)\n";
 		}
@@ -485,7 +490,7 @@ public enum Op implements Operation {
 		}
 
 		@Override
-		public String usage() {
+		public String description() {
 			return this.toString() + ": Internal if-branch. \n" +
 					"Usage: ifOp(condition, thenBody) or ifOp(condition, thenBody, elseBody). " +
 					"Only the ternary operator can return values.\n";
@@ -519,7 +524,7 @@ public enum Op implements Operation {
 		}
 
 		@Override
-		public String usage() {
+		public String description() {
 			return this.toString() + ": Internal length operation for ranges and vectors\n" +
 					"Usage: length(range or vector).\n";
 		}
@@ -594,7 +599,7 @@ public enum Op implements Operation {
 		}
 
 		@Override
-		public String usage() {
+		public String description() {
 			return this.toString() + ": selects element from a vector. \n" +
 					"Usage: select(index, vector) where indices start with 0. If" +
 					"index is larger than the vector size \n" +
@@ -652,7 +657,7 @@ public enum Op implements Operation {
 
 
 		@Override
-		public String usage() {
+		public String description() {
 			return this.toString() + ": Internal for-loop.\n" +
 					"Usage: forOp(var, vector) or forOp(var, range).\n";
 		}
@@ -681,6 +686,11 @@ public enum Op implements Operation {
 		String generateCase(Signature signature, List<Value> values) {
 			throw new IllegalArgumentException("not a C-instruction");
 		}
+
+		@Override
+		public String description() {
+			return "Boolean and. Usage: expr and expr.";
+		}
 	},
 	or {
 		@NonNull
@@ -706,6 +716,11 @@ public enum Op implements Operation {
 		String generateCase(Signature signature, List<Value> values) {
 			throw new IllegalArgumentException("not a C-instruction");
 		}
+
+		@Override
+		public String description() {
+			return "Boolean or. Usage: expr or expr.";
+		}
 	},
 	not {
 		@NonNull
@@ -726,6 +741,11 @@ public enum Op implements Operation {
 		@Override
 		String generateCase(Signature signature, List<Value> values) {
 			throw new IllegalArgumentException("not a C-instruction");
+		}
+
+		@Override
+		public String description() {
+			return "Logical negation. Usage: \"not expr\".";
 		}
 	},
 	// from here assembler instructions
@@ -783,6 +803,11 @@ public enum Op implements Operation {
 				return generateExprCase("convert_" + dstType.name(), signature, values);
 			}
 		}
+
+		@Override
+		public String description() {
+			return "Internal assignment operator. Usage: \"mov source target\".";
+		}
 	},
 
 	// Part 2: Boolean expressions
@@ -792,6 +817,15 @@ public enum Op implements Operation {
 		String generateCase(Signature signature, List<Value> values) {
 			return "pc = (++" + values.get(0).vmAccessCode(1) +  ") < " + values.get(1).vmAccessCode(2) + " ? "
 			+ values.get(2).vmAccessCode(3) + " : " + values.get(3).vmAccessCode(4) + ";";
+		}
+
+		@Override
+		public String description() {
+			return "Logical increment operator.\n" +
+					"Usage: next(i, max).\n" +
+					"Increments the integer variable i. Returns true if the result" +
+					"is smaller than max, otherwise false. Equivalent" +
+					"to the C-expression \"(++i) < max\".";
 		}
 	},
 	g(
@@ -808,6 +842,12 @@ public enum Op implements Operation {
 		String generateCase(Signature signature, List<Value> values) {
 			return generateCmpCase(">", signature, values);
 		}
+
+		@Override
+		public String description() {
+			return "Greater-than comparison. Usage: g(expr1, expr2). Returns" +
+					"true if expr1 > expr 2.";
+		}
 	},
 	ge(
 			new Signature().r(Type.integer).r(Type.integer).label().label(),
@@ -823,7 +863,14 @@ public enum Op implements Operation {
 		String generateCase(Signature signature, List<Value> values) {
 			return generateCmpCase(">=", signature, values);
 		}
-	},
+
+		@Override
+		public String description() {
+			return "Greater-equal comparison. \n" +
+					"Usage: ge(expr1, expr2). \n" +
+					"Returns" +
+					"true if expr1 >= expr 2.";
+		}	},
 	eq(
 			new Signature().r(Type.integer).r(Type.integer).label().label(),
 			new Signature().r(Type.real).r(Type.real).label().label()
@@ -837,6 +884,15 @@ public enum Op implements Operation {
 		@Override
 		String generateCase(Signature signature, List<Value> values) {
 			return generateCmpCase("==", signature, values);
+		}
+
+		@Override
+		public String description() {
+			return "Equals-to comparison. \n" +
+					"Usage: eq(expr1, expr2). \n" +
+					"Returns" +
+					"true if expr1 is equal to expr 2. Handle with care with " +
+					"non-integers because of rounding errors";
 		}
 	},
 	ne(
@@ -852,6 +908,15 @@ public enum Op implements Operation {
 		@Override
 		String generateCase(Signature signature, List<Value> values) {
 			return generateCmpCase("!=", signature, values);
+		}
+
+		@Override
+		public String description() {
+			return "Not-equal comparison. \n" +
+					"Usage: eq(expr1, expr2). \n" +
+					"Returns" +
+					"true if expr1 is equal to expr 2. Handle with care with " +
+					"non-integers because of rounding errors";
 		}
 	},
 	le(
@@ -1737,7 +1802,6 @@ public enum Op implements Operation {
 			return generateExprCase(name(), signature, values);
 		}
 	},
-
 	rabs(
 			new Signature().r(Type.cplx).w(Type.cplx)
 			) {
@@ -2405,8 +2469,11 @@ public enum Op implements Operation {
 				+ values.get(2).vmAccessCode(indices[2]) + " : " + values.get(3).vmAccessCode(indices[3]) + "; ";
 	}
 
-	public String usage() {
-		// TODO I really need this
+	public String title() {
+		throw new UnsupportedOperationException();
+	}
+
+	public String description() {
 		throw new UnsupportedOperationException();
 	}
 
