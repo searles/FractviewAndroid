@@ -474,6 +474,12 @@ public class AssetsHelper {
                             .add("lakevalue", Fractal.Type.Expr, "log(1 + foldvalue2.x)")
             ));
 
+            _PARAMETER_ENTRIES.add(e(am, "Smooth Drawing (Lake)", "smoothlake.png", "",
+                    new Fractal.Parameters()
+                            .add("foldfn", Fractal.Type.Expr, "dist(znext, z) + foldvalue")
+                            .add("lakevalue", Fractal.Type.Expr, "1.3 atan foldvalue.x / PI"))
+            );
+
             _PARAMETER_ENTRIES.add(e(am, "Branching (Bailout and Lake)", "foldbranching.png", "A nice variation for newton",
                     new Fractal.Parameters()
                             .add("foldfn", Fractal.Type.Expr, "(0.5 + 0.5 cos 6 arc (z - znext)) / (12 + rad znext + /dist(znext, z)) + foldvalue")
@@ -510,9 +516,9 @@ public class AssetsHelper {
             _PARAMETER_ENTRIES.add(e(am, "Exponential Smoothing and Branching (Two Fold)", "twofoldexpsmoothbranch.png", "A nice variation for newton",
                     new Fractal.Parameters()
                             .add("foldfn", Fractal.Type.Expr, "/cosh(rad znext + /dist(znext, z)) + foldvalue")
-                            .add("bailoutvalue", Fractal.Type.Expr, "log(E^2 + foldvalue.x)")
+                            .add("bailoutvalue", Fractal.Type.Expr, "log(E^2 + foldvalue.x + foldvalue2.x)")
                             .add("foldfn2", Fractal.Type.Expr, "(0.5 + 0.5 cos 6 arc (z - znext)) / (12 + rad znext + /dist(znext, z)) + foldvalue2")
-                            .add("lakevalue", Fractal.Type.Expr, "log(1 + foldvalue2.x)")
+                            .add("lakevalue", Fractal.Type.Expr, "log(1 + foldvalue.x + foldvalue2.x)")
                             .add("bailouttransfer", Fractal.Type.Expr, "log(1 + foldvalue2.x) : value")
                             .add("laketransfer", Fractal.Type.Expr, "log(1 + foldvalue2.x) : value")
             ));

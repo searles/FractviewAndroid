@@ -143,8 +143,13 @@ public class PaletteView extends View implements MultiScrollView.InternalView {
      */
     private Selection at(float x0, float y0) {
         // where is the selection?
-        boolean onBoundsX = isOnBorderAt(x0 + left, model().width() - 1);
-        boolean onBoundsY = isOnBorderAt(y0 + top, model().height() - 1);
+        boolean onBoundsX = //isOnBorderAt(x0 + left, model().width() - 1) || ;
+                x0 + left > margin + iconSize // header + margin
+                        + (padding + iconSize) * model().width();
+        boolean onBoundsY = //isOnBorderAt(y0 + top, model().height() - 1);
+                y0 + top > margin + iconSize // header + margin
+                        + (padding + iconSize) * model().height();
+
 
         if(onBoundsX || onBoundsY) {
             Selection sel = new Selection();
@@ -538,7 +543,7 @@ public class PaletteView extends View implements MultiScrollView.InternalView {
 
         if(type == ButtonType.Outside) {
             // draw empty gray
-            fillPaint.setColor(Color.LTGRAY);
+            fillPaint.setColor(Color.GRAY);
             framePaint.setColor(Color.LTGRAY);
         } else if(type == ButtonType.Header) {
             // in this case, it is one of the headers.
@@ -727,8 +732,8 @@ public class PaletteView extends View implements MultiScrollView.InternalView {
                 // Two filled
                 canvas.drawRoundRect(
                         lt - left, lt - top,
-                        pix(model().width()) - left + addX,
-                        pix(model().height()) - top + addY,
+                        pix(model().width() + 1) - left + addX,
+                        pix(model().height() + 1) - top + addY,
                         padding, padding, outsideSelectionPaint);
 
                 canvas.drawRoundRect(
@@ -738,8 +743,8 @@ public class PaletteView extends View implements MultiScrollView.InternalView {
 
                 canvas.drawRoundRect(
                         lt - left, lt - top,
-                        pix(model().width()) - left + addX,
-                        pix(model().height()) - top + addY,
+                        pix(model().width() + 1) - left + addX,
+                        pix(model().height() + 1) - top + addY,
                         padding, padding, borderPaint);
 
                 canvas.drawRoundRect(
@@ -939,15 +944,15 @@ public class PaletteView extends View implements MultiScrollView.InternalView {
             canvas.drawRoundRect(
                     margin + iconSize + padding / 2f - left,
                     margin + iconSize + padding / 2f - top,
-                    pix(model().width()) - left - padding / 4f,
-                    pix(model().height()) - top - padding / 4f,
+                    pix(model().width() + 1) - left,
+                    pix(model().height() + 1) - top,
                     padding, padding, borderPaint);
 
             canvas.drawRoundRect(
                     margin + iconSize + padding / 2f - left,
                     margin + iconSize + padding / 2f - top,
-                    pix(model().width()) - left + padding / 4f,
-                    pix(model().height()) - top + padding / 4f,
+                    pix(model().width()) - left,
+                    pix(model().height()) - top,
                     padding, padding, borderPaint);
         }
 
