@@ -10,10 +10,32 @@ import java.util.List;
 
 public abstract class Tree {
 
+	/**
+	 * Linearizes an expression. For this purpose, it adds instructions to program.
+	 * The result is written into the target register. If there is no such
+	 * register, targetScope indicates in which scope a new register should be created.
+	 * To linearize the expression, currentScope is used.
+	 *
+	 * TargetScope is needed in embedded instructions, eg 1 + {2 - 3}. Here, the
+	 * inner scope differs from it.
+	 * @param target
+	 * @param targetScope
+	 * @param currentScope
+	 * @param program
+	 * @return The value of the expr. If target is set, it returns target.
+	 * @throws CompileException Type exception if the result of the expression cannot
+	 * be converted to the target register.
+     */
 	public Value linearizeExpr(Value.Reg target, DataScope targetScope, DataScope currentScope, Program program) throws CompileException {
 		throw new CompileException("not an expression: " + this).addTraceElement(this);
 	}
 
+	/**
+	 * Linearizes the current tree by appending instructions to program.
+	 * @param currentScope
+	 * @param program
+	 * @throws CompileException
+     */
 	public void linearizeStmt(DataScope currentScope, Program program) throws CompileException {
 		throw new CompileException("not a statement: " + this).addTraceElement(this);
 	}

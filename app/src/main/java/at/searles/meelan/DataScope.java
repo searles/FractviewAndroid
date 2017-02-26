@@ -1,8 +1,8 @@
 package at.searles.meelan;
 
 public class DataScope {
-	DataScope parent;
-	int dataIndex;
+	private DataScope parent;
+	private int dataIndex;
 
 	public DataScope(DataScope parent) {
 		this.parent = parent;
@@ -22,14 +22,5 @@ public class DataScope {
 		int ret = dataIndex;
 		dataIndex += t.size();
 		return ret;
-	}
-
-	/**
-	 * This one is for unions so that they do not increase
-	 * the pointer. Works good, but unions are rather unsafe.
-	 * @return
-	 */
-	public int pullDataIndex() {
-		return dataIndex;
 	}
 }

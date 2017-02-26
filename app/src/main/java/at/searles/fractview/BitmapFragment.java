@@ -388,7 +388,21 @@ public class BitmapFragment extends Fragment implements
 			return true;
 		} catch(OutOfMemoryError e) {
 			// fixme not super-nice, but it works
-			Toast.makeText(getActivity(), "ERROR: Out of memory", Toast.LENGTH_LONG).show();
+			getActivity().runOnUiThread(new Runnable() {
+				@Override
+				public void run() {
+					Toast.makeText(getActivity(), "ERROR: Out of memory", Toast.LENGTH_LONG).show();
+				}
+			});
+			return false;
+		} catch(NullPointerException e) {
+			// fixme not super-nice and ugly DRY
+			getActivity().runOnUiThread(new Runnable() {
+				@Override
+				public void run() {
+					Toast.makeText(getActivity(), "ERROR: Out of memory", Toast.LENGTH_LONG).show();
+				}
+			});
 			return false;
 		}
 	}

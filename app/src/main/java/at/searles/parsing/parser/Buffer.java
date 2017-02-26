@@ -1,10 +1,12 @@
 package at.searles.parsing.parser;
 
+import java.io.IOException;
+import java.io.Reader;
+
 import at.searles.parsing.regex.Acceptor;
 import at.searles.parsing.regex.Lexer;
 
-import java.io.IOException;
-import java.io.Reader;
+// FIXME allow multiple acceptors in same node.
 
 /**
  * This is also an extension of charsequence to use it nicely in Acceptor.
@@ -45,9 +47,15 @@ public abstract class Buffer {
 		}
 	}
 
-	Token tok; // FIXME Problems with seq because of subclasses.
+	/**
+	 * The current token. If the token should be somehow preserved,
+	 * copy this one because it will be modified for the next token.
+	 */
+	// FIXME instead of setting a fixed token, I should rather store
+	// FIXME which token a certain thing is...
+	private Token tok; // FIXME Problems with seq because of subclasses.
 
-	boolean advanceToNextToken = true; // if invalid, then call to tok will advance to next token
+	private boolean advanceToNextToken = true; // if invalid, then call to tok will advance to next token
 
 	/**
 	 * Forces the Buffer to advance to the next token on the next
