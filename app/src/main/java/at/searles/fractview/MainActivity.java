@@ -343,14 +343,16 @@ public class MainActivity extends Activity
 
 			case R.id.action_gui_settings: {
 				// show alert dialog with two checkboxes
-				final CharSequence[] items = {"Show Grid","Rotation Lock"};
+				final CharSequence[] items = {"Show Grid","Rotation Lock", "Confirm Zoom with Tab", "Deactivate Zoom"};
 
 				new AlertDialog.Builder(this)
 						.setCancelable(true)
 						.setMultiChoiceItems(items,
 								new boolean[]{
 										imageView.getShowGrid(),
-										imageView.getRotationLock()
+										imageView.getRotationLock(),
+										imageView.getConfirmZoom(),
+										imageView.getDeactivateZoom()
 								},
 								new DialogInterface.OnMultiChoiceClickListener() {
 							@Override
@@ -363,6 +365,14 @@ public class MainActivity extends Activity
 									case 1: {
 										// rotation lock
 										imageView.setRotationLock(isChecked);
+									} break;
+									case 2: {
+										// confirm edit with a tab
+										imageView.setConfirmZoom(isChecked);
+									} break;
+									case 3: {
+										// deactivate zoom
+										imageView.setDeactivateZoom(isChecked);
 									} break;
 								}
 							}
@@ -576,13 +586,7 @@ public class MainActivity extends Activity
 			newFractal.compile();
 
 			// yay, success
-
-			bitmapFragment.edit(new Runnable() {
-				@Override
-				public void run() {
-					bitmapFragment.setFractal(newFractal);
-				}
-			});
+			bitmapFragment.setFractal(newFractal);
 		} catch(CompileException e) {
 			e.printStackTrace();
 			Toast.makeText(this, "ERROR: " + e.getMessage(), Toast.LENGTH_LONG).show();
@@ -631,23 +635,19 @@ public class MainActivity extends Activity
 		} else {
 			warnedAboutHistoryEmpty = false; // reset here.
 
-			// fixme shouldn't history be in here? Problem is that I would have to preserve it...
-			bitmapFragment.edit(new Runnable() {
-				@Override
-				public void run() {
-					if(!bitmapFragment.historyIsEmpty()) {
-						// to avoid race condition
-						bitmapFragment.historyBack();
-					}
-				}
-			});
-
-			return true;
+			if(!bitmapFragment.historyIsEmpty()) {
+				bitmapFragment.historyBack();
+				return true;
+			} else {
+				return false;
+			}
 		}
 	}
 
 	@Override
 	public void onBackPressed() {
+		// first, send it to image view
+		if(imageView.backButtonAction()) return;
 		if(historyBack()) return;
 		super.onBackPressed();
 	}

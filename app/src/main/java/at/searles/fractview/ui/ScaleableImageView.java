@@ -1,6 +1,7 @@
 package at.searles.fractview.ui;
 
 import android.content.Context;
+import android.graphics.Bitmap;
 import android.graphics.Canvas;
 import android.graphics.Matrix;
 import android.graphics.Paint;
@@ -13,6 +14,7 @@ import android.util.Log;
 import android.view.GestureDetector;
 import android.view.MotionEvent;
 import android.widget.ImageView;
+import android.widget.Toast;
 
 import org.jetbrains.annotations.NotNull;
 
@@ -20,7 +22,6 @@ import java.util.LinkedList;
 
 import at.searles.fractview.BitmapFragment;
 import at.searles.fractview.MultiTouchController;
-import at.searles.fractview.fractal.Fractal;
 import at.searles.math.Scale;
 
 public class ScaleableImageView extends ImageView {
@@ -55,6 +56,7 @@ public class ScaleableImageView extends ImageView {
 		BOUNDS_PAINT.setStyle(Paint.Style.FILL_AND_STROKE);
 	}
 
+
 	/**
 	 * To save the state of this view over rotation etc...
 	 */
@@ -65,6 +67,8 @@ public class ScaleableImageView extends ImageView {
 		 */
 		boolean showGrid = false;
 		boolean rotationLock = false;
+		boolean confirmZoom = false;
+		boolean deactivateZoom = false;
 
 		ViewState(Parcelable in) {
 			super(in);
@@ -74,6 +78,8 @@ public class ScaleableImageView extends ImageView {
 			super(in);
 			this.showGrid = in.readInt() == 1;
 			this.rotationLock = in.readInt() == 1;
+			this.confirmZoom = in.readInt() == 1;
+			this.deactivateZoom = in.readInt() == 1;
 		}
 
 		@Override
@@ -82,6 +88,8 @@ public class ScaleableImageView extends ImageView {
 
 			dest.writeInt(showGrid ? 1 : 0);
 			dest.writeInt(rotationLock ? 1 : 0);
+			dest.writeInt(confirmZoom ? 1 : 0);
+			dest.writeInt(deactivateZoom ? 1 : 0);
 		}
 
 		public static final Creator<ViewState> CREATOR = new Creator<ViewState>() {
@@ -99,6 +107,8 @@ public class ScaleableImageView extends ImageView {
 
 	private boolean showGrid; // FIXME shouldn't I rather have one state object?
 	private boolean rotationLock;
+	private boolean confirmZoom;
+	private boolean deactivateZoom;
 
 	// Here, we also have some gesture control
 	// Scroll-Events are handled as multitouch scale-events
@@ -162,6 +172,33 @@ public class ScaleableImageView extends ImageView {
 		return rotationLock;
 	}
 
+	public void setConfirmZoom(boolean confirmZoom) {
+		this.confirmZoom = confirmZoom;
+	}
+
+	public boolean getConfirmZoom() {
+		return confirmZoom;
+	}
+
+	public void setDeactivateZoom(boolean deactivateZoom) {
+		multitouch.cancel();
+		this.deactivateZoom = deactivateZoom;
+	}
+
+	public boolean getDeactivateZoom() {
+		return deactivateZoom;
+	}
+
+	public boolean backButtonAction() {
+		// cancel selection if it exists
+		if(multitouch != null && multitouch.controller != null) {
+			multitouch.cancel();
+			return true;
+		} else {
+			return false;
+		}
+	}
+
 	@Override
 	public Parcelable onSaveInstanceState() {
 		//begin boilerplate code that allows parent classes to save state
@@ -170,6 +207,8 @@ public class ScaleableImageView extends ImageView {
 		ViewState vs = new ViewState(superState);
 		vs.showGrid = this.showGrid;
 		vs.rotationLock = this.rotationLock;
+		vs.confirmZoom = this.confirmZoom;
+		vs.deactivateZoom = this.deactivateZoom;
 
 		return vs;
 	}
@@ -188,6 +227,8 @@ public class ScaleableImageView extends ImageView {
 
 		setShowGrid(vs.showGrid);
 		setRotationLock(vs.rotationLock);
+		setConfirmZoom(vs.confirmZoom);
+		setDeactivateZoom(vs.deactivateZoom);
 	}
 
 	/**
@@ -359,7 +400,15 @@ public class ScaleableImageView extends ImageView {
 		}*/
 
 		// draw image
-		super.onDraw(canvas);
+		try {
+			super.onDraw(canvas);
+		} catch(RuntimeException ex) {
+			// FIXME Problem: The image might be too large to be drawn.
+			Toast.makeText(getContext(), "Image cannot be shown: " + ex.getMessage(), Toast.LENGTH_LONG).show();
+
+			// FIXME Solution is what? Once the preview is generated, I can do something about it.
+			canvas.setBitmap(Bitmap.createBitmap(1, 1, Bitmap.Config.ARGB_8888));
+		}
 
 		// remove bounds
 		float w = getWidth(), h = getHeight();
@@ -496,7 +545,10 @@ public class ScaleableImageView extends ImageView {
 	public boolean onTouchEvent(@NotNull MotionEvent event) {
 		// gesture detector handles scroll
 		// no action without bitmap fragment.
-		if(bitmapFragment == null) return false;
+		// or if deactivateZoom is set.
+		if(bitmapFragment == null || deactivateZoom) {
+			return false;
+		}
 
 		boolean ret = false;
 
@@ -552,13 +604,7 @@ public class ScaleableImageView extends ImageView {
 		final Scale sc = Scale.fromMatrix(values);
 
 		// update scale and restart calculation.
-		bitmapFragment.edit(new Runnable() {
-			@Override
-			public void run() {
-				Fractal fb = bitmapFragment.fractal();
-				bitmapFragment.setScale(fb.scale().relative(sc));
-			}
-		});
+		bitmapFragment.setScaleRelative(sc);
 
 		// If there are multiple scales pending, then
 		// we combine them into one. This is important for the preview.
@@ -575,8 +621,14 @@ public class ScaleableImageView extends ImageView {
 
 		@Override
 		public boolean onDoubleTap(MotionEvent event) {
-			// fixme lastScale!
-			if(multitouch.isScrollEvent) multitouch.cancel();
+			if(confirmZoom) {
+				// not active when 'confirm zoom' is set.
+				return false;
+			}
+
+			if(multitouch.isScrollEvent) {
+				multitouch.cancel();
+			}
 
 			int index = event.getActionIndex();
 
@@ -597,12 +649,17 @@ public class ScaleableImageView extends ImageView {
 		/*@Override
 		public void onShowPress(MotionEvent motionEvent) {
 
-		}
+		}*/
 
 		@Override
 		public boolean onSingleTapUp(MotionEvent motionEvent) {
-			return false;
-		}*/
+			if(confirmZoom && multitouch.controller != null) {
+				multitouch.confirm();
+				return true;
+			} else {
+				return false;
+			}
+		}
 
 		@Override
 		public boolean onScroll(MotionEvent startEvt, MotionEvent currentEvt, float vx, float vy) {
@@ -627,8 +684,8 @@ public class ScaleableImageView extends ImageView {
 
 	class MultiTouch {
 		/**
-		 * Controller for the image. It is possible to use only one, I guess, but scaling
-		 * and everything is rather difficult.
+		 * Controller for the image. It is possible to use only one, I guess,
+		 * but scaling and everything is rather difficult.
 		 */
 		MultiTouchController controller = null;
 
@@ -675,23 +732,25 @@ public class ScaleableImageView extends ImageView {
 		 * @param event
 		 */
 		void initDown(MotionEvent event) {
-			int index = event.getActionIndex();
-			int id = event.getPointerId(index);
-
-			if(controller != null) {
-				throw new IllegalStateException("controller not null");
+			if(controller == null) {
+				controller = new MultiTouchController(rotationLock);
+			} else if(!confirmZoom) {
+				throw new IllegalArgumentException("");
 			}
 
 			// do not display the point-dragging view while dragging...
 			// fixme interactiveView.setVisibility(View.INVISIBLE);
+			down(event); // scrollEvent might be false here.
+		}
+
+		void down(MotionEvent event) {
+			int index = event.getActionIndex();
+			int id = event.getPointerId(index);
 
 			PointF p = new PointF(event.getX(index), event.getY(index));
-
-			controller = new MultiTouchController(rotationLock);
 			controller.addPoint(id, norm(p));
-
-			// isScrollEvent is false here!
 		}
+
 
 		/**
 		 *
@@ -701,15 +760,27 @@ public class ScaleableImageView extends ImageView {
 		void finalUp(MotionEvent event) {
 			if(!isScrollEvent) {
 				cancel();
-				return; // not a scrollevent
+				// no dragging here...
+			} else {
+				up(event);
+
+				if (!confirmZoom) {
+					confirm();
+				}
 			}
+		}
 
-			isScrollEvent = false;
-
+		void up(MotionEvent event) {
 			int index = event.getActionIndex();
 			int id = event.getPointerId(index);
 
 			controller.removePoint(id);
+		}
+
+		boolean confirm() {
+			if(controller == null) {
+				return false;
+			}
 
 			if(!controller.isDone()) {
 				throw new IllegalStateException("action up but not done...");
@@ -725,6 +796,7 @@ public class ScaleableImageView extends ImageView {
 			addScale(n);
 
 			// thanks for all that work, dear controller.
+			isScrollEvent = false;
 			controller = null;
 
 			// the matrix of the image view will be updated
@@ -732,29 +804,14 @@ public class ScaleableImageView extends ImageView {
 
 			// for now, we will set the latest view matrix.
 			setImageMatrix(viewMatrix());
-		}
 
-		void down(MotionEvent event) {
-			int index = event.getActionIndex();
-			int id = event.getPointerId(index);
-
-			PointF p = new PointF(event.getX(index), event.getY(index));
-			controller.addPoint(id, norm(p));
-		}
-
-		void up(MotionEvent event) {
-			int index = event.getActionIndex();
-			int id = event.getPointerId(index);
-
-			controller.removePoint(id);
+			return true;
 		}
 
 		void scroll(MotionEvent event) {
 			isScrollEvent = true;
 
-			int index = event.getActionIndex();
-
-			for(index = 0; index < event.getPointerCount(); ++index) {
+			for(int index = 0; index < event.getPointerCount(); ++index) {
 				PointF pos = new PointF(event.getX(index), event.getY(index));
 				int id = event.getPointerId(index);
 

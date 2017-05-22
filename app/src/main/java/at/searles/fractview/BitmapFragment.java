@@ -16,7 +16,6 @@ import android.widget.Toast;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
-import java.util.LinkedList;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -34,7 +33,6 @@ import at.searles.meelan.CompileException;
  * This class is the glue maintaining all parameters for drawing the fractal
  * and managing the threads including their interruption.
  *
- * History should not be part of this class!
  *
  * Possible Edit-Actions:
  *     * There is a new fractal (Bookmark/ParameterEdit/Source/History)
@@ -118,8 +116,16 @@ public class BitmapFragment extends Fragment implements
 	 */
 	public final Matrix norm2bitmap = new Matrix();
 
+	/**
+	 * This variable is only to be modified from the UI-thread
+	 * to avoid a race condition.
+	 */
+	boolean addToHistory = true; // add the current to history.
 
-	LinkedList<Fractal> history = new LinkedList<>();
+	/**
+	 * List of past fractals that were drawn using this bitmap fragment.
+	 */
+	History history = new History();
 
 	@Override
 	public void onAttach(Activity context) {
@@ -346,6 +352,7 @@ public class BitmapFragment extends Fragment implements
 	// ------------------------
 
 	public void setSize(int width, int height, boolean setAsDefaultIfSuccess) {
+		// do not add new fractal to history
 		edit(new Runnable() {
 			@Override
 			public void run() {
@@ -408,14 +415,27 @@ public class BitmapFragment extends Fragment implements
 	}
 
 	public void setScale(Scale sc) {
-		history.addLast(this.fractal);
+		addToHistory = true;
+		edit(() -> setScaleUnsafe(sc));
+	}
+
+	public void setScaleRelative(Scale sc) {
+		addToHistory = true;
+		edit(() -> setScale(fractal.scale().relative(sc)));
+	}
+
+	private void setScaleUnsafe(Scale sc) {
 		fractal = fractal.copyNewScale(sc);
 		drawer.setScale(sc); // not necessary to update the whole fractal.
 	}
 
 	public void setFractal(Fractal f) {
-		// f must be parsed and compiled.
-		history.addLast(this.fractal);
+		addToHistory = true;
+		edit(() -> setFractalUnsafe(f));
+	}
+
+	private void setFractalUnsafe(Fractal f) {
+		// f must have been parsed and compiled.
 		this.fractal = f;
 		drawer.setFractal(this.fractal);
 	}
@@ -426,11 +446,20 @@ public class BitmapFragment extends Fragment implements
 	}
 
 	public void historyBack() {
-		this.fractal = history.removeLast();
-		drawer.setFractal(this.fractal);
+		addToHistory = false;
+		edit(this::historyBackUnsafe);
 	}
 
-	public void edit(final Runnable editor) {
+	private void historyBackUnsafe() {
+		if(!historyIsEmpty()) {
+			// this was most likely checked before, but I want
+			// to avoid a race condition.
+			this.fractal = history.pop();
+			drawer.setFractal(this.fractal);
+		}
+	}
+
+	private void edit(final Runnable editor) {
         new AsyncTask<Void, Void, Void>() {
             @Override
             protected void onPreExecute() {
@@ -507,6 +536,11 @@ public class BitmapFragment extends Fragment implements
 
 		((UpdateListener) getActivity()).calculationStarting(this);
         currentFuture = executorService.submit(drawer);
+
+		if(addToHistory) {
+			this.history.push(this.fractal);
+			addToHistory = false;
+		}
     }
 
 	// =============================================================

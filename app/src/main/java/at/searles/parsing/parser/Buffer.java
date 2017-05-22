@@ -53,7 +53,7 @@ public abstract class Buffer {
 	 */
 	// FIXME instead of setting a fixed token, I should rather store
 	// FIXME which token a certain thing is...
-	private Token tok; // FIXME Problems with seq because of subclasses.
+	Token tok; // FIXME Problems with seq because of subclasses.
 
 	private boolean advanceToNextToken = true; // if invalid, then call to tok will advance to next token
 
@@ -359,7 +359,9 @@ public abstract class Buffer {
 		}
 
 		public String toString() {
-			if(advanceToNextToken) {
+			// FIXME The compiler will be replaced,
+			// FIXME so a dirty fix for this is not a big deal.
+			if(1==1/*advanceToNextToken*/) {
 				return string.subSequence(0, offset + marked()) + "___" +
 						string.subSequence(offset, string.length());
 			} else {

@@ -1,8 +1,24 @@
 package at.searles.fractview.ui;
 
-public class InteractiveView /*extends View*/ {
+import android.content.Context;
+import android.graphics.Canvas;
+import android.graphics.Paint;
+import android.graphics.PointF;
+import android.util.AttributeSet;
+import android.util.Log;
+import android.view.MotionEvent;
+import android.view.View;
 
-	/*Map<String, PointF> points;
+import java.util.Map;
+import java.util.TreeMap;
+
+/**
+ * This is a transparent view that is on top of the multitouch view.
+ * It allows to select elements on top of the image and drag them.
+ */
+public class InteractiveView extends View {
+
+	Map<String, PointF> points; // draggable points and their position
 	public static final float RAD = 50.f;
 
 	PointListener listener;
@@ -18,7 +34,7 @@ public class InteractiveView /*extends View*/ {
 		TouchListener l = new TouchListener();
 		this.setOnTouchListener(l);
 
-		points = new TreeMap<String, PointF>();
+		points = new TreeMap<>();
 
 		selectedPaintStroke = new Paint();
 		selectedPaintStroke.setColor(0xffffffff);
@@ -139,8 +155,7 @@ public class InteractiveView /*extends View*/ {
 
 			switch(action) {
 				case MotionEvent.ACTION_CANCEL: {
-					releasePoint();
-					return false;
+					return releasePoint();
 				}
 				case MotionEvent.ACTION_DOWN: {
 					return event.getPointerId(0) == 0 && grabPoint(event.getX(), event.getY());
@@ -161,7 +176,7 @@ public class InteractiveView /*extends View*/ {
 		}
 	}
 
-	public static interface PointListener {
+	public interface PointListener {
 		void pointMoved(String label, PointF pos);
-	}*/
+	}
 }
