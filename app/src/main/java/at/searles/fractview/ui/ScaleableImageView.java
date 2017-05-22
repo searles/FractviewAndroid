@@ -38,6 +38,7 @@ public class ScaleableImageView extends ImageView {
 	 */
 	private static final Paint[] GRID_PAINTS = new Paint[]{new Paint(), new Paint(), new Paint()};
 	private static final Paint BOUNDS_PAINT = new Paint();
+	private static final Paint TEXT_PAINT = new Paint(); // for error messages
 
 	static {
 		GRID_PAINTS[0].setColor(0xffffffff);
@@ -54,6 +55,9 @@ public class ScaleableImageView extends ImageView {
 
 		BOUNDS_PAINT.setColor(0xaa000000); // semi-transparent black
 		BOUNDS_PAINT.setStyle(Paint.Style.FILL_AND_STROKE);
+
+		TEXT_PAINT.setTextAlign(Paint.Align.CENTER);
+		TEXT_PAINT.setTextSize(96); // fixme hardcoded...
 	}
 
 
@@ -391,6 +395,14 @@ public class ScaleableImageView extends ImageView {
 		setImageMatrix(defaultMatrix);
 	}*/
 
+	private boolean cannotDrawImage = false;
+
+	@Override
+	public void invalidate() {
+		cannotDrawImage = false;
+		super.invalidate();
+	}
+
 	@Override
 	public void onDraw(@NotNull Canvas canvas) {
 		/*if(bitmapFragment != null && getDrawable() != null) {
@@ -400,14 +412,20 @@ public class ScaleableImageView extends ImageView {
 		}*/
 
 		// draw image
-		try {
-			super.onDraw(canvas);
-		} catch(RuntimeException ex) {
-			// FIXME Problem: The image might be too large to be drawn.
-			Toast.makeText(getContext(), "Image cannot be shown: " + ex.getMessage(), Toast.LENGTH_LONG).show();
+		if(!cannotDrawImage) {
+			try {
+				super.onDraw(canvas);
+			} catch (RuntimeException ex) {
+				// The image might be too large to be drawn.
+				Toast.makeText(getContext(), "Image cannot be shown (but it is still rendered!): " + ex.getMessage(), Toast.LENGTH_LONG).show();
 
-			// FIXME Solution is what? Once the preview is generated, I can do something about it.
-			canvas.setBitmap(Bitmap.createBitmap(1, 1, Bitmap.Config.ARGB_8888));
+				this.setImageBitmap(Bitmap.createBitmap(1, 1, Bitmap.Config.ALPHA_8));
+
+				cannotDrawImage = true;
+				deactivateZoom = true;
+			}
+		} else {
+			return;
 		}
 
 		// remove bounds
@@ -663,9 +681,6 @@ public class ScaleableImageView extends ImageView {
 
 		@Override
 		public boolean onScroll(MotionEvent startEvt, MotionEvent currentEvt, float vx, float vy) {
-			// fixme
-			//Log.d("OGL", motionEvent1.toString());
-
 			multitouch.scroll(currentEvt);
 			return true;
 		}
