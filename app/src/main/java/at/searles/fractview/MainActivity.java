@@ -764,6 +764,7 @@ public class MainActivity extends Activity
 
 	@Override
 	public void calculationFinished(final long ms, BitmapFragment source) {
+		// FIXME split time up.
 		Toast.makeText(MainActivity.this,
 				getString(R.string.label_calc_finished, ms), Toast.LENGTH_SHORT).show();
 	}

@@ -35,7 +35,6 @@ public class History {
     }
 
     public Fractal pop() {
-        this.current = null; // that way the current fractal is not added to past.
-        return past.removeLast();
+        return this.current = past.removeLast();
     }
 }
