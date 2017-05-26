@@ -2,15 +2,13 @@ apply plugin: 'com.android.application'
 
 android {
     compileSdkVersion 25
-
-
     buildToolsVersion "25.0.1"
     defaultConfig {
         applicationId "at.searles.fractview"
         minSdkVersion 21
         targetSdkVersion 25
-        versionCode 53
-        versionName "3.2"
+        versionCode 54
+        versionName '3.2.1'
         testInstrumentationRunner "android.support.test.runner.AndroidJUnitRunner"
         externalNativeBuild {
             cmake {
@@ -35,6 +33,8 @@ android {
     compileOptions {
         targetCompatibility 1.8
         sourceCompatibility 1.8
+    }
+    productFlavors {
     }
 }
 

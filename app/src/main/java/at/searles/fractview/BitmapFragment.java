@@ -394,7 +394,7 @@ public class BitmapFragment extends Fragment implements
 
 			return true;
 		} catch(OutOfMemoryError e) {
-			// fixme not super-nice, but it works
+			Log.e("BF", "OUT OF MEMORY.");
 			getActivity().runOnUiThread(new Runnable() {
 				@Override
 				public void run() {
@@ -403,7 +403,8 @@ public class BitmapFragment extends Fragment implements
 			});
 			return false;
 		} catch(NullPointerException e) {
-			// fixme not super-nice and ugly DRY
+			Log.e("BF", "OUT OF MEMORY.");
+			// FIXME Put this into some lambda to avoid DRY.
 			getActivity().runOnUiThread(new Runnable() {
 				@Override
 				public void run() {

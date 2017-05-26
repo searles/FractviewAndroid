@@ -13,8 +13,7 @@ import android.util.AttributeSet;
 import android.util.Log;
 import android.view.GestureDetector;
 import android.view.MotionEvent;
-import android.widget.ImageView;
-import android.widget.Toast;
+import android.view.View;
 
 import org.jetbrains.annotations.NotNull;
 
@@ -24,7 +23,7 @@ import at.searles.fractview.BitmapFragment;
 import at.searles.fractview.MultiTouchController;
 import at.searles.math.Scale;
 
-public class ScaleableImageView extends ImageView {
+public class ScaleableImageView extends View {
 
 	/**
 	 * Scale factor on double tapping
@@ -40,7 +39,13 @@ public class ScaleableImageView extends ImageView {
 	private static final Paint BOUNDS_PAINT = new Paint();
 	private static final Paint TEXT_PAINT = new Paint(); // for error messages
 
+	private static final Paint IMAGE_PAINT = new Paint();
+
 	static {
+		IMAGE_PAINT.setAntiAlias(false);
+		IMAGE_PAINT.setFilterBitmap(false);
+		IMAGE_PAINT.setDither(false);
+
 		GRID_PAINTS[0].setColor(0xffffffff);
 		GRID_PAINTS[0].setStyle(Paint.Style.STROKE);
 		GRID_PAINTS[0].setStrokeWidth(5f);
@@ -59,7 +64,6 @@ public class ScaleableImageView extends ImageView {
 		TEXT_PAINT.setTextAlign(Paint.Align.CENTER);
 		TEXT_PAINT.setTextSize(96); // fixme hardcoded...
 	}
-
 
 	/**
 	 * To save the state of this view over rotation etc...
@@ -149,9 +153,29 @@ public class ScaleableImageView extends ImageView {
 	 */
 	private MultiTouch multitouch;
 
+	/**
+	 * Image matrix. This one is modified according to the selection.
+	 * @param context
+	 * @param attrs
+     */
+	private Matrix imageMatrix;
+
+	/**
+	 *
+	 * @param context
+	 * @param attrs
+     */
 	public ScaleableImageView(Context context, AttributeSet attrs) {
 		super(context, attrs);
 		initTouch();
+	}
+
+	private Bitmap bitmap() {
+		return bitmapFragment.getBitmap();
+	}
+
+	public void updatedBitmap() {
+		// FIXME What action has to be done when the image is actually updated?
 	}
 
 	/**
@@ -340,7 +364,7 @@ public class ScaleableImageView extends ImageView {
 
 		bitmap2view.invert(view2bitmap);
 
-		setImageMatrix(multitouch.viewMatrix());
+		this.imageMatrix = multitouch.viewMatrix();
 
 		width = (int) vw;
 		height = (int) vh;
@@ -395,14 +419,6 @@ public class ScaleableImageView extends ImageView {
 		setImageMatrix(defaultMatrix);
 	}*/
 
-	private boolean cannotDrawImage = false;
-
-	@Override
-	public void invalidate() {
-		cannotDrawImage = false;
-		super.invalidate();
-	}
-
 	@Override
 	public void onDraw(@NotNull Canvas canvas) {
 		/*if(bitmapFragment != null && getDrawable() != null) {
@@ -412,21 +428,8 @@ public class ScaleableImageView extends ImageView {
 		}*/
 
 		// draw image
-		if(!cannotDrawImage) {
-			try {
-				super.onDraw(canvas);
-			} catch (RuntimeException ex) {
-				// The image might be too large to be drawn.
-				Toast.makeText(getContext(), "Image cannot be shown (but it is still rendered!): " + ex.getMessage(), Toast.LENGTH_LONG).show();
-
-				this.setImageBitmap(Bitmap.createBitmap(1, 1, Bitmap.Config.ALPHA_8));
-
-				cannotDrawImage = true;
-				deactivateZoom = true;
-			}
-		} else {
-			return;
-		}
+		// FIXME matrix!
+		canvas.drawBitmap(bitmap(), imageMatrix, null);
 
 		// remove bounds
 		float w = getWidth(), h = getHeight();
@@ -528,7 +531,7 @@ public class ScaleableImageView extends ImageView {
 		if(!lastScale.isEmpty()) {
 			Matrix l = lastScale.removeLast();
 			// update the viewMatrix.
-			setImageMatrix(multitouch.viewMatrix());
+			this.imageMatrix = multitouch.viewMatrix();
 			invalidate();
 		}
 	}
@@ -739,7 +742,7 @@ public class ScaleableImageView extends ImageView {
 		void cancel() {
 			controller = null;
 			isScrollEvent = false;
-			setImageMatrix(viewMatrix());
+			imageMatrix = viewMatrix();
 		}
 
 		/**
@@ -818,7 +821,8 @@ public class ScaleableImageView extends ImageView {
 			// after we receive the first call to the update-method.
 
 			// for now, we will set the latest view matrix.
-			setImageMatrix(viewMatrix());
+			// it will be reset later when the first preview has been generated.
+			imageMatrix = viewMatrix();
 
 			return true;
 		}
@@ -840,7 +844,7 @@ public class ScaleableImageView extends ImageView {
 			// ie, imagematrix = bitmap2view * m
 			 */
 
-			ScaleableImageView.this.setImageMatrix(viewMatrix());
+			ScaleableImageView.this.imageMatrix = viewMatrix();
 			ScaleableImageView.this.invalidate();
 		}
 	}

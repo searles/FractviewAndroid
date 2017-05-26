@@ -732,9 +732,6 @@ public class MainActivity extends Activity
         }
     }*/
 
-
-
-
 	// =============================================================================
 	// =========== Callbacks from Bitmap Fragment ==================================
 	// =============================================================================
@@ -774,7 +771,7 @@ public class MainActivity extends Activity
 	@Override
 	public void newBitmapCreated(Bitmap bitmap, BitmapFragment source) {
 		Log.d("MA", "received newBitmapCreated");
-		imageView.setImageBitmap(bitmap);
+		imageView.updatedBitmap();
 		imageView.requestLayout();
 	}
 }
