@@ -743,6 +743,7 @@ public class ScaleableImageView extends View {
 			controller = null;
 			isScrollEvent = false;
 			imageMatrix = viewMatrix();
+			invalidate();
 		}
 
 		/**
@@ -756,17 +757,17 @@ public class ScaleableImageView extends View {
 				throw new IllegalArgumentException("");
 			}
 
-			// do not display the point-dragging view while dragging...
-			// fixme interactiveView.setVisibility(View.INVISIBLE);
-			down(event); // scrollEvent might be false here.
+			down(event);
 		}
 
 		void down(MotionEvent event) {
-			int index = event.getActionIndex();
-			int id = event.getPointerId(index);
+			if(controller != null) {
+				int index = event.getActionIndex();
+				int id = event.getPointerId(index);
 
-			PointF p = new PointF(event.getX(index), event.getY(index));
-			controller.addPoint(id, norm(p));
+				PointF p = new PointF(event.getX(index), event.getY(index));
+				controller.addPoint(id, norm(p));
+			}
 		}
 
 
@@ -789,10 +790,12 @@ public class ScaleableImageView extends View {
 		}
 
 		void up(MotionEvent event) {
-			int index = event.getActionIndex();
-			int id = event.getPointerId(index);
+			if(controller != null) {
+				int index = event.getActionIndex();
+				int id = event.getPointerId(index);
 
-			controller.removePoint(id);
+				controller.removePoint(id);
+			}
 		}
 
 		boolean confirm() {
@@ -828,24 +831,19 @@ public class ScaleableImageView extends View {
 		}
 
 		void scroll(MotionEvent event) {
-			isScrollEvent = true;
+			isScrollEvent = controller != null;
 
-			for(int index = 0; index < event.getPointerCount(); ++index) {
-				PointF pos = new PointF(event.getX(index), event.getY(index));
-				int id = event.getPointerId(index);
+			if(isScrollEvent) {
+				for (int index = 0; index < event.getPointerCount(); ++index) {
+					PointF pos = new PointF(event.getX(index), event.getY(index));
+					int id = event.getPointerId(index);
 
-				controller.movePoint(id, norm(pos));
+					controller.movePoint(id, norm(pos));
+				}
+
+				ScaleableImageView.this.imageMatrix = viewMatrix();
+				ScaleableImageView.this.invalidate();
 			}
-
-			/*
-			Original:
-			m = controller.getMatrix();
-			m.postConcat(currentImageMatrix);
-			// ie, imagematrix = bitmap2view * m
-			 */
-
-			ScaleableImageView.this.imageMatrix = viewMatrix();
-			ScaleableImageView.this.invalidate();
 		}
 	}
 }
