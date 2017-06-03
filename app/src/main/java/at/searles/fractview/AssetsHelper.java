@@ -277,6 +277,30 @@ public class AssetsHelper {
                             .add("mandelinit", Fractal.Type.Expr, "0")
             ));
 
+            _PARAMETER_ENTRIES.add(e(am, "Perpendicular Mandelbrot", "perpendicular_mandelbrot.png", "Perpendicular Mandelbrot Fractal",
+                    new Fractal.Parameters()
+                            .add("function", Fractal.Type.Expr, "{ z.x = -abs z.x; mandelbrot(z, p) }")
+                            .add("mandelinit", Fractal.Type.Expr, "0")
+            ));
+
+            _PARAMETER_ENTRIES.add(e(am, "Perpendicular Burning Ship", "perpendicular_burningship.png", "Perpendicular Burning Ship Fractal",
+                    new Fractal.Parameters()
+                            .add("function", Fractal.Type.Expr, "{ z.y = abs z.y; mandelbrot(z, p) }")
+                            .add("mandelinit", Fractal.Type.Expr, "0")
+            ));
+
+            _PARAMETER_ENTRIES.add(e(am, "Perpendicular Celtic", "perpendicular_celtic.png", "Perpendicular Celtic Fractal",
+                    new Fractal.Parameters()
+                            .add("function", Fractal.Type.Expr, "{ var t = sqr z; t.x = -abs t.x; t } + p")
+                            .add("mandelinit", Fractal.Type.Expr, "0")
+            ));
+
+            _PARAMETER_ENTRIES.add(e(am, "Perpendicular Buffalo", "perpendicular_buffalo.png", "Perpendicular Buffalo Fractal",
+                    new Fractal.Parameters()
+                            .add("function", Fractal.Type.Expr, "{ z.y = abs z.y; var t = sqr z; t.x = abs t.x; t } + p")
+                            .add("mandelinit", Fractal.Type.Expr, "0")
+            ));
+
             _PARAMETER_ENTRIES.add(e(am, "Mandel^3", "mandel3.png", "Mandelbrot Set to the power of 3",
                     new Fractal.Parameters()
                             .add("function", Fractal.Type.Expr, "z^3 + p")

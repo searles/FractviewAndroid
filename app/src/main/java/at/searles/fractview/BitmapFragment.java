@@ -611,6 +611,11 @@ public class BitmapFragment extends Fragment implements
 		doImageAction(ProgressDialogValues.values()[requestCode]);
 	}
 
+	@Override
+	public void onCancel(int requestCode) {
+		waiting = null;
+	}
+
 	private void doImageAction(ProgressDialogValues action) {
 		// did someone skip this one?
 		switch(action) {

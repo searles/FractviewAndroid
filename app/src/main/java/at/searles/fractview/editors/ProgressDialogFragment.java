@@ -62,7 +62,8 @@ public class ProgressDialogFragment extends GenericDialogFragment {
             dialog.setButton(ProgressDialog.BUTTON_NEGATIVE, "Cancel", new DialogInterface.OnClickListener() {
                 @Override
                 public void onClick(DialogInterface dialogInterface, int which) {
-                    dialogInterface.dismiss(); // fixme: Is this one needed?
+                    dialogInterface.dismiss();
+                    getCallback().onCancel(requestCode());
                 }
             });
 
@@ -92,5 +93,11 @@ public class ProgressDialogFragment extends GenericDialogFragment {
          * @param requestCode Code to identify the dialog if needed
          */
         void onSkip(int requestCode);
+
+        /**
+         * The next method is called when the skip button is pressed.
+         * @param requestCode Code to identify the dialog if needed
+         */
+        void onCancel(int requestCode);
     }
 }
