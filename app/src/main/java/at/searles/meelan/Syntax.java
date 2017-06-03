@@ -38,7 +38,7 @@ class Syntax {
 				return i;
 			} catch(NumberFormatException e) {
 				// Number is too large
-				return null;
+				throw new ParsingError("bad format", tok.start, tok.src);
 			}
 		}
 
@@ -151,7 +151,7 @@ class Syntax {
 	// some very basic things
 	private static final Parser<String> id = lexer.match("[A-Za-z_][0-9A-Za-z_]*", idFn); // this one must be added before keywords!
 	private static final Parser<Double> real = lexer.match("[0-9]+(\\.[0-9]*)?([eE]-?[0-9]+)?", realFn);
-	private static final Parser<Integer> integer = lexer.match("[0-9]+", integerFn); //  the later one overrules the previous one.
+	private static final Parser<Integer> integer = lexer.match("[0-9][0-9]?[0-9]?[0-9]?[0-9]?[0-9]?[0-9]?[0-9]?", integerFn); //  the later one overrules the previous one.
 	private static final Parser<Integer> hexint = lexer.match("#[0-9a-fA-F]+", hexintFn);
 
 	// regex: "([^\"](\[\"])?)*". In RegexParser, \ is escaped as \\.
