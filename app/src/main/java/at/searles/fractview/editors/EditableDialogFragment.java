@@ -78,7 +78,14 @@ public class EditableDialogFragment extends GenericDialogFragment {
                 @Override
                 public void onClick(DialogInterface dialog, int which) {
                     dialog.dismiss();
-                    getCallback().apply(requestCode(), type().getValueInView(getDialog()));
+
+                    Object value = type().getValueInView(getDialog());
+
+                    if(value != null) {
+                        getCallback().apply(requestCode(), value);
+                    } else {
+                        Log.i("EDF", "The value was null, hence no callback");
+                    }
                 }
             });
         }
@@ -489,12 +496,12 @@ public class EditableDialogFragment extends GenericDialogFragment {
         Palette {
             @Override
             void setValueInView(Object o, View view) {
-                // FIXME
-                // FIXME
+                // FIXME?
             }
 
             @Override
             Object getValueInView(Dialog dialog) {
+                // FIXME?
                 return null;
             }
 
@@ -603,7 +610,17 @@ public class EditableDialogFragment extends GenericDialogFragment {
         // add all elements to it.
         // but have them sorted.
         TreeSet<String> set = new TreeSet<>();
-        set.addAll(prefs.getAll().keySet()); // FIXME, there should be an easier way?
+
+        for(String entry : prefs.getAll().keySet()) {
+            if(entry != null) {
+                // Due to a bug there might be a key null.
+                // This happens when an empty element is added.
+                set.add(entry);
+            } else {
+                Log.e("EDF", "ERROR: Key is null!");
+            }
+        }
+
         adapter.addAll(set);
 
         lv.setOnItemLongClickListener(new AdapterView.OnItemLongClickListener() {

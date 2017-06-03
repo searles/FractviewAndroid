@@ -2,10 +2,10 @@ package at.searles.parsing.regex;
 
 import org.jetbrains.annotations.NotNull;
 
+import java.util.TreeMap;
+
 import at.searles.parsing.parser.Buffer;
 import at.searles.parsing.parser.Parser;
-
-import java.util.TreeMap;
 
 /**
  * Pretty much a more useable frontend for FSA
@@ -179,8 +179,12 @@ public class Lexer {
 				Buffer.Token tok = buf.tok(Lexer.this);
 				if(tok.acceptor == fn) {
 					A a = fn.apply(tok);
-					buf.advanceToNextToken();
-					return a;
+					if(a != null) {
+						buf.advanceToNextToken();
+						return a;
+					} else {
+						return null;
+					}
 				} else {
 					return null;
 				}

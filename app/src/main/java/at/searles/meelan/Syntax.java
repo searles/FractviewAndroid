@@ -33,7 +33,13 @@ class Syntax {
 	private static final Acceptor<Integer> integerFn = new Acceptor<Integer>() {
 		@Override
 		public Integer apply(Buffer.Token tok) {
-			return Integer.parseInt(tok.seq().toString());
+			try {
+				int i = Integer.parseInt(tok.seq().toString());
+				return i;
+			} catch(NumberFormatException e) {
+				// Number is too large
+				return null;
+			}
 		}
 
 		public String toString() {
