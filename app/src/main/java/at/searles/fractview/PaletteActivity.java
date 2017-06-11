@@ -50,6 +50,8 @@ public class PaletteActivity extends Activity implements EditableDialogFragment.
 
 	private String id;
 
+	private SharedPrefsHelper prefsHelper;
+
 	// if something is currently edited, these two
 	// contain its coordinates
 	//private int editX = -1;
@@ -59,6 +61,8 @@ public class PaletteActivity extends Activity implements EditableDialogFragment.
 	public void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
 		setContentView(R.layout.palette_layout);
+
+		this.prefsHelper = new SharedPrefsHelper(this, PREFS_NAME);
 
 		this.id = getIntent().getStringExtra("id");
 
@@ -217,7 +221,7 @@ public class PaletteActivity extends Activity implements EditableDialogFragment.
 			case LOAD_PALETTE: {
 				String name = (String) o;
 
-				String paletteString = SharedPrefsHelper.loadFromSharedPref(this, PREFS_NAME, name);
+				String paletteString = prefsHelper.get(name);
 
 				if(paletteString != null) {
 					// JSON-Parser
@@ -239,7 +243,7 @@ public class PaletteActivity extends Activity implements EditableDialogFragment.
 					String paletteString = Adapters.paletteAdapter.toJSON(
 							model.createPalette()).toString();
 
-					SharedPrefsHelper.saveToSharedPref(this, PREFS_NAME, name, paletteString);
+					prefsHelper.add(name, paletteString, SharedPrefsHelper.SaveMethod.FindNext);
 				} catch (JSONException e) {
 					e.printStackTrace();
 					Toast.makeText(PaletteActivity.this, "JSON-Error", Toast.LENGTH_LONG).show();

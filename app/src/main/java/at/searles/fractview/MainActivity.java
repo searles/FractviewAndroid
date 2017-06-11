@@ -25,11 +25,13 @@ import android.view.MenuInflater;
 import android.view.MenuItem;
 import android.view.View;
 import android.view.WindowManager;
+import android.widget.Button;
+import android.widget.CheckBox;
+import android.widget.EditText;
 import android.widget.ProgressBar;
 import android.widget.Toast;
 
 import org.jetbrains.annotations.NotNull;
-import org.json.JSONException;
 
 import java.io.File;
 
@@ -294,6 +296,86 @@ public class MainActivity extends Activity
         switch (item.getItemId()) {
 			case R.id.action_size: {
 				// change size of the image
+                DialogHelper.inputCustom(this, "Resize Image", R.layout.image_size_editor,
+                        new DialogHelper.DialogFunction() {
+                            @Override
+                            public void apply(DialogInterface d) {
+                                // insert current size
+                                EditText widthView = (EditText) ((AlertDialog) d).findViewById(R.id.widthEditText);
+                                EditText heightView = (EditText) ((AlertDialog) d).findViewById(R.id.heightEditText);
+
+                                widthView.setText(Integer.toString(bitmapFragment.width()));
+                                widthView.setText(Integer.toString(bitmapFragment.height()));
+
+                                // listener to button
+                                Button resetButton = (Button) ((AlertDialog) d).findViewById(R.id.resetSizeButton);
+
+                                resetButton.setOnClickListener(new View.OnClickListener() {
+                                    @Override
+                                    public void onClick(View view) {
+                                        SharedPreferences prefs =
+                                                PreferenceManager.getDefaultSharedPreferences(view.getContext());
+
+                                        Point dim = new Point();
+
+                                        dim.set(prefs.getInt("width", -1), prefs.getInt("height", -1));
+
+                                        if (dim.x <= 0 || dim.y <= 0) {
+                                            dim = MainActivity.screenDimensions(view.getContext());
+                                        }
+
+                                        widthView.setText(Integer.toString(dim.x));
+                                        heightView.setText(Integer.toString(dim.y));
+                                    }
+                                });
+
+                            }
+                        },
+                        new DialogHelper.DialogFunction() {
+                            @Override
+                            public void apply(DialogInterface d) {
+                                // insert current size
+                                EditText widthView = (EditText) ((AlertDialog) d).findViewById(R.id.widthEditText);
+                                EditText heightView = (EditText) ((AlertDialog) d).findViewById(R.id.heightEditText);
+
+                                boolean setAsDefault = ((CheckBox) ((AlertDialog) d).findViewById(R.id.defaultCheckBox)).isChecked();
+
+                                int w, h;
+
+                                try {
+                                    w = Integer.parseInt(widthView.getText().toString());
+                                } catch(NumberFormatException e) {
+                                    Toast.makeText(((AlertDialog) d).getContext(), "invalid width", Toast.LENGTH_LONG).show();
+                                    return;
+                                }
+
+                                try {
+                                    h = Integer.parseInt(heightView.getText().toString());
+                                } catch(NumberFormatException e) {
+                                    Toast.makeText(((AlertDialog) d).getContext(), "invalid height", Toast.LENGTH_LONG).show();
+                                    return;
+                                }
+
+                                if(w < 1) {
+                                    Toast.makeText(((AlertDialog) d).getContext(), "width must be >= 1", Toast.LENGTH_LONG).show();
+                                    return;
+                                }
+
+                                if(h < 1) {
+                                    Toast.makeText(((AlertDialog) d).getContext(), "height must be >= 1", Toast.LENGTH_LONG).show();
+                                    return;
+                                }
+
+                                if(w == bitmapFragment.width() && h == bitmapFragment.height()) {
+                                    Toast.makeText(((AlertDialog) d).getContext(), "size not changed", Toast.LENGTH_SHORT).show();
+
+                                    if(setAsDefault) storeDefaultSize(w, h);
+                                } else {
+                                    // call editor
+                                    bitmapFragment.setSize(w, h, setAsDefault);
+                                }
+                            }
+                        });
 				EditableDialogFragment ft = EditableDialogFragment.newInstance(IMAGE_SIZE,
 						"Change Image Size", false, EditableDialogFragment.Type.ImageSize)
 						.setInitVal(new int[]{ bitmapFragment.width(), bitmapFragment.height() });
@@ -302,10 +384,12 @@ public class MainActivity extends Activity
 			} return true;
 
 			case R.id.action_add_favorite: {
-				EditableDialogFragment ft = EditableDialogFragment.newInstance(ADD_FAVORITE,
-						"Add Favorite", false, EditableDialogFragment.Type.Name);
-
-				ft.show(getFragmentManager(), "dialog");
+				DialogHelper.inputText(this, "Add Favorite", "", new Commons.KeyAction() {
+					@Override
+					public void apply(String key) {
+						saveFavorite(key);
+					}
+				});
 			} return true;
 
 			case R.id.action_parameters: {
@@ -470,26 +554,69 @@ public class MainActivity extends Activity
 	}*/
 
 	private void saveImage() {
-		EditableDialogFragment.newInstance(SAVE_IMAGE,
-				"Enter filename", false, EditableDialogFragment.Type.Name)
-				.show(getFragmentManager(), "dialog");
+        DialogHelper.inputCustom(this, "Enter filename", R.layout.save_image_layout,
+                new DialogHelper.DialogFunction() {
+                    @Override
+                    public void apply(DialogInterface d) {
+
+                    }
+                },
+                new DialogHelper.DialogFunction() {
+                    @Override
+                    public void apply(DialogInterface d) {
+                        // check "bookmark"-checkbox.
+                        EditText editText = (EditText) ((AlertDialog) d).findViewById(R.id.filenameEditText);
+                        CheckBox checkBox = (CheckBox) ((AlertDialog) d).findViewById(R.id.addToFavoritesCheckBox);
+
+                        String filename = editText.getText().toString();
+                        boolean addToFavorites = checkBox.isChecked();
+
+                        if(filename.isEmpty()) {
+                            DialogHelper.error(MainActivity.this, "Filename must not be empty");
+                            return;
+                        }
+
+                        if(addToFavorites) {
+                            saveFavorite(filename);
+                        }
+
+                        File directory = new File(
+                                Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_PICTURES),
+                                "Fractview");
+
+                        Log.d("MA", "Saving file: Path is " + directory);
+
+                        if(!directory.exists()) {
+                            Log.d("MA", "Creating directory");
+                            if(!directory.mkdir()) {
+                                DialogHelper.error(MainActivity.this, "Could not create directory");
+                            }
+                        }
+
+                        // loop up index
+                        for(int i = 0;; ++i) {
+                            final File imageFile = new File(directory, filename
+                                    + (i == 0 ? "" : ("(" + i + ")"))
+                                    + (filename.endsWith(".png") ? "" : ".png"));
+
+                            if(!imageFile.exists()) {
+                                // Saving is done in the following background thread
+                                bitmapFragment.saveImage(imageFile);
+                                return;
+                            }
+                        }
+
+                    }
+                });
 	}
 
 	// Labels for EditableDialogFragment
-	private static final int ADD_FAVORITE = 1; // dialog to enter a name for a favorite
 	private static final int IMAGE_SIZE = 2; // dialog to change image resolution
-	private static final int SAVE_IMAGE = 3; // dialog to save the image
 
 	@Override
 	public void apply(int resourceCode, Object o) {
 		switch (resourceCode) {
-			case ADD_FAVORITE: {
-				saveFavorite((String) o);
-			} break;
 			case IMAGE_SIZE: {
-				// it requires amazingly much code to simply
-				// check whether a string contains a parseable
-				// positive integer...
 				int[] retVal = (int[]) o;
 
 				int w = retVal[0], h = retVal[1];
@@ -504,42 +631,6 @@ public class MainActivity extends Activity
 					bitmapFragment.setSize(w, h, setAsDefault);
 				}
 			} break;
-			case SAVE_IMAGE: {
-				String filename = (String) o;
-
-				if(filename.isEmpty()) {
-					Toast.makeText(this, "ERROR: Filename must not be empty.", Toast.LENGTH_LONG).show();
-				}
-
-				File directory = new File(
-						Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_PICTURES),
-						"Fractview");
-
-				Log.d("MA", "Saving file: Path is " + directory);
-
-				if(!directory.exists()) {
-					Log.d("MA", "Creating directory");
-					if(!directory.mkdir()) {
-						Toast.makeText(this, "ERROR: Could not create directory.",
-								Toast.LENGTH_LONG).show();
-					}
-				}
-
-				// loop up index
-				for(int i = 0;; ++i) {
-					final File imageFile = new File(directory, filename
-							+ (i == 0 ? "" : ("(" + i + ")"))
-							+ (filename.endsWith(".png") ? "" : ".png"));
-
-					if(!imageFile.exists()) {
-						// Saving is done in the following background thread
-						bitmapFragment.saveImage(imageFile);
-						return;
-					}
-				}
-
-				// unreachable code.
-			}
 			default:
 				throw new IllegalArgumentException("Did not expect this: " + resourceCode);
 		}
@@ -555,28 +646,7 @@ public class MainActivity extends Activity
 		Fractal fractal = bitmapFragment.fractal();
 		FavoriteEntry fav = FavoriteEntry.create(name, fractal, bitmapFragment.getBitmap());
 
-		SharedPreferences favoritesPrefs = getSharedPreferences("favorites", Context.MODE_PRIVATE);
-
-		// if title exists, append an index
-		if(favoritesPrefs.contains(name)) {
-			int index = 1; // start from 1
-			while(favoritesPrefs.contains(name + " (" + index + ")")) {
-				index ++;
-			}
-
-			name = name + " (" + index + ")";
-		}
-
-		SharedPreferences.Editor editor = favoritesPrefs.edit();
-
-		try {
-			// and put it into shared preferences and store it thus.
-			editor.putString(name, fav.toJSON().toString());
-			editor.apply();
-		} catch (JSONException e) {
-			e.printStackTrace();
-			Toast.makeText(MainActivity.this, "ERROR: " + e.getLocalizedMessage(), Toast.LENGTH_LONG).show();
-		}
+		FavoritesManager.add(this, name, fav, SharedPrefsHelper.SaveMethod.FindNext);
 	}
 
 	void setNewFractal(final Fractal newFractal) {

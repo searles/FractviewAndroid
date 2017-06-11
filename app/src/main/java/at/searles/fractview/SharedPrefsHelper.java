@@ -1,64 +1,103 @@
 package at.searles.fractview;
 
-import android.app.AlertDialog;
 import android.content.Context;
-import android.content.DialogInterface;
 import android.content.SharedPreferences;
+
+import java.util.Map;
 
 /**
  * Helper for Shared Preferences
  */
 public class SharedPrefsHelper {
 
+    public enum SaveMethod { Override, FindNext };
+
+    private final SharedPreferences prefs;
+
+    public SharedPrefsHelper(Context context, String prefsName) {
+        this.prefs = context.getSharedPreferences(
+                prefsName,
+                Context.MODE_PRIVATE);
+    }
+
+    private String findNextAvailableName(String name) {
+        // if title exists, append an index
+        if(prefs.contains(name)) {
+            int index = 1; // start from 1
+            while(prefs.contains(name + " (" + index + ")")) {
+                index ++;
+            }
+
+            name = name + " (" + index + ")";
+        }
+
+        return name;
+    }
+
     /**
      * @param key The key for the provided shared preferences
      * @return a String stored in sharedPreferences
      */
-    public static String loadFromSharedPref(Context context, String prefsName, String key) {
-        SharedPreferences prefs = context.getSharedPreferences(
-                prefsName,
-                Context.MODE_PRIVATE);
-
+    public String get(String key) {
         return prefs.getString(key, null);
     }
 
-    public static void saveToSharedPref(Context context, String prefsName, String key, String value) {
-        SharedPreferences prefs = context.getSharedPreferences(
-                prefsName,
-                Context.MODE_PRIVATE);
+    public void add(String key, String value, SaveMethod method) {
+        keyAction(key, new Commons.KeyAction() {
+            @Override
+            public void apply(String key) {
+                add(key, value);
+            }
+        }, method);
+    }
 
+    private void keyAction(String key, Commons.KeyAction action, SaveMethod method) {
         if(prefs.contains(key)) {
-            // Check whether this pref should really be overwritten
-
-            // todo should I create  a new dialog fragment for yes/no?
-
-            AlertDialog.Builder yesNoBuilder = new AlertDialog.Builder(context);
-            yesNoBuilder.setIcon(android.R.drawable.ic_delete);
-            yesNoBuilder.setTitle("Overwrite entry " + key + "?");
-
-            yesNoBuilder.setPositiveButton("Yes", new DialogInterface.OnClickListener() {
-                @Override
-                public void onClick(DialogInterface dialogInterface, int which) {
-                    SharedPreferences.Editor edit = prefs.edit();
-                    edit.putString(key, value);
-                    edit.apply();
-                    dialogInterface.dismiss();
-                }
-            });
-
-            yesNoBuilder.setNegativeButton("No", new DialogInterface.OnClickListener() {
-                @Override
-                public void onClick(DialogInterface dialogInterface, int which) {
-                    dialogInterface.dismiss();
-                }
-            });
-
-            yesNoBuilder.show();
+            // now, it depends on save method.
+            switch (method) {
+                case Override:
+                    action.apply(key);
+                    break;
+                case FindNext:
+                    action.apply(findNextAvailableName(key));
+                    break;
+            }
         } else {
-            // does not exist yet.
-            SharedPreferences.Editor edit = prefs.edit();
-            edit.putString(key, value);
-            edit.apply();
+            action.apply(key);
         }
+    }
+
+    private void add(String key, String value) {
+        SharedPreferences.Editor edit = prefs.edit();
+        edit.putString(key, value);
+        edit.apply();
+    }
+
+    public void rename(String key, String newKey, SaveMethod method, Context context) {
+        if(prefs.contains(key)) {
+            String value = get(key);
+
+            keyAction(key, new Commons.KeyAction() {
+                @Override
+                public void apply(String key) {
+                    if(!key.equals(newKey)) {
+                        add(newKey, value);
+                        remove(key);
+                    }
+                }
+            }, method);
+        } else {
+            DialogHelper.error(context, "Shared Preferences do not contain " + key);
+        }
+    }
+
+    public void remove(String key) {
+        SharedPreferences.Editor edit = prefs.edit();
+        edit.remove(key);
+        edit.apply();
+    }
+
+    public Map<String, ?> getAll() {
+        return prefs.getAll();
     }
 }

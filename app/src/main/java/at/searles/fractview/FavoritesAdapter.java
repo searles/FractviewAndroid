@@ -7,7 +7,13 @@ import android.widget.BaseAdapter;
 import android.widget.ImageView;
 import android.widget.TextView;
 
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
+
+import at.searles.fractview.fractal.FavoriteEntry;
 
 /**
  * Adapter for fractals with bitmaps
@@ -15,11 +21,24 @@ import java.util.List;
 public class FavoritesAdapter extends BaseAdapter {
 
 	private final Activity context;
-	private final List<? extends FractalEntry> entries;
+	private final List<String> keys;
+	private final Map<String, FractalEntry> entries;
 
-	public FavoritesAdapter(Activity context, List<? extends FractalEntry> entries) {
+	public FavoritesAdapter(Activity context) {
 		this.context = context;
-		this.entries = entries;
+
+		keys = new ArrayList<>();
+		this.entries = new HashMap<>();
+	}
+
+	public void setData(Map<String, FavoriteEntry> entries) {
+		keys.clear();
+		entries.clear();
+
+		keys.addAll(entries.keySet());
+		Collections.sort(keys);
+
+		this.entries.putAll(entries);
 	}
 
 	@Override
@@ -29,7 +48,7 @@ public class FavoritesAdapter extends BaseAdapter {
 
 	@Override
 	public FractalEntry getItem(int index) {
-		return entries.get(index);
+		return entries.get(keys.get(index));
 	}
 
 	@Override
