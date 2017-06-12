@@ -24,7 +24,6 @@ public class FavoritesManager {
             return;
         }
 
-        new SharedPrefsHelper(context, FAVORITES)
-                .add(name, entryString, method, context);
+        new SharedPrefsHelper(context, FAVORITES).add(name, entryString, method);
     }
 }

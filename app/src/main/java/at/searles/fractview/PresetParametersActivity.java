@@ -103,6 +103,7 @@ public class PresetParametersActivity extends Activity {
             ids.add(id);
         }
 
+        // fixme label!
         next_asset: for(AssetsHelper.ParametersAsset entry : AssetsHelper.parameterEntries(getAssets())) {
             Iterator<String> i = entry.parameters.iterator();
 
@@ -120,7 +121,8 @@ public class PresetParametersActivity extends Activity {
             entries.add(entry);
         }
 
-        final FavoritesAdapter adapter = new FavoritesAdapter(this, entries);
+        final FavoritesAdapter adapter = new FavoritesAdapter(this);
+        adapter.setData(entries);
 
         lv.setAdapter(adapter);
 

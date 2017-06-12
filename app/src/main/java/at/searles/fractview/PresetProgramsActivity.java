@@ -63,7 +63,8 @@ public class PresetProgramsActivity extends Activity {
 		entries.addAll(assets);
 
 		// wrap the favorites-adapter so that first
-		final FavoritesAdapter adapter = new FavoritesAdapter(this, entries);
+		final FavoritesAdapter adapter = new FavoritesAdapter(this);
+		adapter.setData(entries);
 
 		lv.setAdapter(adapter);
 

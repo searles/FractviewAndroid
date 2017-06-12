@@ -30,9 +30,14 @@ public class EditProgramActivity extends Activity implements EditableDialogFragm
 	private static final int LOAD_PROGRAM = -1;
 	private static final int SAVE_PROGRAM = -2;
 
+	private SharedPrefsHelper prefsHelper;
+
 	@Override
 	public void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
+
+		prefsHelper = new SharedPrefsHelper(this, PREFS_NAME);
+
 		setContentView(R.layout.program_layout);
 
 		// fetch program from intent
@@ -226,11 +231,11 @@ public class EditProgramActivity extends Activity implements EditableDialogFragm
 		switch(requestCode) {
 			case SAVE_PROGRAM: {
 				String name = (String) o;
-				SharedPrefsHelper.saveToSharedPref(this, PREFS_NAME, name, source);
+				prefsHelper.add(name, source, SharedPrefsHelper.SaveMethod.FindNext);
 			} break;
 			case LOAD_PROGRAM: {
 				String name = (String) o;
-				source = SharedPrefsHelper.loadFromSharedPref(this, PREFS_NAME, name);
+				source = prefsHelper.get(name);
 				editor.setText(source);
 			} break;
 			default:

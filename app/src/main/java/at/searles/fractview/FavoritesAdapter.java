@@ -31,14 +31,24 @@ public class FavoritesAdapter extends BaseAdapter {
 		this.entries = new HashMap<>();
 	}
 
-	public void setData(Map<String, FavoriteEntry> entries) {
+    public void setData(Map<String, FavoriteEntry> entryMap) {
 		keys.clear();
 		entries.clear();
 
-		keys.addAll(entries.keySet());
+		keys.addAll(entryMap.keySet());
 		Collections.sort(keys);
 
-		this.entries.putAll(entries);
+		this.entries.putAll(entryMap);
+	}
+
+	public void setData(List<FractalEntry> entryList) {
+		keys.clear();
+		entries.clear();
+
+		for(FractalEntry entry : entryList) {
+			keys.add(entry.title());
+			this.entries.put(entry.title(), entry);
+		}
 	}
 
 	@Override
