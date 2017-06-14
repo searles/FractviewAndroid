@@ -39,8 +39,6 @@
     <string name="action_load_program">Load</string>
     <string name="action_compile">Compile</string>
     <string name="action_scale">Scale</string>
-    <string name="action_export_bookmarks">Export Bookmarks</string>
-    <string name="action_import_bookmarks">Import Bookmarks</string>
     <string name="action_load_palette">Load Palette</string>
     <string name="action_save_palette">Save Palette</string>
     <string name="action_import_bookmark">Paste Bookmark From Clipboard</string>

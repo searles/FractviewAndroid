@@ -5,17 +5,19 @@ import android.app.Fragment;
 import android.app.WallpaperManager;
 import android.content.Intent;
 import android.graphics.Bitmap;
-import android.graphics.Matrix;
 import android.net.Uri;
 import android.os.AsyncTask;
 import android.os.Bundle;
 import android.os.Handler;
+import android.os.Looper;
 import android.util.Log;
 import android.widget.Toast;
 
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.util.LinkedList;
+import java.util.List;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -88,7 +90,7 @@ public class BitmapFragment extends Fragment implements
 	private Bitmap bitmap;
 
 	// Now the drawing stuff
-	private FractalDrawer drawer = null;
+	private FractalDrawer drawer;
     private ExecutorService executorService;
     private Future<?> currentFuture;
 
@@ -100,32 +102,38 @@ public class BitmapFragment extends Fragment implements
 	// the next one counts the cancel requests.
 	private volatile int cancelled = 0;
 
-	// if running.
+	// if true, the drawing has not started yet.
+	private boolean isInitializing = true;
+
+    public boolean isInitializing() {
+        return isInitializing;
+    }
+
+    private List<BitmapFragmentListener> listeners = new LinkedList<>();
+
+    public void addBitmapFragmentListener(BitmapFragmentListener listener) {
+        listeners.add(listener);
+    }
+
+    public void removeBitmapFragmentListener(BitmapFragmentListener listener) {
+        if(!listeners.remove(listener)) {
+            Log.e(getClass().getName(), "Trying to remove an inexistent listener!");
+        }
+    }
+
+    // if running.
 	private boolean isRunning;
-
-	/**
-	 * Matrices to convert coordinates into value that is
-	 * independent from the bitmap-size. Normized always
-	 * contains the square -1,-1 - 1-1 with 0,0 in the middle
-	 * but also keeps the ratio of the image.
-	 */
-	public final Matrix bitmap2norm = new Matrix();
-
-	/**
-	 * Inverse of bitmap2norm
-	 */
-	public final Matrix norm2bitmap = new Matrix();
 
 	/**
 	 * This variable is only to be modified from the UI-thread
 	 * to avoid a race condition.
 	 */
-	boolean addToHistory = true; // add the current to history.
+	private boolean addToHistory = true; // add the current to history.
 
 	/**
 	 * List of past fractals that were drawn using this bitmap fragment.
 	 */
-	History history = new History();
+	private History history = new History();
 
 	@Override
 	public void onAttach(Activity context) {
@@ -139,38 +147,40 @@ public class BitmapFragment extends Fragment implements
 		// in the UI-thread, so no race-conditions.
 		if(this.drawer == null) {
 			Log.d("BMF", "First time, onAttach was called...");
-			this.drawer = new RenderScriptDrawer(new FractalDrawer.Controller() {
+			this.drawer = new RenderScriptDrawer(context);
+
+            this.drawer.setListener(
+                new FractalDrawer.FractalDrawerListener() {
 				@Override
 				public void previewGenerated() {
-					// fixme can getActivity return null?
-					getActivity().runOnUiThread(new Runnable() {
+                    new Handler(Looper.getMainLooper()).post(new Runnable() {
 						@Override
 						public void run() {
-							// if getActivity is null, this one will not work anyways
-							((UpdateListener) getActivity()).previewGenerated(BitmapFragment.this);
+                            for(BitmapFragmentListener listener : listeners) {
+                                listener.previewGenerated(BitmapFragment.this);
+                            }
 						}
 					});
 				}
 
 				@Override
 				public void bitmapUpdated() {
-					// fixme can getActivity return null?
-					getActivity().runOnUiThread(new Runnable() {
-						@Override
-						public void run() {
-							// if getActivity is null, this one will not work anyways
-							((UpdateListener) getActivity()).bitmapUpdated(BitmapFragment.this);
+                    new Handler(Looper.getMainLooper()).post(new Runnable() {
+                        @Override
+                        public void run() {
+                            for(BitmapFragmentListener listener : listeners) {
+                                listener.previewGenerated(BitmapFragment.this);
+                            }
 						}
 					});
 				}
 
 				@Override
 				public void finished(final long ms) {
-					Log.d("BMF", "finished was called");
 					isRunning = false;
-					getActivity().runOnUiThread(new Runnable() {
-						@Override
-						public void run() {
+                    new Handler(Looper.getMainLooper()).post(new Runnable() {
+                        @Override
+                        public void run() {
 							Log.d("BMF", "Calling dismiss of waiting dialog");
 							// check whether there is some pending action
 							ProgressDialogFragment waitingDialog =
@@ -188,26 +198,20 @@ public class BitmapFragment extends Fragment implements
 								doImageAction(tmp);
 							}
 
-							// and also inform the activity
-							((UpdateListener) getActivity()).calculationFinished(ms, BitmapFragment.this);
+							// and also inform others
+                            for(BitmapFragmentListener listener : listeners) {
+                                listener.calculationFinished(ms, BitmapFragment.this);
+                            }
 						}
 					});
-				}
-
-				@Override
-				public boolean isCancelled() {
-					return cancelled > 0;
-				}
-
-				@Override
-				public Activity getActivity() {
-					return BitmapFragment.this.getActivity();
 				}
 			});
 		}
 
 		if(this.bitmap != null) {
-			((UpdateListener) getActivity()).newBitmapCreated(bitmap, this); // in case of rotation, this fragment is preserved
+            for(BitmapFragmentListener listener : listeners) {
+                listener.newBitmapCreated(bitmap, this); // in case of rotation, this fragment is preserved
+            }
 		}
 	}
 
@@ -232,12 +236,10 @@ public class BitmapFragment extends Fragment implements
 			throw new IllegalArgumentException("width was " + width + ", height was " + height);
 		}
 
-		updateMatrices();
-
 		// create bitmap
 		this.bitmap = Bitmap.createBitmap(width, height, Bitmap.Config.ARGB_8888);
 
-		((UpdateListener) getActivity()).newBitmapCreated(bitmap, this); // tell others about it.
+		listeners.forEach((l) -> l.newBitmapCreated(bitmap, this)); // tell others about it.
 
 		// and also the fractal.
 		this.fractal = getArguments().getParcelable("fractal");
@@ -263,80 +265,28 @@ public class BitmapFragment extends Fragment implements
 		// finally, we initialize the drawer.
 		// this might take some time after a fresh install, hence do it in the background
 		new AsyncTask<Void, Void, Void>() {
-			boolean finished = false;
-
 			@Override
 			protected Void doInBackground(Void...ignore) {
+				if(drawer == null) {
+					Log.e(getClass().getName(), "drawer is null!");
+				}
 				drawer.init(bitmap, fractal);
 				return null;
 			}
 
 			@Override
-			protected void onPreExecute() {
-				Handler handler = new Handler(); // FIXME create a 'delayed dialog'-class.
-				handler.postDelayed(new Runnable() {
-					@Override
-					public void run() {
-						// start in UI-thread (unless we are already done)
-						if(!finished) {
-							Log.d("BMF", "Creating dialog");
-							ProgressDialogFragment.newInstance(ProgressDialogValues.Init.ordinal(),
-									true,
-									"Please wait...",
-									"Initializing program (this may take a few seconds "
-											+ "after the program cache was cleaned because"
-											+ " the GPU scripts are compiled by Android)", false)
-									.show(getFragmentManager(), "initRSDialog");
-						}
-					}
-                }, 1250); // show dialog after 1250ms
-			}
-
-			@Override
 			protected void onPostExecute(Void ignore) {
-				finished = true;
+                Log.d("BMF", "Init Fractal is done, starting thread");
+                drawer.setFractal(fractal);
 
-				ProgressDialogFragment ft = (ProgressDialogFragment) getFragmentManager().findFragmentByTag("initRSDialog");
+                isInitializing = false; // done
+                for(BitmapFragmentListener listener : listeners) {
+                    listener.initializationFinished();
+                }
 
-				if(ft != null) {
-					Log.d("BF", "Trying to close dialog");
-					ft.dismissAllowingStateLoss();
-				}
-
-				Log.d("BMF", "Init Fractal");
-				drawer.setFractal(fractal);
-
-				Log.d("BMF", "Starting thread");
 				startBackgroundTask();
 			}
 		}.execute();
-	}
-
-	/**
-	 * Must be called when the size is modified.
-	 */
-	protected void updateMatrices() {
-		float m = Math.min(width, height);
-
-		bitmap2norm.setValues(new float[]{
-				2f / m, 0f, -width / m,
-				0f, 2f / m, -height / m,
-				0f, 0f, 1f
-		});
-
-		//bitmap2norm.reset();
-		//bitmap2norm.setScale(2f / m, 2f / m);
-		//bitmap2norm.setTranslate(width / m, height / m);
-
-		//norm2bitmap.reset();
-		//norm2bitmap.setScale(m / 2f, m / 2f);
-		//norm2bitmap.setTranslate(width / 2f, height / 2f);
-
-		norm2bitmap.setValues(new float[]{
-				m / 2f, 0f, width / 2f,
-				0f, m / 2f, height / 2f,
-				0f, 0f, 1f
-		});
 	}
 
 	public float progress() {
@@ -374,12 +324,10 @@ public class BitmapFragment extends Fragment implements
 			this.width = width;
 			this.height = height;
 
-			updateMatrices();
-
 			getActivity().runOnUiThread(new Runnable() {
 				@Override
 				public void run() {
-					((UpdateListener) getActivity()).newBitmapCreated(bitmap, BitmapFragment.this);
+					listeners.forEach((l) -> l.newBitmapCreated(bitmap, BitmapFragment.this));
 				}
 			});
 
@@ -387,6 +335,7 @@ public class BitmapFragment extends Fragment implements
 				getActivity().runOnUiThread(new Runnable() {
 					@Override
 					public void run() {
+						// fixme This one should not be here!
 						((MainActivity) getActivity()).storeDefaultSize(width, height);
 					}
 				});
@@ -533,9 +482,7 @@ public class BitmapFragment extends Fragment implements
         Log.d("BMF", "Start Drawing");
 		isRunning = true;
 
-		// FIXME ((UpdateListener) getActivity()) can be null in here...
-
-		((UpdateListener) getActivity()).calculationStarting(this);
+		listeners.forEach((l) -> l.calculationStarting(this));
         currentFuture = executorService.submit(drawer);
 
 		if(addToHistory) {
@@ -801,7 +748,9 @@ public class BitmapFragment extends Fragment implements
 	 * created this BitmapFragment. It uses the following interface
 	 * for this purpose.
 	 */
-	public interface UpdateListener {
+	public interface BitmapFragmentListener {
+        void initializationFinished();
+
 		/**
 		 * The view and progress bars should be updated because
 		 * the bitmap changed

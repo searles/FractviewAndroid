@@ -7,22 +7,14 @@
     android:rowCount="3"
     android:columnCount="3">
 
-    <at.searles.fractview.ui.ScaleableImageView
+    <at.searles.fractview.ui.BitmapFragmentView
         android:layout_width="fill_parent"
         android:layout_height="fill_parent"
-        android:id="@+id/imageView"
+        android:id="@+id/mainBitmapFragmentView"
         android:gravity="center|center_vertical"
         android:scaleType="matrix"
         android:keepScreenOn="true"
         android:background="@android:color/darker_gray"/>
-
-    <ProgressBar
-        style="?android:attr/progressBarStyleHorizontal"
-        android:layout_width="fill_parent"
-        android:layout_height="wrap_content"
-        android:id="@+id/progressBar"
-        android:layout_gravity="top|center_horizontal"
-        android:progressBackgroundTint="@android:color/transparent" />
 
 </FrameLayout>
 

@@ -35,6 +35,7 @@ public class DialogHelper {
         builder.setTitle(title);
 
         final EditText input = new EditText(context);
+        input.setText(defaultInput);
 
         input.setInputType(InputType.TYPE_CLASS_TEXT);
         builder.setView(input);

@@ -63,7 +63,7 @@ public class PresetProgramsActivity extends Activity {
 		entries.addAll(assets);
 
 		// wrap the favorites-adapter so that first
-		final FavoritesAdapter adapter = new FavoritesAdapter(this);
+		final FractalEntryAdapter adapter = new FractalEntryAdapter(this);
 		adapter.setData(entries);
 
 		lv.setAdapter(adapter);

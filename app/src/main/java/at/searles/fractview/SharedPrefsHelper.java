@@ -2,6 +2,7 @@ package at.searles.fractview;
 
 import android.content.Context;
 import android.content.SharedPreferences;
+import android.util.Log;
 
 import java.util.Map;
 
@@ -74,16 +75,14 @@ public class SharedPrefsHelper {
     }
 
     public void rename(String key, String newKey, SaveMethod method, Context context) {
-        if(prefs.contains(key)) {
+        if(prefs.contains(key) && !key.equals(newKey)) {
             String value = get(key);
 
-            keyAction(key, new Commons.KeyAction() {
+            keyAction(newKey, new Commons.KeyAction() {
                 @Override
-                public void apply(String key) {
-                    if(!key.equals(newKey)) {
-                        add(newKey, value);
-                        remove(key);
-                    }
+                public void apply(String newKey) {
+                    add(newKey, value);
+                    remove(key);
                 }
             }, method);
         } else {
@@ -92,9 +91,13 @@ public class SharedPrefsHelper {
     }
 
     public void remove(String key) {
-        SharedPreferences.Editor edit = prefs.edit();
-        edit.remove(key);
-        edit.apply();
+        if(!prefs.contains(key)) {
+            Log.e(getClass().getName(), "Trying to remove an inexistent key!");
+        } else {
+            SharedPreferences.Editor edit = prefs.edit();
+            edit.remove(key);
+            edit.apply();
+        }
     }
 
     public Map<String, ?> getAll() {

@@ -18,20 +18,20 @@ import at.searles.fractview.fractal.FavoriteEntry;
 /**
  * Adapter for fractals with bitmaps
  */
-public class FavoritesAdapter extends BaseAdapter {
+public class FractalEntryAdapter extends BaseAdapter {
 
 	private final Activity context;
 	private final List<String> keys;
 	private final Map<String, FractalEntry> entries;
 
-	public FavoritesAdapter(Activity context) {
+	public FractalEntryAdapter(Activity context) {
 		this.context = context;
 
 		keys = new ArrayList<>();
 		this.entries = new HashMap<>();
 	}
 
-    public void setData(Map<String, FavoriteEntry> entryMap) {
+    public void setData(Map<String, ? extends FractalEntry> entryMap) {
 		keys.clear();
 		entries.clear();
 
@@ -41,7 +41,7 @@ public class FavoritesAdapter extends BaseAdapter {
 		this.entries.putAll(entryMap);
 	}
 
-	public void setData(List<FractalEntry> entryList) {
+	public void setData(List<? extends FractalEntry> entryList) {
 		keys.clear();
 		entries.clear();
 

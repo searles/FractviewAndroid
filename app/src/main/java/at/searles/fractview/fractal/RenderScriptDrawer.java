@@ -1,34 +1,40 @@
 package at.searles.fractview.fractal;
 
-import android.app.Fragment;
+import android.content.Context;
 import android.graphics.Bitmap;
-import android.renderscript.*;
+import android.os.Handler;
+import android.os.Looper;
+import android.renderscript.Allocation;
+import android.renderscript.Double2;
+import android.renderscript.Element;
+import android.renderscript.Matrix4f;
+import android.renderscript.RSRuntimeException;
+import android.renderscript.RenderScript;
 import android.util.Log;
+
+import java.util.LinkedList;
+import java.util.List;
+
 import at.searles.fractview.ScriptC_fillimage;
 import at.searles.fractview.ScriptC_fractal;
 import at.searles.fractview.ScriptField_lab_surface;
 import at.searles.fractview.ScriptField_palette;
-import at.searles.fractview.fractal.Fractal;
-import at.searles.fractview.fractal.FractalDrawer;
 import at.searles.math.Scale;
 import at.searles.math.color.Palette;
-
-import java.util.LinkedList;
-import java.util.List;
 
 public class RenderScriptDrawer implements FractalDrawer {
 	// Renderscript-Part
 	public static final int parallelPixs = 10240; // fixme allow setting
 	public static final int factor = 2; // 2^INIT_PIX_SIZE = 16
 
-	private FractalDrawer.Controller controller;
+	private FractalDrawer.FractalDrawerListener listener;
 
 	private Scale scale;
 	private Bitmap bitmap;
 	private int width;
 	private int height;
 
-	private final RenderScript rs;
+	private RenderScript rs;
 	private Allocation rsBitmap = null;
 
 	private ScriptC_fillimage fillScript;
@@ -55,12 +61,15 @@ public class RenderScriptDrawer implements FractalDrawer {
 	// for the task-part
 	private volatile int maxProgress;
 	private volatile int progress;
+	private boolean isCancelled;
 
-	public RenderScriptDrawer(FractalDrawer.Controller controller) {
-		this.controller = controller;
-
+	public RenderScriptDrawer(Context context) {
 		// initialize renderscript
-		this.rs = RenderScript.create(controller.getActivity());
+		this.rs = RenderScript.create(context);
+	}
+
+	public void setListener(FractalDrawerListener listener) {
+		this.listener = listener;
 	}
 
 	public void init(Bitmap bitmap, Fractal fractal) throws RSRuntimeException {
@@ -94,6 +103,11 @@ public class RenderScriptDrawer implements FractalDrawer {
 	@Override
 	public float progress() {
 		return progress / ((float) maxProgress);
+	}
+
+	@Override
+	public void cancel() {
+		this.isCancelled = true;
 	}
 
 	public void updateBitmap(Bitmap bm) {
@@ -161,9 +175,7 @@ public class RenderScriptDrawer implements FractalDrawer {
 		maxProgress = size;
 
 		while (stepsize > 0) {
-			if (controller.isCancelled()) break;
-
-			// FIXME Idea: AsyncTask for each step.
+			if (isCancelled) break;
 
 			script.set_stepsize(stepsize);
 
@@ -189,10 +201,8 @@ public class RenderScriptDrawer implements FractalDrawer {
 
 				rsTile.copyTo(dummy);
 
-				// fixme I should find a better way though!
-
 				progress += tilelength;
-				if (controller.isCancelled()) break;
+				if (isCancelled) break;
 			}
 
 			// fill gaps
@@ -209,7 +219,7 @@ public class RenderScriptDrawer implements FractalDrawer {
 			// fixme line before was replaced by the following: try whether this improves crashes.
 			try {
 				synchronized (copyRunnable) {
-					controller.getActivity().runOnUiThread(copyRunnable);
+					new Handler(Looper.getMainLooper()).post(copyRunnable);
 					copyRunnable.wait();
 				}
 			} catch (InterruptedException e) {
@@ -227,10 +237,10 @@ public class RenderScriptDrawer implements FractalDrawer {
 			// image was updated, tell people about it.
 			if (firstCall) {
 				script.set_factor(factor); // it was 0 initially.
-				controller.previewGenerated();
+				listener.previewGenerated();
 				firstCall = false;
 			} else {
-				controller.bitmapUpdated();
+				listener.bitmapUpdated();
 			}
 
 			stepsize /= factor;
@@ -238,9 +248,9 @@ public class RenderScriptDrawer implements FractalDrawer {
 			lasttotalpix = totalpix;
 		}
 
-		if (!(controller.isCancelled())) {
+		if (!isCancelled) {
 			dur = System.currentTimeMillis() - dur;
-			controller.finished(dur);
+			listener.finished(dur);
 		}
 	}
 

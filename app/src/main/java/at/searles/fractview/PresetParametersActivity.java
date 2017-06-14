@@ -121,7 +121,7 @@ public class PresetParametersActivity extends Activity {
             entries.add(entry);
         }
 
-        final FavoritesAdapter adapter = new FavoritesAdapter(this);
+        final FractalEntryAdapter adapter = new FractalEntryAdapter(this);
         adapter.setData(entries);
 
         lv.setAdapter(adapter);

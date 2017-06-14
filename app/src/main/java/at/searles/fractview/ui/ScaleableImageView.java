@@ -19,7 +19,7 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.LinkedList;
 
-import at.searles.fractview.BitmapFragment;
+import at.searles.fractview.Commons;
 import at.searles.fractview.MultiTouchController;
 import at.searles.math.Scale;
 
@@ -113,7 +113,11 @@ public class ScaleableImageView extends View {
 		};
 	}
 
-	private boolean showGrid; // FIXME shouldn't I rather have one state object?
+	public static interface Listener {
+		void scaleRelative(Scale m);
+	}
+
+	private boolean showGrid;
 	private boolean rotationLock;
 	private boolean confirmZoom;
 	private boolean deactivateZoom;
@@ -122,20 +126,12 @@ public class ScaleableImageView extends View {
 	// Scroll-Events are handled as multitouch scale-events
 	// double tab zooms at tabbed position
 
-	// FIXME: Change structure so that bitmap Fragment is not needed.
-	// FIXME: bitmap fragment is needed for the following reasons:
-	// FIXME: first, matrices for view transformations
-	// FIXME: second, setting Scale
-	// FIXME: and third, checking whether it is still running.
-	// FIXME: and 4: setting scale.
-
-	// Reason 3: Why do I need to know whether it is still running?
-
 	// === The following fields are not preserved over rotation ===
-	private BitmapFragment bitmapFragment;
 
 	private Matrix view2bitmap = new Matrix();
 	private Matrix bitmap2view = new Matrix();
+
+	private Listener listener;
 
 	/**
 	 * We use this one to store the last transformation
@@ -160,6 +156,8 @@ public class ScaleableImageView extends View {
      */
 	private Matrix imageMatrix;
 
+	private Bitmap bitmap;
+
 	/**
 	 *
 	 * @param context
@@ -170,13 +168,17 @@ public class ScaleableImageView extends View {
 		initTouch();
 	}
 
-	private Bitmap bitmap() {
-		return bitmapFragment.getBitmap();
+	public void setListener(Listener listener) {
+		this.listener = listener;
 	}
 
-	public void updatedBitmap() {
-		// FIXME What action has to be done when the image is actually updated?
+	public void setBitmap(Bitmap bitmap) {
+		this.bitmap = bitmap;
 	}
+
+	/*private Bitmap bitmap() {
+		return bitmapFragment.getBitmap();
+	}*/
 
 	/**
 	 * Toggle show-grid flag
@@ -267,10 +269,10 @@ public class ScaleableImageView extends View {
      * @return
      */
 	private float scaledBitmapWidth(float viewWidth, float viewHeight) {
-		if(bitmapFragment == null) return viewWidth;
+		if(bitmap == null) return viewWidth;
 
-		float bitmapWidth = bitmapFragment.width(); // fixme: bitmapFragment requires drawer in the background.
-		float bitmapHeight = bitmapFragment.height();
+		float bitmapWidth = bitmap.getWidth();
+		float bitmapHeight = bitmap.getHeight();
 
 		/* Just some thoughts:
 		The scaled rectangle of the bitmap should fit into the view.
@@ -287,10 +289,10 @@ public class ScaleableImageView extends View {
 	}
 
 	private float scaledBitmapHeight(float viewWidth, float viewHeight) {
-		if(bitmapFragment == null) return viewHeight;
+		if(bitmap == null) return viewHeight;
 
-		float bitmapWidth = bitmapFragment.width(); // fixme: bitmapFragment requires drawer in the background.
-		float bitmapHeight = bitmapFragment.height();
+		float bitmapWidth = bitmap.getWidth(); // fixme: bitmapFragment requires drawer in the background.
+		float bitmapHeight = bitmap.getHeight();
 
 		if(flipBitmap(viewWidth, viewHeight)) {
 			float ratio = Math.min(viewWidth / bitmapHeight, viewHeight / bitmapWidth);
@@ -309,10 +311,10 @@ public class ScaleableImageView extends View {
      * @return
      */
 	private boolean flipBitmap(float viewWidth, float viewHeight) {
-		if(bitmapFragment == null) return false;
+		if(bitmap == null) return false;
 
-		float bitmapWidth = bitmapFragment.width(); // fixme: bitmapFragment requires drawer in the background.
-		float bitmapHeight = bitmapFragment.height();
+		float bitmapWidth = bitmap.getWidth();
+		float bitmapHeight = bitmap.getHeight();
 
 		// maximize filled area
 		if(bitmapWidth > bitmapHeight) {
@@ -332,13 +334,13 @@ public class ScaleableImageView extends View {
 		float vw = MeasureSpec.getSize(widthMeasureSpec);
 		float vh = MeasureSpec.getSize(heightMeasureSpec);
 
-		if(bitmapFragment == null || bitmapFragment.getBitmap() == null) {
+		if(bitmap == null) {
 			setMeasuredDimension((int) vw, (int) vh);
 			return;
 		}
 
-		float bw = bitmapFragment.width(); // fixme: bitmapFragment requires drawer in the background.
-		float bh = bitmapFragment.height();
+		float bw = bitmap.getWidth();
+		float bh = bitmap.getHeight();
 
 		if(vw > vh) {
 			// if width of view is bigger, match longer side to it
@@ -375,50 +377,6 @@ public class ScaleableImageView extends View {
 		setMeasuredDimension(width, height);
 	}
 
-	/**
-	 * The following method should be called whenever the imageview changes its size
-	 * or the bitmap is changed.
-	 */
-	/*public void initMatrices() {
-		// Set initMatrix + inverse to current view-size
-		float vw = getWidth();
-		float vh = getHeight();
-
-		// Right after creation, this view might not
-		// be inside anything and therefore have size 0.
-		if(vw <= 0 && vh <= 0) return; // do nothing.
-
-		// fixme put into scale.
-		float bw = bitmapFragment.width();
-		float bh = bitmapFragment.height();
-
-		RectF viewRect = new RectF(0f, 0f, vw, vh);
-		RectF bitmapRect;
-
-		if(vw > vh) {
-			// if width of view is bigger, match longer side to it
-			bitmapRect = new RectF(0f, 0f, Math.max(bw, bh), Math.min(bw, bh));
-		} else {
-			bitmapRect = new RectF(0f, 0f, Math.min(bw, bh), Math.max(bw, bh));
-		}
-
-		defaultMatrix.setRectToRect(bitmapRect, viewRect, Matrix.ScaleToFit.CENTER);
-
-		// Check orientation
-		if(vw > vh ^ bw > bh) {
-			// Turn centerImageMatrix by 90 degrees
-			Matrix m = new Matrix();
-			m.postRotate(90f);
-			m.postTranslate(bh, 0);
-
-			defaultMatrix.preConcat(m);
-		}
-
-		currentImageMatrix = defaultMatrix;
-
-		setImageMatrix(defaultMatrix);
-	}*/
-
 	@Override
 	public void onDraw(@NotNull Canvas canvas) {
 		/*if(bitmapFragment != null && getDrawable() != null) {
@@ -429,7 +387,7 @@ public class ScaleableImageView extends View {
 
 		// draw image
 		// FIXME matrix!
-		canvas.drawBitmap(bitmap(), imageMatrix, null);
+		canvas.drawBitmap(bitmap, imageMatrix, null);
 
 		// remove bounds
 		float w = getWidth(), h = getHeight();
@@ -504,22 +462,6 @@ public class ScaleableImageView extends View {
 		}
 	}
 
-	public void setBitmapFragment(BitmapFragment bitmapFragment) {
-		this.bitmapFragment = bitmapFragment;
-	}
-
-	/*public void updateBitmap() {
-		setImageBitmap(bitmapFragment.getBitmap());
-		this.requestLayout(); // size might have changed. Force it to relayout
-	}*/
-
-
-
-	/*@Override
-	public void onCreate(Bundle bundle) {
-		super.onCreate(bundle);
-	}*/
-
 	/**
 	 * Called when the bitmap is updated according to the last transformation or
 	 * when a post-edit happend that did not restart the drawing. This is necessary
@@ -567,7 +509,7 @@ public class ScaleableImageView extends View {
 		// gesture detector handles scroll
 		// no action without bitmap fragment.
 		// or if deactivateZoom is set.
-		if(bitmapFragment == null || deactivateZoom) {
+		if(deactivateZoom) {
 			return false;
 		}
 
@@ -595,15 +537,8 @@ public class ScaleableImageView extends View {
 		float[] pts = new float[]{p.x, p.y};
 
 		view2bitmap.mapPoints(pts);
-		bitmapFragment.bitmap2norm.mapPoints(pts);
+		Commons.bitmap2norm(bitmap.getWidth(), bitmap.getHeight()).mapPoints(pts);
 		return new PointF(pts[0], pts[1]);
-	}
-
-	/** Inverse of norm
-	 */
-	void invNormAll(float[] src, float[] dst) {
-		bitmapFragment.norm2bitmap.mapPoints(dst, src);
-		bitmap2view.mapPoints(dst);
 	}
 
 	/**
@@ -625,7 +560,7 @@ public class ScaleableImageView extends View {
 		final Scale sc = Scale.fromMatrix(values);
 
 		// update scale and restart calculation.
-		bitmapFragment.setScaleRelative(sc);
+		listener.scaleRelative(sc);
 
 		// If there are multiple scales pending, then
 		// we combine them into one. This is important for the preview.
@@ -728,8 +663,8 @@ public class ScaleableImageView extends View {
 				m.preConcat(l);
 			}
 
-			m.preConcat(bitmapFragment.bitmap2norm);
-			m.postConcat(bitmapFragment.norm2bitmap);
+			m.preConcat(Commons.bitmap2norm(bitmap.getWidth(), bitmap.getHeight()));
+			m.postConcat(Commons.norm2bitmap(bitmap.getWidth(), bitmap.getHeight()));
 
 			m.postConcat(bitmap2view);
 

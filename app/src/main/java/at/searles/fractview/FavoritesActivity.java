@@ -17,10 +17,12 @@ import android.widget.ListView;
 import org.json.JSONException;
 import org.json.JSONObject;
 
+import java.io.BufferedWriter;
 import java.io.File;
+import java.io.FileWriter;
 import java.io.IOException;
 import java.util.HashMap;
-import java.util.List;
+import java.util.LinkedHashMap;
 import java.util.Map;
 
 import at.searles.fractview.fractal.FavoriteEntry;
@@ -32,14 +34,13 @@ public class FavoritesActivity extends Activity {
 
 	private static final String[] options = {"Rename", "Delete", "Copy To Clipboard"};
 
-	private List<String> keys;
-	private Map<String, FavoriteEntry> entries;
+	// private Map<String, FavoriteEntry> entries;
 	private SharedPrefsHelper prefsHelper;
 
 	private void initData() {
 		Map<String, ?> sharedPrefs = prefsHelper.getAll();
 
-		entries = new HashMap<>(sharedPrefs.size());
+		HashMap<String, FavoriteEntry> entries = new HashMap<>(sharedPrefs.size());
 
 		for(String key : sharedPrefs.keySet()) {
 			try {
@@ -54,7 +55,7 @@ public class FavoritesActivity extends Activity {
 		adapter.notifyDataSetChanged();
 	}
 
-	private FavoritesAdapter adapter;
+	private FractalEntryAdapter adapter;
 
 	@Override
 	public void onCreate(Bundle savedInstanceState) {
@@ -65,7 +66,7 @@ public class FavoritesActivity extends Activity {
 
 		ListView lv = (ListView) findViewById(R.id.bookmarkListView);
 
-		this.adapter = new FavoritesAdapter(this);
+		this.adapter = new FractalEntryAdapter(this);
 
 		initData();
 
@@ -75,10 +76,10 @@ public class FavoritesActivity extends Activity {
 			@Override
 			public void onItemClick(AdapterView<?> parent, View view, int index, long id) {
 				// get bookmark
-				FavoriteEntry fav = entries.get(index);
+				FractalEntry entry = adapter.getItem(index);
 
 				Intent data = new Intent();
-				data.putExtra("fractal", fav.fractal());
+				data.putExtra("fractal", ((FavoriteEntry) entry).fractal());
 				setResult(1, data);
 				finish();
 			}
@@ -93,15 +94,15 @@ public class FavoritesActivity extends Activity {
 				builder.setItems(options, new DialogInterface.OnClickListener() {
 					@Override
 					public void onClick(DialogInterface dialog, int which) {
-						String key = keys.get(index);
+						FavoriteEntry entry = (FavoriteEntry) adapter.getItem(index);
 
 						switch (which) {
 							case 0: {
                                 // Show dialog for new name
-								DialogHelper.inputText(FavoritesActivity.this, "Rename entry", key, new Commons.KeyAction() {
+								DialogHelper.inputText(FavoritesActivity.this, "Rename entry", entry.title(), new Commons.KeyAction() {
 									@Override
 									public void apply(String newKey) {
-										prefsHelper.rename(key, newKey, SharedPrefsHelper.SaveMethod.FindNext, FavoritesActivity.this);
+										prefsHelper.rename(entry.title(), newKey, SharedPrefsHelper.SaveMethod.FindNext, FavoritesActivity.this);
 										initData(); // reinitialize because order might have changed
 									}
 								});
@@ -109,13 +110,13 @@ public class FavoritesActivity extends Activity {
 							break;
 							case 1: {
 								// delete it
-								prefsHelper.remove(key);
+								prefsHelper.remove(entry.title());
 								initData();
 							}
 							break;
 							case 2: {
 								// copy to clipboard
-								ClipboardHelper.copyFractal(view.getContext(), entries.get(key).fractal());
+								ClipboardHelper.copyFractal(view.getContext(), entry.fractal());
 							}
 							break;
 						}
@@ -158,11 +159,23 @@ public class FavoritesActivity extends Activity {
 	public boolean onOptionsItemSelected(MenuItem item) {
 		// Handle presses on the action bar items
 		switch (item.getItemId()) {
-			case R.id.action_export: {
-				JSONObject obj = new JSONObject(entries);
+			case R.id.action_export_collection: {
+
+				// Fetch map from adapter
+				Map<String, FavoriteEntry> map = new LinkedHashMap<>();
+
+				for(int i = 0; i < adapter.getCount(); ++i) {
+					FavoriteEntry entry = (FavoriteEntry) adapter.getItem(i);
+					map.put(entry.title(), entry);
+				}
 
 				try {
-					File textFile = File.createTempFile("fractview_collection", ".txt", this.getExternalCacheDir());
+					File textFile = File.createTempFile("fractview_collection-" + Commons.timestamp(),
+							".fv", this.getExternalCacheDir()); // extension fv for fractview
+
+					BufferedWriter bw = new BufferedWriter(new FileWriter(textFile));
+					bw.write(new JSONObject(map).toString());
+					bw.close();
 
 					// Share image
 					Uri contentUri = Uri.fromFile(textFile);
@@ -176,7 +189,7 @@ public class FavoritesActivity extends Activity {
 					DialogHelper.error(this, e.getMessage());
 				}
 			} return true;
-			case R.id.action_import: {
+			case R.id.action_import_collection: {
 				// FIXME
 			} return true;
 			default:

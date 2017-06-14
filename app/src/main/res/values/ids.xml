@@ -1,0 +1,5 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <item name="action_import_collection" type="id">Import Collection</item>
+    <item name="action_export_collection" type="id">Export Collection</item>
+</resources>

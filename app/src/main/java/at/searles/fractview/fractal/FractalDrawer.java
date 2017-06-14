@@ -1,7 +1,7 @@
 package at.searles.fractview.fractal;
 
-import android.app.Activity;
 import android.graphics.Bitmap;
+
 import at.searles.math.Scale;
 
 public interface FractalDrawer extends Runnable {
@@ -9,7 +9,7 @@ public interface FractalDrawer extends Runnable {
 	/**
 	 * Controller interface for notification callbacks
 	 */
-	public interface Controller {
+	public interface FractalDrawerListener {
 		/**
 		 * Called when the first preview of the new image is generated.
 		 */
@@ -25,19 +25,9 @@ public interface FractalDrawer extends Runnable {
 		 * @param ms
 		 */
 		void finished(long ms);
-
-		/**
-		 * The drawer should check this regularly to  find out whether the calculation is cancelled.
-		 * @return
-		 */
-		boolean isCancelled();
-
-		/**
-		 * Returns an activity that can be used to eg access the UI-thread.
-		 * @return
-		 */
-		Activity getActivity();
 	}
+
+	public void setListener(FractalDrawerListener listener);
 
 	public void init(Bitmap bitmap, Fractal fractal);
 
@@ -47,5 +37,7 @@ public interface FractalDrawer extends Runnable {
 
 	public void setFractal(Fractal f);
 
-	float progress(); // value between 0 and 1
+	public float progress(); // value between 0 and 1
+
+	public void cancel(); // set cancel flag to true.
 }

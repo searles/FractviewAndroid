@@ -15,7 +15,6 @@ import android.graphics.Bitmap;
 import android.graphics.Point;
 import android.os.Bundle;
 import android.os.Environment;
-import android.os.Handler;
 import android.preference.PreferenceManager;
 import android.support.v4.app.ActivityCompat;
 import android.support.v4.content.ContextCompat;
@@ -38,14 +37,13 @@ import java.io.File;
 import at.searles.fractview.editors.EditableDialogFragment;
 import at.searles.fractview.fractal.FavoriteEntry;
 import at.searles.fractview.fractal.Fractal;
-import at.searles.fractview.ui.ScaleableImageView;
+import at.searles.fractview.ui.BitmapFragmentView;
 import at.searles.meelan.CompileException;
 
 
 // Activity is the glue between BitmapFragment and Views.
 public class MainActivity extends Activity
 		implements ActivityCompat.OnRequestPermissionsResultCallback,
-		BitmapFragment.UpdateListener,
 		EditableDialogFragment.Callback {
 
     //public static final int ALPHA_PREFERENCES = 0xaa000000;
@@ -56,74 +54,22 @@ public class MainActivity extends Activity
 	public static final int PRESETS_ACTIVITY_RETURN = 102;
 	public static final int BOOKMARK_ACTIVITY_RETURN = 103;
 
-	public static final long PROGRESS_UPDATE_MILLIS = 500; // update the progress bar every ... ms.
-
-	ScaleableImageView imageView; // fixme don't forget to change size of this one.
+	BitmapFragmentView imageView; // fixme don't forget to change size of this one.
 	ProgressBar progressBar;
 
-    BitmapFragment bitmapFragment;
+	/**
+	 * Bitmap fragment contains the only image
+	 */
+    private BitmapFragment bitmapFragment;
+
+	/**
+	 * Listener for bitmap fragment
+	 */
+	private BitmapFragment.BitmapFragmentListener bitmapFragmentListener;
 
 	SharedPreferences prefs;
 
 	FragmentManager fm;
-
-	//int backgroundColor;
-    //int textColor;
-
-	/**
-	 * Class used for updating the view on a regular basis
-	 */
-	class UpdateAction implements Runnable {
-		Handler updateHandler = new Handler();
-		boolean updateActionRunning = false;
-
-		void updateProgress() {
-			progressBar.setProgress((int) (bitmapFragment.progress() * progressBar.getMax() + 0.5));
-		}
-
-		// start update action
-		void schedule() {
-			// always in UI-thread.
-			if(bitmapFragment == null) return;
-
-			if(!updateActionRunning && bitmapFragment.isRunning()) {
-				updateProgress();
-
-				// only start if it is not running yet.
-				progressBar.setProgress(0);
-				progressBar.setVisibility(View.VISIBLE);
-
-				updateActionRunning = true;
-				updateHandler.postDelayed(this, PROGRESS_UPDATE_MILLIS);
-			}
-		}
-
-		@Override
-		public void run() {
-			if(bitmapFragment != null) {
-				if (bitmapFragment.isRunning()) {
-					updateProgress();
-					updateHandler.postDelayed(this, PROGRESS_UPDATE_MILLIS);
-				} else {
-					progressBar.setVisibility(View.INVISIBLE);
-					updateActionRunning = false;
-				}
-			}
-		}
-	}
-
-	UpdateAction updateAction = new UpdateAction();
-
-	/**
-	 * Must be called from the UI-thread
-	 */
-	public void startProgressUpdates() {
-		// start if not running.
-		// fixme check thread
-		updateAction.schedule();
-	}
-
-
 
 	public static Point screenDimensions(Context context) {
 		Point dim = new Point();
@@ -154,9 +100,7 @@ public class MainActivity extends Activity
 
 		getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON); // make sure that screen stays awake
 
-		imageView = (ScaleableImageView) findViewById(R.id.imageView);
-		progressBar = (ProgressBar) findViewById(R.id.progressBar);
-		progressBar.setVisibility(View.INVISIBLE); // will be shown maybe later
+		imageView = (BitmapFragmentView) findViewById(R.id.mainBitmapFragmentView);
 
 		super.onCreate(savedInstanceState); // this one (re-)creates the bitmap fragment on rotation.
 
@@ -166,13 +110,6 @@ public class MainActivity extends Activity
 		fm = getFragmentManager();
 
 		bitmapFragment = (BitmapFragment) fm.findFragmentByTag("bitmap_fragment");
-
-		// FIXME Order is stupid.
-		// How to fix it:
-		// First, create bitmap fragment with dimensions.
-		//     This also creates the bitmap.
-		//     in BMF, drawer is null at this point, but still the bitmap can be set for the viewer.
-		//     Then, call initDrawer-method in background with dialog. This initializes the drawer.
 
 		if(bitmapFragment == null) {
 			Log.d("MA", "bitmap fragment is null");
@@ -210,15 +147,50 @@ public class MainActivity extends Activity
 			transaction.commitAllowingStateLoss(); // fixme why would there be a stateloss?
 		}
 
+		// set up listeners for bitmap fragment
+		bitmapFragmentListener = new BitmapFragment.BitmapFragmentListener() {
+
+			@Override
+			public void calculationStarting(BitmapFragment source) {
+				// this is already called from the ui-thread.
+				// we now start a handler that will update the progress every 25 ms and show it
+				// in the progress bar.
+			}
+
+			@Override
+			public void calculationFinished(long ms, BitmapFragment source) {
+				DialogHelper.info(MainActivity.this, "Finished after " + Commons.duration(ms));
+			}
+
+			@Override
+			public void initializationFinished() {
+				// not needed here.
+			}
+
+			@Override
+			public void bitmapUpdated(BitmapFragment src) {
+				// not needed here
+			}
+
+			@Override
+			public void previewGenerated(BitmapFragment src) {
+				// not needed here
+			}
+
+			@Override
+			public void newBitmapCreated(Bitmap bitmap, BitmapFragment src) {
+				// ignore
+			}
+		};
+
 		// now we have a valid bitmap fragment, but careful! it is not yet initialized.
 		imageView.setBitmapFragment(bitmapFragment);
-
-		updateAction.schedule(); // start progress if necessary
 	}
 
 	@Override
 	public void onDestroy() {
-		// if an update thread is running, stop it now.
+		imageView.dispose();
+		bitmapFragment.removeBitmapFragmentListener(bitmapFragmentListener);
 		bitmapFragment = null; // all action that was not done till now is gone.
 		super.onDestroy();
 	}
@@ -411,7 +383,7 @@ public class MainActivity extends Activity
 				startActivityForResult(i, PRESETS_ACTIVITY_RETURN);
 			} return true;
 
-			case R.id.action_import: {
+			case R.id.action_paste_from_clipboard: {
 				// paste from clipboard
 				Fractal newFractal = ClipboardHelper.pasteFractal(this);
 
@@ -420,7 +392,7 @@ public class MainActivity extends Activity
 				}
 			} return true;
 
-			case R.id.action_export: {
+			case R.id.action_copy_to_clipboard: {
 				// copy to clipboard
 				ClipboardHelper.copyFractal(this, bitmapFragment.fractal());
 			} return true;
@@ -433,30 +405,31 @@ public class MainActivity extends Activity
 						.setCancelable(true)
 						.setMultiChoiceItems(items,
 								new boolean[]{
-										imageView.getShowGrid(),
-										imageView.getRotationLock(),
-										imageView.getConfirmZoom(),
-										imageView.getDeactivateZoom()
+										imageView.scaleableImageView().getShowGrid(),
+										imageView.scaleableImageView().getRotationLock(),
+										imageView.scaleableImageView().getConfirmZoom(),
+										imageView.scaleableImageView().getDeactivateZoom()
 								},
 								new DialogInterface.OnMultiChoiceClickListener() {
 							@Override
 							public void onClick(DialogInterface dialog, int indexSelected, boolean isChecked) {
+								// fixme can move the editor to BitmapFragmentView?
 								switch(indexSelected) {
 									case 0: {
 										// show/hide grid
-										imageView.setShowGrid(isChecked);
+										imageView.scaleableImageView().setShowGrid(isChecked);
 									} break;
 									case 1: {
 										// rotation lock
-										imageView.setRotationLock(isChecked);
+										imageView.scaleableImageView().setRotationLock(isChecked);
 									} break;
 									case 2: {
 										// confirm edit with a tab
-										imageView.setConfirmZoom(isChecked);
+										imageView.scaleableImageView().setConfirmZoom(isChecked);
 									} break;
 									case 3: {
 										// deactivate zoom
-										imageView.setDeactivateZoom(isChecked);
+										imageView.scaleableImageView().setDeactivateZoom(isChecked);
 									} break;
 								}
 							}
@@ -558,7 +531,11 @@ public class MainActivity extends Activity
                 new DialogHelper.DialogFunction() {
                     @Override
                     public void apply(DialogInterface d) {
+						// Initialize editText with mask from timestamp
+						EditText editText = (EditText) ((AlertDialog) d).findViewById(R.id.filenameEditText);
 
+						// create timestamp
+						editText.setText("fractview_" + Commons.timestamp());
                     }
                 },
                 new DialogHelper.DialogFunction() {
@@ -720,129 +697,5 @@ public class MainActivity extends Activity
 		if(imageView.backButtonAction()) return;
 		if(historyBack()) return;
 		super.onBackPressed();
-	}
-
-
-	/*@Override
-	public boolean onKeyDown(int keyCode, KeyEvent event) {
-		if(keyCode == KeyEvent.KEYCODE_BACK) {
-			if(historyBack()) return true;
-		}
-		return super.onKeyDown(keyCode, event);
-	}*/
-
-	// ================================================================
-	// ========= Interactive View =====================================
-	// ================================================================
-
-    /*@Override
-    public void pointMoved(final String label, PointF pos) {
-        // FIXME: Change this into an "argument updated-method"
-        pos = vToB(pos.x, pos.y);
-        pos = bitmapFragment.fromBitmapToNormalized(pos.x, pos.y);
-        final Double2 p = bitmapFragment.scale.scale(pos.x, pos.y);
-
-        // FIXME: Only if is julia
-		if(label.equals("Julia")) {
-			if (bitmapFragment.fractal.isJuliaSet()) {
-				bitmapFragment.edit(new Runnable() {
-					@Override
-					public void run() {
-						bitmapFragment.fractal.setJulia(p);
-					}
-				}, getString(R.string.point_moved));
-			} else {
-				// it is a mandelbrot set. The julia-parameter does not have any impact
-				bitmapFragment.fractal.setJulia(p);
-			}
-		} else {
-			bitmapFragment.edit(new Runnable() {
-				@Override
-				public void run() {
-					bitmapFragment.fractal.setParameter(label, p);
-				}
-			}, getString(R.string.point_moved));
-		}
-    }
-
-	private void showPoint(String label, Double2 p) {
-		/*fixme PointF vp = bitmapFragment.scale.invScale(p.x, p.y);
-		vp = bitmapFragment.fromNormalizedToBitmap(vp.x, vp.y);
-		final PointF q = bToV(vp.x, vp.y);
-
-		interactiveView.setPoint(label, q);
-	}
-
-    void updateInteractiveView() {
-        // Call this if the coordinates have changed for any reason
-        Log.d("MA", "Arguments updated");
-
-		// FIXME: Clear only when type was updated
-		// FIXME: Only show points that are marked as visible
-		// FIXME: Label for julia-set
-		//interactiveView.clear();
-
-		// first, jula parameter
-
-		// fixme next, parameters of fractal
-		/*for(String label : bitmapFragment.fractal.getPointParameters()) {
-			showPoint(label, bitmapFragment.fractal.getPoint(label));
-		}*
-
-        // if it is invisible (for whatever reason)
-        if(interactiveView.getVisibility() == View.INVISIBLE) {
-            // make it visible.
-            runOnUiThread(new Runnable() {
-                public void run() {
-                    interactiveView.setVisibility(View.VISIBLE);
-                }
-            });
-        } else {
-            interactiveView.postInvalidate();
-        }
-    }*/
-
-	// =============================================================================
-	// =========== Callbacks from Bitmap Fragment ==================================
-	// =============================================================================
-
-	// FIXME in order to be able to handle multiple bitmap fragments, there should be
-	// FIXME some argument as parameter.
-
-	@Override
-	public void previewGenerated(BitmapFragment source) {
-		// can be called from outside the UI-thread!
-		Log.d("MA", "preview generated");
-		imageView.removeLastScale();
-		imageView.invalidate();
-	}
-
-	@Override
-	public void bitmapUpdated(BitmapFragment source) {
-		// can be called from outside the UI-thread!
-		// Log.d("MA", "bitmap updated");
-		imageView.invalidate();
-	}
-
-	@Override
-	public void calculationStarting(BitmapFragment source) {
-		// this is already called from the ui-thread.
-		// we now start a handler that will update the progress every 25 ms and show it
-		// in the progress bar.
-		startProgressUpdates();
-	}
-
-	@Override
-	public void calculationFinished(final long ms, BitmapFragment source) {
-		// FIXME split time up.
-		Toast.makeText(MainActivity.this,
-				getString(R.string.label_calc_finished, ms), Toast.LENGTH_SHORT).show();
-	}
-
-	@Override
-	public void newBitmapCreated(Bitmap bitmap, BitmapFragment source) {
-		Log.d("MA", "received newBitmapCreated");
-		imageView.updatedBitmap();
-		imageView.requestLayout();
 	}
 }
