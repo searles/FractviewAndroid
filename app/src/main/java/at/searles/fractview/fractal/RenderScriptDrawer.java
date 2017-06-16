@@ -22,12 +22,12 @@ import at.searles.fractview.ScriptField_palette;
 import at.searles.math.Scale;
 import at.searles.math.color.Palette;
 
-public class RenderScriptDrawer implements FractalDrawer {
+public class RenderScriptDrawer implements Drawer {
 	// Renderscript-Part
 	public static final int parallelPixs = 10240; // fixme allow setting
 	public static final int factor = 2; // 2^INIT_PIX_SIZE = 16
 
-	private FractalDrawer.FractalDrawerListener listener;
+	private DrawerListener listener;
 
 	private Scale scale;
 	private Bitmap bitmap;
@@ -61,14 +61,14 @@ public class RenderScriptDrawer implements FractalDrawer {
 	// for the task-part
 	private volatile int maxProgress;
 	private volatile int progress;
-	private boolean isCancelled;
+	private boolean editRequested;
 
 	public RenderScriptDrawer(Context context) {
 		// initialize renderscript
 		this.rs = RenderScript.create(context);
 	}
 
-	public void setListener(FractalDrawerListener listener) {
+	public void setListener(DrawerListener listener) {
 		this.listener = listener;
 	}
 
@@ -106,9 +106,14 @@ public class RenderScriptDrawer implements FractalDrawer {
 	}
 
 	@Override
-	public void cancel() {
-		this.isCancelled = true;
+	public void requestEdit() {
+		this.editRequested = true;
 	}
+
+	@Override
+	public void clearRequestEdit() {
+        this.editRequested = false;
+    }
 
 	public void updateBitmap(Bitmap bm) {
 		Log.d("RS_D", "updating bitmap");
@@ -141,7 +146,7 @@ public class RenderScriptDrawer implements FractalDrawer {
 
 	// Draw
 
-	final Runnable copyRunnable = new Runnable() {
+	private final Runnable copyRunnable = new Runnable() {
 		@Override
 		public void run() {
 			rsBitmap.copyTo(bitmap);
@@ -154,8 +159,7 @@ public class RenderScriptDrawer implements FractalDrawer {
 	};
 
 	public void run() {
-		long dur = System.currentTimeMillis();
-
+		Log.d("RS", "start run");
 		script.set_factor(0); // factor is 0 in beginning.
 
 		int stepsize = 1;
@@ -175,7 +179,7 @@ public class RenderScriptDrawer implements FractalDrawer {
 		maxProgress = size;
 
 		while (stepsize > 0) {
-			if (isCancelled) break;
+			if (editRequested) break;
 
 			script.set_stepsize(stepsize);
 
@@ -202,7 +206,7 @@ public class RenderScriptDrawer implements FractalDrawer {
 				rsTile.copyTo(dummy);
 
 				progress += tilelength;
-				if (isCancelled) break;
+				if (editRequested) break;
 			}
 
 			// fill gaps
@@ -215,8 +219,8 @@ public class RenderScriptDrawer implements FractalDrawer {
 
 			// copy to image
 			// rsBitmap.copyTo(bitmap);
+			// line before was replaced by the following: try whether this improves crashes.
 
-			// fixme line before was replaced by the following: try whether this improves crashes.
 			try {
 				synchronized (copyRunnable) {
 					new Handler(Looper.getMainLooper()).post(copyRunnable);
@@ -237,10 +241,10 @@ public class RenderScriptDrawer implements FractalDrawer {
 			// image was updated, tell people about it.
 			if (firstCall) {
 				script.set_factor(factor); // it was 0 initially.
-				listener.previewGenerated();
+				listener.bitmapUpdated(true);
 				firstCall = false;
 			} else {
-				listener.bitmapUpdated();
+				listener.bitmapUpdated(false);
 			}
 
 			stepsize /= factor;
@@ -248,10 +252,8 @@ public class RenderScriptDrawer implements FractalDrawer {
 			lasttotalpix = totalpix;
 		}
 
-		if (!isCancelled) {
-			dur = System.currentTimeMillis() - dur;
-			listener.finished(dur);
-		}
+		Log.d("RS", "finished");
+		listener.finished();
 	}
 
 	// Update data

@@ -4,30 +4,26 @@ import android.graphics.Bitmap;
 
 import at.searles.math.Scale;
 
-public interface FractalDrawer extends Runnable {
+public interface Drawer extends Runnable {
 
 	/**
 	 * Controller interface for notification callbacks
 	 */
-	public interface FractalDrawerListener {
-		/**
-		 * Called when the first preview of the new image is generated.
-		 */
-		void previewGenerated();
-
+	public interface DrawerListener {
 		/**
 		 * Called when some new part of the image was drawn
+		 *
+		 * @param firstUpdate true if this is the first update
 		 */
-		void bitmapUpdated();
+		void bitmapUpdated(boolean firstUpdate);
 
 		/**
 		 * Called when the calculation is done.
-		 * @param ms
 		 */
-		void finished(long ms);
+		void finished();
 	}
 
-	public void setListener(FractalDrawerListener listener);
+	public void setListener(DrawerListener listener);
 
 	public void init(Bitmap bitmap, Fractal fractal);
 
@@ -39,5 +35,7 @@ public interface FractalDrawer extends Runnable {
 
 	public float progress(); // value between 0 and 1
 
-	public void cancel(); // set cancel flag to true.
+	public void requestEdit();
+
+	public void clearRequestEdit();
 }

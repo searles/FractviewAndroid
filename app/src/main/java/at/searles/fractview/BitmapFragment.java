@@ -18,15 +18,10 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.util.LinkedList;
 import java.util.List;
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
-import java.util.concurrent.Future;
-import java.util.concurrent.locks.ReentrantLock;
 
 import at.searles.fractview.editors.ProgressDialogFragment;
+import at.searles.fractview.fractal.Drawer;
 import at.searles.fractview.fractal.Fractal;
-import at.searles.fractview.fractal.FractalDrawer;
 import at.searles.fractview.fractal.RenderScriptDrawer;
 import at.searles.math.Scale;
 import at.searles.meelan.CompileException;
@@ -90,20 +85,16 @@ public class BitmapFragment extends Fragment implements
 	private Bitmap bitmap;
 
 	// Now the drawing stuff
-	private FractalDrawer drawer;
-    private ExecutorService executorService;
-    private Future<?> currentFuture;
-
-    // Locks + variable to cancel a running calculation.
-	private ReentrantLock editLock = new ReentrantLock();
+	private Drawer drawer;
 
 	// the next two variables are only changed in the UI thread.
 
-	// the next one counts the cancel requests.
-	private volatile int cancelled = 0;
-
 	// if true, the drawing has not started yet.
 	private boolean isInitializing = true;
+
+	// if true, the drawing is currently running and the drawer should
+	// not be modified.
+	private boolean isRunning;
 
     public boolean isInitializing() {
         return isInitializing;
@@ -120,9 +111,6 @@ public class BitmapFragment extends Fragment implements
             Log.e(getClass().getName(), "Trying to remove an inexistent listener!");
         }
     }
-
-    // if running.
-	private boolean isRunning;
 
 	/**
 	 * This variable is only to be modified from the UI-thread
@@ -150,58 +138,40 @@ public class BitmapFragment extends Fragment implements
 			this.drawer = new RenderScriptDrawer(context);
 
             this.drawer.setListener(
-                new FractalDrawer.FractalDrawerListener() {
+                new Drawer.DrawerListener() {
 				@Override
-				public void previewGenerated() {
+				public void bitmapUpdated(boolean firstUpdate) {
                     new Handler(Looper.getMainLooper()).post(new Runnable() {
 						@Override
 						public void run() {
                             for(BitmapFragmentListener listener : listeners) {
-                                listener.previewGenerated(BitmapFragment.this);
+								if(firstUpdate) {
+									listener.previewGenerated(BitmapFragment.this);
+								} else {
+									listener.bitmapUpdated(BitmapFragment.this);
+								}
                             }
 						}
 					});
 				}
 
 				@Override
-				public void bitmapUpdated() {
-                    new Handler(Looper.getMainLooper()).post(new Runnable() {
-                        @Override
-                        public void run() {
-                            for(BitmapFragmentListener listener : listeners) {
-                                listener.previewGenerated(BitmapFragment.this);
-                            }
-						}
-					});
-				}
-
-				@Override
-				public void finished(final long ms) {
-					isRunning = false;
-                    new Handler(Looper.getMainLooper()).post(new Runnable() {
-                        @Override
-                        public void run() {
-							Log.d("BMF", "Calling dismiss of waiting dialog");
-							// check whether there is some pending action
-							ProgressDialogFragment waitingDialog =
-									(ProgressDialogFragment) getFragmentManager().findFragmentByTag("waitingDialog");
-
-							if(waitingDialog != null) {
-								// this check is due to a possible race condition
-								// yes, there is some action missing. Dismiss dialog and do it.
-								waitingDialog.dismissAllowingStateLoss();
+				public void finished() {
+					Log.d(getClass().getName(), "drawer is finished");
+					new Handler(Looper.getMainLooper()).post(new Runnable() {
+						@Override
+						public void run() {
+							if(!editors.isEmpty()) {
+								editors.forEach(Runnable::run);
+								editors.clear();
+								drawer.clearRequestEdit();
+								startBackgroundTask();
+							} else {
+								isRunning = false;
+								listeners.forEach((listener) ->
+										listener.calculationFinished(-1, BitmapFragment.this)
+								);
 							}
-
-							if(waiting != null) {
-								ProgressDialogValues tmp = waiting;
-								waiting = null;
-								doImageAction(tmp);
-							}
-
-							// and also inform others
-                            for(BitmapFragmentListener listener : listeners) {
-                                listener.calculationFinished(ms, BitmapFragment.this);
-                            }
 						}
 					});
 				}
@@ -259,24 +229,20 @@ public class BitmapFragment extends Fragment implements
 			throw new IllegalArgumentException("initial fractal is not compilable: " + e.getMessage());
 		}
 
-		// create executor service
-		executorService = Executors.newCachedThreadPool();
-
 		// finally, we initialize the drawer.
 		// this might take some time after a fresh install, hence do it in the background
 		new AsyncTask<Void, Void, Void>() {
 			@Override
 			protected Void doInBackground(Void...ignore) {
-				if(drawer == null) {
-					Log.e(getClass().getName(), "drawer is null!");
-				}
+				Log.d(getClass().getName(), "init drawer");
+
 				drawer.init(bitmap, fractal);
 				return null;
 			}
 
 			@Override
 			protected void onPostExecute(Void ignore) {
-                Log.d("BMF", "Init Fractal is done, starting thread");
+                Log.d(getClass().getName(), "init is done");
                 drawer.setFractal(fractal);
 
                 isInitializing = false; // done
@@ -343,21 +309,20 @@ public class BitmapFragment extends Fragment implements
 
 			return true;
 		} catch(OutOfMemoryError e) {
-			Log.e("BF", "OUT OF MEMORY.");
+			Log.d(getClass().getName(), "Out of memory");
 			getActivity().runOnUiThread(new Runnable() {
 				@Override
 				public void run() {
-					Toast.makeText(getActivity(), "ERROR: Out of memory", Toast.LENGTH_LONG).show();
+					Toast.makeText(getActivity(), "Image too large...", Toast.LENGTH_LONG).show();
 				}
 			});
 			return false;
 		} catch(NullPointerException e) {
-			Log.e("BF", "OUT OF MEMORY.");
 			// FIXME Put this into some lambda to avoid DRY.
 			getActivity().runOnUiThread(new Runnable() {
 				@Override
 				public void run() {
-					Toast.makeText(getActivity(), "ERROR: Out of memory", Toast.LENGTH_LONG).show();
+					Toast.makeText(getActivity(), "Image too large...", Toast.LENGTH_LONG).show();
 				}
 			});
 			return false;
@@ -371,7 +336,7 @@ public class BitmapFragment extends Fragment implements
 
 	public void setScaleRelative(Scale sc) {
 		addToHistory = true;
-		edit(() -> setScale(fractal.scale().relative(sc)));
+		edit(() -> setScaleUnsafe(fractal.scale().relative(sc)));
 	}
 
 	private void setScaleUnsafe(Scale sc) {
@@ -409,67 +374,20 @@ public class BitmapFragment extends Fragment implements
 		}
 	}
 
+
+	private LinkedList<Runnable> editors = new LinkedList<>();
+
 	private void edit(final Runnable editor) {
-        new AsyncTask<Void, Void, Void>() {
-            @Override
-            protected void onPreExecute() {
-                // in UI-thread
-                cancelled++;
-            }
-
-            @Override
-            protected Void doInBackground(Void... voids) {
-				// only one edit at a time. Other edits have to wait here!
-
-				// There are two types of edits:
-				// Change parameters/program
-				// Change image
-				// The last one can only be done when the thread has stopped. The other one may be performed also
-				// before. That is why we have a boolean here and actually two mutexes.
-                editLock.lock();
-
-                try {
-					Log.d("BMF", "Locking for edit");
-					long duration = System.currentTimeMillis();
-
-					if(currentFuture != null) {
-						currentFuture.get(); // wait for termination
-					} else {
-						// If the bitmap fragment is recreated after being terminated,
-						// currentFuture is null.
-						Log.d("BMF", "Just telling, it seems the app was terminated while in another activity");
-					}
-
-					duration = System.currentTimeMillis() - duration;
-					Log.d("BMF", "Cancelled: " + duration);
-
-					editor.run();
-                } catch (InterruptedException ex) {
-                    Thread.currentThread().interrupt();
-                } catch (ExecutionException ex) {
-                    ex.printStackTrace();
-                } finally {
-                    editLock.unlock();
-                }
-
-                return null;
-            }
-
-            @Override
-            protected void onPostExecute(Void result) {
-                // in UI-thread
-				cancelled --;
-
-				// if cancelled != null then there will be another editor.
-                if (cancelled == 0) {
-                    startBackgroundTask();
-                } else {
-                    Log.d("BMF", "did not start because other edits are pending");
-					// fixme if editing is because of lastscale but no new calculation is started
-					// I have to call combineLastScales
-                }
-            }
-        }.execute();
+		// always in UI thread
+		if(isRunning) {
+			Log.d(getClass().getName(), "isRunning is true, hence adding editor to list.");
+			editors.add(editor);
+			drawer.requestEdit();
+		} else {
+			Log.d(getClass().getName(), "isRunning is false, hence calling editor");
+			editor.run();
+			startBackgroundTask();
+		}
     }
 
 
@@ -479,16 +397,17 @@ public class BitmapFragment extends Fragment implements
     private void startBackgroundTask() {
         // this is always started from UI-thread
         // start calculation in background
-        Log.d("BMF", "Start Drawing");
+        Log.d(getClass().getName(), "start drawing");
 		isRunning = true;
 
 		listeners.forEach((l) -> l.calculationStarting(this));
-        currentFuture = executorService.submit(drawer);
 
 		if(addToHistory) {
 			this.history.push(this.fractal);
 			addToHistory = false;
 		}
+
+		new Thread(drawer).start(); // fixme is that the android way?
     }
 
 	// =============================================================
@@ -513,23 +432,6 @@ public class BitmapFragment extends Fragment implements
     public int height() {
         return height;
     }
-
-	/*@Override
-	public void imageSaved(File file, int id) {
-		// FIXME
-		// FIXME
-		if(id == SAVE_IMAGE_EXTERN) {
-			// do nothing
-		} else if(id == SHARE_IMAGE) {
-			Uri contentUri = Uri.fromFile(file);
-			Intent share = new Intent(Intent.ACTION_SEND);
-			share.setType("image/png");
-			share.putExtra(Intent.EXTRA_STREAM, contentUri);
-			startActivity(Intent.createChooser(share, "Share Image"));
-		} else if(id == SET_IMAGE_AS_WALLPAPER) {
-
-		}
-	}*/
 
 	// ==================================================================
 	// ================= Save/Share/Set as Wallpaper ====================
