@@ -139,6 +139,7 @@ public class BitmapFragmentView extends FrameLayout {
         }
 
         this.bitmapFragment = bitmapFragment;
+        this.imageView.setBitmap(bitmapFragment.getBitmap());
 
         if(bitmapFragment.isInitializing()) {
             // activate spinner
@@ -192,6 +193,4 @@ public class BitmapFragmentView extends FrameLayout {
         bitmapFragment.addBitmapFragmentListener(bitmapFragmentListener);
         updateAction.schedule(); // start progress if necessary
     }
-
-
 }

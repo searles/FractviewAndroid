@@ -209,6 +209,7 @@ public class BitmapFragment extends Fragment implements
 		// create bitmap
 		this.bitmap = Bitmap.createBitmap(width, height, Bitmap.Config.ARGB_8888);
 
+		// todo check whether this is really necessary.
 		listeners.forEach((l) -> l.newBitmapCreated(bitmap, this)); // tell others about it.
 
 		// and also the fractal.

@@ -176,9 +176,6 @@ public class ScaleableImageView extends View {
 		this.bitmap = bitmap;
 	}
 
-	/*private Bitmap bitmap() {
-		return bitmapFragment.getBitmap();
-	}*/
 
 	/**
 	 * Toggle show-grid flag
@@ -291,7 +288,7 @@ public class ScaleableImageView extends View {
 	private float scaledBitmapHeight(float viewWidth, float viewHeight) {
 		if(bitmap == null) return viewHeight;
 
-		float bitmapWidth = bitmap.getWidth(); // fixme: bitmapFragment requires drawer in the background.
+		float bitmapWidth = bitmap.getWidth();
 		float bitmapHeight = bitmap.getHeight();
 
 		if(flipBitmap(viewWidth, viewHeight)) {
@@ -379,14 +376,10 @@ public class ScaleableImageView extends View {
 
 	@Override
 	public void onDraw(@NotNull Canvas canvas) {
-		/*if(bitmapFragment != null && getDrawable() != null) {
-			// fixme this is ugly...
-			BitmapDrawable bd = (BitmapDrawable) getDrawable();
-			if(bd.getBitmap() == null) setImageBitmap(bitmapFragment.getBitmap());
-		}*/
+		// avoid crash if the image was not created yet.
+		if(bitmap == null) return;
 
 		// draw image
-		// FIXME matrix!
 		canvas.drawBitmap(bitmap, imageMatrix, null);
 
 		// remove bounds
@@ -437,9 +430,7 @@ public class ScaleableImageView extends View {
 		if(flipBitmap(w, h)) {
 			// draw an indicator in the left upper corner of the bitmap
 			// which is in this case
-			for (int i = 0; i < GRID_PAINTS.length; ++i) {
-				Paint gridPaint = GRID_PAINTS[i];
-
+			for (Paint gridPaint : GRID_PAINTS) {
 				// three lines in total
 				canvas.drawLine(
 						w - LEFT_UP_INDICATOR_LENGTH * 0.5f, LEFT_UP_INDICATOR_LENGTH * 0.5f,
@@ -602,10 +593,6 @@ public class ScaleableImageView extends View {
 			return true;
 		}
 
-		/*@Override
-		public void onShowPress(MotionEvent motionEvent) {
-
-		}*/
 
 		@Override
 		public boolean onSingleTapUp(MotionEvent motionEvent) {
@@ -622,16 +609,6 @@ public class ScaleableImageView extends View {
 			multitouch.scroll(currentEvt);
 			return true;
 		}
-
-		/*@Override
-		public void onLongPress(MotionEvent motionEvent) {
-
-		}
-
-		@Override
-		public boolean onFling(MotionEvent motionEvent, MotionEvent motionEvent1, float v, float v1) {
-			return false;
-		}*/
 	};
 
 
@@ -675,10 +652,15 @@ public class ScaleableImageView extends View {
 		 * Cancel entire action
 		 */
 		void cancel() {
+			// controller might not be null if a finger is on
+			// the display but did not move
 			controller = null;
-			isScrollEvent = false;
-			imageMatrix = viewMatrix();
-			invalidate();
+
+			if(isScrollEvent) {
+				isScrollEvent = false;
+				imageMatrix = viewMatrix();
+				invalidate();
+			}
 		}
 
 		/**
@@ -689,7 +671,7 @@ public class ScaleableImageView extends View {
 			if(controller == null) {
 				controller = new MultiTouchController(rotationLock);
 			} else if(!confirmZoom) {
-				throw new IllegalArgumentException("");
+				Log.e(getClass().getName(), "Huh? Controller is set, but it is the first down-event?");
 			}
 
 			down(event);

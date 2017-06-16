@@ -1,6 +1,8 @@
 package at.searles.fractview;
 
 import android.graphics.Matrix;
+import android.os.Handler;
+import android.os.Looper;
 
 import java.text.SimpleDateFormat;
 import java.util.Date;
@@ -92,5 +94,17 @@ public class Commons {
     public static float bitmapY(float normY, int width, int height) {
         float m = Math.min(width, height);
         return normY * m / 2f + height / 2f;
+    }
+
+    public static boolean isUI() {
+        return Looper.getMainLooper().equals(Looper.myLooper());
+    }
+
+    public static void uiRun(Runnable runnable) {
+        if(isUI()) {
+            runnable.run();
+        } else {
+            new Handler(Looper.getMainLooper()).post(runnable);
+        }
     }
 }
