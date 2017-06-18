@@ -173,6 +173,7 @@ public class ScaleableImageView extends View {
 	}
 
 	public void setBitmap(Bitmap bitmap) {
+		multitouch.cancel();
 		this.bitmap = bitmap;
 	}
 
@@ -191,6 +192,7 @@ public class ScaleableImageView extends View {
 	}
 
 	public void setRotationLock(boolean rotationLock) {
+		multitouch.cancel();
 		this.rotationLock = rotationLock;
 		// does not change the view.
 	}
@@ -200,6 +202,7 @@ public class ScaleableImageView extends View {
 	}
 
 	public void setConfirmZoom(boolean confirmZoom) {
+		multitouch.cancel();
 		this.confirmZoom = confirmZoom;
 	}
 
@@ -671,6 +674,7 @@ public class ScaleableImageView extends View {
 			if(controller == null) {
 				controller = new MultiTouchController(rotationLock);
 			} else if(!confirmZoom) {
+				// FIXME this happened, but I don't know why!
 				Log.e(getClass().getName(), "Huh? Controller is set, but it is the first down-event?");
 			}
 

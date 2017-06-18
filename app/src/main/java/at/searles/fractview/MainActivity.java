@@ -212,9 +212,7 @@ public class MainActivity extends Activity
 		editor.putInt("height", height);
 		editor.apply();
 
-		Toast.makeText(this,
-				this.getString(R.string.label_new_default_size, width, height),
-				Toast.LENGTH_SHORT).show();
+		DialogHelper.info(this, "New Default Size: " + width + " x " + height);
 	}
 
 	@Override
@@ -277,7 +275,7 @@ public class MainActivity extends Activity
                                 EditText heightView = (EditText) ((AlertDialog) d).findViewById(R.id.heightEditText);
 
                                 widthView.setText(Integer.toString(bitmapFragment.width()));
-                                widthView.setText(Integer.toString(bitmapFragment.height()));
+                                heightView.setText(Integer.toString(bitmapFragment.height()));
 
                                 // listener to button
                                 Button resetButton = (Button) ((AlertDialog) d).findViewById(R.id.resetSizeButton);
@@ -317,29 +315,29 @@ public class MainActivity extends Activity
                                 try {
                                     w = Integer.parseInt(widthView.getText().toString());
                                 } catch(NumberFormatException e) {
-                                    Toast.makeText(((AlertDialog) d).getContext(), "invalid width", Toast.LENGTH_LONG).show();
+                                    DialogHelper.error(((AlertDialog) d).getContext(), "invalid width");
                                     return;
                                 }
 
                                 try {
                                     h = Integer.parseInt(heightView.getText().toString());
                                 } catch(NumberFormatException e) {
-                                    Toast.makeText(((AlertDialog) d).getContext(), "invalid height", Toast.LENGTH_LONG).show();
+                                    DialogHelper.error(((AlertDialog) d).getContext(), "invalid height");
                                     return;
                                 }
 
                                 if(w < 1) {
-                                    Toast.makeText(((AlertDialog) d).getContext(), "width must be >= 1", Toast.LENGTH_LONG).show();
+                                    DialogHelper.error(((AlertDialog) d).getContext(), "width must be >= 1");
                                     return;
                                 }
 
                                 if(h < 1) {
-                                    Toast.makeText(((AlertDialog) d).getContext(), "height must be >= 1", Toast.LENGTH_LONG).show();
+                                    DialogHelper.error(((AlertDialog) d).getContext(), "height must be >= 1");
                                     return;
                                 }
 
                                 if(w == bitmapFragment.width() && h == bitmapFragment.height()) {
-                                    Toast.makeText(((AlertDialog) d).getContext(), "size not changed", Toast.LENGTH_SHORT).show();
+                                    DialogHelper.info(((AlertDialog) d).getContext(), "size not changed");
 
                                     if(setAsDefault) storeDefaultSize(w, h);
                                 } else {
@@ -348,11 +346,6 @@ public class MainActivity extends Activity
                                 }
                             }
                         });
-				EditableDialogFragment ft = EditableDialogFragment.newInstance(IMAGE_SIZE,
-						"Change Image Size", false, EditableDialogFragment.Type.ImageSize)
-						.setInitVal(new int[]{ bitmapFragment.width(), bitmapFragment.height() });
-
-				ft.show(getFragmentManager(), "dialog");
 			} return true;
 
 			case R.id.action_add_favorite: {

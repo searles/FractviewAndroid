@@ -113,12 +113,6 @@ public class BitmapFragment extends Fragment implements
     }
 
 	/**
-	 * This variable is only to be modified from the UI-thread
-	 * to avoid a race condition.
-	 */
-	private boolean addToHistory = true; // add the current to history.
-
-	/**
 	 * List of past fractals that were drawn using this bitmap fragment.
 	 */
 	private History history = new History();
@@ -210,7 +204,7 @@ public class BitmapFragment extends Fragment implements
 		this.bitmap = Bitmap.createBitmap(width, height, Bitmap.Config.ARGB_8888);
 
 		// todo check whether this is really necessary.
-		listeners.forEach((l) -> l.newBitmapCreated(bitmap, this)); // tell others about it.
+		this.listeners.forEach((l) -> l.newBitmapCreated(bitmap, this)); // tell others about it.
 
 		// and also the fractal.
 		this.fractal = getArguments().getParcelable("fractal");
@@ -247,9 +241,7 @@ public class BitmapFragment extends Fragment implements
                 drawer.setFractal(fractal);
 
                 isInitializing = false; // done
-                for(BitmapFragmentListener listener : listeners) {
-                    listener.initializationFinished();
-                }
+				listeners.forEach(BitmapFragmentListener::initializationFinished);
 
 				startBackgroundTask();
 			}
@@ -270,12 +262,7 @@ public class BitmapFragment extends Fragment implements
 
 	public void setSize(int width, int height, boolean setAsDefaultIfSuccess) {
 		// do not add new fractal to history
-		edit(new Runnable() {
-			@Override
-			public void run() {
-				setSizeUnsafe(width, height, setAsDefaultIfSuccess);
-			}
-		});
+		edit(() -> setSizeUnsafe(width, height, setAsDefaultIfSuccess));
 	}
 
 	private boolean setSizeUnsafe(int width, int height, boolean setAsDefaultIfSuccess) {
@@ -331,22 +318,20 @@ public class BitmapFragment extends Fragment implements
 	}
 
 	public void setScale(Scale sc) {
-		addToHistory = true;
 		edit(() -> setScaleUnsafe(sc));
 	}
 
 	public void setScaleRelative(Scale sc) {
-		addToHistory = true;
 		edit(() -> setScaleUnsafe(fractal.scale().relative(sc)));
 	}
 
 	private void setScaleUnsafe(Scale sc) {
 		fractal = fractal.copyNewScale(sc);
 		drawer.setScale(sc); // not necessary to update the whole fractal.
+		history.addToHistory(fractal);
 	}
 
 	public void setFractal(Fractal f) {
-		addToHistory = true;
 		edit(() -> setFractalUnsafe(f));
 	}
 
@@ -354,6 +339,7 @@ public class BitmapFragment extends Fragment implements
 		// f must have been parsed and compiled.
 		this.fractal = f;
 		drawer.setFractal(this.fractal);
+		history.addToHistory(this.fractal);
 	}
 
 	public boolean historyIsEmpty() {
@@ -362,19 +348,9 @@ public class BitmapFragment extends Fragment implements
 	}
 
 	public void historyBack() {
-		addToHistory = false;
-		edit(this::historyBackUnsafe);
+		Fractal f = history.removeLast();
+		setFractal(f);
 	}
-
-	private void historyBackUnsafe() {
-		if(!historyIsEmpty()) {
-			// this was most likely checked before, but I want
-			// to avoid a race condition.
-			this.fractal = history.pop();
-			drawer.setFractal(this.fractal);
-		}
-	}
-
 
 	private LinkedList<Runnable> editors = new LinkedList<>();
 
@@ -402,11 +378,6 @@ public class BitmapFragment extends Fragment implements
 		isRunning = true;
 
 		listeners.forEach((l) -> l.calculationStarting(this));
-
-		if(addToHistory) {
-			this.history.push(this.fractal);
-			addToHistory = false;
-		}
 
 		new Thread(drawer).start(); // fixme is that the android way?
     }

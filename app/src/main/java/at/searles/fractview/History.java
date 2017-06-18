@@ -9,15 +9,15 @@ import at.searles.fractview.fractal.Fractal;
  */
 
 public class History {
-    Fractal current;
-    LinkedList<Fractal> past;
+    private Fractal current;
+    private LinkedList<Fractal> past;
 
     public History() {
         this.current = null;
         this.past = new LinkedList<>();
     }
 
-    public void push(Fractal fractal) {
+    public void addToHistory(Fractal fractal) {
         if(fractal == null) {
             throw new NullPointerException("fractal in history must not be null");
         }
@@ -34,7 +34,8 @@ public class History {
         return past.isEmpty();
     }
 
-    public Fractal pop() {
-        return this.current = past.removeLast();
+    public Fractal removeLast() {
+        this.current = null;
+        return past.removeLast();
     }
 }
