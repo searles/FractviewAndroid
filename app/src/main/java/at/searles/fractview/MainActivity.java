@@ -151,14 +151,14 @@ public class MainActivity extends Activity
 		bitmapFragmentListener = new BitmapFragment.BitmapFragmentListener() {
 
 			@Override
-			public void calculationStarting(BitmapFragment source) {
+			public void drawerStarted(BitmapFragment source) {
 				// this is already called from the ui-thread.
 				// we now start a handler that will update the progress every 25 ms and show it
 				// in the progress bar.
 			}
 
 			@Override
-			public void calculationFinished(long ms, BitmapFragment source) {
+			public void drawerFinished(long ms, BitmapFragment source) {
 				DialogHelper.info(MainActivity.this, "Finished after " + Commons.duration(ms));
 			}
 
@@ -240,7 +240,7 @@ public class MainActivity extends Activity
 					if(requestCode == IMAGE_PERMISSIONS_SAVE) {
 						saveImage();
 					} else {
-						bitmapFragment.shareImage();
+						SavePlugin.createShare().init(bitmapFragment);
 					}
 				} else {
 					Toast.makeText(this, "ERROR: Cannot share/save images without " +
@@ -250,7 +250,7 @@ public class MainActivity extends Activity
 
 			case WALLPAPER_PERMISSIONS: {
 				if(grantResults[0] == PackageManager.PERMISSION_GRANTED) {
-					bitmapFragment.setAsWallpaper();
+					SavePlugin.createSetWallpaper().init(bitmapFragment);
 				} else {
 					Toast.makeText(this, "Cannot set image as wallpaper without " +
 							"permissions.", Toast.LENGTH_LONG).show();
@@ -455,7 +455,7 @@ public class MainActivity extends Activity
 															Manifest.permission.WRITE_EXTERNAL_STORAGE
 													}, IMAGE_PERMISSIONS_SHARE);
 										} else {
-											bitmapFragment.shareImage();
+											SavePlugin.createShare().init(bitmapFragment);
 										}
 									}
 									break;
@@ -484,7 +484,7 @@ public class MainActivity extends Activity
 															Manifest.permission.SET_WALLPAPER
 													}, WALLPAPER_PERMISSIONS);
 										} else {
-											bitmapFragment.setAsWallpaper();
+											SavePlugin.createSetWallpaper().init(bitmapFragment);
 										}
 									}
 									break;
@@ -570,8 +570,8 @@ public class MainActivity extends Activity
                                     + (filename.endsWith(".png") ? "" : ".png"));
 
                             if(!imageFile.exists()) {
-                                // Saving is done in the following background thread
-                                bitmapFragment.saveImage(imageFile);
+                                // Saving is done in the following plugin
+								SavePlugin.createSave(imageFile).init(bitmapFragment);
                                 return;
                             }
                         }

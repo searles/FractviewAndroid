@@ -9,7 +9,6 @@ import android.util.Log;
 import android.view.View;
 import android.widget.FrameLayout;
 import android.widget.ProgressBar;
-import android.widget.TextView;
 
 import at.searles.fractview.BitmapFragment;
 import at.searles.fractview.R;
@@ -34,9 +33,7 @@ public class BitmapFragmentView extends FrameLayout {
     private BitmapFragment bitmapFragment;
     private BitmapFragment.BitmapFragmentListener bitmapFragmentListener;
 
-    private ProgressBar initProgressBar;
     private ProgressBar drawerProgressBar;
-    private TextView messageLabel;
 
     private ScaleableImageView imageView;
 
@@ -51,9 +48,7 @@ public class BitmapFragmentView extends FrameLayout {
         updateAction = new DrawerProgressTask();
         imageView = (ScaleableImageView) findViewById(R.id.scaleableImageView);
 
-        initProgressBar = (ProgressBar) findViewById(R.id.initProgressBar);
         drawerProgressBar = (ProgressBar) findViewById(R.id.drawerProgressBar);
-        messageLabel = (TextView) findViewById(R.id.messageTextView);
 
         drawerProgressBar.setVisibility(View.INVISIBLE); // will be shown maybe later
 
@@ -141,23 +136,9 @@ public class BitmapFragmentView extends FrameLayout {
         this.bitmapFragment = bitmapFragment;
         this.imageView.setBitmap(bitmapFragment.getBitmap());
 
-        if(bitmapFragment.isInitializing()) {
-            // activate spinner
-            messageLabel.setText("Hello. This is active");
-        } else {
-            messageLabel.setVisibility(INVISIBLE);
-            initProgressBar.setVisibility(INVISIBLE);
-        }
-
         this.bitmapFragmentListener = new BitmapFragment.BitmapFragmentListener() {
             @Override
             public void initializationFinished() {
-                messageLabel.setVisibility(INVISIBLE);
-                initProgressBar.setVisibility(INVISIBLE);
-
-                // fixme remove view
-
-                invalidate(); // redraw
             }
 
             @Override
@@ -174,12 +155,12 @@ public class BitmapFragmentView extends FrameLayout {
             }
 
             @Override
-            public void calculationStarting(BitmapFragment src) {
+            public void drawerStarted(BitmapFragment src) {
                 updateAction.schedule();
             }
 
             @Override
-            public void calculationFinished(long ms, BitmapFragment src) {
+            public void drawerFinished(long ms, BitmapFragment src) {
                 // progress bar is hidden in update task.
             }
 

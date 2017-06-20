@@ -8,26 +8,6 @@
              android:rowCount="3"
              android:columnCount="3">
 
-    <LinearLayout
-        android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        android:orientation="vertical"
-        android:layout_gravity="center_vertical|center_horizontal">
-
-        <TextView
-            android:id="@+id/messageTextView"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:text="TextView"
-            tools:text="Hello World"/>
-
-        <ProgressBar
-            android:id="@+id/initProgressBar"
-            style="?android:attr/progressBarStyle"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"/>
-    </LinearLayout>
-
     <at.searles.fractview.ui.ScaleableImageView
         android:id="@+id/scaleableImageView"
         android:layout_width="fill_parent"

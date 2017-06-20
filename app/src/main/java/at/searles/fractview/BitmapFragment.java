@@ -1,11 +1,9 @@
 package at.searles.fractview;
 
 import android.app.Activity;
+import android.app.AlertDialog;
 import android.app.Fragment;
-import android.app.WallpaperManager;
-import android.content.Intent;
 import android.graphics.Bitmap;
-import android.net.Uri;
 import android.os.AsyncTask;
 import android.os.Bundle;
 import android.os.Handler;
@@ -13,13 +11,9 @@ import android.os.Looper;
 import android.util.Log;
 import android.widget.Toast;
 
-import java.io.File;
-import java.io.FileOutputStream;
-import java.io.IOException;
 import java.util.LinkedList;
 import java.util.List;
 
-import at.searles.fractview.editors.ProgressDialogFragment;
 import at.searles.fractview.fractal.Drawer;
 import at.searles.fractview.fractal.Fractal;
 import at.searles.fractview.fractal.RenderScriptDrawer;
@@ -56,8 +50,7 @@ import at.searles.meelan.CompileException;
  *
  * An Editor
  */
-public class BitmapFragment extends Fragment implements
-						ProgressDialogFragment.Callback {
+public class BitmapFragment extends Fragment {
 
 	public static BitmapFragment newInstance(int width, int height, Fractal fractal) {
 		// set initial size
@@ -73,11 +66,6 @@ public class BitmapFragment extends Fragment implements
 
 		return ft;
 	}
-
-	/**
-	 * There are three types of progressdialogs in this one.
-	 */
-	private enum ProgressDialogValues { Init, RunningSave, RunningShare, RunningWallpaper, Save }
 
     // Allocations and various data
     private int height, width;
@@ -103,14 +91,32 @@ public class BitmapFragment extends Fragment implements
     private List<BitmapFragmentListener> listeners = new LinkedList<>();
 
     public void addBitmapFragmentListener(BitmapFragmentListener listener) {
+		Log.d(getClass().getName(), "adding listener " + listener);
         listeners.add(listener);
     }
 
     public void removeBitmapFragmentListener(BitmapFragmentListener listener) {
+		Log.d(getClass().getName(), "removing listener " + listener);
+
         if(!listeners.remove(listener)) {
             Log.e(getClass().getName(), "Trying to remove an inexistent listener!");
         }
     }
+
+	private List<BitmapFragmentPlugin> plugins = new LinkedList<>();
+
+	public void addBitmapFragmentPlugin(BitmapFragmentPlugin plugin) {
+		Log.d(getClass().getName(), "adding plugin " + plugin);
+		plugins.add(plugin);
+	}
+
+	public void removeBitmapFragmentPlugin(BitmapFragmentPlugin plugin) {
+		Log.d(getClass().getName(), "remove plugin " + plugin);
+		if(!plugins.remove(plugin)) {
+			Log.e(getClass().getName(), "Trying to remove an inexistent plugin!");
+		}
+	}
+
 
 	/**
 	 * List of past fractals that were drawn using this bitmap fragment.
@@ -122,6 +128,11 @@ public class BitmapFragment extends Fragment implements
 		// Deprecated but Android SDK is buggy here!
 		Log.d("BMF", "onAttach");
 		super.onAttach(context);
+
+		// FIXME put the next initialization somewhere else. For instance into
+		// FIXME a plugin.
+
+		plugins.forEach((plugin) -> plugin.attachContext(context));
 
 		// we are in the UI-thread and if this was the first start,
 		// onCreate was not yet called. Good point to initialize
@@ -163,7 +174,7 @@ public class BitmapFragment extends Fragment implements
 							} else {
 								isRunning = false;
 								listeners.forEach((listener) ->
-										listener.calculationFinished(-1, BitmapFragment.this)
+										listener.drawerFinished(-1, BitmapFragment.this)
 								);
 							}
 						}
@@ -183,6 +194,7 @@ public class BitmapFragment extends Fragment implements
 	public void onDetach() {
 		Log.d("BMF", "onDetach");
 		super.onDetach();
+		plugins.forEach(BitmapFragmentPlugin::detach);
 	}
 
 	@Override
@@ -224,28 +236,66 @@ public class BitmapFragment extends Fragment implements
 			throw new IllegalArgumentException("initial fractal is not compilable: " + e.getMessage());
 		}
 
-		// finally, we initialize the drawer.
-		// this might take some time after a fresh install, hence do it in the background
-		new AsyncTask<Void, Void, Void>() {
-			@Override
-			protected Void doInBackground(Void...ignore) {
-				Log.d(getClass().getName(), "init drawer");
+		// initialize drawer. This might take some time, thus do it from
+		// a plugin.
+		BitmapFragmentPlugin initPlugin = new BitmapFragmentPlugin() {
 
-				drawer.init(bitmap, fractal);
-				return null;
+			BitmapFragmentPlugin self = this;
+			AlertDialog dialog = null;
+
+			@Override
+			public void init(BitmapFragment fragment) {
+				fragment.addBitmapFragmentPlugin(this);
+
+				if(fragment.getActivity() != null) {
+					attachContext(fragment.getActivity());
+				}
+
+				new AsyncTask<Void, Void, Void>() {
+					@Override
+					protected Void doInBackground(Void...ignore) {
+						Log.d(getClass().getName(), "init drawer");
+
+						drawer.init(bitmap, fractal);
+						return null;
+					}
+
+					@Override
+					protected void onPostExecute(Void ignore) {
+						Log.d(getClass().getName(), "init is done");
+
+						if(dialog != null) {
+							dialog.dismiss();
+						}
+
+						removeBitmapFragmentPlugin(self);
+						drawer.setFractal(fractal);
+
+						isInitializing = false; // done
+						listeners.forEach(BitmapFragmentListener::initializationFinished);
+
+						startBackgroundTask();
+					}
+				}.execute();
 			}
 
 			@Override
-			protected void onPostExecute(Void ignore) {
-                Log.d(getClass().getName(), "init is done");
-                drawer.setFractal(fractal);
+			public void attachContext(Activity context) {
+				AlertDialog.Builder builder = new AlertDialog.Builder(context);
+				builder.setTitle("Initializing Fractview");
+				builder.setMessage("Please wait a few seconds while scripts are compiled...");
+				builder.setCancelable(false);
 
-                isInitializing = false; // done
-				listeners.forEach(BitmapFragmentListener::initializationFinished);
-
-				startBackgroundTask();
+				dialog = builder.show();
 			}
-		}.execute();
+
+			@Override
+			public void detach() {
+				dialog = null;
+			}
+		};
+
+		initPlugin.init(this);
 	}
 
 	public float progress() {
@@ -377,7 +427,7 @@ public class BitmapFragment extends Fragment implements
         Log.d(getClass().getName(), "start drawing");
 		isRunning = true;
 
-		listeners.forEach((l) -> l.calculationStarting(this));
+		listeners.forEach((l) -> l.drawerStarted(this));
 
 		new Thread(drawer).start(); // fixme is that the android way?
     }
@@ -405,216 +455,6 @@ public class BitmapFragment extends Fragment implements
         return height;
     }
 
-	// ==================================================================
-	// ================= Save/Share/Set as Wallpaper ====================
-	// ==================================================================
-
-	public void shareImage() {
-		waitForImageRendering(ProgressDialogValues.RunningShare);
-	}
-
-	public void setAsWallpaper() {
-		waitForImageRendering(ProgressDialogValues.RunningWallpaper);
-	}
-
-	public void saveImage(File imageFile) {
-		saveFile = imageFile; // keep file
-		waitForImageRendering(ProgressDialogValues.RunningSave);
-	}
-
-	private static final int SAVE_IMAGE = 1;
-	private static final int SHARE_IMAGE = 2;
-	private static final int SET_WALLPAPER = 3;
-
-	@Override
-	public void onSkip(int requestCode) {
-		waiting = null;
-		doImageAction(ProgressDialogValues.values()[requestCode]);
-	}
-
-	@Override
-	public void onCancel(int requestCode) {
-		waiting = null;
-	}
-
-	private void doImageAction(ProgressDialogValues action) {
-		// did someone skip this one?
-		switch(action) {
-			case RunningSave: {
-				// dialog was already dismissed
-				doImageAction(SAVE_IMAGE);
-			} break;
-			case RunningShare: {
-				doImageAction(SHARE_IMAGE);
-			} break;
-			case RunningWallpaper: {
-				doImageAction(SET_WALLPAPER);
-			} break;
-			default:
-				throw new IllegalArgumentException("there should not be a skippable dialog for " + action);
-		}
-	}
-
-	/**
-	 * do whatever is requested immediately.
-	 * @param actionId Id of the requested action.
-     */
-	private void doImageAction(int actionId) {
-		switch(actionId) {
-			case SAVE_IMAGE: {
-				saveImageInBackground(saveFile, actionId);
-			} break;
-			case SHARE_IMAGE: {
-				// create TMP file and call share indent
-				try {
-					File imageFile = File.createTempFile("fractview", ".png", getActivity().getExternalCacheDir());
-					saveImageInBackground(imageFile, actionId);
-				} catch (IOException e) {
-					Toast.makeText(getActivity(), "ERROR: " + e.getMessage(), Toast.LENGTH_LONG).show();
-				}
-
-			} break;
-			case SET_WALLPAPER: {
-				saveImageInBackground(null, actionId);
-			} break;
-
-			// in all other cases, do nothing.
-		}
-	}
-
-	/**
-	 * Variable indicates that there is someone waiting...
-	 */
-	private ProgressDialogValues waiting = null; // null = no waiting dialog.
-
-	private File saveFile;
-
-	private void waitForImageRendering(ProgressDialogValues postAction) {
-		// if bitmap fragment is not yet done
-		if(isRunning()) {
-			// show dialog to wait
-			ProgressDialogFragment waitingDialog = ProgressDialogFragment.newInstance(postAction.ordinal(),
-					true,
-					"Image rendering not yet finished...",
-					"Skip to use the incompletely rendered image", true);
-			waitingDialog.setTargetFragment(this, -1);
-			waitingDialog.show(getFragmentManager(), "waitingDialog");
-			waiting = postAction;
-		} else {
-			// if not running, then save immediately
-			doImageAction(postAction);
-		}
-	}
-
-	/**
-	 * Saves the image in the background. As a special tweak, it displays a dialog to
-	 * save the file only once the calculation is done. This dialog allows skip or cancel. Skip
-	 * saves the image instantly, Cancel cancels the whole thing.
-	 * @param imageFile File object in which the image should be saved.
-	 */
-	private void saveImageInBackground(final File imageFile, int action) {
-		// We are in the UI-Thread.
-		// Check whether there is some active Activity to store a savingsdialog
-		Log.d("BF", "isFinishing in activity: " + getActivity().isFinishing());
-
-		ProgressDialogFragment ft = ProgressDialogFragment.newInstance(ProgressDialogValues.Save.ordinal(),
-				true,
-				"Please wait...",
-				"Saving image...", false);
-
-		try {
-			// TODO if this is called when the activity is not showing,
-			// it causes a crash.
-			ft.show(getFragmentManager(), "saveDialog");
-		} catch(IllegalStateException e) {
-			e.printStackTrace();
-		}
-		// no need for target because it is not skippable
-		// ft.setTargetFragment(BitmapFragment.this, -1);
-
-		// Create task that will save the image
-		new AsyncTask<Void, Void, Boolean>() {
-
-			@Override
-			protected void onPreExecute() {}
-
-			@Override
-			protected Boolean doInBackground(Void... params) {
-				String errorMsg;
-				try {
-					// either put it into the file or set it as wallpaper
-					if(action == SET_WALLPAPER) {
-						// image file is ignored here.
-						if(imageFile != null) {
-							throw new IllegalArgumentException("image file should be null here!");
-						}
-
-						// set bitmap
-						WallpaperManager wallpaperManager =
-								WallpaperManager.getInstance(getActivity());
-
-						wallpaperManager.setBitmap(getBitmap());
-						return true;
-					} else {
-						FileOutputStream fos = new FileOutputStream(imageFile);
-
-						if (bitmap.compress(Bitmap.CompressFormat.PNG, 100, fos)) {
-							// Successfully written picture
-							fos.close();
-
-							return true;
-						} else {
-							errorMsg = "Error calling \"compress\".";
-							fos.close();
-						}
-					}
-				} catch(IOException e) {
-					errorMsg = e.getLocalizedMessage();
-				}
-
-				// There was some error
-
-				String finalErrorMsg = errorMsg;
-				getActivity().runOnUiThread(new Runnable() {
-					@Override
-					public void run() {
-						Toast.makeText(getActivity(), "ERROR: " + finalErrorMsg,
-								Toast.LENGTH_LONG).show();
-					}
-				});
-
-				return false;
-			}
-
-			@Override
-			protected void onPostExecute(Boolean saved) {
-				ProgressDialogFragment ft = (ProgressDialogFragment) getFragmentManager().findFragmentByTag("saveDialog");
-
-				if(ft != null) ft.dismissAllowingStateLoss();
-
-				if(saved) {
-					if(action == SAVE_IMAGE) {
-						// this is executed after saving was successful
-						// Add it to the gallery
-						Intent mediaScanIntent = new Intent(Intent.ACTION_MEDIA_SCANNER_SCAN_FILE);
-						Uri contentUri = Uri.fromFile(saveFile);
-						mediaScanIntent.setData(contentUri);
-						getActivity().sendBroadcast(mediaScanIntent);
-
-						saveFile = null; // just to be save...
-					} else if(action == SHARE_IMAGE) {
-						// Share image
-						Uri contentUri = Uri.fromFile(imageFile);
-						// after it was successfully saved, share it.
-						Intent share = new Intent(Intent.ACTION_SEND);
-						share.setType("image/png");
-						share.putExtra(Intent.EXTRA_STREAM, contentUri);
-						startActivity(Intent.createChooser(share, "Share Image"));
-					}
-				}
-			}
-		}.execute();
-	}
 
 
 	/**
@@ -640,13 +480,13 @@ public class BitmapFragment extends Fragment implements
 		/**
 		 * We will now start a new calc. This one is called from the UI-thread.
 		 */
-		void calculationStarting(BitmapFragment src);
+		void drawerStarted(BitmapFragment src);
 
 		/**
 		 * Called when the calculation is finished (and it was not cancelled)
 		 * @param ms milliseconds
 		 */
-        void calculationFinished(long ms, BitmapFragment src);
+        void drawerFinished(long ms, BitmapFragment src);
 
 
 		// FIXME the next one seems to be a bit odd compared to the other ones.
