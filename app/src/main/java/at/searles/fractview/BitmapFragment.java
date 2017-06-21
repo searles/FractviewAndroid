@@ -9,7 +9,6 @@ import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
 import android.util.Log;
-import android.widget.Toast;
 
 import java.util.LinkedList;
 import java.util.List;
@@ -346,23 +345,12 @@ public class BitmapFragment extends Fragment {
 			}
 
 			return true;
-		} catch(OutOfMemoryError e) {
+		} catch(OutOfMemoryError | NullPointerException e) {
+            // New in Java 7. Weird syntax...
 			Log.d(getClass().getName(), "Out of memory");
-			getActivity().runOnUiThread(new Runnable() {
-				@Override
-				public void run() {
-					Toast.makeText(getActivity(), "Image too large...", Toast.LENGTH_LONG).show();
-				}
-			});
-			return false;
-		} catch(NullPointerException e) {
-			// FIXME Put this into some lambda to avoid DRY.
-			getActivity().runOnUiThread(new Runnable() {
-				@Override
-				public void run() {
-					Toast.makeText(getActivity(), "Image too large...", Toast.LENGTH_LONG).show();
-				}
-			});
+			getActivity().runOnUiThread(() ->
+                    DialogHelper.error(getActivity(), "Image too large...")
+			);
 			return false;
 		}
 	}
@@ -474,6 +462,7 @@ public class BitmapFragment extends Fragment {
 		/**
 		 * The view should be updated and the view matrices reset
 		 * because a first preview was generated in the bitmap.
+         * Maybe merge this one with bitmapUpdated?
 		 */
 		void previewGenerated(BitmapFragment src);
 
@@ -488,8 +477,6 @@ public class BitmapFragment extends Fragment {
 		 */
         void drawerFinished(long ms, BitmapFragment src);
 
-
-		// FIXME the next one seems to be a bit odd compared to the other ones.
 		/**
 		 * Called after a new bitmap was created.
 		 * @param bitmap The new bitmap

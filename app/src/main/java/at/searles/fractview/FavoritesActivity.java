@@ -110,7 +110,7 @@ public class FavoritesActivity extends Activity {
 							break;
 							case 1: {
 								// delete it
-								prefsHelper.remove(entry.title());
+								prefsHelper.remove(entry.title(), FavoritesActivity.this);
 								initData();
 							}
 							break;
