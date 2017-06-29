@@ -350,12 +350,12 @@ public class RenderScriptDrawer implements Drawer {
 		double centerY = (height - 1.) / 2.;
 		double factor = 1. / Math.min(centerX, centerY);
 
-		Double2 x = new Double2(scale.xx * factor, scale.xy * factor);
-		Double2 y = new Double2(scale.yx * factor, scale.yy * factor);
+		Double2 x = new Double2(scale.xx() * factor, scale.xy() * factor);
+		Double2 y = new Double2(scale.yx() * factor, scale.yy() * factor);
 
 		Double2 c = new Double2(
-				scale.cx - factor * (scale.xx * centerX + scale.yx * centerY),
-				scale.cy - factor * (scale.xy * centerX + scale.yy * centerY)
+				scale.cx() - factor * (scale.xx() * centerX + scale.yx() * centerY),
+				scale.cy() - factor * (scale.xy() * centerX + scale.yy() * centerY)
 		);
 
 		script.set_xx(x);

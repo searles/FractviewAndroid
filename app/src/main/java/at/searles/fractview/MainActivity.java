@@ -33,6 +33,7 @@ import android.widget.Toast;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
+import java.util.HashMap;
 
 import at.searles.fractview.editors.EditableDialogFragment;
 import at.searles.fractview.fractal.FavoriteEntry;
@@ -136,7 +137,7 @@ public class MainActivity extends Activity
 			Fractal initFractal = new Fractal(
 					AssetsHelper.DEFAULT_SCALE,
 					sourceCode,
-					new Fractal.Parameters()
+					new HashMap<>()
 			);
 
 			bitmapFragment = BitmapFragment.newInstance(w, h, initFractal);

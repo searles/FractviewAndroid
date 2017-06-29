@@ -5,8 +5,7 @@ import android.content.ClipboardManager;
 import android.content.Context;
 import android.widget.Toast;
 
-import org.json.JSONException;
-import org.json.JSONObject;
+import com.google.gson.JsonParser;
 
 import at.searles.fractview.fractal.Fractal;
 
@@ -16,28 +15,19 @@ import at.searles.fractview.fractal.Fractal;
 
 public class ClipboardHelper {
     public static void copyFractal(Context context, Fractal fractal) {
-        try {
-            String export = fractal.toJSON().toString(2);
-            copy(context, export);
-        } catch (JSONException e) {
-            e.printStackTrace();
-            Toast.makeText(context, "ERROR: Could not create JSON", Toast.LENGTH_LONG).show();
-        }
+        String export = fractal.serialize().toString();
+        copy(context, export);
     }
 
     public static Fractal pasteFractal(Context context) {
         CharSequence pasteText = ClipboardHelper.paste(context);
 
         if(pasteText != null) {
-            try {
-                return Fractal.fromJSON(new JSONObject(pasteText.toString()));
-            } catch (JSONException e) {
-                e.printStackTrace();
-                Toast.makeText(context, "ERROR: Could not parse content of clipboard", Toast.LENGTH_LONG).show();
-            }
+            return Fractal.deserialize(new JsonParser().parse(pasteText.toString()));
+        } else {
+            // TODO
+            return null;
         }
-
-        return null;
     }
 
 

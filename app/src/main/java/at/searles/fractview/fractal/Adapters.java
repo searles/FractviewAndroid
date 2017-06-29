@@ -1,15 +1,8 @@
 package at.searles.fractview.fractal;
 
 import android.os.Parcel;
-import android.util.Log;
 
-import org.json.JSONArray;
 import org.json.JSONException;
-import org.json.JSONObject;
-
-import at.searles.math.Cplx;
-import at.searles.math.Scale;
-import at.searles.math.color.Palette;
 
 /**
  * This class is rather a namespace that contains the Adapter-Interface plus some static adapters.
@@ -60,7 +53,7 @@ public class Adapters {
 		}
 	};*/
 
-	public static Adapter<Scale> scaleAdapter = new Adapter<Scale>() {
+	/*public static Adapter<Scale> scaleAdapter = new Adapter<Scale>() {
 		// A scale consists of 6 doubles.
 		// Format for Parcel: 6 doubles in a row.
 		// Format for JSON: JSONArray with 6 doubles
@@ -268,7 +261,7 @@ public class Adapters {
 		public Object toJSON(Double d) throws JSONException {
 			return d;
 		}
-	};*/
+	};
 
 	public static final Adapter<Cplx> cplxAdapter = new Adapter<Cplx>() {
 		// Parcel: Two doubles in a row.

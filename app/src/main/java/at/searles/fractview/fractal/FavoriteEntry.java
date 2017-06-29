@@ -1,20 +1,26 @@
 package at.searles.fractview.fractal;
 
-import android.graphics.*;
+import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
+import android.graphics.Canvas;
+import android.graphics.Matrix;
+import android.graphics.Paint;
 import android.util.Base64;
-import org.json.JSONException;
-import org.json.JSONObject;
+import android.util.Log;
+
+import com.google.gson.JsonElement;
+import com.google.gson.JsonObject;
 
 import java.io.ByteArrayOutputStream;
 
-import at.searles.fractview.FractalEntry;
+import at.searles.fractview.FractalLabel;
 
 /**
  *
  */
-public class FavoriteEntry implements FractalEntry {
+public class FavoriteEntry implements FractalLabel {
 
-	static final int ICON_LEN = 64;
+	private static final int ICON_LEN = 64;
 
 	private Fractal fractal;
 	private Bitmap icon; // icon may be null!
@@ -35,13 +41,10 @@ public class FavoriteEntry implements FractalEntry {
 		float w = original.getWidth();
 		float h = original.getHeight();
 
-		float tx = (original.getWidth() * scale - ICON_LEN) / 2.f;
-		float ty = (original.getHeight() * scale - ICON_LEN) / 2.f;
-
 		Matrix transformation = new Matrix();
 		transformation.setValues(new float[]{
-				scale, 0, (ICON_LEN - scale * w) / 2.f,
-				0, scale, (ICON_LEN - scale * h) / 2.f,
+				scale, 0, (ICON_LEN - scale * w) * .5f,
+				0, scale, (ICON_LEN - scale * h) * .5f,
 				0, 0, 1,
 		});
 
@@ -70,38 +73,53 @@ public class FavoriteEntry implements FractalEntry {
      */
 	private static Bitmap getBitmapFromString(String str) {
 		// Thanks to http://mobile.cs.fsu.edu/converting-images-to-json-objects/
-		// FIXME check error case
 		byte[] decodedString = Base64.decode(str, Base64.DEFAULT);
 		return BitmapFactory.decodeByteArray(decodedString, 0, decodedString.length);
 	}
 
 	public static FavoriteEntry create(String title, Fractal fractal, Bitmap bitmap) {
-		return new FavoriteEntry(title, fractal, createIcon(bitmap));
+		return new FavoriteEntry(title, createIcon(bitmap), fractal);
 	}
 
-	public FavoriteEntry(String title, Fractal fractal, Bitmap icon) {
+	public FavoriteEntry(String title, Bitmap icon, Fractal fractal) {
 		this.title = title;
 		this.fractal = fractal;
 		this.icon = icon;
 	}
 
-	public JSONObject toJSON() throws JSONException {
-		JSONObject obj = new JSONObject();
-		obj.put("fractal", fractal.toJSON());
-		obj.put("icon", getStringFromBitmap(icon));
+	public static final String FRACTAL_LABEL = "fractal";
+	public static final String ICON_LABEL = "icon";
+	public static final String TITLE_LABEL = "title";
+
+	public JsonObject serialize() {
+		JsonObject obj = new JsonObject();
+
+		obj.addProperty(TITLE_LABEL, title);
+		obj.addProperty(ICON_LABEL, getStringFromBitmap(icon));
+		obj.add(TITLE_LABEL, fractal.serialize());
+
 		return obj;
 	}
 
-	public static FavoriteEntry fromJSON(String title, Object o) throws JSONException {
-		if(o instanceof JSONObject) {
-			JSONObject obj = (JSONObject) o;
-			Fractal f = Fractal.fromJSON(obj.getJSONObject("fractal"));
-			Bitmap bm = getBitmapFromString(obj.getString("icon"));
+	/**
+	 *
+	 * @param defaultTitle In an old version, the title was not stored, therefore this one is here to avoid null.
+	 * @param e The Json
+	 * @return
+	 */
+	public static FavoriteEntry deserialize(String defaultTitle, JsonElement e) {
+		JsonObject obj = (JsonObject) e;
+		Fractal fractal = Fractal.deserialize(obj.get(FRACTAL_LABEL));
+		Bitmap icon = getBitmapFromString(obj.get(ICON_LABEL).getAsString());
 
-			return new FavoriteEntry(title, f, bm);
+		String title = obj.get(TITLE_LABEL).getAsString();
+
+		if(title == null) {
+			Log.d(FavoriteEntry.class.getName(), "no title was stored in Json");
+			title = defaultTitle;
 		}
 
-		throw new JSONException("not a JSON-Object???");
+		return new FavoriteEntry(title, icon, fractal);
 	}
 
 	@Override
@@ -116,7 +134,6 @@ public class FavoriteEntry implements FractalEntry {
 
 	@Override
 	public String description() {
-		// FIXME add some description like date.
 		return "";
 	}
 

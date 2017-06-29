@@ -2,8 +2,6 @@ package at.searles.fractview;
 
 import android.content.Context;
 
-import org.json.JSONException;
-
 import at.searles.fractview.fractal.FavoriteEntry;
 
 /**
@@ -17,12 +15,7 @@ public class FavoritesManager {
     public static void add(Context context, String name, FavoriteEntry fav, SharedPrefsHelper.SaveMethod method) {
         String entryString;
 
-        try {
-            entryString = fav.toJSON().toString();
-        } catch (JSONException e) {
-            DialogHelper.error(context, e.getMessage());
-            return;
-        }
+            entryString = fav.serialize().toString();
 
         new SharedPrefsHelper(context, FAVORITES).add(name, entryString, method);
     }

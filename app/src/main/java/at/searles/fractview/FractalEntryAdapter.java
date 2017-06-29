@@ -13,8 +13,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import at.searles.fractview.fractal.FavoriteEntry;
-
 /**
  * Adapter for fractals with bitmaps
  */
@@ -22,7 +20,7 @@ public class FractalEntryAdapter extends BaseAdapter {
 
 	private final Activity context;
 	private final List<String> keys;
-	private final Map<String, FractalEntry> entries;
+	private final Map<String, FractalLabel> entries;
 
 	public FractalEntryAdapter(Activity context) {
 		this.context = context;
@@ -31,7 +29,7 @@ public class FractalEntryAdapter extends BaseAdapter {
 		this.entries = new HashMap<>();
 	}
 
-    public void setData(Map<String, ? extends FractalEntry> entryMap) {
+    public void setData(Map<String, ? extends FractalLabel> entryMap) {
 		keys.clear();
 		entries.clear();
 
@@ -41,11 +39,11 @@ public class FractalEntryAdapter extends BaseAdapter {
 		this.entries.putAll(entryMap);
 	}
 
-	public void setData(List<? extends FractalEntry> entryList) {
+	public void setData(List<? extends FractalLabel> entryList) {
 		keys.clear();
 		entries.clear();
 
-		for(FractalEntry entry : entryList) {
+		for(FractalLabel entry : entryList) {
 			keys.add(entry.title());
 			this.entries.put(entry.title(), entry);
 		}
@@ -57,7 +55,7 @@ public class FractalEntryAdapter extends BaseAdapter {
 	}
 
 	@Override
-	public FractalEntry getItem(int index) {
+	public FractalLabel getItem(int index) {
 		return entries.get(keys.get(index));
 	}
 
@@ -76,7 +74,7 @@ public class FractalEntryAdapter extends BaseAdapter {
 		ImageView iconView = (ImageView) view.findViewById(R.id.iconView);
 		TextView titleView = (TextView) view.findViewById(R.id.titleView);
 
-		FractalEntry entry = getItem(index);
+		FractalLabel entry = getItem(index);
 
 		iconView.setImageBitmap(entry.icon());
 		iconView.setScaleType(ImageView.ScaleType.CENTER_INSIDE);

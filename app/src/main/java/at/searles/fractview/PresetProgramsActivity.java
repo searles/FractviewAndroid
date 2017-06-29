@@ -23,7 +23,7 @@ public class PresetProgramsActivity extends Activity {
 
 	private Fractal inFractal;
 
-	private static final FractalEntry KEEP = new FractalEntry() {
+	private static final FractalLabel KEEP = new FractalLabel() {
 		@Override
 		public String title() {
 			return "Keep current program";
@@ -55,7 +55,7 @@ public class PresetProgramsActivity extends Activity {
 		List<AssetsHelper.ProgramAsset> assets = AssetsHelper.entries(getAssets());
 
 		// entries contain a first empty dummy
-		List<FractalEntry> entries = new ArrayList<>(assets.size() + 1);
+		List<FractalLabel> entries = new ArrayList<>(assets.size() + 1);
 
 		// first, add the 'keep'-entry
 		entries.add(KEEP);
@@ -79,7 +79,7 @@ public class PresetProgramsActivity extends Activity {
 				} else {
 					String sourceCode =
 							((AssetsHelper.ProgramAsset) entries.get(index)).source;
-					f = new Fractal(inFractal.scale(), sourceCode, inFractal.parameters());
+					f = inFractal.copyNewSource(sourceCode, true);//new Fractal(inFractal.scale(), sourceCode, inFractal.data());
 				}
 
 				// Start new Parameter activity and put this source code inside.

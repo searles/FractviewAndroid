@@ -2,6 +2,7 @@ package at.searles.fractview.editors;
 
 import android.app.AlertDialog;
 import android.app.Dialog;
+import android.app.DialogFragment;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.SharedPreferences;
@@ -30,11 +31,11 @@ import at.searles.math.color.Colors;
  * Dialog for editable elements. Initial argument must be set in the bundle
  * 'arguments'. This is for sharedpref-dialogs the name of the shared preference.
  */
-public class EditableDialogFragment extends GenericDialogFragment {
+public class EditableDialogFragment extends DialogFragment {
 
     public static EditableDialogFragment newInstance(int requestCode, String title,
                                                      boolean callFragment, Type type) {
-        Bundle b = GenericDialogFragment.createBundle(requestCode, callFragment, title);
+        Bundle b = EditableDialogFragment.createBundle(requestCode, callFragment, title);
         b.putInt("type", type.ordinal());
 
         EditableDialogFragment fragment = new EditableDialogFragment();
@@ -44,6 +45,41 @@ public class EditableDialogFragment extends GenericDialogFragment {
     }
 
     private Object initialValue;
+
+    public static Bundle createBundle(
+            int requestCode,
+            boolean callFragment,
+            String title) {
+        Bundle b = new Bundle();
+        b.putInt("request_code", requestCode);
+        b.putBoolean("call_fragment", callFragment);
+        if(title != null) b.putString("title", title);
+
+        b.putBoolean("closed", false);
+        // this one is here to check whether the dialog should still
+        // exist.
+
+        return b;
+    }
+
+    protected boolean callbackFragment() {
+        return getArguments().getBoolean("call_fragment");
+    }
+
+    /**
+     * @return may return null if there is no title
+     */
+    protected String title() {
+        if(getArguments().containsKey("title")) {
+            return getArguments().getString("title");
+        } else {
+            return null;
+        }
+    }
+
+    protected int requestCode() {
+        return getArguments().getInt("request_code");
+    }
 
     public EditableDialogFragment setInitVal(Object o) {
         this.initialValue = o;
@@ -139,12 +175,12 @@ public class EditableDialogFragment extends GenericDialogFragment {
 
                 Scale sc = (Scale) o;
 
-                editorXX.setText(Double.toString(sc.xx));
-                editorXY.setText(Double.toString(sc.xy));
-                editorYX.setText(Double.toString(sc.yx));
-                editorYY.setText(Double.toString(sc.yy));
-                editorCX.setText(Double.toString(sc.cx));
-                editorCY.setText(Double.toString(sc.cy));
+                editorXX.setText(Double.toString(sc.xx()));
+                editorXY.setText(Double.toString(sc.xy()));
+                editorYX.setText(Double.toString(sc.yx()));
+                editorYY.setText(Double.toString(sc.yy()));
+                editorCX.setText(Double.toString(sc.cx()));
+                editorCY.setText(Double.toString(sc.cy()));
             }
 
             @Override

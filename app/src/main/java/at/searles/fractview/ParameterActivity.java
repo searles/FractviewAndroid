@@ -55,7 +55,7 @@ public class ParameterActivity extends Activity implements EditableDialogFragmen
 	static final int ELEMENT = 1;
 	static final int SCALE = 2;
 
-	Fractal fb;
+	Fractal fractal;
 	ParameterAdapter adapter; // List adapter for parameters
 	ListView listView;
 
@@ -74,16 +74,16 @@ public class ParameterActivity extends Activity implements EditableDialogFragmen
 		switch(p.b) {
 			case Scale: {
 				Scale sc = (Scale) o;
-				fb.setScale(sc);
+				fractal.setScale(sc);
 			} break;
 			case Int: {
-				fb.setInt(p.a, (Integer) o);
+				fractal.setInt(p.a, (Integer) o);
 			} break;
 			case Real: {
-				fb.setReal(p.a, (Double) o);
+				fractal.setReal(p.a, (Double) o);
 			} break;
 			case Cplx: {
-				fb.setCplx(p.a, (Cplx) o);
+				fractal.setCplx(p.a, (Cplx) o);
 			} break;
 			case Expr: {
 				// This one is more complicated.
@@ -92,11 +92,11 @@ public class ParameterActivity extends Activity implements EditableDialogFragmen
 
 				// store id in case of error.
 				// If backup is null, then the original was used.
-				String backup = fb.isDefaultValue(p.a) ? null : (String) fb.get(p.a).b;
+				String backup = fractal.isDefault(p.a) ? null : (String) fractal.get(p.a).value();
 
 				try {
-					fb.setExpr(p.a, (String) o);
-					fb.compile();
+					fractal.setExpr(p.a, (String) o);
+					fractal.compile();
 
 					// compiling was fine...
 					adapter.notifyDataSetChanged();
@@ -106,10 +106,10 @@ public class ParameterActivity extends Activity implements EditableDialogFragmen
 					// there was an error. Restore expr for id to original state
 					if (backup == null) {
 						// back to original
-						fb.reset(p.a);
+						fractal.setToDefault(p.a);
 					} else {
 						// back to old value
-						fb.setExpr(p.a, backup);
+						fractal.setExpr(p.a, backup);
 					}
 
 					// TODO Collect these. This is code duplication
@@ -123,74 +123,13 @@ public class ParameterActivity extends Activity implements EditableDialogFragmen
 				}
 			} break;
 			case Color: {
-				fb.setColor(p.a, ((Integer) o) | 0xff000000);
+				fractal.setColor(p.a, ((Integer) o) | 0xff000000);
 			} break;
 			default:
 				// bool and palette is not her
 				throw new IllegalArgumentException("No such type");
 		}
 	}
-
-	/*@Override
-	public boolean applyScale(Scale sc) {
-		fb.setScale(sc);
-		adapter.notifyDataSetChanged();
-		return true;
-	}
-
-	@Override
-	public boolean applyInt(int i) {
-		fb.setInt(currentEditId, i);
-		adapter.notifyDataSetChanged();
-		return true;
-	}
-
-	@Override
-	public boolean applyReal(double d) {
-		fb.setReal(currentEditId, d);
-		adapter.notifyDataSetChanged();
-		return true;
-	}
-
-	@Override
-	public boolean applyColor(int color) {
-		fb.setColor(currentEditId, color);
-		adapter.notifyDataSetChanged();
-		return true;
-	}
-
-	@Override
-	public boolean applyCplx(Cplx c) {
-		Log.d("cplx edit callback: " , "re = " + c.re() + ", im = " + c.im());
-
-		fb.setCplx(currentEditId, c);
-		adapter.notifyDataSetChanged();
-		return true;
-	}
-
-	@Override
-	public boolean applyExpr(String data) {
-		// store id in case of error
-		String resetValue = fb.isDefaultValue(currentEditId) ? null : fb.expr(currentEditId);
-
-		try {
-			fb.setExpr(currentEditId, data);
-			fb.compile();
-
-			adapter.notifyDataSetChanged();
-			return true;
-		} catch(CompileException e) { // this includes parsing exceptions now
-			Toast.makeText(this, e.getLocalizedMessage(), Toast.LENGTH_LONG).show();
-
-			if (resetValue == null) {
-				fb.resetExpr(currentEditId);
-			} else {
-				fb.setExpr(currentEditId, resetValue);
-			}
-
-			return false;
-		}
-	}*/
 
 	private void showOptionsDialog(CharSequence[] options, DialogInterface.OnClickListener listener) {
 		// show these simple dialogs to reset or center values.
@@ -216,19 +155,19 @@ public class ParameterActivity extends Activity implements EditableDialogFragmen
 
 		if(savedInstanceState == null) {
 			Intent intent = getIntent();
-			this.fb = intent.getParcelableExtra("fractal");
+			this.fractal = intent.getParcelableExtra("fractal");
 		} else {
-			this.fb = savedInstanceState.getParcelable("fractal");
+			this.fractal = savedInstanceState.getParcelable("fractal");
 		}
 
-		if(this.fb == null) {
-			throw new IllegalArgumentException("fb is null!");
+		if(this.fractal == null) {
+			throw new IllegalArgumentException("fractal is null!");
 		}
 
 		// need to extract all external values from FB. Hence parse it [compiling not necessary]
 
 		try {
-			this.fb.parse();
+			this.fractal.parse();
 		} catch (CompileException e) {
 			throw new IllegalArgumentException("could not compile fractal: " + e.getMessage() + ". this is a bug.");
 		}
@@ -252,21 +191,21 @@ public class ParameterActivity extends Activity implements EditableDialogFragmen
 					case Scale: {
 						EditableDialogFragment ft = EditableDialogFragment.newInstance(
 								position, "Edit Scale", false, EditableDialogFragment.Type.Scale)
-								.setInitVal(fb.scale());
+								.setInitVal(fractal.scale());
 
 						ft.show(getFragmentManager(), "dialog");
 					} return;
 					case Expr: {
 						EditableDialogFragment ft = EditableDialogFragment.newInstance(
 								position, "Edit Expression", false, EditableDialogFragment.Type.Name)
-								.setInitVal(fb.get(p.a).b);
+								.setInitVal(fractal.get(p.a).value());
 
 						ft.show(getFragmentManager(), "dialog");
 					} return;
 					case Bool: {
-						boolean newValue = !(Boolean) fb.get(p.a).b;
+						boolean newValue = !(Boolean) fractal.get(p.a).value();
 
-						fb.setBool(p.a, newValue);
+						fractal.setBool(p.a, newValue);
 						((CheckedTextView) view).setChecked(newValue);
 
 						adapter.notifyDataSetChanged();
@@ -276,14 +215,14 @@ public class ParameterActivity extends Activity implements EditableDialogFragmen
 					case Int: {
 						EditableDialogFragment ft = EditableDialogFragment.newInstance(
 								position, "Edit Integer Value", false, EditableDialogFragment.Type.Int)
-								.setInitVal(fb.get(p.a).b);
+								.setInitVal(fractal.get(p.a).value());
 
 						ft.show(getFragmentManager(), "dialog");
 					} return;
 					case Real: {
 						EditableDialogFragment ft = EditableDialogFragment.newInstance(
 								position, "Edit Real Value", false, EditableDialogFragment.Type.Real)
-								.setInitVal(fb.get(p.a).b);
+								.setInitVal(fractal.get(p.a).value());
 
 						ft.show(getFragmentManager(), "dialog");
 					}
@@ -291,7 +230,7 @@ public class ParameterActivity extends Activity implements EditableDialogFragmen
 					case Cplx: {
 						EditableDialogFragment ft = EditableDialogFragment.newInstance(
 								position, "Edit Complex Value", false, EditableDialogFragment.Type.Cplx)
-								.setInitVal(fb.get(p.a).b);
+								.setInitVal(fractal.get(p.a).value());
 
 						ft.show(getFragmentManager(), "dialog");
 					}
@@ -299,18 +238,18 @@ public class ParameterActivity extends Activity implements EditableDialogFragmen
 					case Color: {
 						EditableDialogFragment ft = EditableDialogFragment.newInstance(
 								position, "Edit Color", false, EditableDialogFragment.Type.Color)
-								.setInitVal(fb.get(p.a).b);
+								.setInitVal(fractal.get(p.a).value());
 
 						ft.show(getFragmentManager(), "dialog");
 					}
 					return;
 					case Palette: {
 						// start new activity
-						Palette value = (Palette) fb.get(p.a).b;
+						Palette value = (Palette) fractal.get(p.a).value();
 
 						Intent i = new Intent(ParameterActivity.this, PaletteActivity.class);
 
-						i.putExtra("palette", new PaletteActivity.PaletteWrapper(value));
+						i.putExtra("palette", new Commons.PaletteWrapper(value));
 						i.putExtra("id", p.a); // label should also be in here.
 
 						startActivityForResult(i, PaletteActivity.PALETTE_ACTIVITY_RETURN);
@@ -332,22 +271,24 @@ public class ParameterActivity extends Activity implements EditableDialogFragmen
 						showOptionsDialog(scaleOptions, new DialogInterface.OnClickListener() {
 							@Override
 							public void onClick(DialogInterface dialogInterface, int which) {
-								Scale original = fb.scale();
+								Scale original = fractal.scale();
 								switch (which) {
 									case 0: // Reset
-										fb.resetScale();
+										fractal.setScaleToDefault();
 										break;
 									case 1: // Origin
-										fb.setScale(new Scale(original.xx, original.xy, original.yx, original.yy, 0, 0));
+										fractal.setScale(new Scale(original.xx(), original.xy(), original.yx(), original.yy(), 0, 0));
 										break;
 									case 2: // Ratio
+										// TODO: Orientation: Use diagonals.
 
+										// FIXME Check these
 										// Step 1: make x/y-vectors same length
-										double xx = original.xx;
-										double xy = original.xy;
+										double xx = original.xx();
+										double xy = original.xy();
 
-										double yx = original.yx;
-										double yy = original.yy;
+										double yx = original.yx();
+										double yy = original.yy();
 
 										double lenx = Math.sqrt(xx * xx + xy * xy);
 										double leny = Math.sqrt(yx * yx + yy * yy);
@@ -366,13 +307,13 @@ public class ParameterActivity extends Activity implements EditableDialogFragmen
 										double ay = vx - vy;
 
 										// fixme find proper orientation
-										fb.setScale(new Scale(ax, ay, -ay, ax, original.cx, original.cy));
+										fractal.setScale(new Scale(ax, ay, -ay, ax, original.cx(), original.cy()));
 
 										break;
 									case 3: // Straighten
-										double xlen = Math.hypot(original.xx, original.xy);
-										double ylen = Math.hypot(original.yx, original.yy);
-										fb.setScale(new Scale(xlen, 0, 0, ylen, original.cx, original.cy));
+										double xlen = Math.hypot(original.xx(), original.xy());
+										double ylen = Math.hypot(original.yx(), original.yy());
+										fractal.setScale(new Scale(xlen, 0, 0, ylen, original.cx(), original.cy()));
 										break;
 								}
 
@@ -388,7 +329,7 @@ public class ParameterActivity extends Activity implements EditableDialogFragmen
 							public void onClick(DialogInterface dialogInterface, int which) {
 								switch (which) {
 									case 0: // Reset
-										fb.reset(p.a);
+										fractal.setToDefault(p.a);
 										break;
 								}
 
@@ -403,9 +344,9 @@ public class ParameterActivity extends Activity implements EditableDialogFragmen
 							public void onClick(DialogInterface dialogInterface, int which) {
 								switch (which) {
 									case 0: // Reset
-										fb.reset(p.a);
+										fractal.setToDefault(p.a);
 										// must update it in the interface
-										((CheckedTextView) view).setChecked((Boolean) fb.get(p.a).b);
+										((CheckedTextView) view).setChecked((Boolean) fractal.get(p.a).value());
 										break;
 								}
 
@@ -421,7 +362,7 @@ public class ParameterActivity extends Activity implements EditableDialogFragmen
 							public void onClick(DialogInterface dialogInterface, int which) {
 								switch (which) {
 									case 0: // Reset
-										fb.reset(p.a);
+										fractal.setToDefault(p.a);
 										break;
 								}
 
@@ -437,7 +378,7 @@ public class ParameterActivity extends Activity implements EditableDialogFragmen
 							public void onClick(DialogInterface dialogInterface, int which) {
 								switch (which) {
 									case 0: // Reset
-										fb.reset(p.a);
+										fractal.setToDefault(p.a);
 										break;
 								}
 
@@ -453,10 +394,10 @@ public class ParameterActivity extends Activity implements EditableDialogFragmen
 							public void onClick(DialogInterface dialogInterface, int which) {
 								switch (which) {
 									case 0: // Reset
-										fb.reset(p.a);
+										fractal.setToDefault(p.a);
 										break;
 									case 1: // Center
-										fb.setCplx(p.a, new Cplx(fb.scale().cx, fb.scale().cy));
+										fractal.setCplx(p.a, new Cplx(fractal.scale().cx(), fractal.scale().cy()));
 										break;
 								}
 
@@ -472,7 +413,7 @@ public class ParameterActivity extends Activity implements EditableDialogFragmen
 							public void onClick(DialogInterface dialogInterface, int which) {
 								switch (which) {
 									case 0: // Reset
-										fb.reset(p.a);
+										fractal.setToDefault(p.a);
 										break;
 								}
 
@@ -488,7 +429,7 @@ public class ParameterActivity extends Activity implements EditableDialogFragmen
 							public void onClick(DialogInterface dialogInterface, int which) {
 								switch (which) {
 									case 0: // Reset
-										fb.reset(p.a);
+										fractal.setToDefault(p.a);
 										break;
 								}
 
@@ -519,7 +460,7 @@ public class ParameterActivity extends Activity implements EditableDialogFragmen
 			@Override
 			public void onClick(View view) {
 				Intent data = new Intent();
-				data.putExtra("parameters", fb);
+				data.putExtra("parameters", fractal);
 				setResult(1, data);
 				finish();
 			}
@@ -529,7 +470,7 @@ public class ParameterActivity extends Activity implements EditableDialogFragmen
 	@Override
 	public void onSaveInstanceState(@NotNull Bundle savedInstanceState) {
 		// Save the user's current game state
-		savedInstanceState.putParcelable("fractal", fb);
+		savedInstanceState.putParcelable("fractal", fractal);
 
 		// Always call the superclass so it can save the view hierarchy state
 		super.onSaveInstanceState(savedInstanceState);
@@ -538,12 +479,12 @@ public class ParameterActivity extends Activity implements EditableDialogFragmen
 	void setNewSourceCode(String sourceCode) {
 		try {
 			// in first attempt preserve arguments
-			final Fractal newFractal = fb.copyNewSource(sourceCode, true);
+			final Fractal newFractal = fractal.copyNewSource(sourceCode, true);
 
 			newFractal.parse();
 			newFractal.compile();
 
-			this.fb = newFractal;
+			this.fractal = newFractal;
 			adapter.init();
 			adapter.notifyDataSetChanged();
 
@@ -552,12 +493,12 @@ public class ParameterActivity extends Activity implements EditableDialogFragmen
 			Toast.makeText(this, "Resetting parameters due to errors: " + e.getMessage(), Toast.LENGTH_LONG).show();
 
 			try {
-				final Fractal newFractal = fb.copyNewSource(sourceCode, false);
+				final Fractal newFractal = fractal.copyNewSource(sourceCode, false);
 
 				newFractal.parse();
 				newFractal.compile();
 
-				this.fb = newFractal;
+				this.fractal = newFractal;
 				adapter.init();
 				adapter.notifyDataSetChanged();
 			} catch(CompileException e2) {
@@ -575,10 +516,10 @@ public class ParameterActivity extends Activity implements EditableDialogFragmen
 
 		if (requestCode == PaletteActivity.PALETTE_ACTIVITY_RETURN) {
 			if (resultCode == 1) { // = "Ok"
-				PaletteActivity.PaletteWrapper wrapper = data.getParcelableExtra("palette");
+				Commons.PaletteWrapper wrapper = data.getParcelableExtra("palette");
 				String id = data.getStringExtra("id");
 
-				fb.setPalette(id, wrapper.p);
+				fractal.setPalette(id, wrapper.p);
 				adapter.notifyDataSetChanged();
 			}
 		} else if (requestCode == PROGRAM_ACTIVITY_RETURN) {
@@ -610,7 +551,7 @@ public class ParameterActivity extends Activity implements EditableDialogFragmen
 				builder.setPositiveButton("Ok", new DialogInterface.OnClickListener() {
 					@Override
 					public void onClick(DialogInterface dialogInterface, int i) {
-						fb.resetAll();
+						fractal.setAllToDefault();
 						adapter.notifyDataSetChanged(); // something changed...
 					}
 				});
@@ -628,7 +569,7 @@ public class ParameterActivity extends Activity implements EditableDialogFragmen
 			}
 			case R.id.action_edit_source: {
 				Intent i = new Intent(this, EditProgramActivity.class);
-				i.putExtra("source", this.fb.sourceCode());
+				i.putExtra("source", this.fractal.sourceCode());
 				startActivityForResult(i, PROGRAM_ACTIVITY_RETURN);
 			} return true;
 		}
@@ -656,7 +597,7 @@ public class ParameterActivity extends Activity implements EditableDialogFragmen
 				editor.set(bitmapFragment.fractal());
 				DialogEditFragment.createDialog(this, editor);*/
 
-	class ParameterAdapter extends BaseAdapter implements ListAdapter {
+	private class ParameterAdapter extends BaseAdapter implements ListAdapter {
 
 		final LayoutInflater inflater;
 		final ArrayList<Pair<String, Fractal.Type>> elements;
@@ -677,8 +618,8 @@ public class ParameterActivity extends Activity implements EditableDialogFragmen
 			// First add scale.
 			elements.add(new Pair<>("Scale", Fractal.Type.Scale));
 
-			for(String id : fb.parameterIds()) {
-				elements.add(new Pair<>(id, fb.get(id).a));
+			for(String id : fractal.parameters()) {
+				elements.add(new Pair<>(id, fractal.get(id).type()));
 			}
 		}
 
@@ -728,7 +669,7 @@ public class ParameterActivity extends Activity implements EditableDialogFragmen
 
 					CheckedTextView text1 = (CheckedTextView) view.findViewById(android.R.id.text1);
 
-					if(!fb.isDefaultValue(e.a)) {
+					if(!fractal.isDefault(e.a)) {
 						//Log.d("PA", e.label + " is not default");
 						text1.setTypeface(Typeface.DEFAULT_BOLD);
 					} else {
@@ -737,7 +678,7 @@ public class ParameterActivity extends Activity implements EditableDialogFragmen
 					}
 
 					text1.setText(e.a);
-					text1.setChecked((Boolean) fb.get(e.a).b);
+					text1.setChecked((Boolean) fractal.get(e.a).value());
 				} break;
 				case ELEMENT: {
 					if (view == null)
@@ -746,7 +687,7 @@ public class ParameterActivity extends Activity implements EditableDialogFragmen
 					text1.setText(e.a);
 
 					// if not isDefaultValue set bold.
-					if(!fb.isDefaultValue(e.a)) {
+					if(!fractal.isDefault(e.a)) {
 						//Log.d("PA", e.label + " is not default");
 						text1.setTypeface(Typeface.DEFAULT_BOLD);
 					} else {
@@ -770,7 +711,7 @@ public class ParameterActivity extends Activity implements EditableDialogFragmen
 					TextView text1 = (TextView) view.findViewById(android.R.id.text1);
 					text1.setText("Scale"); // FIXME there is only one. Thus use a string.
 
-					if(!fb.scale().equals(AssetsHelper.DEFAULT_SCALE)) {
+					if(!fractal.scale().equals(AssetsHelper.DEFAULT_SCALE)) {
 						//Log.d("PA", e.label + " is not default");
 						text1.setTypeface(Typeface.DEFAULT_BOLD);
 					} else {

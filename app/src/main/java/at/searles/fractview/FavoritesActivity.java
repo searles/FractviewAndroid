@@ -14,7 +14,8 @@ import android.widget.AdapterView;
 import android.widget.Button;
 import android.widget.ListView;
 
-import org.json.JSONException;
+import com.google.gson.JsonParser;
+
 import org.json.JSONObject;
 
 import java.io.BufferedWriter;
@@ -43,12 +44,7 @@ public class FavoritesActivity extends Activity {
 		HashMap<String, FavoriteEntry> entries = new HashMap<>(sharedPrefs.size());
 
 		for(String key : sharedPrefs.keySet()) {
-			try {
-				entries.put(key, FavoriteEntry.fromJSON(key, new JSONObject((String) sharedPrefs.get(key))));
-			} catch (JSONException e) {
-				// should not happen.
-				e.printStackTrace();
-			}
+			entries.put(key, FavoriteEntry.deserialize(key, new JsonParser().parse((String) sharedPrefs.get(key))));
 		}
 
 		adapter.setData(entries);
@@ -76,7 +72,7 @@ public class FavoritesActivity extends Activity {
 			@Override
 			public void onItemClick(AdapterView<?> parent, View view, int index, long id) {
 				// get bookmark
-				FractalEntry entry = adapter.getItem(index);
+				FractalLabel entry = adapter.getItem(index);
 
 				Intent data = new Intent();
 				data.putExtra("fractal", ((FavoriteEntry) entry).fractal());

@@ -13,6 +13,8 @@ import android.widget.Button;
 import android.widget.EditText;
 import android.widget.Toast;
 
+import java.util.HashMap;
+
 import at.searles.fractview.editors.EditableDialogFragment;
 import at.searles.fractview.fractal.Fractal;
 import at.searles.meelan.CompileException;
@@ -96,7 +98,7 @@ public class EditProgramActivity extends Activity implements EditableDialogFragm
 		source = editor.getText().toString();
 
 		try {
-			Fractal fractal = new Fractal(AssetsHelper.DEFAULT_SCALE, source, new Fractal.Parameters());
+			Fractal fractal = new Fractal(AssetsHelper.DEFAULT_SCALE, source, new HashMap<>());
 			fractal.parse(); // Check whether parsing works
 			fractal.compile(); // Also checks default-values for external data.
 			return true;

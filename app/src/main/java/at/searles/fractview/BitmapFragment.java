@@ -74,18 +74,9 @@ public class BitmapFragment extends Fragment {
 	// Now the drawing stuff
 	private Drawer drawer;
 
-	// the next two variables are only changed in the UI thread.
-
-	// if true, the drawing has not started yet.
-	private boolean isInitializing = true;
-
 	// if true, the drawing is currently running and the drawer should
-	// not be modified.
+	// not be modified. Only modified in UI thread
 	private boolean isRunning;
-
-    public boolean isInitializing() {
-        return isInitializing;
-    }
 
     private List<BitmapFragmentListener> listeners = new LinkedList<>();
 
@@ -270,7 +261,6 @@ public class BitmapFragment extends Fragment {
 						removeBitmapFragmentPlugin(self);
 						drawer.setFractal(fractal);
 
-						isInitializing = false; // done
 						listeners.forEach(BitmapFragmentListener::initializationFinished);
 
 						startBackgroundTask();

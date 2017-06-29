@@ -12,8 +12,9 @@ import android.widget.CheckBox;
 import android.widget.ListView;
 
 import java.util.ArrayList;
-import java.util.Iterator;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.TreeSet;
 
 import at.searles.fractview.fractal.Fractal;
@@ -30,7 +31,7 @@ import at.searles.meelan.CompileException;
 
 public class PresetParametersActivity extends Activity {
 
-    private static final FractalEntry USE_DEFAULTS = new FractalEntry() {
+    private static final FractalLabel USE_DEFAULTS = new FractalLabel() {
         @Override
         public String title() {
             return "Use default values";
@@ -47,7 +48,7 @@ public class PresetParametersActivity extends Activity {
         }
     };
 
-    private static final FractalEntry MERGE_DEFAULTS = new FractalEntry() {
+    private static final FractalLabel MERGE_DEFAULTS = new FractalLabel() {
         @Override
         public String title() {
             return "Use current parameters";
@@ -82,7 +83,7 @@ public class PresetParametersActivity extends Activity {
         List<AssetsHelper.ParametersAsset> assets = AssetsHelper.parameterEntries(getAssets());
 
         // entries contain a first empty dummy
-        List<FractalEntry> entries = new ArrayList<>(assets.size() + 2);
+        List<FractalLabel> entries = new ArrayList<>(assets.size() + 2);
 
         // first, add the 'keep'-entry
         entries.add(USE_DEFAULTS);
@@ -99,17 +100,14 @@ public class PresetParametersActivity extends Activity {
         // is fully contained, it is accepted.
         TreeSet<String> ids = new TreeSet<>();
 
-        for(String id : inFractal.parameterIds()) {
+        for(String id : inFractal.parameters()) {
             ids.add(id);
         }
 
         // fixme label!
         next_asset: for(AssetsHelper.ParametersAsset entry : AssetsHelper.parameterEntries(getAssets())) {
-            Iterator<String> i = entry.parameters.iterator();
 
-            while(i.hasNext()) {
-                String id = i.next();
-
+            for (String id : entry.parameters.keySet()) {
                 if (!id.startsWith("__")) {
                     if (!ids.contains(id)) {
                         continue next_asset; // next entry in for loop...
@@ -129,27 +127,27 @@ public class PresetParametersActivity extends Activity {
         lv.setOnItemClickListener(new AdapterView.OnItemClickListener() {
             @Override
             public void onItemClick(AdapterView<?> parent, View view, int index, long id) {
-                Fractal.Parameters p;
-                Scale sc;
+                Map<String, Fractal.Parameter> parameterMap;
+                Scale scale;
 
                 if(index == 0 || index == 1) {
                     // Use defaults, therefore use empty parameters.
-                    p = Fractal.Parameters.EMPTY;
+                    parameterMap = new HashMap<String, Fractal.Parameter>();
                     // use default
-                    sc = AssetsHelper.DEFAULT_SCALE;
+                    scale = AssetsHelper.DEFAULT_SCALE;
                 } else {
                     AssetsHelper.ParametersAsset entry = (AssetsHelper.ParametersAsset) entries.get(index);
-                    sc = entry.scale == null ? AssetsHelper.DEFAULT_SCALE : entry.scale;
-                    p = entry.parameters;
+                    scale = entry.scale == null ? AssetsHelper.DEFAULT_SCALE : entry.scale;
+                    parameterMap = entry.parameters;
                 }
 
                 // use old scale if merge is checked.
                 if(mergeCheckBox.isChecked() || index == 1) {
-                    sc = inFractal.scale();
-                    p = p.merge(inFractal.parameters());
+                    scale = inFractal.scale();
+                    parameterMap = Commons.merge(parameterMap, inFractal.parameterMap());
                 }
 
-                Fractal retVal = new Fractal(sc, inFractal.sourceCode(), p);
+                Fractal retVal = new Fractal(scale, inFractal.sourceCode(), parameterMap);
 
                 returnFractal(retVal);
             }

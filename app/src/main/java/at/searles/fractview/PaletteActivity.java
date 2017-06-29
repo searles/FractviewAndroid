@@ -3,21 +3,18 @@ package at.searles.fractview;
 import android.app.Activity;
 import android.content.Intent;
 import android.os.Bundle;
-import android.os.Parcel;
-import android.os.Parcelable;
 import android.view.Menu;
 import android.view.MenuInflater;
 import android.view.MenuItem;
 import android.view.View;
 import android.widget.Button;
-import android.widget.Toast;
+
+import com.google.gson.JsonElement;
+import com.google.gson.JsonParser;
 
 import org.jetbrains.annotations.NotNull;
-import org.json.JSONException;
-import org.json.JSONObject;
 
 import at.searles.fractview.editors.EditableDialogFragment;
-import at.searles.fractview.fractal.Adapters;
 import at.searles.fractview.ui.MultiScrollView;
 import at.searles.fractview.ui.PaletteView;
 import at.searles.fractview.ui.PaletteViewModel;
@@ -66,7 +63,7 @@ public class PaletteActivity extends Activity implements EditableDialogFragment.
 
 		this.id = getIntent().getStringExtra("id");
 
-		PaletteWrapper wrapper;
+		Commons.PaletteWrapper wrapper;
 
 		if(savedInstanceState == null) {
 			wrapper = getIntent().getParcelableExtra("palette");
@@ -103,7 +100,7 @@ public class PaletteActivity extends Activity implements EditableDialogFragment.
 			@Override
 			public void onClick(View view) {
 				Intent data = new Intent();
-				data.putExtra("palette", new PaletteWrapper(model.createPalette()));
+				data.putExtra("palette", new Commons.PaletteWrapper(model.createPalette()));
 				data.putExtra("id", id);
 				setResult(1, data);
 				finish();
@@ -114,7 +111,7 @@ public class PaletteActivity extends Activity implements EditableDialogFragment.
 	@Override
 	public void onSaveInstanceState(@NotNull Bundle savedInstanceState) {
 		// Save the user's current game state
-		savedInstanceState.putParcelable("palette", new PaletteWrapper(/*label, */model.createPalette()));
+		savedInstanceState.putParcelable("palette", new Commons.PaletteWrapper(/*label, */model.createPalette()));
 		savedInstanceState.putString("id", id);
 
 		// Always call the superclass so it can save the view hierarchy state
@@ -154,30 +151,27 @@ public class PaletteActivity extends Activity implements EditableDialogFragment.
 			} return true;
 			case R.id.action_export_palette: {
 				// copy
-				try {
-					JSONObject o = (JSONObject) Adapters.paletteAdapter.toJSON(model.createPalette());
-					ClipboardHelper.copy(this, o.toString(2));
-				} catch (JSONException e) {
-					e.printStackTrace();
-					Toast.makeText(this, "ERROR: " + e.getMessage(), Toast.LENGTH_LONG).show();
-				}
+				JsonElement o = model.createPalette().serialize();
+				ClipboardHelper.copy(this, o.toString());
 			} return true;
 			case R.id.action_import_palette: {
 				// paste
 				CharSequence pastedText = ClipboardHelper.paste(this);
-				try {
-					Palette p = Adapters.paletteAdapter.fromJSON(new JSONObject(pastedText.toString()));
 
-					if(p != null) {
+				if(pastedText != null) {
+					Palette p = Palette.deserialize(new JsonParser().parse(pastedText.toString()));
+
+					if (p != null) {
 						model = new PaletteViewModel(p);
 
 						PaletteView view = (PaletteView) findViewById(R.id.paletteView);
 
 						view.invalidate();
+					} else {
+						DialogHelper.error(this, "No palette in clipboard");
 					}
-				} catch (JSONException e) {
-					e.printStackTrace();
-					Toast.makeText(this, "ERROR: " + e.getMessage(), Toast.LENGTH_LONG).show();
+				} else {
+					DialogHelper.error(this, "The clipboard is empty");
 				}
 			} return true;
 			default:
@@ -225,29 +219,23 @@ public class PaletteActivity extends Activity implements EditableDialogFragment.
 
 				if(paletteString != null) {
 					// JSON-Parser
-					try {
-						Palette p = Adapters.paletteAdapter.fromJSON(new JSONObject(paletteString));
+					Palette p = Palette.deserialize(new JsonParser().parse(paletteString));
+
+					if(p == null) {
 						// set the palette.
 						model = new PaletteViewModel(p);
 						PaletteView view = (PaletteView) findViewById(R.id.paletteView);
 						view.invalidate();
-					} catch (JSONException e) {
-						e.printStackTrace();
-						Toast.makeText(PaletteActivity.this, "JSON-Error", Toast.LENGTH_LONG).show();
+					} else {
+						DialogHelper.error(this, "Could not create palette");
 					}
 				}
 			} break;
 			case SAVE_PALETTE: {
-				try {
-					String name = (String) o;
-					String paletteString = Adapters.paletteAdapter.toJSON(
-							model.createPalette()).toString();
+				String name = (String) o;
+				String paletteString = model.createPalette().serialize().toString();
 
-					prefsHelper.add(name, paletteString, SharedPrefsHelper.SaveMethod.FindNext);
-				} catch (JSONException e) {
-					e.printStackTrace();
-					Toast.makeText(PaletteActivity.this, "JSON-Error", Toast.LENGTH_LONG).show();
-				}
+				prefsHelper.add(name, paletteString, SharedPrefsHelper.SaveMethod.FindNext);
 			} break;
 			default: {
 				// Tag when it is a color are the coordinates
@@ -266,51 +254,6 @@ public class PaletteActivity extends Activity implements EditableDialogFragment.
 	public void dimensionChanged() {
 		MultiScrollView msView = (MultiScrollView) findViewById(R.id.multiScrollView);
 		msView.updateSize();
-	}
-
-	// fixme this one should move into adapter.
-	// fixme also create such wrappers for other types.
-	public static class PaletteWrapper implements Parcelable {
-
-		//public final String label;
-		public final Palette p;
-
-		PaletteWrapper(/*String label,*/ Palette p) {
-			//this.label = label;
-			this.p = p;
-		}
-
-
-		@Override
-		public int describeContents() {
-			return 0;
-		}
-
-		@Override
-		public void writeToParcel(Parcel parcel, int flags) {
-			//parcel.writeString(label);
-			Adapters.paletteAdapter.toParcel(p, parcel, flags);
-		}
-
-		public static final Parcelable.Creator<PaletteWrapper> CREATOR
-				= new Parcelable.Creator<PaletteWrapper>() {
-			public PaletteWrapper createFromParcel(Parcel in) {
-				return new PaletteWrapper(in);
-			}
-
-			public PaletteWrapper[] newArray(int size) {
-				return new PaletteWrapper[size];
-			}
-		};
-
-		/**
-		 * Now, writeParcel in reverse
-		 * @param parcel The palette in a parcel
-		 */
-		private PaletteWrapper(Parcel parcel) {
-			//label = parcel.readString();
-			p = Adapters.paletteAdapter.fromParcel(parcel);
-		}
 	}
 
 }

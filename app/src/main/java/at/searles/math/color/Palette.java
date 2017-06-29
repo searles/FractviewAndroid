@@ -16,59 +16,47 @@
  */
 package at.searles.math.color;
 
+import com.google.gson.JsonArray;
+import com.google.gson.JsonDeserializationContext;
+import com.google.gson.JsonDeserializer;
+import com.google.gson.JsonElement;
+import com.google.gson.JsonObject;
+import com.google.gson.JsonParseException;
+import com.google.gson.JsonSerializationContext;
+import com.google.gson.JsonSerializer;
+
+import java.lang.reflect.Type;
+
 import at.searles.math.InterpolationMatrix;
 import at.searles.math.Matrix4;
 
 public class Palette {
 
-	/*public static Palette fromARGB(int[][] data) {
-		float[][][] fData = new float[data.length][][];
+	private final int width;
+	private final int height;
+	private final int[][] colors;
 
-		for(int i = 0; i < data.length; ++i) {
-			fData[i] = new float[data[i].length][];
-			for(int j = 0; j < data[i].length; ++j) {
-				// FIXME this was already somewhere...
-				int color = data[i][j];
-				float b = (color & 0xff) / (255.f);
-				color >>= 8;
-				float g = (color & 0xff) / (255.f);
-				color >>= 8;
-				float r = (color & 0xff) / (255.f);
-				color >>= 8;
-				float a = (color & 0xff) / (255.f);
+	public Palette(int[][] colors) {
+		this.height = colors.length;
+		this.width = colors[0].length;
 
-				fData[i][j] = new float[]{r, g, b, a};
-			}
-		}
+		this.colors = new int[height][width];
 
-		return new Palette(fData);
-	}*/
-
-	int w;
-	int h;
-	public int[][] argbs;
-
-	public Palette(int[][] argbs) {
-		this.h = argbs.length;
-		this.w = argbs[0].length;
-
-		this.argbs = new int[h][w];
-
-		for (int y = 0; y < h; ++y) {
-			System.arraycopy(argbs[y], 0, this.argbs[y], 0, w);
+		for (int y = 0; y < height; ++y) {
+			System.arraycopy(colors[y], 0, this.colors[y], 0, width);
 		}
 	}
 
 	public int width() {
-		return w;
+		return width;
 	}
 
 	public int height() {
-		return h;
+		return height;
 	}
 
 	public int argb(int x, int y) {
-		return argbs[y][x];
+		return colors[y][x];
 	}
 
 	public String toString() {
@@ -76,7 +64,7 @@ public class Palette {
 
 		boolean b0 = true;
 
-		for(int[] row : argbs) {
+		for(int[] row : colors) {
 			if(b0) b0 = false; // first element in row
 			else sb.append(", ");
 
@@ -98,8 +86,6 @@ public class Palette {
 		return sb.toString();
 	}
 
-
-	// TODO Keep colors and all parameters of constructor.
 
 	public static class LABSurface {
 		public final Matrix4 L;
@@ -155,7 +141,7 @@ public class Palette {
 	}
 
 	public Palette.Data create() {
-		LABSurface[][] cs = createSplines(argbs);
+		LABSurface[][] cs = createSplines(colors);
 		return new Data(cs);
 	}
 
@@ -182,8 +168,65 @@ public class Palette {
 		}
 	}
 
-	//public Colors color(float x, float y, Colors dest) {
-	//	return dest.set(L.z(x, y), a.z(x, y), b.z(x, y));
-	//}
+	public static final String WIDTH_LABEL = "width";
+	public static final String HEIGHT_LABEL = "height";
+	public static final String PALETTE_LABEL = "data";
 
+	public JsonElement serialize() {
+		JsonObject object = new JsonObject();
+
+		object.addProperty(WIDTH_LABEL, width);
+		object.addProperty(HEIGHT_LABEL, height);
+
+		JsonArray array = new JsonArray();
+
+		for(int y = 0; y < height(); ++y) {
+			JsonArray row = new JsonArray();
+			for(int x = 0; x < width(); ++x) {
+				row.add(argb(x, y));
+			}
+
+			array.add(row);
+		}
+
+		object.add(PALETTE_LABEL, array);
+
+		return object;
+	}
+
+	public static Palette deserialize(JsonElement json)
+			throws JsonParseException {
+		JsonObject object = (JsonObject) json;
+
+		int width = object.get(WIDTH_LABEL).getAsInt();
+		int height = object.get(HEIGHT_LABEL).getAsInt();
+
+		JsonArray array = object.getAsJsonArray("data");
+
+		int colors[][] = new int[height][width];
+
+		for(int y = 0; y < height; ++y) {
+			JsonArray row = (JsonArray) array.get(y);
+
+			for(int x = 0; x < width; ++x) {
+				colors[y][x] = row.get(x).getAsInt();
+			}
+		}
+
+		return new Palette(colors);
+	}
+
+	// ======= GSON Adapter ========
+	public static class JsonAdapter implements JsonDeserializer<Palette>, JsonSerializer<Palette> {
+		@Override
+		public Palette deserialize(JsonElement json, Type typeOfT, JsonDeserializationContext context)
+				throws JsonParseException {
+			return Palette.deserialize(json);
+		}
+
+		@Override
+		public JsonElement serialize(Palette src, Type typeOfSrc, JsonSerializationContext context) {
+			return src.serialize();
+		}
+	}
 }
