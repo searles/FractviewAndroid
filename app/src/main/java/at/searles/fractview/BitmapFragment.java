@@ -275,7 +275,7 @@ public class BitmapFragment extends Fragment {
 			public void attachContext(Activity context) {
 				AlertDialog.Builder builder = new AlertDialog.Builder(context);
 				builder.setTitle("Initializing Fractview");
-				builder.setMessage("Please wait a few seconds while scripts are compiled...");
+				builder.setMessage("Please wait a few seconds while scripts are compiled...\nThank you for using Fractview!");
 				builder.setCancelable(false);
 
 				dialog = builder.show();
