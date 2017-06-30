@@ -342,8 +342,15 @@ public class MainActivity extends Activity
 
                                     if(setAsDefault) storeDefaultSize(w, h);
                                 } else {
+                                    ActivityManager.MemoryInfo memoryInfo = getAvailableMemory();
+                                    
+                                    
+                                    Compare memory available and new size, warn if necessary
+                                   
+                                    if(setAsDefault) storeDefaultSize(width, height);
+
                                     // call editor
-                                    bitmapFragment.setSize(w, h, setAsDefault);
+                                    bitmapFragment.setSize(w, h);
                                 }
                             }
                         });
@@ -588,6 +595,7 @@ public class MainActivity extends Activity
 	public void apply(int resourceCode, Object o) {
 		switch (resourceCode) {
 			case IMAGE_SIZE: {
+                // FIXME Is this still used???
 				int[] retVal = (int[]) o;
 
 				int w = retVal[0], h = retVal[1];
