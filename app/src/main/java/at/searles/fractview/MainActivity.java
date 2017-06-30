@@ -117,10 +117,12 @@ public class MainActivity extends Activity
 
 			// fetch dimensions from preferences or display size.
 
-			int w = prefs.getInt("width", -1);
-			int h = prefs.getInt("height", -1);
+			int w = prefs.getInt(WIDTH_LABEL, -1);
+			int h = prefs.getInt(HEIGHT_LABEL, -1);
 
-			if(w == -1 || h == -1) {
+			boolean useDisplaySizeForImage = w == -1 || h == -1;
+			
+			if(useDisplaySizeForImage) {
 				Log.i("BMF", "No dimensions in shared preferences, using display size");
 
 				Point dim = screenDimensions(this);
@@ -139,13 +141,25 @@ public class MainActivity extends Activity
 					sourceCode,
 					new HashMap<>()
 			);
+			
+			boolean reducedImageSizeDueToMemory = false;
+			
+			while(memory is too low to create such an image) {
+				// image consumption must be at most half of available memory!
+				w /= 2; h /= 2;
+				reducedImageSizeDueToMemory = true;
+			}
 
 			bitmapFragment = BitmapFragment.newInstance(w, h, initFractal);
-
+			
+			if(!useDisplaySizeForImage && reducedImageSizeDueToMemory) {
+				// If the image size was used, no need to tell that you have a superb display :)
+				DialogHelper.e(this, "Reduced image size due to low memory");
+			}
 
 			FragmentTransaction transaction = getFragmentManager().beginTransaction();
 			transaction.add(bitmapFragment, "bitmap_fragment");
-			transaction.commitAllowingStateLoss(); // fixme why would there be a stateloss?
+			transaction.commitAllowingStateLoss(); // Question: Why should there be a stateloss?
 		}
 
 		// set up listeners for bitmap fragment
