@@ -96,7 +96,7 @@ public class FavoriteEntry implements FractalLabel {
 
 		obj.addProperty(TITLE_LABEL, title);
 		obj.addProperty(ICON_LABEL, getStringFromBitmap(icon));
-		obj.add(TITLE_LABEL, fractal.serialize());
+		obj.add(FRACTAL_LABEL, fractal.serialize());
 
 		return obj;
 	}

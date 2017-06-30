@@ -33,6 +33,9 @@ import at.searles.fractview.fractal.FavoriteEntry;
  */
 public class FavoritesActivity extends Activity {
 
+	public static final String FAVORITES = "favorites";
+
+
 	private static final String[] options = {"Rename", "Delete", "Copy To Clipboard"};
 
 	// private Map<String, FavoriteEntry> entries;
@@ -44,7 +47,14 @@ public class FavoritesActivity extends Activity {
 		HashMap<String, FavoriteEntry> entries = new HashMap<>(sharedPrefs.size());
 
 		for(String key : sharedPrefs.keySet()) {
-			entries.put(key, FavoriteEntry.deserialize(key, new JsonParser().parse((String) sharedPrefs.get(key))));
+			String specification = (String) sharedPrefs.get(key);
+
+			try {
+				entries.put(key, FavoriteEntry.deserialize(key, new JsonParser().parse(specification)));
+			} catch (Exception e) {
+				// FIXME
+				e.printStackTrace();
+			}
 		}
 
 		adapter.setData(entries);
@@ -58,7 +68,7 @@ public class FavoritesActivity extends Activity {
 		super.onCreate(savedInstanceState);
 		setContentView(R.layout.favorite_layout);
 
-        prefsHelper = new SharedPrefsHelper(this, FavoritesManager.FAVORITES);
+        prefsHelper = new SharedPrefsHelper(this, FAVORITES);
 
 		ListView lv = (ListView) findViewById(R.id.bookmarkListView);
 

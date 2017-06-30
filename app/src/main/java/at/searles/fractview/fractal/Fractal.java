@@ -498,6 +498,8 @@ public class Fractal implements Parcelable, ExternalData {
 
 	public static Fractal deserialize(JsonElement element) {
 		// Scale is stored as double-array
+		Log.d(Fractal.class.getName(), "deserializing " + element);
+
 		JsonObject obj = (JsonObject) element;
 
 		Scale scale = Scale.deserialize(obj.get(SCALE_LABEL));

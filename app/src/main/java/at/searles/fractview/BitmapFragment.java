@@ -119,10 +119,9 @@ public class BitmapFragment extends Fragment {
 		Log.d("BMF", "onAttach");
 		super.onAttach(context);
 
-		// FIXME put the next initialization somewhere else. For instance into
-		// FIXME a plugin.
-
-		plugins.forEach((plugin) -> plugin.attachContext(context));
+		for(BitmapFragmentPlugin plugin : plugins) {
+			plugin.attachContext(context);
+		}
 
 		// we are in the UI-thread and if this was the first start,
 		// onCreate was not yet called. Good point to initialize
@@ -157,15 +156,18 @@ public class BitmapFragment extends Fragment {
 						@Override
 						public void run() {
 							if(!editors.isEmpty()) {
-								editors.forEach(Runnable::run);
+								for(Runnable editor : editors) {
+									editor.run();
+								}
 								editors.clear();
 								drawer.clearRequestEdit();
 								startBackgroundTask();
 							} else {
 								isRunning = false;
-								listeners.forEach((listener) ->
-										listener.drawerFinished(-1, BitmapFragment.this)
-								);
+
+								for(BitmapFragmentListener listener : listeners) {
+									listener.drawerFinished(-1, BitmapFragment.this);
+								}
 							}
 						}
 					});
@@ -184,7 +186,10 @@ public class BitmapFragment extends Fragment {
 	public void onDetach() {
 		Log.d("BMF", "onDetach");
 		super.onDetach();
-		plugins.forEach(BitmapFragmentPlugin::detach);
+
+		for(BitmapFragmentPlugin plugin : plugins) {
+			plugin.detach();
+		}
 	}
 
 	@Override
@@ -205,8 +210,9 @@ public class BitmapFragment extends Fragment {
 		// create bitmap
 		this.bitmap = Bitmap.createBitmap(width, height, Bitmap.Config.ARGB_8888);
 
-		// todo check whether this is really necessary.
-		this.listeners.forEach((l) -> l.newBitmapCreated(bitmap, this)); // tell others about it.
+		for(BitmapFragmentListener listener : listeners) {
+			listener.newBitmapCreated(bitmap, this); // tell others about it.
+		}
 
 		// and also the fractal.
 		this.fractal = getArguments().getParcelable("fractal");
@@ -264,7 +270,6 @@ public class BitmapFragment extends Fragment {
 						for(BitmapFragmentListener listener : listeners) {
 							listener.initializationFinished();
 						}
-						// FIXME listeners.forEach(BitmapFragmentListener::initializationFinished);
 
 						startBackgroundTask();
 					}

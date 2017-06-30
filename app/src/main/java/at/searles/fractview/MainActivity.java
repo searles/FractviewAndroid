@@ -647,7 +647,12 @@ public class MainActivity extends Activity
 		Fractal fractal = bitmapFragment.fractal();
 		FavoriteEntry fav = FavoriteEntry.create(name, fractal, bitmapFragment.getBitmap());
 
-		FavoritesManager.add(this, name, fav, SharedPrefsHelper.SaveMethod.FindNext);
+		String entryString = fav.serialize().toString();
+
+		Log.d(getClass().getName(), "Storing " + entryString);
+
+		new SharedPrefsHelper(this, FavoritesActivity.FAVORITES).add(name, entryString, SharedPrefsHelper.SaveMethod.FindNext);
+
 	}
 
 	void setNewFractal(final Fractal newFractal) {
