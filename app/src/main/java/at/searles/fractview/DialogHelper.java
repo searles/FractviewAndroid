@@ -58,9 +58,10 @@ public class DialogHelper {
         builder.show();
     }
 
-    public void showConfirmDialog(Context context, String message, Runnable action) {
+    public static void confirm(Context context, String title, String message, Runnable action) {
         AlertDialog.Builder yesNoBuilder = new AlertDialog.Builder(context);
         yesNoBuilder.setIcon(android.R.drawable.ic_delete);
+        yesNoBuilder.setTitle(title);
         yesNoBuilder.setTitle(message);
 
         yesNoBuilder.setPositiveButton("Yes", new DialogInterface.OnClickListener() {

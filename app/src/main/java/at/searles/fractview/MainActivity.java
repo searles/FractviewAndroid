@@ -3,6 +3,7 @@ package at.searles.fractview;
 import android.Manifest;
 import android.annotation.SuppressLint;
 import android.app.Activity;
+import android.app.ActivityManager;
 import android.app.AlertDialog;
 import android.app.FragmentManager;
 import android.app.FragmentTransaction;
@@ -27,7 +28,6 @@ import android.view.WindowManager;
 import android.widget.Button;
 import android.widget.CheckBox;
 import android.widget.EditText;
-import android.widget.ProgressBar;
 import android.widget.Toast;
 
 import org.jetbrains.annotations.NotNull;
@@ -35,7 +35,6 @@ import org.jetbrains.annotations.NotNull;
 import java.io.File;
 import java.util.HashMap;
 
-import at.searles.fractview.editors.EditableDialogFragment;
 import at.searles.fractview.fractal.FavoriteEntry;
 import at.searles.fractview.fractal.Fractal;
 import at.searles.fractview.ui.BitmapFragmentView;
@@ -54,6 +53,8 @@ public class MainActivity extends Activity
 	public static final int PARAMETER_ACTIVITY_RETURN = 101;
 	public static final int PRESETS_ACTIVITY_RETURN = 102;
 	public static final int BOOKMARK_ACTIVITY_RETURN = 103;
+	private static final String WIDTH_LABEL = "width";
+	private static final String HEIGHT_LABEL = "height";
 
 	private BitmapFragmentView imageView; // fixme don't forget to change size of this one.
 	// FIXME this one should be in BitmapFragmentView! ProgressBar progressBar;
@@ -81,12 +82,6 @@ public class MainActivity extends Activity
 		if(dim.x < dim.y) {
 			//noinspection SuspiciousNameCombination
 			dim.set(dim.y, dim.x);
-		}
-
-		while(dim.x * dim.y > MAX_INIT_SIZE) {
-			// I use a maximum size because maybe there are sometimes 10000x8000pix-screens...
-			dim.x /= 2;
-			dim.y /= 2;
 		}
 
 		return dim;
@@ -143,18 +138,21 @@ public class MainActivity extends Activity
 			);
 			
 			boolean reducedImageSizeDueToMemory = false;
-			
-			while(memory is too low to create such an image) {
+
+			// one pixel requires two argb fields, ie 8 bytes.
+
+			while(availMem() * 16 < w * h) {
 				// image consumption must be at most half of available memory!
 				w /= 2; h /= 2;
 				reducedImageSizeDueToMemory = true;
+				Log.d(getClass().getName(), "Reducing size of image to " + w + " x " + h);
 			}
 
 			bitmapFragment = BitmapFragment.newInstance(w, h, initFractal);
 			
 			if(!useDisplaySizeForImage && reducedImageSizeDueToMemory) {
 				// If the image size was used, no need to tell that you have a superb display :)
-				DialogHelper.e(this, "Reduced image size due to low memory");
+				DialogHelper.error(this, "Reduced image size due to low memory");
 			}
 
 			FragmentTransaction transaction = getFragmentManager().beginTransaction();
@@ -200,6 +198,13 @@ public class MainActivity extends Activity
 
 		// now we have a valid bitmap fragment, but careful! it is not yet initialized.
 		imageView.setBitmapFragment(bitmapFragment);
+	}
+
+	protected long availMem() {
+		ActivityManager.MemoryInfo mi = new ActivityManager.MemoryInfo();
+		ActivityManager activityManager = (ActivityManager) getSystemService(ACTIVITY_SERVICE);
+		activityManager.getMemoryInfo(mi);
+		return mi.availMem;
 	}
 
 	@Override
@@ -349,25 +354,26 @@ public class MainActivity extends Activity
                                     return;
                                 }
 
-				// Image size is set in a runnable because there might be an additional
-				// check that allows cancellation on low memory.
-				Runnable setSizeRunnable = () -> {
-					if(setAsDefault) storeDefaultSize(w, h);
+								// Image size is set in a runnable because there might be an additional
+								// check that allows cancellation on low memory.
+								Runnable setSizeRunnable = () -> {
+									if(setAsDefault) storeDefaultSize(w, h);
 
-					if(w == bitmapFragment.width() && h == bitmapFragment.height()) {
-					    DialogHelper.info(((AlertDialog) d).getContext(), "size not changed");
-					} else {
-					    bitmapFragment.setSize(w, h);
-					}
-				};
+									if(w == bitmapFragment.width() && h == bitmapFragment.height()) {
+										DialogHelper.info(((AlertDialog) d).getContext(), "size not changed");
+									} else {
+										bitmapFragment.setSize(w, h);
+									}
+								};
 
-                                ActivityManager.MemoryInfo memoryInfo = getAvailableMemory();
-				
-				if(MemoryIsLow) {
-				    Show alert dialog and if answer is still yes, run setSizeRunnale
-				} else {
-					setSizeRunnable.run();
-				}
+								if(8 * w * h > availMem()) {
+									double availMB = availMem() / (1024. * 1024.);
+
+									DialogHelper.confirm(MainActivity.this,
+											"Low on memory", "There is only " + String.format("%.2", availMB) + "mb available. Resize still?", setSizeRunnable);
+								} else {
+									setSizeRunnable.run();
+								}
                             }
                         });
 			} return true;

@@ -319,7 +319,7 @@ public class BitmapFragment extends Fragment {
 			this.width = width;
 			this.height = height;
 
-			REPLACE_BY_RUN_IN_UI(new Runnable() {
+			Commons.uiRun(new Runnable() {
 				@Override
 				public void run() {
 					listeners.forEach((l) -> l.newBitmapCreated(bitmap, BitmapFragment.this));
@@ -331,7 +331,7 @@ public class BitmapFragment extends Fragment {
             // FIXME!!! Potential crash!
             // New in Java 7. Weird syntax...
 			Log.d(getClass().getName(), "Out of memory");
-			REPLACE_BY_RUN_IN_UI(() ->
+			Commons.uiRun(() ->
                     DialogHelper.error(getActivity(), "Image too large...")
 			);
 			return false;
