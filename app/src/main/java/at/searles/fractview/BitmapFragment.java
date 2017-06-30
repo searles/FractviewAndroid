@@ -302,12 +302,11 @@ public class BitmapFragment extends Fragment {
 	// Now for the editing part
 	// ------------------------
 
-	public void setSize(int width, int height, boolean setAsDefaultIfSuccess) {
-		// do not add new fractal to history
-		edit(() -> setSizeUnsafe(width, height, setAsDefaultIfSuccess));
+	public void setSize(int width, int height) {
+		edit(() -> setSizeUnsafe(width, height));
 	}
 
-	private boolean setSizeUnsafe(int width, int height, boolean setAsDefaultIfSuccess) {
+	private boolean setSizeUnsafe(int width, int height) {
 		// this might not be run from UI-thread
 		assert bitmap != null;
 
@@ -320,28 +319,19 @@ public class BitmapFragment extends Fragment {
 			this.width = width;
 			this.height = height;
 
-			getActivity().runOnUiThread(new Runnable() {
+			REPLACE_BY_RUN_IN_UI(new Runnable() {
 				@Override
 				public void run() {
 					listeners.forEach((l) -> l.newBitmapCreated(bitmap, BitmapFragment.this));
 				}
 			});
 
-			if(setAsDefaultIfSuccess) {
-				getActivity().runOnUiThread(new Runnable() {
-					@Override
-					public void run() {
-						// fixme This one should not be here!
-						((MainActivity) getActivity()).storeDefaultSize(width, height);
-					}
-				});
-			}
-
 			return true;
 		} catch(OutOfMemoryError | NullPointerException e) {
+            // FIXME!!! Potential crash!
             // New in Java 7. Weird syntax...
 			Log.d(getClass().getName(), "Out of memory");
-			getActivity().runOnUiThread(() ->
+			REPLACE_BY_RUN_IN_UI(() ->
                     DialogHelper.error(getActivity(), "Image too large...")
 			);
 			return false;
