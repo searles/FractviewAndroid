@@ -44,19 +44,19 @@ import at.searles.meelan.CompileException;
 
 // Activity is the glue between BitmapFragment and Views.
 public class MainActivity extends Activity
-		implements ActivityCompat.OnRequestPermissionsResultCallback,
-		EditableDialogFragment.Callback {
+		implements ActivityCompat.OnRequestPermissionsResultCallback/*,
+		/*EditableDialogFragment.Callback*/ {
 
     //public static final int ALPHA_PREFERENCES = 0xaa000000;
 
-	public static final int MAX_INIT_SIZE = 2048 * 1536;
+	/*public static final int MAX_INIT_SIZE = 2048 * 1536;*/
 
 	public static final int PARAMETER_ACTIVITY_RETURN = 101;
 	public static final int PRESETS_ACTIVITY_RETURN = 102;
 	public static final int BOOKMARK_ACTIVITY_RETURN = 103;
 
-	BitmapFragmentView imageView; // fixme don't forget to change size of this one.
-	ProgressBar progressBar;
+	private BitmapFragmentView imageView; // fixme don't forget to change size of this one.
+	// FIXME this one should be in BitmapFragmentView! ProgressBar progressBar;
 
 	/**
 	 * Bitmap fragment contains the only image
@@ -223,11 +223,9 @@ public class MainActivity extends Activity
 
 	void storeDefaultSize(int width, int height) {
 		SharedPreferences.Editor editor = PreferenceManager.getDefaultSharedPreferences(this).edit();
-		editor.putInt("width", width);
-		editor.putInt("height", height);
+		editor.putInt(WIDTH_LABEL, width);
+		editor.putInt(HEIGHT_LABEL, height);
 		editor.apply();
-
-		DialogHelper.info(this, "New Default Size: " + width + " x " + height);
 	}
 
 	@Override
@@ -303,7 +301,7 @@ public class MainActivity extends Activity
 
                                         Point dim = new Point();
 
-                                        dim.set(prefs.getInt("width", -1), prefs.getInt("height", -1));
+                                        dim.set(prefs.getInt(WIDTH_LABEL, -1), prefs.getInt(HEIGHT_LABEL, -1));
 
                                         if (dim.x <= 0 || dim.y <= 0) {
                                             dim = MainActivity.screenDimensions(view.getContext());
@@ -351,21 +349,25 @@ public class MainActivity extends Activity
                                     return;
                                 }
 
-                                if(w == bitmapFragment.width() && h == bitmapFragment.height()) {
-                                    DialogHelper.info(((AlertDialog) d).getContext(), "size not changed");
+				// Image size is set in a runnable because there might be an additional
+				// check that allows cancellation on low memory.
+				Runnable setSizeRunnable = () -> {
+					if(setAsDefault) storeDefaultSize(w, h);
 
-                                    if(setAsDefault) storeDefaultSize(w, h);
-                                } else {
-                                    ActivityManager.MemoryInfo memoryInfo = getAvailableMemory();
-                                    
-                                    
-                                    Compare memory available and new size, warn if necessary
-                                   
-                                    if(setAsDefault) storeDefaultSize(width, height);
+					if(w == bitmapFragment.width() && h == bitmapFragment.height()) {
+					    DialogHelper.info(((AlertDialog) d).getContext(), "size not changed");
+					} else {
+					    bitmapFragment.setSize(w, h);
+					}
+				};
 
-                                    // call editor
-                                    bitmapFragment.setSize(w, h);
-                                }
+                                ActivityManager.MemoryInfo memoryInfo = getAvailableMemory();
+				
+				if(MemoryIsLow) {
+				    Show alert dialog and if answer is still yes, run setSizeRunnale
+				} else {
+					setSizeRunnable.run();
+				}
                             }
                         });
 			} return true;
@@ -603,7 +605,7 @@ public class MainActivity extends Activity
 	}
 
 	// Labels for EditableDialogFragment
-	private static final int IMAGE_SIZE = 2; // dialog to change image resolution
+	/*private static final int IMAGE_SIZE = 2; // dialog to change image resolution
 
 	@Override
 	public void apply(int resourceCode, Object o) {
@@ -627,7 +629,7 @@ public class MainActivity extends Activity
 			default:
 				throw new IllegalArgumentException("Did not expect this: " + resourceCode);
 		}
-	}
+	}*/
 
 	void saveFavorite(String name) {
 		if(name.isEmpty()) {
