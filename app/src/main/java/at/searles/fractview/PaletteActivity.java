@@ -3,6 +3,7 @@ package at.searles.fractview;
 import android.app.Activity;
 import android.content.Intent;
 import android.os.Bundle;
+import android.util.Log;
 import android.view.Menu;
 import android.view.MenuInflater;
 import android.view.MenuItem;
@@ -217,11 +218,13 @@ public class PaletteActivity extends Activity implements EditableDialogFragment.
 
 				String paletteString = prefsHelper.get(name);
 
+				Log.d(getClass().getName(), "Palette string is " + paletteString + ", name is " + name);
+
 				if(paletteString != null) {
 					// JSON-Parser
-					Palette p = Palette.deserialize(new JsonParser().parse(paletteString));
+					Palette p = Palette.deserialize(new JsonParser().parse(paletteString).getAsJsonObject());
 
-					if(p == null) {
+					if(p != null) {
 						// set the palette.
 						model = new PaletteViewModel(p);
 						PaletteView view = (PaletteView) findViewById(R.id.paletteView);

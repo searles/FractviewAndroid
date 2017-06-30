@@ -653,7 +653,7 @@ public class EditableDialogFragment extends DialogFragment {
                 // This happens when an empty element is added.
                 set.add(entry);
             } else {
-                Log.e("EDF", "ERROR: Key is null!");
+                Log.w("EDF", "Palette contains one entry with key null!");
             }
         }
 

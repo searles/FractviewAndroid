@@ -261,7 +261,10 @@ public class BitmapFragment extends Fragment {
 						removeBitmapFragmentPlugin(self);
 						drawer.setFractal(fractal);
 
-						listeners.forEach(BitmapFragmentListener::initializationFinished);
+						for(BitmapFragmentListener listener : listeners) {
+							listener.initializationFinished();
+						}
+						// FIXME listeners.forEach(BitmapFragmentListener::initializationFinished);
 
 						startBackgroundTask();
 					}

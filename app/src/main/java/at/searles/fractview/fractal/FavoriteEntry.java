@@ -103,20 +103,21 @@ public class FavoriteEntry implements FractalLabel {
 
 	/**
 	 *
-	 * @param defaultTitle In an old version, the title was not stored, therefore this one is here to avoid null.
+	 * @param title In an old version, the title was not stored, therefore this one is here to avoid null.
 	 * @param e The Json
 	 * @return
 	 */
-	public static FavoriteEntry deserialize(String defaultTitle, JsonElement e) {
+	public static FavoriteEntry deserialize(String title, JsonElement e) {
 		JsonObject obj = (JsonObject) e;
 		Fractal fractal = Fractal.deserialize(obj.get(FRACTAL_LABEL));
 		Bitmap icon = getBitmapFromString(obj.get(ICON_LABEL).getAsString());
 
-		String title = obj.get(TITLE_LABEL).getAsString();
+		JsonElement titleJson = obj.get(TITLE_LABEL);
 
-		if(title == null) {
+		if(titleJson == null) {
 			Log.d(FavoriteEntry.class.getName(), "no title was stored in Json");
-			title = defaultTitle;
+		} else {
+			title = titleJson.getAsString();
 		}
 
 		return new FavoriteEntry(title, icon, fractal);

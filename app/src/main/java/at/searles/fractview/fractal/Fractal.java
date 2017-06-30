@@ -113,7 +113,8 @@ public class Fractal implements Parcelable, ExternalData {
 			throw new IllegalArgumentException("id " + id + " is not a valid parameter");
 		} else {
 			// Types must be identical
-			return data.containsKey(id) && data.get(id).type == defaultData.get(id).type;
+			// FIXME FIXME
+			return (data.containsKey(id) && data.get(id).type == defaultData.get(id).type);
 		}
 	}
 
@@ -461,7 +462,7 @@ public class Fractal implements Parcelable, ExternalData {
 						cplxs.add(id, ((Cplx) element.object).serialize());
 						break;
 					case Bool:
-						bools.addProperty(id, ((Boolean) element.object) ? 1 : 0);
+						bools.addProperty(id, (Boolean) element.object);
 						break;
 					case Expr:
 						exprs.addProperty(id, (String) element.object);
@@ -524,37 +525,37 @@ public class Fractal implements Parcelable, ExternalData {
 			JsonObject palettes = data.getAsJsonObject(PALETTES_LABEL);
 			JsonObject scales = data.getAsJsonObject(SCALES_LABEL);
 
-			if (ints != null) ints.entrySet().forEach((entry) ->
-					dataMap.put(entry.getKey(), new Parameter(Type.Int, entry.getValue().getAsInt())
-					));
+			if (ints != null) for(Map.Entry<String, JsonElement> entry : ints.entrySet()) {
+				dataMap.put(entry.getKey(), new Fractal.Parameter(Type.Int, entry.getValue().getAsInt()));
+			}
 
-			if (reals != null) reals.entrySet().forEach((entry) ->
-					dataMap.put(entry.getKey(), new Parameter(Type.Int, entry.getValue().getAsDouble())
-					));
+			if (reals != null) for(Map.Entry<String, JsonElement> entry : reals.entrySet()) {
+				dataMap.put(entry.getKey(), new Parameter(Type.Real, entry.getValue().getAsDouble()));
+			}
 
-			if (cplxs != null) cplxs.entrySet().forEach((entry) ->
-					dataMap.put(entry.getKey(), new Parameter(Type.Int, Cplx.deserialize(entry.getValue()))
-					));
+			if (cplxs != null) for(Map.Entry<String, JsonElement> entry : cplxs.entrySet()) {
+				dataMap.put(entry.getKey(), new Parameter(Type.Cplx, Cplx.deserialize(entry.getValue())));
+			}
 
-			if (bools != null) bools.entrySet().forEach((entry) ->
-					dataMap.put(entry.getKey(), new Parameter(Type.Int, entry.getValue().getAsInt() == 1)
-					));
+			if (bools != null) for(Map.Entry<String, JsonElement> entry : bools.entrySet()) {
+				dataMap.put(entry.getKey(), new Parameter(Type.Bool, entry.getValue().getAsBoolean()));
+			}
 
-			if (exprs != null) exprs.entrySet().forEach((entry) ->
-					dataMap.put(entry.getKey(), new Parameter(Type.Int, entry.getValue().getAsString())
-					));
+			if (exprs != null) for(Map.Entry<String, JsonElement> entry : exprs.entrySet()) {
+				dataMap.put(entry.getKey(), new Parameter(Type.Expr, entry.getValue().getAsString()));
+			}
 
-			if (colors != null) colors.entrySet().forEach((entry) ->
-					dataMap.put(entry.getKey(), new Parameter(Type.Int, entry.getValue().getAsInt())
-					));
+			if (colors != null) for(Map.Entry<String, JsonElement> entry : colors.entrySet()) {
+				dataMap.put(entry.getKey(), new Parameter(Type.Color, entry.getValue().getAsInt()));
+			}
 
-			if (palettes != null) palettes.entrySet().forEach((entry) ->
-					dataMap.put(entry.getKey(), new Parameter(Type.Int, Palette.deserialize(entry.getValue()))
-					));
+			if (palettes != null) for(Map.Entry<String, JsonElement> entry : palettes.entrySet()) {
+				dataMap.put(entry.getKey(), new Parameter(Type.Palette, Palette.deserialize(entry.getValue())));
+			}
 
-			if (scales != null) scales.entrySet().forEach((entry) ->
-					dataMap.put(entry.getKey(), new Parameter(Type.Scale, Scale.deserialize(entry.getValue()))
-					));
+			if (scales != null) for(Map.Entry<String, JsonElement> entry : scales.entrySet()) {
+				dataMap.put(entry.getKey(), new Parameter(Type.Scale, Scale.deserialize(entry.getValue())));
+			}
 		}
 
 		return new Fractal(scale, sourceCode.toString(), dataMap);
@@ -728,7 +729,7 @@ public class Fractal implements Parcelable, ExternalData {
 		private final Type type;
 		private final Object object;
 
-		private Parameter(Type type, Object object) {
+		public Parameter(Type type, Object object) {
 			this.type = type;
 			this.object = object;
 		}

@@ -170,7 +170,7 @@ public class Palette {
 
 	public static final String WIDTH_LABEL = "width";
 	public static final String HEIGHT_LABEL = "height";
-	public static final String PALETTE_LABEL = "data";
+	public static final String COLORS_LABEL = "colors";
 
 	public JsonElement serialize() {
 		JsonObject object = new JsonObject();
@@ -181,15 +181,12 @@ public class Palette {
 		JsonArray array = new JsonArray();
 
 		for(int y = 0; y < height(); ++y) {
-			JsonArray row = new JsonArray();
 			for(int x = 0; x < width(); ++x) {
-				row.add(argb(x, y));
+				array.add(argb(x, y));
 			}
-
-			array.add(row);
 		}
 
-		object.add(PALETTE_LABEL, array);
+		object.add(COLORS_LABEL, array);
 
 		return object;
 	}
@@ -201,15 +198,13 @@ public class Palette {
 		int width = object.get(WIDTH_LABEL).getAsInt();
 		int height = object.get(HEIGHT_LABEL).getAsInt();
 
-		JsonArray array = object.getAsJsonArray("data");
+		JsonArray array = object.getAsJsonArray(COLORS_LABEL);
 
 		int colors[][] = new int[height][width];
 
 		for(int y = 0; y < height; ++y) {
-			JsonArray row = (JsonArray) array.get(y);
-
 			for(int x = 0; x < width; ++x) {
-				colors[y][x] = row.get(x).getAsInt();
+				colors[y][x] = array.get(x + y * width).getAsInt();
 			}
 		}
 
