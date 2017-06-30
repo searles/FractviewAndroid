@@ -114,7 +114,7 @@ public class Fractal implements Parcelable, ExternalData {
 		} else {
 			// Types must be identical
 			// FIXME FIXME
-			return (data.containsKey(id) && data.get(id).type == defaultData.get(id).type);
+			return !(data.containsKey(id) && data.get(id).type == defaultData.get(id).type);
 		}
 	}
 
@@ -124,7 +124,7 @@ public class Fractal implements Parcelable, ExternalData {
 	 * @return
 	 */
 	public Parameter get(String id) {
-		if(isDefault(id)) {
+		if(!isDefault(id)) {
 			return data.get(id);
 		} else {
 			return defaultData.get(id);
