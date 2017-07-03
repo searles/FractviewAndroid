@@ -332,6 +332,9 @@ public class Fractal implements ExternalData {
 					paletteIndex++;
 
 					break;
+                case Scale: {
+                    // FIXME TODO
+                } break;
                 default:
                     throw new IllegalArgumentException("not implemented yet");
 			}
