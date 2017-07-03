@@ -38,10 +38,13 @@ import at.searles.parsing.ParsingError;
 
 public class Fractal implements ExternalData {
 
+	// Set custom defaultScale and keep it
+	private final Scale defaultScale;
+	
 	/**
-	 * Scale of this fractal
+	 * data contains a label Scale that contains the scale of the fractal.
 	 */
-	private Scale scale;
+	public static final String SCALE_LABEL = "Scale";
 
 	/**
 	 * Source code of the program
@@ -75,12 +78,12 @@ public class Fractal implements ExternalData {
 	 * @param sourceCode
 	 * @param parameters
 	 */
-	public Fractal(Scale scale, String sourceCode, Map<String, Parameter> parameters) {
+	public Fractal(Scale defaultScale, String sourceCode, Map<String, Parameter> parameters) {
 		if(scale == null || sourceCode == null || parameters == null) {
 			throw new NullPointerException();
 		}
 
-		this.scale = scale;
+		this.defaultScale = defaultScale;
 		this.sourceCode = sourceCode;
 		this.data = parameters;
 	}
@@ -143,13 +146,6 @@ public class Fractal implements ExternalData {
 	}
 
 	/**
-	 * Scale requires special treatment.
-	 */
-	public void setScaleToDefault() {
-		setScale(AssetsHelper.DEFAULT_SCALE);
-	}
-
-	/**
 	 * Resets all parameters to default
 	 */
 	public void setAllToDefault() {
@@ -202,12 +198,9 @@ public class Fractal implements ExternalData {
 	 * @return
 	 */
 	public Fractal copyNewScale(Scale newScale) {
-		Fractal f = new Fractal(newScale, sourceCode, data);
-
-		// take over generated stuff.
-		f.defaultData = defaultData; f.ast = ast; f.code = code;
-
-		return f;
+        HashMap<String, Parameter> newData = new HashMap<String, Parameter>();
+        newData.put(new Parameter(Type.Scale, newScale));
+		return copyNewData(newData, true);
 	}
 
 	/**
@@ -215,32 +208,23 @@ public class Fractal implements ExternalData {
 	 * @param newData
 	 * @return
 	 */
-	public Fractal copyNewData(Map<String, Parameter> newData) {
-		Fractal f = new Fractal(scale, sourceCode, newData);
+	public Fractal copyNewData(Map<String, Parameter> newData, boolean merge) {
+        if(merge) newData = Commons.merge(newData, data);
+        
+        // keep default scale
+		Fractal f = new Fractal(defauktScale, sourceCode, newData);
 
-		// take over generated stuff.
-		f.defaultData = defaultData; f.ast = ast; f.code = code;
+		// Source code stayed the same, thus no need to parse again.
+		f.defaultData = defaultData; f.ast = ast;
 
 		return f;
-	}
-	/**
-	 * Returns a new Fractal object that is a merged one of
-	 * other and this. If there is an element in both of them, then
-	 * the one of 'this' is used.
-	 * @param that the other fractal
-	 * @return a new object
-	 */
-	public Fractal mergeData(Fractal that) {
-		Map<String, Parameter> mergedData = Commons.merge(this.data, that.data);
-
-		return copyNewData(mergedData);
-	}
-	// The fractal is described by the following three elements:
+    }
+    
 
 
 	// some mutable methods
 	public Scale scale() {
-		return scale;
+		return get(SCALE_LABEL);
 	}
 
 	public void setScale(Scale scale) {
@@ -284,6 +268,11 @@ public class Fractal implements ExternalData {
 	public void parse() throws ParsingError, CompileException {
 		defaultData = new LinkedHashMap<>();
 		ast = Meelan.parse(sourceCode, this);
+        
+        // make sure that there is an initial scale.
+        if(!defaultData.containsKey(SCALE_LABEL)) {
+            defaultData.put(SCALE_LABEL, defaultScale);
+        }
 	}
 
 	/**
@@ -417,6 +406,9 @@ public class Fractal implements ExternalData {
 				// this one is a bit different
 				defaultData.put(id, new Parameter(Type.Palette, Commons.toPalette(init)));
 			} break;
+            case "scale": {
+				defaultData.put(id, new Parameter(Type.Scale, Commons.toScale(init)));
+            } break;
 			default:
 				throw new CompileException("Unknown extern type: " + type + " for id " + id);
 		}
