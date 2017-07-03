@@ -198,8 +198,7 @@ public class Serializers {
         public JsonElement serialize(Fractal fractal, Type typeOfSrc, JsonSerializationContext context) {
             JsonObject ret = new JsonObject();
 
-            // Scale is stored as double-array
-            ret.add(SCALE_LABEL, context.serialize(fractal.scale(), Scale.class));
+            // Scale is now stored in data fields.
 
             JsonArray sourceArray = new JsonArray();
 
@@ -273,7 +272,6 @@ public class Serializers {
             // Scale is stored as double-array
             JsonObject obj = (JsonObject) json;
 
-            Scale scale = context.deserialize(obj.get(SCALE_LABEL), Scale.class);
 
             StringBuilder sourceCode = new StringBuilder();
             JsonArray sourceArray = obj.getAsJsonArray(SOURCE_LABEL);
@@ -330,8 +328,19 @@ public class Serializers {
                     dataMap.put(entry.getKey(), new Fractal.Parameter(Fractal.Type.Scale, context.deserialize(entry.getValue(), Scale.class)));
                 }
             }
+            
+            
+            // In old versions, scale was on top. There will be
+            // most likely forever Jsons with a dedicated scale
+            // field. For these, read scale from here.
+            JsonElement element = obj.get(SCALE_LABEL);
 
-            return new Fractal(scale, sourceCode.toString(), dataMap);
+            if(element != null) {
+                Scale scale = context.deserialize(element, Scale.class);
+                dataMap.put(Fractal.SCALE_LABEL, scale);
+            }
+
+            return new Fractal(sourceCode.toString(), dataMap);
         }
     }
 }
