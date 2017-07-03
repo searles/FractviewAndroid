@@ -38,14 +38,16 @@ import at.searles.parsing.ParsingError;
 
 public class Fractal implements ExternalData {
 
-	// Set custom defaultScale and keep it
-	private final Scale defaultScale;
-	
 	/**
 	 * data contains a label Scale that contains the scale of the fractal.
 	 */
 	public static final String SCALE_LABEL = "Scale";
 
+    /**
+     * Scale to fall back if there is no other scale defined.
+     */ 
+    public static final Scale DEFAULT_SCALE = new Scale(2, 0, 0, 2, 0, 0);
+    
 	/**
 	 * Source code of the program
 	 */
@@ -78,12 +80,11 @@ public class Fractal implements ExternalData {
 	 * @param sourceCode
 	 * @param parameters
 	 */
-	public Fractal(Scale defaultScale, String sourceCode, Map<String, Parameter> parameters) {
+	public Fractal(String sourceCode, Map<String, Parameter> parameters) {
 		if(scale == null || sourceCode == null || parameters == null) {
 			throw new NullPointerException();
 		}
 
-		this.defaultScale = defaultScale;
 		this.sourceCode = sourceCode;
 		this.data = parameters;
 	}
@@ -180,6 +181,10 @@ public class Fractal implements ExternalData {
 	public void setPalette(String id, Palette p) {
 		data.put(id, new Parameter(Type.Palette, p));
 	}
+    
+	public void setScale(String id, Scale sc) {
+		data.put(id, new Parameter(Type.Scale, sc));
+	}
 
 	/**
 	 * Create a new instance of this class with a different source code
@@ -220,15 +225,10 @@ public class Fractal implements ExternalData {
 		return f;
     }
     
-
-
-	// some mutable methods
+    // ======== Some convenience methods to obtain data ========
+    
 	public Scale scale() {
 		return get(SCALE_LABEL);
-	}
-
-	public void setScale(Scale scale) {
-		this.scale = scale;
 	}
 
 	/**
@@ -267,12 +267,12 @@ public class Fractal implements ExternalData {
 	 */
 	public void parse() throws ParsingError, CompileException {
 		defaultData = new LinkedHashMap<>();
-		ast = Meelan.parse(sourceCode, this);
         
-        // make sure that there is an initial scale.
-        if(!defaultData.containsKey(SCALE_LABEL)) {
-            defaultData.put(SCALE_LABEL, defaultScale);
-        }
+        // First entry is the default scale.
+        // This is a work-around if there is no default scale defined in source code.
+        defaultData.put(SCALE_LABEL, DEFAULT_SCALE);
+        
+		ast = Meelan.parse(sourceCode, this);
 	}
 
 	/**
@@ -332,6 +332,8 @@ public class Fractal implements ExternalData {
 					paletteIndex++;
 
 					break;
+                default:
+                    throw new IllegalArgumentException("not implemented yet");
 			}
 		}
 
