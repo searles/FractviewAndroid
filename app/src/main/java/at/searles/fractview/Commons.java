@@ -1,11 +1,15 @@
 package at.searles.fractview;
 
+import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
+import android.graphics.Canvas;
 import android.graphics.Matrix;
+import android.graphics.Paint;
 import android.os.Handler;
 import android.os.Looper;
 import android.os.Parcel;
-import android.os.Parcelable;
 
+import java.io.ByteArrayOutputStream;
 import java.text.SimpleDateFormat;
 import java.util.Collections;
 import java.util.Date;
@@ -189,31 +193,6 @@ public class Commons {
         return new Palette(argbs);
     }
 
-    public static void writePaletteToParcel(Palette p, Parcel parcel) {
-        parcel.writeInt(p.width());
-        parcel.writeInt(p.height());
-
-        for (int y = 0; y < p.height(); ++y) {
-            for (int x = 0; x < p.width(); ++x) {
-                parcel.writeInt(p.argb(x, y));
-            }
-        }
-    }
-
-    public static Palette readPalette(Parcel in) {
-        int w = in.readInt();
-        int h = in.readInt();
-
-        int data[][] = new int[h][w];
-
-        for (int y = 0; y < h; ++y) {
-            for (int x = 0; x < w; ++x) {
-                data[y][x] = in.readInt();
-            }
-        }
-
-        return new Palette(data);
-    }
 
     public static <A> Map<String, A> merge(Map<String, A> primary, Map<String, A> secondary) {
         Map<String, A> merged = new HashMap<>();
@@ -225,46 +204,55 @@ public class Commons {
     }
 
 
-    public static class PaletteWrapper implements Parcelable {
 
-        //public final String label;
-        public final Palette p;
+    private static final int ICON_LEN = 64;
 
-        PaletteWrapper(/*String label,*/ Palette p) {
-            //this.label = label;
-            this.p = p;
-        }
+    /**
+     * creates a new bitmap with size 64x64 containing the center of the current image
+     * @return
+     */
+    private static Bitmap createIcon(Bitmap original) {
+        // FIXME Move somewhere else!
+        // create a square icon. Should  only contain central square.
+        Bitmap icon = Bitmap.createBitmap(ICON_LEN, ICON_LEN, Bitmap.Config.ARGB_8888);
 
+        Canvas canvas = new Canvas(icon);
 
-        @Override
-        public int describeContents() {
-            return 0;
-        }
+        float scale = ((float) ICON_LEN) / Math.min(original.getWidth(), original.getHeight());
 
-        @Override
-        public void writeToParcel(Parcel parcel, int flags) {
-            //parcel.writeString(label);
-            writePaletteToParcel(p, parcel);
-        }
+        float w = original.getWidth();
+        float h = original.getHeight();
 
-        public static final Creator<PaletteWrapper> CREATOR
-                = new Creator<PaletteWrapper>() {
-            public PaletteWrapper createFromParcel(Parcel in) {
-                return new PaletteWrapper(in);
-            }
+        Matrix transformation = new Matrix();
+        transformation.setValues(new float[]{
+                scale, 0, (ICON_LEN - scale * w) * .5f,
+                0, scale, (ICON_LEN - scale * h) * .5f,
+                0, 0, 1,
+        });
 
-            public PaletteWrapper[] newArray(int size) {
-                return new PaletteWrapper[size];
-            }
-        };
+        Paint paint = new Paint();
+        paint.setFilterBitmap(true);
 
-        /**
-         * Now, writeParcel in reverse
-         * @param parcel The palette in a parcel
-         */
-        private PaletteWrapper(Parcel parcel) {
-            //label = parcel.readString();
-            p = readPalette(parcel);
-        }
+        canvas.drawBitmap(original, transformation, paint);
+
+        return icon;
     }
+
+    private static byte[] getBitmapBinary(Bitmap bitmapPicture) {
+        // FIXME Move somewhere else!
+        // Thanks to http://mobile.cs.fsu.edu/converting-images-to-json-objects/
+        ByteArrayOutputStream byteArrayBitmapStream = new ByteArrayOutputStream();
+        bitmapPicture.compress(Bitmap.CompressFormat.PNG, 100, byteArrayBitmapStream);
+        return byteArrayBitmapStream.toByteArray();
+    }
+
+    /**
+     * Convert a Base64 encoded icon to a bitmap
+     * @return
+     */
+    private static Bitmap getBitmapFromBinary(byte[] binaryData) {
+        // Thanks to http://mobile.cs.fsu.edu/converting-images-to-json-objects/
+        return BitmapFactory.decodeByteArray(binaryData, 0, binaryData.length);
+    }
+
 }

@@ -17,7 +17,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.TreeSet;
 
-import at.searles.fractview.fractal.Fractal;
+import at.searles.fractal.Fractal;
+import at.searles.fractal.FractalLabel;
 import at.searles.math.Scale;
 import at.searles.meelan.CompileException;
 

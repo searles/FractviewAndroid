@@ -7,7 +7,7 @@ import android.widget.Toast;
 
 import com.google.gson.JsonParser;
 
-import at.searles.fractview.fractal.Fractal;
+import at.searles.fractal.Fractal;
 
 /**
  * Created by searles on 17.01.17.

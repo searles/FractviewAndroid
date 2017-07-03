@@ -13,6 +13,8 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import at.searles.fractal.FractalLabel;
+
 /**
  * Adapter for fractals with bitmaps
  */

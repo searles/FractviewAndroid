@@ -20,7 +20,6 @@ import org.jetbrains.annotations.NotNull;
 import java.util.LinkedList;
 
 import at.searles.fractview.Commons;
-import at.searles.fractview.MultiTouchController;
 import at.searles.math.Scale;
 
 public class ScaleableImageView extends View {

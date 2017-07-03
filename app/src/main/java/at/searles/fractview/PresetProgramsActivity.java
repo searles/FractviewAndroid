@@ -12,7 +12,8 @@ import android.widget.ListView;
 import java.util.ArrayList;
 import java.util.List;
 
-import at.searles.fractview.fractal.Fractal;
+import at.searles.fractal.Fractal;
+import at.searles.fractal.FractalLabel;
 
 /**
  *

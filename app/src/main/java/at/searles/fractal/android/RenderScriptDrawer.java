@@ -1,4 +1,4 @@
-package at.searles.fractview.fractal;
+package at.searles.fractal.android;
 
 import android.content.Context;
 import android.graphics.Bitmap;
@@ -15,6 +15,8 @@ import android.util.Log;
 import java.util.LinkedList;
 import java.util.List;
 
+import at.searles.fractal.Drawer;
+import at.searles.fractal.Fractal;
 import at.searles.fractview.ScriptC_fillimage;
 import at.searles.fractview.ScriptC_fractal;
 import at.searles.fractview.ScriptField_lab_surface;

@@ -35,9 +35,10 @@ import org.jetbrains.annotations.NotNull;
 import java.io.File;
 import java.util.HashMap;
 
-import at.searles.fractview.fractal.FavoriteEntry;
-import at.searles.fractview.fractal.Fractal;
+import at.searles.fractal.FractalEntry;
+import at.searles.fractal.Fractal;
 import at.searles.fractview.ui.BitmapFragmentView;
+import at.searles.fractview.ui.DialogHelper;
 import at.searles.meelan.CompileException;
 
 
@@ -645,7 +646,7 @@ public class MainActivity extends Activity
 
 		// Fetch icon from bitmap fragment
 		Fractal fractal = bitmapFragment.fractal();
-		FavoriteEntry fav = FavoriteEntry.create(name, fractal, bitmapFragment.getBitmap());
+		FractalEntry fav = FractalEntry.create(name, fractal, bitmapFragment.getBitmap());
 
 		String entryString = fav.serialize().toString();
 

@@ -12,7 +12,8 @@ import java.io.InputStreamReader;
 import java.util.ArrayList;
 import java.util.Map;
 
-import at.searles.fractview.fractal.Fractal;
+import at.searles.fractal.Fractal;
+import at.searles.fractal.FractalLabel;
 import at.searles.math.Cplx;
 import at.searles.math.Scale;
 import at.searles.math.color.Palette;

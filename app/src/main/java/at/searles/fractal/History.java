@@ -1,8 +1,6 @@
-package at.searles.fractview;
+package at.searles.fractal;
 
 import java.util.LinkedList;
-
-import at.searles.fractview.fractal.Fractal;
 
 /**
  * Created by searles on 21.05.17.

@@ -23,7 +23,7 @@
         <activity android:name=".ParameterActivity"/>
         <activity android:name=".PresetProgramsActivity"/>
         <activity android:name=".PresetParametersActivity"/>
-        <activity android:name=".EditProgramActivity"/>
+        <activity android:name=".SourceEditorActivity"/>
     </application>
 
 </manifest>

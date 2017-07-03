@@ -26,8 +26,7 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
 
-import at.searles.fractview.editors.EditableDialogFragment;
-import at.searles.fractview.fractal.Fractal;
+import at.searles.fractal.Fractal;
 import at.searles.math.Cplx;
 import at.searles.math.Scale;
 import at.searles.math.color.Palette;
@@ -568,7 +567,7 @@ public class ParameterActivity extends Activity implements EditableDialogFragmen
 				return true;
 			}
 			case R.id.action_edit_source: {
-				Intent i = new Intent(this, EditProgramActivity.class);
+				Intent i = new Intent(this, SourceEditorActivity.class);
 				i.putExtra("source", this.fractal.sourceCode());
 				startActivityForResult(i, PROGRAM_ACTIVITY_RETURN);
 			} return true;

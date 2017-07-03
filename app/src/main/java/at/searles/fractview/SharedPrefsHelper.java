@@ -5,6 +5,8 @@ import android.content.SharedPreferences;
 
 import java.util.Map;
 
+import at.searles.fractview.ui.DialogHelper;
+
 /**
  * Helper for Shared Preferences
  */

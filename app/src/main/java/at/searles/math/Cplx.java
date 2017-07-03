@@ -533,35 +533,4 @@ public class Cplx {
 		return im == 0? Double.toString(re) : re + ":" + im;
 	}
 
-	public JsonElement serialize() {
-		JsonArray array = new JsonArray();
-
-		array.add(re);
-		array.add(im);
-
-		return array;
-	}
-
-	public static Cplx deserialize(JsonElement json) throws JsonParseException {
-		JsonArray array = (JsonArray) json;
-
-		double re = array.get(0).getAsDouble();
-		double im = array.get(1).getAsDouble();
-
-		return new Cplx(re, im);
-	}
-
-	// ======= GSON Adapter ========
-	public static class JsonAdapter implements JsonDeserializer<Cplx>, JsonSerializer<Cplx> {
-		@Override
-		public Cplx deserialize(JsonElement json, Type typeOfT, JsonDeserializationContext context)
-				throws JsonParseException {
-			return Cplx.deserialize(json);
-		}
-
-		@Override
-		public JsonElement serialize(Cplx src, Type typeOfSrc, JsonSerializationContext context) {
-			return src.serialize();
-		}
-	}
 }

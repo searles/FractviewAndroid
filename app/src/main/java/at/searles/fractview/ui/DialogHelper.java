@@ -1,4 +1,4 @@
-package at.searles.fractview;
+package at.searles.fractview.ui;
 
 import android.app.AlertDialog;
 import android.content.Context;
@@ -7,6 +7,8 @@ import android.text.InputType;
 import android.util.Log;
 import android.widget.EditText;
 import android.widget.Toast;
+
+import at.searles.fractview.Commons;
 
 /**
  * Created by searles on 10.06.17.

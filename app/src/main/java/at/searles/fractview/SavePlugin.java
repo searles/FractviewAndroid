@@ -14,6 +14,8 @@ import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
 
+import at.searles.fractview.ui.DialogHelper;
+
 /**
  * Created by searles on 18.06.17.
  */

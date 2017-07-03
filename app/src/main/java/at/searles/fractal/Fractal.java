@@ -1,12 +1,4 @@
-package at.searles.fractview.fractal;
-
-import android.os.Parcel;
-import android.os.Parcelable;
-import android.util.Log;
-
-import com.google.gson.JsonArray;
-import com.google.gson.JsonElement;
-import com.google.gson.JsonObject;
+package at.searles.fractal;
 
 import java.util.Arrays;
 import java.util.Collections;
@@ -44,7 +36,7 @@ import at.searles.parsing.ParsingError;
  * LinkedHashMap<String, ExternElement>
  */
 
-public class Fractal implements Parcelable, ExternalData {
+public class Fractal implements ExternalData {
 
 	/**
 	 * Scale of this fractal
@@ -98,8 +90,20 @@ public class Fractal implements Parcelable, ExternalData {
 	 * @return
 	 */
 	public Iterable<String> parameters() {
-		if(defaultData == null) throw new IllegalArgumentException("parse has not been called yet!");
+		if(defaultData == null) {
+			throw new IllegalArgumentException("parse has not been called yet!");
+		}
+
 		return defaultData.keySet();
+	}
+
+
+	/**
+	 * Returns an iterable of all parameters.
+	 * @return
+	 */
+	public Iterable<Map.Entry<String, Parameter>> nonDefaultParameters() {
+		return data.entrySet();
 	}
 
 	/**
@@ -108,13 +112,12 @@ public class Fractal implements Parcelable, ExternalData {
 	 */
 	public boolean isDefault(String id) {
 		if(defaultData == null) {
-			throw new IllegalArgumentException("parse has not been called yet!");
-		} else if (!defaultData.containsKey(id)) {
-			throw new IllegalArgumentException("id " + id + " is not a valid parameter");
+			throw new IllegalArgumentException("fractal not compiled");
+		} else if(!defaultData.containsKey(id)) {
+			throw new IllegalArgumentException("key does not exist");
 		} else {
-			// Types must be identical
-			// FIXME FIXME
-			return !(data.containsKey(id) && data.get(id).type == defaultData.get(id).type);
+			// Types must be compatible
+			return !(data.containsKey(id) && data.get(id).type() == defaultData.get(id).type());
 		}
 	}
 
@@ -281,7 +284,6 @@ public class Fractal implements Parcelable, ExternalData {
 	public void parse() throws ParsingError, CompileException {
 		defaultData = new LinkedHashMap<>();
 		ast = Meelan.parse(sourceCode, this);
-		Log.d("FR", ast.toString());
 	}
 
 	/**
@@ -348,280 +350,6 @@ public class Fractal implements Parcelable, ExternalData {
 	}
 
 	@Override
-	public int describeContents() {
-		return 0;
-	}
-
-	@Override
-	public void writeToParcel(Parcel parcel, int flags) {
-		// First source code
-		parcel.writeString(sourceCode);
-
-		// Next scale
-		parcel.writeDouble(scale.xx());
-		parcel.writeDouble(scale.xy());
-		parcel.writeDouble(scale.yx());
-		parcel.writeDouble(scale.yy());
-		parcel.writeDouble(scale.cx());
-		parcel.writeDouble(scale.cy());
-
-		// Next data.
-		parcel.writeInt(data.size());
-
-		for(Map.Entry<String, Parameter> entry : data.entrySet()) {
-			parcel.writeString(entry.getKey());
-
-			Type type = entry.getValue().type;
-			Object o = entry.getValue().object;
-
-			parcel.writeInt(type.ordinal());
-
-			switch(type) {
-				case Int:
-					parcel.writeInt((Integer) o);
-					break;
-				case Real:
-					parcel.writeDouble((Double) o);
-					break;
-				case Cplx:
-					parcel.writeDouble(((Cplx) o).re());
-					parcel.writeDouble(((Cplx) o).im());
-					break;
-				case Bool:
-					parcel.writeInt((Boolean) o ? 1 : 0);
-					break;
-				case Expr:
-					parcel.writeString((String) o);
-					break;
-				case Color:
-					parcel.writeInt((Integer) o);
-					break;
-				case Palette:
-					Commons.writePaletteToParcel((Palette) o, parcel);
-					break;
-				default:
-					throw new IllegalArgumentException("Did not expect " + type + " in 'data'");
-			}
-		}
-	}
-
-	private static final String SCALE_LABEL = "scale";
-	private static final String SOURCE_LABEL = "source";
-
-	private static final String INTS_LABEL = "ints";
-	private static final String REALS_LABEL = "reals";
-	private static final String CPLXS_LABEL = "cplxs";
-	private static final String BOOLS_LABEL = "bools";
-	private static final String EXPRS_LABEL = "exprs";
-	private static final String COLORS_LABEL = "colors";
-	private static final String PALETTES_LABEL = "palettes";
-	private static final String SCALES_LABEL = "scales";
-
-	private static final String DATA_LABEL = "arguments";
-
-	/**
-	 * Custom serializer for fractal. Mainly for historic reasons - when this app was implemented
-	 * the first time, elements were grouped by type.
-	 * @return
-	 */
-	public JsonElement serialize() {
-		JsonObject ret = new JsonObject();
-
-		// Scale is stored as double-array
-		ret.add(SCALE_LABEL, scale.serialize());
-
-		JsonArray sourceArray = new JsonArray();
-
-		for(String line : sourceCode.split("\n")) {
-			sourceArray.add(line);
-		}
-
-		ret.add(SOURCE_LABEL, sourceArray);
-
-		JsonObject ints = new JsonObject();
-		JsonObject reals = new JsonObject();
-		JsonObject cplxs = new JsonObject();
-		JsonObject bools = new JsonObject();
-		JsonObject exprs = new JsonObject();
-		JsonObject colors = new JsonObject();
-		JsonObject palettes = new JsonObject();
-		JsonObject scales = new JsonObject();
-
-		for(String id : parameters()) {
-			if(!isDefault(id)) {
-				Parameter element = data.get(id);
-
-				switch (element.type) {
-					case Int:
-						ints.addProperty(id, (Integer) element.object);
-						break;
-					case Real:
-						reals.addProperty(id, (Double) element.object);
-						break;
-					case Cplx:
-						cplxs.add(id, ((Cplx) element.object).serialize());
-						break;
-					case Bool:
-						bools.addProperty(id, (Boolean) element.object);
-						break;
-					case Expr:
-						exprs.addProperty(id, (String) element.object);
-						break;
-					case Color:
-						colors.addProperty(id, (Integer) element.object);
-						break;
-					case Palette:
-						palettes.add(id, ((Palette) element.object).serialize());
-						break;
-					case Scale:
-						scales.add(id, ((Scale) element.object).serialize());
-						break;
-				}
-			}
-		}
-
-		JsonObject data = new JsonObject();
-
-		if(!ints.entrySet().isEmpty()) data.add(INTS_LABEL, ints);
-		if(!reals.entrySet().isEmpty()) data.add(REALS_LABEL, reals);
-		if(!cplxs.entrySet().isEmpty()) data.add(CPLXS_LABEL, cplxs);
-		if(!bools.entrySet().isEmpty()) data.add(BOOLS_LABEL, bools);
-		if(!exprs.entrySet().isEmpty()) data.add(EXPRS_LABEL, exprs);
-		if(!colors.entrySet().isEmpty()) data.add(COLORS_LABEL, colors);
-		if(!palettes.entrySet().isEmpty()) data.add(PALETTES_LABEL, palettes);
-		if(!scales.entrySet().isEmpty()) data.add(SCALES_LABEL, scales);
-
-		if(!data.entrySet().isEmpty()) ret.add(DATA_LABEL, data);
-
-		return ret;
-	}
-
-	public static Fractal deserialize(JsonElement element) {
-		// Scale is stored as double-array
-		Log.d(Fractal.class.getName(), "deserializing " + element);
-
-		JsonObject obj = (JsonObject) element;
-
-		Scale scale = Scale.deserialize(obj.get(SCALE_LABEL));
-
-		StringBuilder sourceCode = new StringBuilder();
-		JsonArray sourceArray = obj.getAsJsonArray(SOURCE_LABEL);
-
-		for(JsonElement line : sourceArray) {
-			sourceCode.append(line.getAsString()).append('\n');
-		}
-
-		// Fetch data.
-		Map<String, Parameter> dataMap = new HashMap<>();
-
-		JsonObject data = obj.getAsJsonObject(DATA_LABEL);
-
-		if(data != null) {
-			// all of them are optional.
-			JsonObject ints = data.getAsJsonObject(INTS_LABEL);
-			JsonObject reals = data.getAsJsonObject(REALS_LABEL);
-			JsonObject cplxs = data.getAsJsonObject(CPLXS_LABEL);
-			JsonObject bools = data.getAsJsonObject(BOOLS_LABEL);
-			JsonObject exprs = data.getAsJsonObject(EXPRS_LABEL);
-			JsonObject colors = data.getAsJsonObject(COLORS_LABEL);
-			JsonObject palettes = data.getAsJsonObject(PALETTES_LABEL);
-			JsonObject scales = data.getAsJsonObject(SCALES_LABEL);
-
-			if (ints != null) for(Map.Entry<String, JsonElement> entry : ints.entrySet()) {
-				dataMap.put(entry.getKey(), new Fractal.Parameter(Type.Int, entry.getValue().getAsInt()));
-			}
-
-			if (reals != null) for(Map.Entry<String, JsonElement> entry : reals.entrySet()) {
-				dataMap.put(entry.getKey(), new Parameter(Type.Real, entry.getValue().getAsDouble()));
-			}
-
-			if (cplxs != null) for(Map.Entry<String, JsonElement> entry : cplxs.entrySet()) {
-				dataMap.put(entry.getKey(), new Parameter(Type.Cplx, Cplx.deserialize(entry.getValue())));
-			}
-
-			if (bools != null) for(Map.Entry<String, JsonElement> entry : bools.entrySet()) {
-				dataMap.put(entry.getKey(), new Parameter(Type.Bool, entry.getValue().getAsBoolean()));
-			}
-
-			if (exprs != null) for(Map.Entry<String, JsonElement> entry : exprs.entrySet()) {
-				dataMap.put(entry.getKey(), new Parameter(Type.Expr, entry.getValue().getAsString()));
-			}
-
-			if (colors != null) for(Map.Entry<String, JsonElement> entry : colors.entrySet()) {
-				dataMap.put(entry.getKey(), new Parameter(Type.Color, entry.getValue().getAsInt()));
-			}
-
-			if (palettes != null) for(Map.Entry<String, JsonElement> entry : palettes.entrySet()) {
-				dataMap.put(entry.getKey(), new Parameter(Type.Palette, Palette.deserialize(entry.getValue())));
-			}
-
-			if (scales != null) for(Map.Entry<String, JsonElement> entry : scales.entrySet()) {
-				dataMap.put(entry.getKey(), new Parameter(Type.Scale, Scale.deserialize(entry.getValue())));
-			}
-		}
-
-		return new Fractal(scale, sourceCode.toString(), dataMap);
-	}
-
-	public static final Parcelable.Creator<Fractal> CREATOR =
-		new Parcelable.Creator<Fractal>() {
-			public Fractal createFromParcel(Parcel in) {
-				String sourceCode = in.readString();
-
-				double xx = in.readDouble();
-				double xy = in.readDouble();
-				double yx = in.readDouble();
-				double yy = in.readDouble();
-				double cx = in.readDouble();
-				double cy = in.readDouble();
-
-				Scale sc = new Scale(xx, xy, yx, yy, cx, cy);
-
-				Map<String, Parameter> data = new HashMap<>();
-
-				for(int size = in.readInt(); size > 0; --size) {
-					String id = in.readString();
-
-					Type type = Type.values()[in.readInt()];
-
-					switch(type) {
-						case Int:
-						case Color: // Fall though
-							data.put(id, new Parameter(type, in.readInt()));
-							break;
-						case Real:
-							data.put(id, new Parameter(type, in.readDouble()));
-							break;
-						case Cplx: {
-							double re = in.readDouble();
-							double im = in.readDouble();
-							data.put(id, new Parameter(type, new Cplx(re, im)));
-						} break;
-						case Bool:
-							data.put(id, new Parameter(type, in.readInt() == 1));
-							break;
-						case Expr:
-							data.put(id, new Parameter(type, in.readString()));
-							break;
-						case Palette: {
-							data.put(id, new Parameter(type, Commons.readPalette(in)));
-						} break;
-						default:
-							throw new IllegalArgumentException("Did not expect " + type + " in 'data'");
-					}
-
-				}
-
-				return new Fractal(sc, sourceCode, data);
-			}
-
-			public Fractal[] newArray(int size) {
-				return new Fractal[size];
-			}
-		};
-
-
-	@Override
 	public void add(String id, String type, Tree init) throws CompileException {
 		switch(type) {
 			case "int": {
@@ -631,7 +359,6 @@ public class Fractal implements Parcelable, ExternalData {
 				} else if(init instanceof Value.Real) {
 					// fixme this is a fix for a bug.
 					i = (int) ((Value.Real) init).value;
-					Log.e("FRACTALS", "An int was parsed as a real");
 				} else {
 					throw new CompileException("extern " + id + " = " + init + " is not an int but a " + init.getClass() + "!");
 				}

@@ -16,17 +16,6 @@
  */
 package at.searles.math.color;
 
-import com.google.gson.JsonArray;
-import com.google.gson.JsonDeserializationContext;
-import com.google.gson.JsonDeserializer;
-import com.google.gson.JsonElement;
-import com.google.gson.JsonObject;
-import com.google.gson.JsonParseException;
-import com.google.gson.JsonSerializationContext;
-import com.google.gson.JsonSerializer;
-
-import java.lang.reflect.Type;
-
 import at.searles.math.InterpolationMatrix;
 import at.searles.math.Matrix4;
 
@@ -168,60 +157,4 @@ public class Palette {
 		}
 	}
 
-	public static final String WIDTH_LABEL = "width";
-	public static final String HEIGHT_LABEL = "height";
-	public static final String COLORS_LABEL = "colors";
-
-	public JsonElement serialize() {
-		JsonObject object = new JsonObject();
-
-		object.addProperty(WIDTH_LABEL, width);
-		object.addProperty(HEIGHT_LABEL, height);
-
-		JsonArray array = new JsonArray();
-
-		for(int y = 0; y < height(); ++y) {
-			for(int x = 0; x < width(); ++x) {
-				array.add(argb(x, y));
-			}
-		}
-
-		object.add(COLORS_LABEL, array);
-
-		return object;
-	}
-
-	public static Palette deserialize(JsonElement json)
-			throws JsonParseException {
-		JsonObject object = (JsonObject) json;
-
-		int width = object.get(WIDTH_LABEL).getAsInt();
-		int height = object.get(HEIGHT_LABEL).getAsInt();
-
-		JsonArray array = object.getAsJsonArray(COLORS_LABEL);
-
-		int colors[][] = new int[height][width];
-
-		for(int y = 0; y < height; ++y) {
-			for(int x = 0; x < width; ++x) {
-				colors[y][x] = array.get(x + y * width).getAsInt();
-			}
-		}
-
-		return new Palette(colors);
-	}
-
-	// ======= GSON Adapter ========
-	public static class JsonAdapter implements JsonDeserializer<Palette>, JsonSerializer<Palette> {
-		@Override
-		public Palette deserialize(JsonElement json, Type typeOfT, JsonDeserializationContext context)
-				throws JsonParseException {
-			return Palette.deserialize(json);
-		}
-
-		@Override
-		public JsonElement serialize(Palette src, Type typeOfSrc, JsonSerializationContext context) {
-			return src.serialize();
-		}
-	}
 }

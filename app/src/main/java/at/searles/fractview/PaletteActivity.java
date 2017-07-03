@@ -15,7 +15,7 @@ import com.google.gson.JsonParser;
 
 import org.jetbrains.annotations.NotNull;
 
-import at.searles.fractview.editors.EditableDialogFragment;
+import at.searles.fractview.ui.DialogHelper;
 import at.searles.fractview.ui.MultiScrollView;
 import at.searles.fractview.ui.PaletteView;
 import at.searles.fractview.ui.PaletteViewModel;

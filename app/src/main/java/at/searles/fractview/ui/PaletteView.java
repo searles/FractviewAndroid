@@ -17,7 +17,7 @@ import java.util.ArrayList;
 import java.util.Iterator;
 
 import at.searles.fractview.PaletteActivity;
-import at.searles.fractview.editors.EditableDialogFragment;
+import at.searles.fractview.EditableDialogFragment;
 import at.searles.math.Commons;
 import at.searles.math.color.Colors;
 

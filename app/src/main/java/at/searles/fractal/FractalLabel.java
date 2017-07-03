@@ -1,9 +1,12 @@
-package at.searles.fractview;
+package at.searles.fractal;
 
 import android.graphics.Bitmap;
 
 /**
- * Interface for all kinds of fractal entries. This one is just a label type.
+ * Interface for all kinds of fractal entries:
+ *     Presets
+ *     Favorites
+ *
  */
 
 public interface FractalLabel {

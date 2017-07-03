@@ -14,19 +14,19 @@ import android.widget.AdapterView;
 import android.widget.Button;
 import android.widget.ListView;
 
+import com.google.gson.JsonArray;
 import com.google.gson.JsonParser;
-
-import org.json.JSONObject;
 
 import java.io.BufferedWriter;
 import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.util.HashMap;
-import java.util.LinkedHashMap;
 import java.util.Map;
 
-import at.searles.fractview.fractal.FavoriteEntry;
+import at.searles.fractal.FractalEntry;
+import at.searles.fractal.FractalLabel;
+import at.searles.fractview.ui.DialogHelper;
 
 /**
  *
@@ -38,19 +38,19 @@ public class FavoritesActivity extends Activity {
 
 	private static final String[] options = {"Rename", "Delete", "Copy To Clipboard"};
 
-	// private Map<String, FavoriteEntry> entries;
+	// private Map<String, FractalEntry> entries;
 	private SharedPrefsHelper prefsHelper;
 
 	private void initData() {
 		Map<String, ?> sharedPrefs = prefsHelper.getAll();
 
-		HashMap<String, FavoriteEntry> entries = new HashMap<>(sharedPrefs.size());
+		HashMap<String, FractalEntry> entries = new HashMap<>(sharedPrefs.size());
 
 		for(String key : sharedPrefs.keySet()) {
 			String specification = (String) sharedPrefs.get(key);
 
 			try {
-				entries.put(key, FavoriteEntry.deserialize(key, new JsonParser().parse(specification)));
+				entries.put(key, FractalEntry.deserialize(key, new JsonParser().parse(specification)));
 			} catch (Exception e) {
 				// FIXME
 				e.printStackTrace();
@@ -85,7 +85,7 @@ public class FavoritesActivity extends Activity {
 				FractalLabel entry = adapter.getItem(index);
 
 				Intent data = new Intent();
-				data.putExtra("fractal", ((FavoriteEntry) entry).fractal());
+				data.putExtra("fractal", ((FractalEntry) entry).fractal());
 				setResult(1, data);
 				finish();
 			}
@@ -100,7 +100,7 @@ public class FavoritesActivity extends Activity {
 				builder.setItems(options, new DialogInterface.OnClickListener() {
 					@Override
 					public void onClick(DialogInterface dialog, int which) {
-						FavoriteEntry entry = (FavoriteEntry) adapter.getItem(index);
+						FractalEntry entry = (FractalEntry) adapter.getItem(index);
 
 						switch (which) {
 							case 0: {
@@ -168,11 +168,11 @@ public class FavoritesActivity extends Activity {
 			case R.id.action_export_collection: {
 
 				// Fetch map from adapter
-				Map<String, FavoriteEntry> map = new LinkedHashMap<>();
+				JsonArray array = new JsonArray();
 
 				for(int i = 0; i < adapter.getCount(); ++i) {
-					FavoriteEntry entry = (FavoriteEntry) adapter.getItem(i);
-					map.put(entry.title(), entry);
+					FractalEntry entry = (FractalEntry) adapter.getItem(i);
+					array.add(entry.serialize());
 				}
 
 				try {
@@ -180,10 +180,12 @@ public class FavoritesActivity extends Activity {
 							".fv", this.getExternalCacheDir()); // extension fv for fractview
 
 					BufferedWriter bw = new BufferedWriter(new FileWriter(textFile));
-					bw.write(new JSONObject(map).toString());
+
+					bw.write(array.toString());
+
 					bw.close();
 
-					// Share image
+					// Share text file
 					Uri contentUri = Uri.fromFile(textFile);
 					// after it was successfully saved, share it.
 					Intent share = new Intent(Intent.ACTION_SEND);

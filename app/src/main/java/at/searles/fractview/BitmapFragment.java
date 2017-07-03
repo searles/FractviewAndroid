@@ -13,9 +13,11 @@ import android.util.Log;
 import java.util.LinkedList;
 import java.util.List;
 
-import at.searles.fractview.fractal.Drawer;
-import at.searles.fractview.fractal.Fractal;
-import at.searles.fractview.fractal.RenderScriptDrawer;
+import at.searles.fractal.Drawer;
+import at.searles.fractal.Fractal;
+import at.searles.fractal.History;
+import at.searles.fractal.android.RenderScriptDrawer;
+import at.searles.fractview.ui.DialogHelper;
 import at.searles.math.Scale;
 import at.searles.meelan.CompileException;
 
@@ -280,7 +282,7 @@ public class BitmapFragment extends Fragment {
 			public void attachContext(Activity context) {
 				AlertDialog.Builder builder = new AlertDialog.Builder(context);
 				builder.setTitle("Initializing Fractview");
-				builder.setMessage("Please wait a few seconds while scripts are compiled...\nThank you for using Fractview!");
+				builder.setMessage("After the app cache was cleaned this might take a few seconds...\n\n\nThank you for using Fractview!");
 				builder.setCancelable(false);
 
 				dialog = builder.show();

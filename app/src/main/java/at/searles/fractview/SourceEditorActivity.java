@@ -5,6 +5,7 @@ import android.content.Intent;
 import android.os.Bundle;
 import android.text.Editable;
 import android.text.TextWatcher;
+import android.util.Log;
 import android.view.Menu;
 import android.view.MenuInflater;
 import android.view.MenuItem;
@@ -15,12 +16,11 @@ import android.widget.Toast;
 
 import java.util.HashMap;
 
-import at.searles.fractview.editors.EditableDialogFragment;
-import at.searles.fractview.fractal.Fractal;
+import at.searles.fractal.Fractal;
 import at.searles.meelan.CompileException;
 import at.searles.parsing.ParsingError;
 
-public class EditProgramActivity extends Activity implements EditableDialogFragment.Callback {
+public class SourceEditorActivity extends Activity implements EditableDialogFragment.Callback {
 
 	// TODO: Load from sample!
 
@@ -32,13 +32,9 @@ public class EditProgramActivity extends Activity implements EditableDialogFragm
 	private static final int LOAD_PROGRAM = -1;
 	private static final int SAVE_PROGRAM = -2;
 
-	private SharedPrefsHelper prefsHelper;
-
 	@Override
 	public void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
-
-		prefsHelper = new SharedPrefsHelper(this, PREFS_NAME);
 
 		setContentView(R.layout.program_layout);
 
@@ -232,12 +228,13 @@ public class EditProgramActivity extends Activity implements EditableDialogFragm
 	public void apply(int requestCode, Object o) {
 		switch(requestCode) {
 			case SAVE_PROGRAM: {
+				Log.d(getClass().getName(), "Saving program " + o);
 				String name = (String) o;
-				prefsHelper.add(name, source, SharedPrefsHelper.SaveMethod.FindNext);
+				new SharedPrefsHelper(this, PREFS_NAME).add(name, source, SharedPrefsHelper.SaveMethod.FindNext);
 			} break;
 			case LOAD_PROGRAM: {
 				String name = (String) o;
-				source = prefsHelper.get(name);
+				source = new SharedPrefsHelper(this, PREFS_NAME).get(name);
 				editor.setText(source);
 			} break;
 			default:

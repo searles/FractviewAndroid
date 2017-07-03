@@ -1,4 +1,4 @@
-package at.searles.fractview.fractal;
+package at.searles.fractal;
 
 import android.graphics.Bitmap;
 
