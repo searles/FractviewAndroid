@@ -19,6 +19,33 @@ import at.searles.math.color.Palette;
 
 public class ParcelSerializers {
 
+    /**
+     * Used to put a palette into a bundle
+     */
+    static public Bundle paletteToBundle(Palette palette) {
+        Bundle bundle = new Bundle();
+        
+        bundle.putInt(WIDTH_LABEL, p.width());
+        bundle.putInt(HEIGHT_LABEL, p.height());
+
+        int[] array = new int[p.width() * p.height()];
+
+        for (int y = 0; y < p.height(); ++y) {
+            for (int x = 0; x < p.width(); ++x) {
+                array[x + y * p.width()] = p.argb(x, y);
+            }
+        }
+        
+        bundle.putIntArray(COLORS_LABEL, array);
+    }
+    
+    static public Palette bundleToPalette(Bundle bundle) {
+        int width = bundle.getInt(WIDTH_LABEL);
+        int height = bundle.getInt(HEIGHT_LABEL);
+        
+        int[] array = 
+    }
+    
 
     public static class PaletteWrapper implements Parcelable {
 
@@ -55,14 +82,7 @@ public class ParcelSerializers {
 
 
         public static void writePaletteToParcel(Palette p, Parcel parcel) {
-            parcel.writeInt(p.width());
-            parcel.writeInt(p.height());
 
-            for (int y = 0; y < p.height(); ++y) {
-                for (int x = 0; x < p.width(); ++x) {
-                    parcel.writeInt(p.argb(x, y));
-                }
-            }
         }
 
         public static Palette readPalette(Parcel in) {
