@@ -37,6 +37,7 @@ import java.util.HashMap;
 
 import at.searles.fractal.FractalEntry;
 import at.searles.fractal.Fractal;
+import at.searles.fractal.android.BundleAdapter;
 import at.searles.fractview.ui.BitmapFragmentView;
 import at.searles.fractview.ui.DialogHelper;
 import at.searles.meelan.CompileException;
@@ -221,7 +222,7 @@ public class MainActivity extends Activity
 		Log.d("MA", "on save instance called in MA");
 
 		// FIXME make sure that fractal is compilable!
-		bitmapFragment.getArguments().putParcelable("fractal", bitmapFragment.fractal());
+		bitmapFragment.getArguments().putBundle("fractal", BundleAdapter.fractalToBundle(bitmapFragment.fractal()));
 
 		// Always call the superclass so it can save the view hierarchy state
 		super.onSaveInstanceState(savedInstanceState);
@@ -390,7 +391,7 @@ public class MainActivity extends Activity
 
 			case R.id.action_parameters: {
 				Intent i = new Intent(MainActivity.this, ParameterActivity.class);
-				i.putExtra("fractal", bitmapFragment.fractal());
+				i.putExtra("fractal", BundleAdapter.fractalToBundle(bitmapFragment.fractal()));
 				startActivityForResult(i, PARAMETER_ACTIVITY_RETURN);
 			} return true;
 
@@ -403,7 +404,7 @@ public class MainActivity extends Activity
 			case R.id.action_presets: {
 				// show new activity
 				Intent i = new Intent(MainActivity.this, PresetProgramsActivity.class);
-				i.putExtra("fractal", bitmapFragment.fractal());
+				i.putExtra("fractal", BundleAdapter.fractalToBundle(bitmapFragment.fractal()));
 				startActivityForResult(i, PRESETS_ACTIVITY_RETURN);
 			} return true;
 

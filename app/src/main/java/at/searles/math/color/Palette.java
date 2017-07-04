@@ -23,17 +23,15 @@ public class Palette {
 
 	private final int width;
 	private final int height;
-	private final int[][] colors;
+	private final int[] colors;
 
-	public Palette(int[][] colors) {
-		this.height = colors.length;
-		this.width = colors[0].length;
+	public Palette(int width, int height, int[] colors) {
+		this.width = width;
+		this.height = height;
 
-		this.colors = new int[height][width];
+		this.colors = new int[width * height];
 
-		for (int y = 0; y < height; ++y) {
-			System.arraycopy(colors[y], 0, this.colors[y], 0, width);
-		}
+		System.arraycopy(colors, 0, this.colors, 0, this.colors.length);
 	}
 
 	public int width() {
@@ -45,7 +43,11 @@ public class Palette {
 	}
 
 	public int argb(int x, int y) {
-		return colors[y][x];
+		return colors[y * width  + x];
+	}
+
+	public int[] colors() {
+		return colors;
 	}
 
 	public String toString() {
@@ -53,18 +55,18 @@ public class Palette {
 
 		boolean b0 = true;
 
-		for(int[] row : colors) {
+		for(int y = 0; y < height; ++y) {
 			if(b0) b0 = false; // first element in row
 			else sb.append(", ");
 
 			boolean b1 = true;
 			sb.append("[");
 
-			for(int c : row) {
+			for(int x = 0; x < width; ++x) {
 				if(b1) b1 = false;
 				else sb.append(", ");
 
-				sb.append(Colors.toColorString(c));
+				sb.append(Colors.toColorString(argb(x, y)));
 			}
 
 			sb.append("]");
@@ -91,10 +93,10 @@ public class Palette {
 	}
 
 
-	static LABSurface[][] createSplines(int[][] argbs) {
+	static LABSurface[][] createSplines(Palette p) {
 		// must be a rectangle
-		int h = argbs.length;
-		int w = argbs[0].length;
+		int h = p.height;
+		int w = p.width;
 
 		double[][] L = new double[h][w];
 		double[][] a = new double[h][w];
@@ -104,7 +106,7 @@ public class Palette {
 		for(int y = 0; y < h; ++y) {
 			for(int x = 0; x < w; ++x) {
 				// fixme shortcut!
-				float[] lab = Colors.rgb2lab(Colors.int2rgb(argbs[y][x]));
+				float[] lab = Colors.rgb2lab(Colors.int2rgb(p.argb(x, y)));
 
 				L[y][x] = lab[0];
 				a[y][x] = lab[1];
@@ -130,7 +132,7 @@ public class Palette {
 	}
 
 	public Palette.Data create() {
-		LABSurface[][] cs = createSplines(colors);
+		LABSurface[][] cs = createSplines(this);
 		return new Data(cs);
 	}
 

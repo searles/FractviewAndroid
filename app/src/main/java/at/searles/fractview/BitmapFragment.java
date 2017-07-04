@@ -16,7 +16,7 @@ import java.util.List;
 import at.searles.fractal.Drawer;
 import at.searles.fractal.Fractal;
 import at.searles.fractal.History;
-import at.searles.fractal.android.RenderScriptDrawer;
+import at.searles.fractal.android.BundleAdapter;
 import at.searles.fractview.ui.DialogHelper;
 import at.searles.math.Scale;
 import at.searles.meelan.CompileException;
@@ -60,7 +60,8 @@ public class BitmapFragment extends Fragment {
 		bundle.putInt("width", width);
 		bundle.putInt("height", height);
 
-		bundle.putParcelable("fractal", fractal);
+		Bundle fractalBundle = BundleAdapter.fractalToBundle(fractal);
+		bundle.putBundle("fractal", fractalBundle);
 
 		BitmapFragment ft = new BitmapFragment();
 		ft.setArguments(bundle);

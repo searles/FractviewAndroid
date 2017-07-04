@@ -1,13 +1,11 @@
 package at.searles.fractal.android;
 
-import android.os.Parcel;
-import android.os.Parcelable;
+import android.os.Bundle;
 
 import java.util.HashMap;
 import java.util.Map;
 
 import at.searles.fractal.Fractal;
-import at.searles.fractview.Commons;
 import at.searles.math.Cplx;
 import at.searles.math.Scale;
 import at.searles.math.color.Palette;
@@ -19,18 +17,31 @@ import at.searles.math.color.Palette;
 
 public class BundleAdapter {
 
+    private static final String WIDTH_LABEL = "width";
+    private static final String HEIGHT_LABEL = "height";
+    private static final String COLORS_LABEL = "colors";
+    private static final String SOURCE_LABEL = "source";
+    private static final String INTS_LABEL = "ints";
+    private static final String REALS_LABEL = "reals";
+    private static final String CPLXS_LABEL = "cplxs";
+    private static final String BOOLS_LABEL = "bools";
+    private static final String EXPRS_LABEL = "exprs";
+    //private static final String COLORS_LABEL = "colors";
+    private static final String PALETTES_LABEL = "palettes";
+    private static final String SCALES_LABEL = "scales";
+
     /**
      * Used to put a palette into a bundle
      */
-    static public Bundle paletteToBundle(Palette palette) {
+    static public Bundle paletteToBundle(Palette p) {
         Bundle bundle = new Bundle();
         
         bundle.putInt(WIDTH_LABEL, p.width());
         bundle.putInt(HEIGHT_LABEL, p.height());
 
-        int[] data = p.colors();
+        bundle.putIntArray(COLORS_LABEL, p.colors());
 
-        bundle.putIntArray(COLORS_LABEL, data);
+        return bundle;
     }
     
     static public Palette bundleToPalette(Bundle bundle) {
@@ -42,19 +53,19 @@ public class BundleAdapter {
         return new Palette(width, height, data); 
     }
     
-    static double[] cplxToArray(Cplx c) {
+    private static double[] cplxToArray(Cplx c) {
         return new double[]{c.re(), c.im()};
     }
     
-    static Cplx arrayToCplx(double[] d) {
+    private static Cplx arrayToCplx(double[] d) {
         return new Cplx(d[0], d[1]);
     }
     
-    static double[] scaleToArray(Scale sc) {
+    private static double[] scaleToArray(Scale sc) {
         return new double[]{sc.xx(), sc.xy(), sc.yx(), sc.yy(), sc.cx(), sc.cy()};
     }
     
-    static Scale arrayToScale(double[] d) {
+    private static Scale arrayToScale(double[] d) {
         return new Scale(d[0], d[1], d[2], d[3], d[4], d[5]);
     }
     
@@ -74,30 +85,30 @@ public class BundleAdapter {
         
         for(Map.Entry<String, Fractal.Parameter> entry: fractal.nonDefaultParameters()) {
             String key = entry.getKey();
-            type = entry.getValue().type();
-            value = entry.getValue().value();
+            Fractal.Type type = entry.getValue().type();
+            Object value = entry.getValue().value();
             
             switch (type) {
             case Int:
                 intBundle.putInt(key, (Integer) value);
                 break;
             case Real:
-                realBundle.putDouble((Double) value);
+                realBundle.putDouble(key, (Double) value);
                 break;
             case Cplx:
                 cplxBundle.putDoubleArray(key, cplxToArray((Cplx) value));
                 break;
             case Bool:
-                boolBundle.putBoolean((Boolean) value);
+                boolBundle.putBoolean(key, (Boolean) value);
                 break;
             case Expr:
-                exprBundle.putString((String) value);
+                exprBundle.putString(key, (String) value);
                 break;
             case Color:
-                colorBundle.putInt((Integer) value);
+                colorBundle.putInt(key, (Integer) value);
                 break;
             case Palette:
-                paletteBundle.putBundle(key, paletteToBundle((Palette) value);
+                paletteBundle.putBundle(key, paletteToBundle((Palette) value));
                 break;
             case Scale:
                 scaleBundle.putDoubleArray(key, scaleToArray((Scale) value));
@@ -119,8 +130,8 @@ public class BundleAdapter {
         return bundle;
     }
                                         
-    static public Fractal bundleToFractal(Bundle b) {
-        String sourceCode = b.getString(SOURCE_LABEL);
+    static public Fractal bundleToFractal(Bundle bundle) {
+        String sourceCode = bundle.getString(SOURCE_LABEL);
         
         Map<String, Fractal.Parameter> data = new HashMap<String, Fractal.Parameter>();
         
@@ -134,35 +145,35 @@ public class BundleAdapter {
         Bundle scaleBundle = bundle.getBundle(SCALES_LABEL);
         
         for(String key : intBundle.keySet()) {
-            data.put(key, new Parameter(Type.Int, intBundle.getInt(key)));
+            data.put(key, new Fractal.Parameter(Fractal.Type.Int, intBundle.getInt(key)));
         }
 
         for(String key : realBundle.keySet()) {
-            data.put(key, new Parameter(Type.Real, realBundle.getInt(key)));
+            data.put(key, new Fractal.Parameter(Fractal.Type.Real, realBundle.getDouble(key)));
         }
 
         for(String key : cplxBundle.keySet()) {
-            data.put(key, new Parameter(Type.Cplx, arrayToCplx(cplxBundle.getInt(key))));
+            data.put(key, new Fractal.Parameter(Fractal.Type.Cplx, arrayToCplx(cplxBundle.getDoubleArray(key))));
         }
 
         for(String key : boolBundle.keySet()) {
-            data.put(key, new Parameter(Type.Bool, intBundle.getBoolean(key)));
+            data.put(key, new Fractal.Parameter(Fractal.Type.Bool, intBundle.getBoolean(key)));
         }
 
         for(String key : exprBundle.keySet()) {
-            data.put(key, new Parameter(Type.Expr, exprBundle.getString(key)));
+            data.put(key, new Fractal.Parameter(Fractal.Type.Expr, exprBundle.getString(key)));
         }
 
         for(String key : colorBundle.keySet()) {
-            data.put(key, new Parameter(Type.Color, colorBundle.getInt(key)));
+            data.put(key, new Fractal.Parameter(Fractal.Type.Color, colorBundle.getInt(key)));
         }
 
         for(String key : paletteBundle.keySet()) {
-            data.put(key, new Parameter(Type.Palette, bundleToPalette(paletteBundle.getBundle(key))));
+            data.put(key, new Fractal.Parameter(Fractal.Type.Palette, bundleToPalette(paletteBundle.getBundle(key))));
         }
 
         for(String key : scaleBundle.keySet()) {
-            data.put(key, new Parameter(Type.Scale, arrayToScale(scaleBundle.getDoubleArray(key))));
+            data.put(key, new Fractal.Parameter(Fractal.Type.Scale, arrayToScale(scaleBundle.getDoubleArray(key))));
         }
 
         return new Fractal(sourceCode, data);
