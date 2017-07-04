@@ -35,10 +35,6 @@ import at.searles.utils.Pair;
 
 public class ParameterActivity extends Activity implements EditableDialogFragment.Callback {
 
-	// TODO: Load from sample
-	// TODO: Load (like in palette)
-	// TODO: Save (like in palette)
-
 	public static final int PROGRAM_ACTIVITY_RETURN = 100;
 
 	static final CharSequence[] scaleOptions = { "Reset to Default", "Center on Origin", "Orthogonalize", "Straighten" };
@@ -248,7 +244,7 @@ public class ParameterActivity extends Activity implements EditableDialogFragmen
 
 						Intent i = new Intent(ParameterActivity.this, PaletteActivity.class);
 
-						i.putExtra("palette", new Commons.PaletteWrapper(value));
+						i.putExtra(PaletteActivity.PALETTE_LABEL, BundleAdapter.paletteToBundle(value));
 						i.putExtra("id", p.a); // label should also be in here.
 
 						startActivityForResult(i, PaletteActivity.PALETTE_ACTIVITY_RETURN);
@@ -475,38 +471,6 @@ public class ParameterActivity extends Activity implements EditableDialogFragmen
 		super.onSaveInstanceState(savedInstanceState);
 	}
 
-	void setNewSourceCode(String sourceCode) {
-		try {
-			// in first attempt preserve arguments
-			final Fractal newFractal = fractal.copyNewSource(sourceCode, true);
-
-			newFractal.parse();
-			newFractal.compile();
-
-			this.fractal = newFractal;
-			adapter.init();
-			adapter.notifyDataSetChanged();
-
-			Toast.makeText(this, "Keeping parameters", Toast.LENGTH_SHORT).show();
-		} catch(CompileException e) {
-			Toast.makeText(this, "Resetting parameters due to errors: " + e.getMessage(), Toast.LENGTH_LONG).show();
-
-			try {
-				final Fractal newFractal = fractal.copyNewSource(sourceCode, false);
-
-				newFractal.parse();
-				newFractal.compile();
-
-				this.fractal = newFractal;
-				adapter.init();
-				adapter.notifyDataSetChanged();
-			} catch(CompileException e2) {
-				e.printStackTrace();
-				Toast.makeText(this, e2.getMessage(), Toast.LENGTH_LONG).show();
-			}
-		}
-	}
-
 	@Override
 	protected void onActivityResult(int requestCode, int resultCode, Intent data) {
 		// TODO I should also be able to use this one for dialogs?
@@ -515,16 +479,19 @@ public class ParameterActivity extends Activity implements EditableDialogFragmen
 
 		if (requestCode == PaletteActivity.PALETTE_ACTIVITY_RETURN) {
 			if (resultCode == 1) { // = "Ok"
-				Commons.PaletteWrapper wrapper = data.getParcelableExtra("palette");
+				Bundle bundle = data.getBundle(PaletteActivity.PALETTE_LABEL);
 				String id = data.getStringExtra("id");
 
-				fractal.setPalette(id, wrapper.p);
+				fractal.setPalette(id, BundleAdapter.bundleToPalette(bundle));
 				adapter.notifyDataSetChanged();
 			}
 		} else if (requestCode == PROGRAM_ACTIVITY_RETURN) {
 			if (resultCode == 1) { // = "Ok"
-				String sourceCode = data.getExtras().getString("source");
-				setNewSourceCode(sourceCode);
+				Bundle bundle = data.getBundle(SourceCodeActivity.FRACTAL_LABEL);
+                Fractal newFractal = BundleAdapter.bundleToFractal(bundle);
+                this.fractal = newFractal;
+			    adapter.init();
+			    adapter.notifyDataSetChanged();
 			}
 		}
 	}
@@ -568,7 +535,7 @@ public class ParameterActivity extends Activity implements EditableDialogFragmen
 			}
 			case R.id.action_edit_source: {
 				Intent i = new Intent(this, SourceEditorActivity.class);
-				i.putExtra("source", this.fractal.sourceCode());
+				i.putExtra(FRACTAL_LABEL, BundleAdapter.fractalToBundle(this.fractal));
 				startActivityForResult(i, PROGRAM_ACTIVITY_RETURN);
 			} return true;
 		}
