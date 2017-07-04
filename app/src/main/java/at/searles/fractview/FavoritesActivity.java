@@ -25,7 +25,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 import at.searles.fractal.FractalEntry;
-import at.searles.fractal.FractalLabel;
+import at.searles.fractal.gson.Serializers;
 import at.searles.fractview.ui.DialogHelper;
 
 /**
@@ -49,12 +49,7 @@ public class FavoritesActivity extends Activity {
 		for(String key : sharedPrefs.keySet()) {
 			String specification = (String) sharedPrefs.get(key);
 
-			try {
-				entries.put(key, FractalEntry.deserialize(key, new JsonParser().parse(specification)));
-			} catch (Exception e) {
-				// FIXME
-				e.printStackTrace();
-			}
+			entries.put(key, Serializers.serializer().fromJson(specification, FractalEntry.class));
 		}
 
 		adapter.setData(entries);
@@ -82,7 +77,7 @@ public class FavoritesActivity extends Activity {
 			@Override
 			public void onItemClick(AdapterView<?> parent, View view, int index, long id) {
 				// get bookmark
-				FractalLabel entry = adapter.getItem(index);
+				FractalEntry entry = adapter.getItem(index);
 
 				Intent data = new Intent();
 				data.putExtra("fractal", ((FractalEntry) entry).fractal());

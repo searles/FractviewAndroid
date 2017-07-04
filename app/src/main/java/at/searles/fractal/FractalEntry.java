@@ -25,7 +25,7 @@ public class FractalEntry {
 		return title;
 	}
 
-	public byte[] icon() {
+	public byte[] iconBinary() {
 		return iconBinary;
 	}
 

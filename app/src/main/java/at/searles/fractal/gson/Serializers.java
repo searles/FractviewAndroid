@@ -1,5 +1,7 @@
 package at.searles.fractal.gson;
 
+import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonDeserializationContext;
 import com.google.gson.JsonDeserializer;
@@ -15,8 +17,8 @@ import java.lang.reflect.Type;
 import java.util.HashMap;
 import java.util.Map;
 
-import at.searles.fractal.FractalEntry;
 import at.searles.fractal.Fractal;
+import at.searles.fractal.FractalEntry;
 import at.searles.math.Cplx;
 import at.searles.math.Scale;
 import at.searles.math.color.Palette;
@@ -27,6 +29,27 @@ import at.searles.math.color.Palette;
  */
 
 public class Serializers {
+
+    private static Gson gson = null;
+
+    public static Gson serializer() {
+        // No need for synchronization since this will usually
+        // be only called from the ui thread.
+        if(gson != null) {
+            GsonBuilder gsonBuilder = new GsonBuilder();
+
+            // register some types
+            gsonBuilder.registerTypeAdapter(Cplx.class, new CplxAdapter());
+            gsonBuilder.registerTypeAdapter(Scale.class, new ScaleAdapter());
+            gsonBuilder.registerTypeAdapter(Palette.class, new PaletteAdapter());
+            gsonBuilder.registerTypeAdapter(Fractal.class, new FractalAdapter());
+            gsonBuilder.registerTypeAdapter(FractalEntry.class, new FractalEntryAdapter());
+
+            gson = gsonBuilder.create();
+        }
+
+        return gson;
+    }
 
     public static class CplxAdapter implements JsonDeserializer<Cplx>, JsonSerializer<Cplx> {
         @Override
@@ -97,15 +120,13 @@ public class Serializers {
 
             JsonArray array = object.getAsJsonArray(COLORS_LABEL);
 
-            int colors[][] = new int[height][width];
+            int colors[] = new int[height * width];
 
-            for (int y = 0; y < height; ++y) {
-                for (int x = 0; x < width; ++x) {
-                    colors[y][x] = array.get(x + y * width).getAsInt();
-                }
+            for (int i = 0; i < colors.length; ++i) {
+                colors[i] = array.get(i).getAsInt();
             }
 
-            return new Palette(colors);
+            return new Palette(width, height, colors);
         }
 
         @Override
@@ -131,7 +152,7 @@ public class Serializers {
 
     // Next is FavoritesEntry
 
-    public static class FavoriteEntryAdapter implements JsonDeserializer<FractalEntry>, JsonSerializer<FractalEntry> {
+    public static class FractalEntryAdapter implements JsonDeserializer<FractalEntry>, JsonSerializer<FractalEntry> {
         private static final String FRACTAL_LABEL = "fractal";
         private static final String ICON_LABEL = "icon"; // this is optional
         private static final String TITLE_LABEL = "title";
@@ -179,7 +200,7 @@ public class Serializers {
         }
     }
 
-    public class FractalAdapter implements JsonSerializer<Fractal>, JsonDeserializer<Fractal> {
+    public static class FractalAdapter implements JsonSerializer<Fractal>, JsonDeserializer<Fractal> {
         private static final String SCALE_LABEL = "scale";
         private static final String SOURCE_LABEL = "source";
 

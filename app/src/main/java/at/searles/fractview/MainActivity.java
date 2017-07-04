@@ -32,12 +32,14 @@ import android.widget.Toast;
 
 import org.jetbrains.annotations.NotNull;
 
+import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.util.HashMap;
 
-import at.searles.fractal.FractalEntry;
 import at.searles.fractal.Fractal;
+import at.searles.fractal.FractalEntry;
 import at.searles.fractal.android.BundleAdapter;
+import at.searles.fractal.gson.Serializers;
 import at.searles.fractview.ui.BitmapFragmentView;
 import at.searles.fractview.ui.DialogHelper;
 import at.searles.meelan.CompileException;
@@ -133,11 +135,7 @@ public class MainActivity extends Activity
 
 			String sourceCode = AssetsHelper.readSourcecode(getAssets(), "Default.fv");
 
-			Fractal initFractal = new Fractal(
-					AssetsHelper.DEFAULT_SCALE,
-					sourceCode,
-					new HashMap<>()
-			);
+			Fractal initFractal = new Fractal(sourceCode, new HashMap<>());
 			
 			boolean reducedImageSizeDueToMemory = false;
 
@@ -639,7 +637,9 @@ public class MainActivity extends Activity
 		}
 	}*/
 
-	void saveFavorite(String name) {
+	private static final int ICON_SIZE = 64;
+
+	private void saveFavorite(String name) {
 		if(name.isEmpty()) {
 			Toast.makeText(MainActivity.this, "ERROR: Name must not be empty", Toast.LENGTH_LONG).show();
 			return;
@@ -647,9 +647,18 @@ public class MainActivity extends Activity
 
 		// Fetch icon from bitmap fragment
 		Fractal fractal = bitmapFragment.fractal();
-		FractalEntry fav = FractalEntry.create(name, fractal, bitmapFragment.getBitmap());
 
-		String entryString = fav.serialize().toString();
+		// create icon out of bitmap
+		Bitmap icon = bitmapFragment.createIcon(ICON_SIZE);
+
+		// create byte-stream of compressed png.
+		ByteArrayOutputStream byteArrayBitmapStream = new ByteArrayOutputStream();
+		icon.compress(Bitmap.CompressFormat.PNG, 100, byteArrayBitmapStream);
+		byte[] iconPngStream = byteArrayBitmapStream.toByteArray();
+
+		FractalEntry fav = new FractalEntry(name, iconPngStream, fractal, Commons.timestamp());
+
+		String entryString = Serializers.serializer().toJson(fav);
 
 		Log.d(getClass().getName(), "Storing " + entryString);
 

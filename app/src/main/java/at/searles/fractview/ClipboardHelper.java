@@ -5,9 +5,8 @@ import android.content.ClipboardManager;
 import android.content.Context;
 import android.widget.Toast;
 
-import com.google.gson.JsonParser;
-
 import at.searles.fractal.Fractal;
+import at.searles.fractal.gson.Serializers;
 
 /**
  * Created by searles on 17.01.17.
@@ -15,7 +14,7 @@ import at.searles.fractal.Fractal;
 
 public class ClipboardHelper {
     public static void copyFractal(Context context, Fractal fractal) {
-        String export = fractal.serialize().toString();
+        String export = Serializers.serializer().toJson(fractal);
         copy(context, export);
     }
 
@@ -23,7 +22,7 @@ public class ClipboardHelper {
         CharSequence pasteText = ClipboardHelper.paste(context);
 
         if(pasteText != null) {
-            return Fractal.deserialize(new JsonParser().parse(pasteText.toString()));
+            return Serializers.serializer().fromJson(pasteText.toString(), Fractal.class);
         } else {
             // TODO
             return null;

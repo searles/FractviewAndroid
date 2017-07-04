@@ -4,6 +4,8 @@ import android.app.Activity;
 import android.app.AlertDialog;
 import android.app.Fragment;
 import android.graphics.Bitmap;
+import android.graphics.Canvas;
+import android.graphics.Matrix;
 import android.os.AsyncTask;
 import android.os.Bundle;
 import android.os.Handler;
@@ -425,6 +427,33 @@ public class BitmapFragment extends Fragment {
     public Bitmap getBitmap() {
         return bitmap;
     }
+
+	/**
+	 * creates a new bitmap with size 64x64 containing the center of the current image
+	 * @return
+	 */
+	public Bitmap createIcon(int size) {
+		// create a square icon. Should  only contain central square.
+		Bitmap icon = Bitmap.createBitmap(size, size, Bitmap.Config.ARGB_8888);
+
+		Canvas canvas = new Canvas(icon);
+
+		float scale = ((float) size) / Math.min(bitmap.getWidth(), bitmap.getHeight());
+
+		float w = bitmap.getWidth();
+		float h = bitmap.getHeight();
+
+		Matrix transformation = new Matrix();
+		transformation.setValues(new float[]{
+				scale, 0, (size - scale * w) * .5f,
+				0, scale, (size - scale * h) * .5f,
+				0, 0, 1,
+		});
+
+		canvas.drawBitmap(bitmap, transformation, null);
+
+		return icon;
+	}
 
     public int width() {
         return width;
