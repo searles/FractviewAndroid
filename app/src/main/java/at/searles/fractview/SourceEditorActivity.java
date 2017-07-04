@@ -22,15 +22,17 @@ import at.searles.parsing.ParsingError;
 
 public class SourceEditorActivity extends Activity implements EditableDialogFragment.Callback {
 
-	// TODO: Load from sample!
+    static public final String FRACTAL_LABEL = "fractal";
+	static public final String PREFS_NAME = "SavedPrograms";
+	
+	static private final int LOAD_PROGRAM = -1;
+	static private final int SAVE_PROGRAM = -2;
 
-	public static final String PREFS_NAME = "SavedPrograms";
-	EditText editor;
 
-	String source; // if source is null, sth changed...
+    private EditText editor;
+    
+	private Fractal original;
 
-	private static final int LOAD_PROGRAM = -1;
-	private static final int SAVE_PROGRAM = -2;
 
 	@Override
 	public void onCreate(Bundle savedInstanceState) {
@@ -39,13 +41,17 @@ public class SourceEditorActivity extends Activity implements EditableDialogFrag
 		setContentView(R.layout.program_layout);
 
 		// fetch program from intent
-		source = getIntent().getExtras().getString("source");
+		Bundle bundle = getIntent().getBundle(FRACTAL_LABEL);
 
+		this.original = BundleAdapter.bundleToFractal(bundle);
+
+        
+        
 		editor = (EditText) findViewById(R.id.programEditText);
 		editor.setHorizontallyScrolling(true); // fixme Android Bug: the attribute in the xml is ignored
 
 		// set text in editor
-		editor.setText(source);
+		editor.setText(this.original.sourceCode());
 
 		editor.addTextChangedListener(new TextWatcher() {
 			// if the text is changed we set program to null to see whether we need fresh compiling
@@ -77,16 +83,18 @@ public class SourceEditorActivity extends Activity implements EditableDialogFrag
 			public void onClick(View view) {
 				if(source != null || apply()) {
 					Intent data = new Intent();
-					data.putExtra("source", source);
+                    
+					data.putExtra(FRACTAL_LABEL, );
 					setResult(1, data);
 					finish();
 				}
 			}
 		});
-
 	}
+    
+    
 
-	boolean apply() {
+	private boolean apply() {
 		// if there is an error, store it.
 		ParsingError parsingError = null;
 		CompileException compilerException = null;
