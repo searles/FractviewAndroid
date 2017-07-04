@@ -33,9 +33,8 @@ import at.searles.math.color.Palette;
  */
 public class PaletteActivity extends Activity implements EditableDialogFragment.Callback {
 
-	// Editors should contain all the important information because they are retained.
-
-	// fixme save via parcels!
+	public static final PALETTE_LABEL = "palette;
+	public static final ID_LABEL = "palette;
 
 	public static final String PREFS_NAME = "SavedPalettes";
 
@@ -62,14 +61,12 @@ public class PaletteActivity extends Activity implements EditableDialogFragment.
 
 		this.prefsHelper = new SharedPrefsHelper(this, PREFS_NAME);
 
-		this.id = getIntent().getStringExtra("id");
-
-		Commons.PaletteWrapper wrapper;
+		this.id = getIntent().getStringExtra(ID_LABEL);
 
 		if(savedInstanceState == null) {
-			wrapper = getIntent().getParcelableExtra("palette");
+			wrapper = getIntent().getParcelableExtra(PALETTE_LABEL);
 		} else {
-			wrapper = savedInstanceState.getParcelable("palette");
+			wrapper = savedInstanceState.getParcelable(PALETTE_LABEL);
 		}
 
 		if(wrapper == null) {
@@ -101,8 +98,8 @@ public class PaletteActivity extends Activity implements EditableDialogFragment.
 			@Override
 			public void onClick(View view) {
 				Intent data = new Intent();
-				data.putExtra("palette", new Commons.PaletteWrapper(model.createPalette()));
-				data.putExtra("id", id);
+				data.putExtra(PALETTE_LABEL, BundleAdapter.paletteToBundle(model.createPalette()));
+				data.putExtra(ID_LABEL, id);
 				setResult(1, data);
 				finish();
 			}
@@ -112,8 +109,8 @@ public class PaletteActivity extends Activity implements EditableDialogFragment.
 	@Override
 	public void onSaveInstanceState(@NotNull Bundle savedInstanceState) {
 		// Save the user's current game state
-		savedInstanceState.putParcelable("palette", new Commons.PaletteWrapper(/*label, */model.createPalette()));
-		savedInstanceState.putString("id", id);
+		savedInstanceState.putParcelable(PALETTE_LABEL, BundleAdapter.paletteToBundle(model.createPalette()));
+		savedInstanceState.putString(ID_LABEL, id);
 
 		// Always call the superclass so it can save the view hierarchy state
 		super.onSaveInstanceState(savedInstanceState);
