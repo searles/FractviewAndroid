@@ -245,7 +245,7 @@ public class ParameterActivity extends Activity implements EditableDialogFragmen
 						Intent i = new Intent(ParameterActivity.this, PaletteActivity.class);
 
 						i.putExtra(PaletteActivity.PALETTE_LABEL, BundleAdapter.paletteToBundle(value));
-						i.putExtra("id", p.a); // label should also be in here.
+						i.putExtra(PaletteActivity.ID_LABEL, p.a); // label should also be in here.
 
 						startActivityForResult(i, PaletteActivity.PALETTE_ACTIVITY_RETURN);
 					}
@@ -266,6 +266,7 @@ public class ParameterActivity extends Activity implements EditableDialogFragmen
 						showOptionsDialog(scaleOptions, new DialogInterface.OnClickListener() {
 							@Override
 							public void onClick(DialogInterface dialogInterface, int which) {
+								// FIXME!!! Externalize
 								Scale original = fractal.scale();
 								switch (which) {
 									case 0: // Reset
@@ -480,7 +481,7 @@ public class ParameterActivity extends Activity implements EditableDialogFragmen
 		if (requestCode == PaletteActivity.PALETTE_ACTIVITY_RETURN) {
 			if (resultCode == 1) { // = "Ok"
 				Bundle bundle = data.getBundle(PaletteActivity.PALETTE_LABEL);
-				String id = data.getStringExtra("id");
+				String id = data.getStringExtra(PaletteActivity.ID_LABEL);
 
 				fractal.setPalette(id, BundleAdapter.bundleToPalette(bundle));
 				adapter.notifyDataSetChanged();
