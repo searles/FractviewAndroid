@@ -32,6 +32,8 @@ import at.searles.meelan.CompileException;
 
 public class PresetParametersActivity extends Activity {
 
+    static public final String FRACTAL_LABEL = "fractal";
+    
     private static final FractalLabel USE_DEFAULTS = new FractalLabel() {
         @Override
         public String title() {
@@ -66,7 +68,7 @@ public class PresetParametersActivity extends Activity {
         }
     };
 
-    Fractal inFractal;
+    private Fractal inFractal;
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
@@ -74,7 +76,7 @@ public class PresetParametersActivity extends Activity {
         setContentView(R.layout.preset_parameters);
 
         Intent intent = getIntent();
-        this.inFractal = intent.getParcelableExtra("fractal"); // FIXME test whether this is preserved on termination
+        this.inFractal = BundleAdapter.bundleToFractal(intent.getBundle(FRACTAL_LABEL));
 
         CheckBox mergeCheckBox = (CheckBox) findViewById(R.id.mergeCheckBox);
 
@@ -164,11 +166,10 @@ public class PresetParametersActivity extends Activity {
         });
     }
 
-    void returnFractal(Fractal f) {
+    private void returnFractal(Fractal f) {
         Intent data = new Intent();
 
-        Log.d("PPA", "returned fractal is " + f);
-        data.putExtra("fractal", f);
+        data.putExtra(FRACTAL_LABEL, BundleAdapter.fractalToBundle(f));
         setResult(1, data);
         finish();
     }
