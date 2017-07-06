@@ -23,8 +23,6 @@ import at.searles.math.color.Palette;
  */
 
 public class AssetsHelper {
-    public static final Scale DEFAULT_SCALE = new Scale(2, 0, 0, 2, 0, 0);
-
     /**
      * Try to read content of assets-folder
      * @param am The asset manager that should be used
@@ -110,7 +108,7 @@ public class AssetsHelper {
     }
 
     // And now for the presets.
-    public static class ProgramAsset implements FractalLabel {
+    public static class ProgramAsset {
         public final String title;
         public final Bitmap icon;
         public final String description;
@@ -123,17 +121,14 @@ public class AssetsHelper {
             this.source = source;
         }
 
-        @Override
         public String title() {
             return title;
         }
 
-        @Override
         public Bitmap icon() {
             return icon;
         }
 
-        @Override
         public String description() {
             return description;
         }
@@ -188,46 +183,41 @@ public class AssetsHelper {
             throw new IllegalArgumentException("bad asset: " + title);
         }*/
 
-        return new ParametersAsset(title, icon, description, null, parameters.map());
+        return new ParametersAsset(title, icon, description, parameters.map());
     }
 
-    public static ParametersAsset e(AssetManager am, String title, String iconFilename, String description, Scale scale, Fractal.ParameterMapBuilder parameters) {
+    public static ParametersAsset e(AssetManager am, String title, String iconFilename, String description, Fractal.ParameterMapBuilder parameters) {
         Bitmap icon = AssetsHelper.readIcon(am, iconFilename);
 
         /*if(icon == null) {
             throw new IllegalArgumentException("bad asset: " + title);
         }*/
 
-        return new ParametersAsset(title, icon, description, scale, parameters.map());
+        return new ParametersAsset(title, icon, description, parameters.map());
     }
 
     // And now for the presets.
-    public static class ParametersAsset implements FractalLabel {
+    public static class ParametersAsset{
         public final String title;
         public final Bitmap icon;
         public final String description;
-        public final Scale scale; // may be null
         public final Map<String, Fractal.Parameter> parameters;
 
-        private ParametersAsset(String title, Bitmap icon, String description, Scale scale, Map<String, Fractal.Parameter> parameters) {
+        private ParametersAsset(String title, Bitmap icon, String description, Map<String, Fractal.Parameter> parameters) {
             this.title = title;
             this.icon = icon;
             this.description = description;
-            this.scale = scale;
             this.parameters = parameters;
         }
 
-        @Override
         public String title() {
             return title;
         }
 
-        @Override
         public Bitmap icon() {
             return icon;
         }
 
-        @Override
         public String description() {
             return description;
         }
@@ -281,25 +271,25 @@ public class AssetsHelper {
 
             _PARAMETER_ENTRIES.add(e(am, "Perpendicular Mandelbrot", "perpendicular_mandelbrot.png", "Perpendicular Mandelbrot Fractal",
                     Fractal.parameterBuilder()
-                            .add("function", Fractal.Type.Expr, "{ z.x = -abs z.x; mandelbrot(z, p) }")
+                            .add("function", Fractal.Type.Expr, "mandelbrot(conj rabs z, p)")
                             .add("mandelinit", Fractal.Type.Expr, "0")
             ));
 
             _PARAMETER_ENTRIES.add(e(am, "Perpendicular Burning Ship", "perpendicular_burningship.png", "Perpendicular Burning Ship Fractal",
                     Fractal.parameterBuilder()
-                            .add("function", Fractal.Type.Expr, "{ z.y = abs z.y; mandelbrot(z, p) }")
+                            .add("function", Fractal.Type.Expr, "mandelbrot(iabs z, p)")
                             .add("mandelinit", Fractal.Type.Expr, "0")
             ));
 
             _PARAMETER_ENTRIES.add(e(am, "Perpendicular Celtic", "perpendicular_celtic.png", "Perpendicular Celtic Fractal",
                     Fractal.parameterBuilder()
-                            .add("function", Fractal.Type.Expr, "{ var t = sqr z; t.x = -abs t.x; t } + p")
+                            .add("function", Fractal.Type.Expr, "conj rabs sqr z + p")
                             .add("mandelinit", Fractal.Type.Expr, "0")
             ));
 
             _PARAMETER_ENTRIES.add(e(am, "Perpendicular Buffalo", "perpendicular_buffalo.png", "Perpendicular Buffalo Fractal",
                     Fractal.parameterBuilder()
-                            .add("function", Fractal.Type.Expr, "{ z.y = abs z.y; var t = sqr z; t.x = abs t.x; t } + p")
+                            .add("function", Fractal.Type.Expr, "rabs sqr iabs z + p")
                             .add("mandelinit", Fractal.Type.Expr, "0")
             ));
 
@@ -331,14 +321,14 @@ public class AssetsHelper {
                             .add("juliapoint", Fractal.Type.Cplx, new Cplx(0.5666, -0.5))
             ));
 
-            _PARAMETER_ENTRIES.add(e(am, "Cczcpaczcp", "ccz-2.png", "Buffalo Fractal",
+            _PARAMETER_ENTRIES.add(e(am, "Cczcpaczcp", "ccz-2.png", "Cczcpaczcp",
                     Fractal.parameterBuilder()
                             .add("function", Fractal.Type.Expr, "p (z^3 + z^-1)")
                             .add("mandelinit", Fractal.Type.Expr, "{ def alpha = 1; def beta = 3; def gamma = 1; def delta = -1; (-gamma delta / alpha beta)^/(beta - delta)}")
                             .add("max_power", Fractal.Type.Real, 3)
             ));
 
-            _PARAMETER_ENTRIES.add(e(am, "Glynn", "glynn.png", "Glynn fractal (a julia set of mandel^1.6",
+            _PARAMETER_ENTRIES.add(e(am, "Glynn", "glynn.png", "Glynn fractal (a julia set of mandel^1.6)",
                     Fractal.parameterBuilder()
                             .add("function", Fractal.Type.Expr, "z ^ 1.75 + p")
                             .add("max_power", Fractal.Type.Real, 1.75)
@@ -382,7 +372,7 @@ public class AssetsHelper {
                             .add("mandelinit", Fractal.Type.Expr, "I")
             ));
 
-            _PARAMETER_ENTRIES.add(e(am, "CoshZ", "coshz.png", "Magnet 2 Fractal",
+            _PARAMETER_ENTRIES.add(e(am, "CoshZ", "coshz.png", "Cosh Z fractal",
                     Fractal.parameterBuilder()
                             .add("function", Fractal.Type.Expr, "cosh z * p")
                             .add("bailout", Fractal.Type.Real, 32)
