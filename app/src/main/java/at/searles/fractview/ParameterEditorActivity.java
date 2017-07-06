@@ -48,7 +48,6 @@ public class ParameterEditorActivity extends Activity implements EditableDialogF
 	// The following use different views (and listeners)
 	private static final int BOOL = 0;
 	private static final int ELEMENT = 1;
-	private static final int SCALE = 2;
 
 	private Fractal fractal;
 	private ParameterAdapter adapter; // List adapter for parameters
@@ -531,26 +530,6 @@ public class ParameterEditorActivity extends Activity implements EditableDialogF
 		return false;
 	}
 
-	// create new dialog with fractal editor in it.
-				/*FractalEditor fractalEditor = new FractalEditor("Edit FractalBuilder");
-
-				SettingsEditor<Fractal> editor = new SettingsEditor.Adapter<Fractal>(
-						fractalEditor, new SettingsEditor.OnConfirmedListener<Fractal>() {
-					@Override
-					public boolean confirmed(final Fractal fractal) {
-						bitmapFragment.edit(new Runnable() {
-							@Override
-							public void run() {
-								bitmapFragment.fractalBuilder.set(fractal);
-							}
-						}, "edit"); // FIXME String
-						return true;
-					}
-				});
-
-				editor.set(bitmapFragment.fractal());
-				DialogEditFragment.createDialog(this, editor);*/
-
 	private class ParameterAdapter extends BaseAdapter implements ListAdapter {
 
 		final LayoutInflater inflater;
@@ -607,7 +586,7 @@ public class ParameterEditorActivity extends Activity implements EditableDialogF
 		@Override
 		public int getItemViewType(int position) {
 			Fractal.Type t = elements.get(position).b;
-			return t == Fractal.Type.Bool ? BOOL : t == Fractal.Type.Scale ? SCALE : ELEMENT;
+			return t == Fractal.Type.Bool ? BOOL : ELEMENT;
 		}
 
 		@Override
@@ -659,20 +638,6 @@ public class ParameterEditorActivity extends Activity implements EditableDialogF
 						case Palette: text2.setText("Palette"); break;
 					}
 				} break;
-				case SCALE: {
-					if (view == null)
-						view = inflater.inflate(android.R.layout.simple_list_item_1, parent, false);
-					TextView text1 = (TextView) view.findViewById(android.R.id.text1);
-					text1.setText("Scale"); // FIXME there is only one. Thus use a string.
-
-					if(!fractal.scale().equals(AssetsHelper.DEFAULT_SCALE)) {
-						//Log.d("PA", e.label + " is not default");
-						text1.setTypeface(Typeface.DEFAULT_BOLD);
-					} else {
-						//Log.d("PA", e.label + " is default");
-						text1.setTypeface(Typeface.DEFAULT);
-					}
-				}
 			}
 
 

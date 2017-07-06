@@ -16,30 +16,17 @@ import at.searles.fractal.Fractal;
 import at.searles.fractal.FractalLabel;
 
 /**
- *
+ * Source shows up here in the following order:
+ * 1. "Current"
+ * 2. "Current with Defaults"
+ * 3..m. "Presets"
+ * m+1..n "Saved Programs".
  */
 public class SourcePresetActivity extends Activity {
 
 	public static final int PRESETS_PARAMETERS_RETURN = 102;
 
 	private Fractal inFractal;
-
-	private static final FractalLabel KEEP = new FractalLabel() {
-		@Override
-		public String title() {
-			return "Keep current program";
-		}
-
-		@Override
-		public Bitmap icon() {
-			return null;
-		}
-
-		@Override
-		public String description() {
-			return "Reuses the current program";
-		}
-	};
 
 	@Override
 	public void onCreate(Bundle savedInstanceState) {
@@ -53,18 +40,17 @@ public class SourcePresetActivity extends Activity {
 		ListView lv = (ListView) findViewById(R.id.bookmarkListView);
 
 		// fetch assets
-		List<AssetsHelper.ProgramAsset> assets = AssetsHelper.entries(getAssets());
+		List<AssetsHelper.SourceEntry> assets = AssetsHelper.entries(getAssets());
 
 		// entries contain a first empty dummy
-		List<FractalLabel> entries = new ArrayList<>(assets.size() + 1);
+		List<AssetsHelper.SourceEntry> entries = new ArrayList<>(assets.size() + 1);
 
 		// first, add the 'keep'-entry
-		entries.add(KEEP);
 
 		entries.addAll(assets);
 
 		// wrap the favorites-adapter so that first
-		final FractalEntryAdapter adapter = new FractalEntryAdapter(this);
+		final FractalEntryListAdapter adapter = new FractalEntryListAdapter(this);
 		adapter.setData(entries);
 
 		lv.setAdapter(adapter);
@@ -79,7 +65,7 @@ public class SourcePresetActivity extends Activity {
 					f = inFractal;
 				} else {
 					String sourceCode =
-							((AssetsHelper.ProgramAsset) entries.get(index)).source;
+							((AssetsHelper.SourceEntry) entries.get(index)).source;
 					f = inFractal.copyNewSource(sourceCode, true);//new Fractal(inFractal.scale(), sourceCode, inFractal.data());
 				}
 

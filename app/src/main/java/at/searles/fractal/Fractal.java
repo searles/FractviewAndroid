@@ -123,6 +123,16 @@ public class Fractal implements ExternalData {
 		}
 	}
 
+	public Type type(String id) {
+		if(defaultData == null) {
+			throw new IllegalArgumentException("must parse fractal before this");
+		} else {
+			Parameter p = defaultData.get(id);
+
+			return p != null ? p.type() : null;
+		}
+	}
+
 	/**
 	 * Returns the value for a given parameter
 	 * @param id
@@ -424,31 +434,6 @@ public class Fractal implements ExternalData {
 
 	public Map<String, Parameter> parameterMap() {
 		return data;
-	}
-
-	/**
-	 * Can the parameters of 'other' be merged into the parameters of 'this'?
-	 * @param other
-	 * @return
-	 */
-	public boolean compatibleParameters(Fractal other) {
-		if(this.defaultData == null) {
-			throw new IllegalArgumentException("fractal must be parsed before");
-		}
-		r
-		boolean skipAsset = true;
-
-		// FIXME put the following into Fractal as method "isCompatibleWith(Set<String>)"?
-		for (String id : entry.fractal().parameters()) {
-			if (!id.startsWith("__")) { // if not an internal
-				if (!ids.contains(id)) {
-					skipAsset = true;
-					break;
-				}
-			}
-		}
-
-
 	}
 
 	public static class ParameterMapBuilder {

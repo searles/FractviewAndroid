@@ -31,6 +31,10 @@ public class ParameterPresetActivity extends Activity {
 
     private Fractal inFractal;
 
+    // FIXME: First current, then assets, then elements stored in shared preference.
+    // FIXME: Show only those, that are compilable with source
+
+
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -42,13 +46,15 @@ public class ParameterPresetActivity extends Activity {
         ListView lv = (ListView) findViewById(R.id.bookmarkListView);
 
         // fetch assets
-        List<AssetsHelper.ParametersAsset> assets = AssetsHelper.parameterEntries(getAssets());
+        List<AssetsHelper.ParameterEntry> assets = AssetsHelper.parameterEntries(getAssets());
 
         // entries contain a first empty dummy
         List<FractalEntry> entries = new ArrayList<>(assets.size() + 1);
 
         // first, add the 'keep'-entry
         entries.add(new FractalEntry("Current", null, inFractal, ""));
+
+        // next, add assets
 
         // parse fractal
         try {
@@ -57,22 +63,7 @@ public class ParameterPresetActivity extends Activity {
             e.printStackTrace();
         }
 
-        // take all parameterIds, and only if a preset
-        // is fully contained, it is accepted.
-        HashSet<Fractal.Parameter> ids = new TreeSet<>();
-
-        for(String id : inFractal.parameters()) {
-            ids.add(id);
-        }
-
         final FractalEntryListAdapter adapter = new FractalEntryListAdapter(this);
-
-        // find all assets whose parameters matches the program's
-        for(FractalEntry entry : AssetsHelper.parameterEntries(getAssets())) {
-            if(!inFractal.compatibleParameters(entry.fractal())) {
-                adapter.add(entry);
-            }
-        }
 
         lv.setAdapter(adapter);
 

@@ -358,7 +358,7 @@ public class Serializers {
 
             if(element != null) {
                 Scale scale = context.deserialize(element, Scale.class);
-                dataMap.put(Fractal.SCALE_KEY_LABEL, new Fractal.Parameter(Fractal.Type.Scale, scale));
+                dataMap.put(Fractal.SCALE_KEY, new Fractal.Parameter(Fractal.Type.Scale, scale));
             }
 
             return new Fractal(sourceCode.toString(), dataMap);
