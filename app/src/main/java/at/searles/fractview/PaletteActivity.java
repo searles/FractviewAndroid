@@ -10,11 +10,10 @@ import android.view.MenuItem;
 import android.view.View;
 import android.widget.Button;
 
-import com.google.gson.JsonElement;
-import com.google.gson.JsonParser;
-
 import org.jetbrains.annotations.NotNull;
 
+import at.searles.fractal.android.BundleAdapter;
+import at.searles.fractal.gson.Serializers;
 import at.searles.fractview.ui.DialogHelper;
 import at.searles.fractview.ui.MultiScrollView;
 import at.searles.fractview.ui.PaletteView;
@@ -33,8 +32,8 @@ import at.searles.math.color.Palette;
  */
 public class PaletteActivity extends Activity implements EditableDialogFragment.Callback {
 
-	public static final PALETTE_LABEL = "palette;
-	public static final ID_LABEL = "palette;
+	public static final String PALETTE_LABEL = "palette";
+	public static final String ID_LABEL = "id";
 
 	public static final String PREFS_NAME = "SavedPalettes";
 
@@ -43,7 +42,7 @@ public class PaletteActivity extends Activity implements EditableDialogFragment.
 	private static final int SAVE_PALETTE = -1; // because positive numbers are for indices
 	private static final int LOAD_PALETTE = -2; // because positive numbers are for indices
 
-	private PaletteViewModel model = null;
+    private PaletteViewModel model = null;
 
 	private String id;
 
@@ -63,19 +62,21 @@ public class PaletteActivity extends Activity implements EditableDialogFragment.
 
 		this.id = getIntent().getStringExtra(ID_LABEL);
 
+		Bundle bundle;
+
 		if(savedInstanceState == null) {
-			wrapper = getIntent().getParcelableExtra(PALETTE_LABEL);
+			bundle = getIntent().getBundleExtra(PALETTE_LABEL);
 		} else {
-			wrapper = savedInstanceState.getParcelable(PALETTE_LABEL);
+			bundle = savedInstanceState.getBundle(PALETTE_LABEL);
 		}
 
-		if(wrapper == null) {
+		if(bundle == null) {
 			// can this happen?
 			throw new IllegalArgumentException("No palette available");
 		}
 
 		// create model and palette view
-		model = new PaletteViewModel(wrapper.p);
+		model = new PaletteViewModel(BundleAdapter.bundleToPalette(bundle));
 
 		// now that the model is set, we can update the size of the scrollviews
 		((MultiScrollView) findViewById(R.id.multiScrollView)).updateSize();
@@ -149,15 +150,15 @@ public class PaletteActivity extends Activity implements EditableDialogFragment.
 			} return true;
 			case R.id.action_export_palette: {
 				// copy
-				JsonElement o = model.createPalette().serialize();
-				ClipboardHelper.copy(this, o.toString());
+				String entry = Serializers.serializer().toJson(model.createPalette(), Palette.class);
+				ClipboardHelper.copy(this, entry);
 			} return true;
 			case R.id.action_import_palette: {
 				// paste
 				CharSequence pastedText = ClipboardHelper.paste(this);
 
 				if(pastedText != null) {
-					Palette p = Palette.deserialize(new JsonParser().parse(pastedText.toString()));
+					Palette p = Serializers.serializer().fromJson(pastedText.toString(), Palette.class);
 
 					if (p != null) {
 						model = new PaletteViewModel(p);
@@ -181,32 +182,6 @@ public class PaletteActivity extends Activity implements EditableDialogFragment.
 		return model;
 	}
 
-	/*@Override
-	public void initDialogView(String id, View view) {
-		switch (id) {
-			case "save": {
-			} break;
-			default: {
-				String[] s = id.split(",");
-
-				int x = Integer.parseInt(s[0]);
-				int y = Integer.parseInt(s[1]);
-
-				int color = model.get(x, y);
-
-				// I initialize the view here.
-				ColorView colorView = (ColorView) view.findViewById(R.id.colorView);
-				EditText webcolorEditor = (EditText) view.findViewById(R.id.webcolorEditText);
-
-				// I need listeners for both of them.
-				colorView.bindToEditText(webcolorEditor);
-
-				webcolorEditor.setText(Colors.toColorString(color));
-				colorView.setColor(color);
-			} break;
-		}
-	}*/
-
 	@Override
 	public void apply(int requestCode, Object o) {
 		switch(requestCode) {
@@ -218,8 +193,7 @@ public class PaletteActivity extends Activity implements EditableDialogFragment.
 				Log.d(getClass().getName(), "Palette string is " + paletteString + ", name is " + name);
 
 				if(paletteString != null) {
-					// JSON-Parser
-					Palette p = Palette.deserialize(new JsonParser().parse(paletteString).getAsJsonObject());
+					Palette p = Serializers.serializer().fromJson(paletteString, Palette.class);
 
 					if(p != null) {
 						// set the palette.
@@ -233,7 +207,7 @@ public class PaletteActivity extends Activity implements EditableDialogFragment.
 			} break;
 			case SAVE_PALETTE: {
 				String name = (String) o;
-				String paletteString = model.createPalette().serialize().toString();
+				String paletteString = Serializers.serializer().toJson(model.createPalette(), Palette.class);
 
 				prefsHelper.add(name, paletteString, SharedPrefsHelper.SaveMethod.FindNext);
 			} break;

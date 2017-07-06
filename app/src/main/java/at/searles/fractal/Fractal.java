@@ -8,7 +8,6 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 
-import at.searles.fractview.AssetsHelper;
 import at.searles.fractview.Commons;
 import at.searles.math.Cplx;
 import at.searles.math.Scale;
@@ -41,7 +40,7 @@ public class Fractal implements ExternalData {
 	/**
 	 * data contains a label Scale that contains the scale of the fractal.
 	 */
-	public static final String SCALE_LABEL = "Scale";
+	public static final String SCALE_KEY = "Scale";
 
     /**
      * Scale to fall back if there is no other scale defined.
@@ -76,12 +75,11 @@ public class Fractal implements ExternalData {
 
 	/**
 	 * Simple constructor
-	 * @param scale
 	 * @param sourceCode
 	 * @param parameters
 	 */
 	public Fractal(String sourceCode, Map<String, Parameter> parameters) {
-		if(scale == null || sourceCode == null || parameters == null) {
+		if(sourceCode == null || parameters == null) {
 			throw new NullPointerException();
 		}
 
@@ -150,7 +148,6 @@ public class Fractal implements ExternalData {
 	 * Resets all parameters to default
 	 */
 	public void setAllToDefault() {
-		setScaleToDefault();
 		data.clear();
 	}
 
@@ -181,9 +178,14 @@ public class Fractal implements ExternalData {
 	public void setPalette(String id, Palette p) {
 		data.put(id, new Parameter(Type.Palette, p));
 	}
-    
+
 	public void setScale(String id, Scale sc) {
 		data.put(id, new Parameter(Type.Scale, sc));
+	}
+
+	public void setScale(Scale sc) {
+		// The default scale that is used for the zoom
+		data.put(SCALE_KEY, new Parameter(Type.Scale, sc));
 	}
 
 	/**
@@ -194,7 +196,7 @@ public class Fractal implements ExternalData {
 	 */
 	public Fractal copyNewSource(String newSourceCode, boolean reuseArguments) {
 		// This one requires complete new compiling
-		return new Fractal(scale, newSourceCode, reuseArguments ? data : new HashMap<>());
+		return new Fractal(newSourceCode, reuseArguments ? data : new HashMap<>());
 	}
 
 	/**
@@ -204,7 +206,7 @@ public class Fractal implements ExternalData {
 	 */
 	public Fractal copyNewScale(Scale newScale) {
         HashMap<String, Parameter> newData = new HashMap<String, Parameter>();
-        newData.put(new Parameter(Type.Scale, newScale));
+        newData.put(SCALE_KEY, new Parameter(Type.Scale, newScale));
 		return copyNewData(newData, true);
 	}
 
@@ -217,7 +219,7 @@ public class Fractal implements ExternalData {
         if(merge) newData = Commons.merge(newData, data);
         
         // keep default scale
-		Fractal f = new Fractal(defauktScale, sourceCode, newData);
+		Fractal f = new Fractal(sourceCode, newData);
 
 		// Source code stayed the same, thus no need to parse again.
 		f.defaultData = defaultData; f.ast = ast;
@@ -228,7 +230,7 @@ public class Fractal implements ExternalData {
     // ======== Some convenience methods to obtain data ========
     
 	public Scale scale() {
-		return get(SCALE_LABEL);
+		return (Scale) get(SCALE_KEY).value();
 	}
 
 	/**
@@ -270,9 +272,10 @@ public class Fractal implements ExternalData {
         
         // First entry is the default scale.
         // This is a work-around if there is no default scale defined in source code.
-        defaultData.put(SCALE_LABEL, DEFAULT_SCALE);
-        
+        defaultData.put(SCALE_KEY, new Parameter(Type.Scale, DEFAULT_SCALE));
+
 		ast = Meelan.parse(sourceCode, this);
+		// It is added before so that it would show up as the first element.
 	}
 
 	/**
@@ -423,6 +426,31 @@ public class Fractal implements ExternalData {
 		return data;
 	}
 
+	/**
+	 * Can the parameters of 'other' be merged into the parameters of 'this'?
+	 * @param other
+	 * @return
+	 */
+	public boolean compatibleParameters(Fractal other) {
+		if(this.defaultData == null) {
+			throw new IllegalArgumentException("fractal must be parsed before");
+		}
+		r
+		boolean skipAsset = true;
+
+		// FIXME put the following into Fractal as method "isCompatibleWith(Set<String>)"?
+		for (String id : entry.fractal().parameters()) {
+			if (!id.startsWith("__")) { // if not an internal
+				if (!ids.contains(id)) {
+					skipAsset = true;
+					break;
+				}
+			}
+		}
+
+
+	}
+
 	public static class ParameterMapBuilder {
 		private final Map<String, Parameter> map;
 
@@ -466,6 +494,25 @@ public class Fractal implements ExternalData {
 
 		public Object value() {
 			return object;
+		}
+
+		@Override
+		public boolean equals(Object o) {
+			if (this == o) return true;
+			if (o == null || getClass() != o.getClass()) return false;
+
+			Parameter parameter = (Parameter) o;
+
+			if (type != parameter.type) return false;
+			return object != null ? object.equals(parameter.object) : parameter.object == null;
+
+		}
+
+		@Override
+		public int hashCode() {
+			int result = type != null ? type.hashCode() : 0;
+			result = 31 * result + (object != null ? object.hashCode() : 0);
+			return result;
 		}
 	}
 }

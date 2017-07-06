@@ -18,7 +18,7 @@ import at.searles.fractal.FractalLabel;
 /**
  *
  */
-public class PresetProgramsActivity extends Activity {
+public class SourcePresetActivity extends Activity {
 
 	public static final int PRESETS_PARAMETERS_RETURN = 102;
 
@@ -84,8 +84,8 @@ public class PresetProgramsActivity extends Activity {
 				}
 
 				// Start new Parameter activity and put this source code inside.
-				Intent i = new Intent(PresetProgramsActivity.this,
-						PresetParametersActivity.class);
+				Intent i = new Intent(SourcePresetActivity.this,
+						ParameterPresetActivity.class);
 				i.putExtra("fractal", f);
 				startActivityForResult(i, PRESETS_PARAMETERS_RETURN);
 			}
@@ -94,7 +94,7 @@ public class PresetProgramsActivity extends Activity {
 		/*lv.setOnItemLongClickListener(new AdapterView.OnItemLongClickListener() {
 		  @Override
 		  public boolean onItemLongClick(AdapterView<?> adapterView, View view, int index, long id) {
-			  AlertDialog.Builder builder = new AlertDialog.Builder(PresetProgramsActivity.this);
+			  AlertDialog.Builder builder = new AlertDialog.Builder(SourcePresetActivity.this);
 
 			  builder.setTitle("Select an Option");
 			  builder.setItems(options, new DialogInterface.OnClickListener() {
@@ -166,7 +166,7 @@ public class PresetProgramsActivity extends Activity {
 			@Override
 			public void onClick(View view) {
 				// end this activity.
-				PresetProgramsActivity.this.finish();
+				SourcePresetActivity.this.finish();
 			}
 		});
 	}

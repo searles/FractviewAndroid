@@ -22,24 +22,35 @@ import at.searles.utils.IndexedKeyMap;
 
 public class FractalEntryListAdapter extends BaseAdapter {
 
-    private final IndexedKeyMap<FractalEntry> list;
+    private final IndexedKeyMap<FractalEntry> map;
     private final Map<String, Bitmap> iconCache;
     private final Activity context;
 
     public FractalEntryListAdapter(Activity context) {
         this.context = context;
-        this.list = new IndexedKeyMap<>();
+        this.map = new IndexedKeyMap<>();
         this.iconCache = new HashMap<>();
+    }
+
+    public void add(FractalEntry entry) {
+        // FIXME: Flag whether it should be kept sorted.
+        map.add(entry.title(), entry);
+    }
+
+    public void remove(int index) {
+        String key = map.keyAt(index);
+        map.remove(index);
+        iconCache.remove(key);
     }
 
     @Override
     public int getCount() {
-        return list.size();
+        return map.size();
     }
 
     @Override
     public FractalEntry getItem(int position) {
-        return list.valueAt(position);
+        return map.valueAt(position);
     }
 
     @Override
@@ -65,10 +76,12 @@ public class FractalEntryListAdapter extends BaseAdapter {
         if(iconCache.containsKey(entry.title())) {
             icon = iconCache.get(entry.title());
         } else {
+            // decode here but keep it in cache
             icon = BitmapFactory.decodeByteArray(entry.iconBinary(), 0, entry.iconBinary().length);
             iconCache.put(entry.title(), icon);
         }
 
+        // FIXME Can be null!
         iconView.setImageBitmap(icon);
         iconView.setScaleType(ImageView.ScaleType.CENTER_INSIDE);
 

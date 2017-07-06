@@ -189,7 +189,7 @@ public class Serializers {
             obj.addProperty(TITLE_LABEL, entry.title());
 
             // encode icon byte stream as Base64
-            byte[] icon = entry.icon();
+            byte[] icon = entry.iconBinary();
             obj.addProperty(ICON_LABEL, Base64.encodeBase64String(icon));
 
             obj.add(FRACTAL_LABEL, context.serialize(entry.fractal(), Fractal.class));
@@ -358,7 +358,7 @@ public class Serializers {
 
             if(element != null) {
                 Scale scale = context.deserialize(element, Scale.class);
-                dataMap.put(Fractal.SCALE_LABEL, new Fractal.Parameter(Fractal.Type.Scale, scale));
+                dataMap.put(Fractal.SCALE_KEY_LABEL, new Fractal.Parameter(Fractal.Type.Scale, scale));
             }
 
             return new Fractal(sourceCode.toString(), dataMap);

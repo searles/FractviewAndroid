@@ -7,7 +7,6 @@ import android.graphics.Matrix;
 import android.graphics.Paint;
 import android.os.Handler;
 import android.os.Looper;
-import android.os.Parcel;
 
 import java.io.ByteArrayOutputStream;
 import java.text.SimpleDateFormat;
@@ -18,6 +17,7 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 
+import at.searles.math.Scale;
 import at.searles.math.color.Palette;
 import at.searles.meelan.CompileException;
 import at.searles.meelan.Tree;
@@ -28,6 +28,7 @@ import at.searles.meelan.Value;
  */
 
 public class Commons {
+
     public static interface KeyAction {
         void apply(String key);
     }
@@ -124,6 +125,10 @@ public class Commons {
         }
     }
 
+    public static Scale toScale(Tree init) {
+        throw new IllegalArgumentException("not yet implemented");
+    }
+
     /**
      * Converts a term to a palette
      * @param t
@@ -173,24 +178,19 @@ public class Commons {
         }
 
         // p now contains lists of lists, h and w contain width and height.
-        int[][] argbs = new int[h][w];
+        int[] colors = new int[h * w];
 
         int y = 0;
 
         for(List<Integer> row : p) {
-            int x = 0;
-            while(x < w) {
-                // we circle around if a row is incomplete.
-                for(int rgb : row) {
-                    argbs[y][x] = rgb;
-                    x++;
-                    if(x >= w) break;
-                }
+            int i = 0;
+
+            for(Integer color : row) {
+                colors[i++] = color;
             }
-            y++;
         }
 
-        return new Palette(argbs);
+        return new Palette(w, h, colors);
     }
 
 

@@ -14,17 +14,18 @@ import android.widget.AdapterView;
 import android.widget.Button;
 import android.widget.ListView;
 
-import com.google.gson.JsonArray;
-import com.google.gson.JsonParser;
+import com.google.gson.stream.JsonWriter;
 
 import java.io.BufferedWriter;
 import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
-import java.util.HashMap;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Map;
 
 import at.searles.fractal.FractalEntry;
+import at.searles.fractal.android.BundleAdapter;
 import at.searles.fractal.gson.Serializers;
 import at.searles.fractview.ui.DialogHelper;
 
@@ -38,25 +39,23 @@ public class FavoritesActivity extends Activity {
 
 	private static final String[] options = {"Rename", "Delete", "Copy To Clipboard"};
 
-	// private Map<String, FractalEntry> entries;
 	private SharedPrefsHelper prefsHelper;
+
+	private FractalEntryListAdapter adapter;
 
 	private void initData() {
 		Map<String, ?> sharedPrefs = prefsHelper.getAll();
 
-		HashMap<String, FractalEntry> entries = new HashMap<>(sharedPrefs.size());
-
 		for(String key : sharedPrefs.keySet()) {
 			String specification = (String) sharedPrefs.get(key);
 
-			entries.put(key, Serializers.serializer().fromJson(specification, FractalEntry.class));
+			FractalEntry entry = Serializers.serializer().fromJson(specification, FractalEntry.class);
+
+			adapter.add(entry);
 		}
 
-		adapter.setData(entries);
 		adapter.notifyDataSetChanged();
 	}
-
-	private FractalEntryAdapter adapter;
 
 	@Override
 	public void onCreate(Bundle savedInstanceState) {
@@ -67,20 +66,21 @@ public class FavoritesActivity extends Activity {
 
 		ListView lv = (ListView) findViewById(R.id.bookmarkListView);
 
-		this.adapter = new FractalEntryAdapter(this);
+		this.adapter = new FractalEntryListAdapter(this);
 
 		initData();
 
 		lv.setAdapter(adapter);
 
 		lv.setOnItemClickListener(new AdapterView.OnItemClickListener() {
+			// On click return the selected fractal.
 			@Override
 			public void onItemClick(AdapterView<?> parent, View view, int index, long id) {
 				// get bookmark
 				FractalEntry entry = adapter.getItem(index);
 
 				Intent data = new Intent();
-				data.putExtra("fractal", ((FractalEntry) entry).fractal());
+				data.putExtra("fractal", BundleAdapter.fractalToBundle(entry.fractal()));
 				setResult(1, data);
 				finish();
 			}
@@ -95,7 +95,7 @@ public class FavoritesActivity extends Activity {
 				builder.setItems(options, new DialogInterface.OnClickListener() {
 					@Override
 					public void onClick(DialogInterface dialog, int which) {
-						FractalEntry entry = (FractalEntry) adapter.getItem(index);
+						FractalEntry entry = adapter.getItem(index);
 
 						switch (which) {
 							case 0: {
@@ -163,11 +163,11 @@ public class FavoritesActivity extends Activity {
 			case R.id.action_export_collection: {
 
 				// Fetch map from adapter
-				JsonArray array = new JsonArray();
+				List<FractalEntry> entries = new ArrayList<>(adapter.getCount());
 
 				for(int i = 0; i < adapter.getCount(); ++i) {
-					FractalEntry entry = (FractalEntry) adapter.getItem(i);
-					array.add(entry.serialize());
+					FractalEntry entry = adapter.getItem(i);
+					entries.add(entry);
 				}
 
 				try {
@@ -176,9 +176,13 @@ public class FavoritesActivity extends Activity {
 
 					BufferedWriter bw = new BufferedWriter(new FileWriter(textFile));
 
-					bw.write(array.toString());
+					JsonWriter writer = new JsonWriter(bw);
 
-					bw.close();
+					writer.setIndent("  ");
+
+					Serializers.serializer().toJson(entries, ArrayList.class, writer);
+
+					writer.close();
 
 					// Share text file
 					Uri contentUri = Uri.fromFile(textFile);

@@ -20,9 +20,9 @@
         </activity>
         <activity android:name=".FavoritesActivity"/>
         <activity android:name=".PaletteActivity"/>
-        <activity android:name=".ParameterActivity"/>
-        <activity android:name=".PresetProgramsActivity"/>
-        <activity android:name=".PresetParametersActivity"/>
+        <activity android:name=".ParameterEditorActivity"/>
+        <activity android:name=".SourcePresetActivity"/>
+        <activity android:name=".ParameterPresetActivity"/>
         <activity android:name=".SourceEditorActivity"/>
     </application>
 

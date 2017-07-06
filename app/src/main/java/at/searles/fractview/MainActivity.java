@@ -388,7 +388,7 @@ public class MainActivity extends Activity
 			} return true;
 
 			case R.id.action_parameters: {
-				Intent i = new Intent(MainActivity.this, ParameterActivity.class);
+				Intent i = new Intent(MainActivity.this, ParameterEditorActivity.class);
 				i.putExtra("fractal", BundleAdapter.fractalToBundle(bitmapFragment.fractal()));
 				startActivityForResult(i, PARAMETER_ACTIVITY_RETURN);
 			} return true;
@@ -401,7 +401,7 @@ public class MainActivity extends Activity
 
 			case R.id.action_presets: {
 				// show new activity
-				Intent i = new Intent(MainActivity.this, PresetProgramsActivity.class);
+				Intent i = new Intent(MainActivity.this, SourcePresetActivity.class);
 				i.putExtra("fractal", BundleAdapter.fractalToBundle(bitmapFragment.fractal()));
 				startActivityForResult(i, PRESETS_ACTIVITY_RETURN);
 			} return true;

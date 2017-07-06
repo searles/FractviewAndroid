@@ -27,32 +27,32 @@ import org.jetbrains.annotations.NotNull;
 import java.util.ArrayList;
 
 import at.searles.fractal.Fractal;
+import at.searles.fractal.android.BundleAdapter;
 import at.searles.math.Cplx;
 import at.searles.math.Scale;
 import at.searles.math.color.Palette;
 import at.searles.meelan.CompileException;
 import at.searles.utils.Pair;
 
-public class ParameterActivity extends Activity implements EditableDialogFragment.Callback {
+public class ParameterEditorActivity extends Activity implements EditableDialogFragment.Callback {
 
-	public static final int PROGRAM_ACTIVITY_RETURN = 100;
+	private static final CharSequence[] scaleOptions = { "Reset to Default", "Center on Origin", "Orthogonalize", "Straighten" };
+	private static final CharSequence[] boolOptions = { "Reset to Default" };
+	private static final CharSequence[] intOptions = { "Reset to Default" };
+	private static final CharSequence[] realOptions = { "Reset to Default" };
+	private static final CharSequence[] cplxOptions = { "Reset to Default", "Set to Center" };
+	private static final CharSequence[] colorOptions = { "Reset to Default" };
+	private static final CharSequence[] exprOptions = { "Reset to Default" };
+	private static final CharSequence[] paletteOptions = { "Reset to Default" };
 
-	static final CharSequence[] scaleOptions = { "Reset to Default", "Center on Origin", "Orthogonalize", "Straighten" };
-	static final CharSequence[] boolOptions = { "Reset to Default" };
-	static final CharSequence[] intOptions = { "Reset to Default" };
-	static final CharSequence[] realOptions = { "Reset to Default" };
-	static final CharSequence[] cplxOptions = { "Reset to Default", "Set to Center" };
-	static final CharSequence[] colorOptions = { "Reset to Default" };
-	static final CharSequence[] exprOptions = { "Reset to Default" };
-	static final CharSequence[] paletteOptions = { "Reset to Default" };
+	// The following use different views (and listeners)
+	private static final int BOOL = 0;
+	private static final int ELEMENT = 1;
+	private static final int SCALE = 2;
 
-	static final int BOOL = 0;
-	static final int ELEMENT = 1;
-	static final int SCALE = 2;
-
-	Fractal fractal;
-	ParameterAdapter adapter; // List adapter for parameters
-	ListView listView;
+	private Fractal fractal;
+	private ParameterAdapter adapter; // List adapter for parameters
+	private ListView listView;
 
 	@Override
 	public void apply(int resourceCode, Object o) {
@@ -128,7 +128,7 @@ public class ParameterActivity extends Activity implements EditableDialogFragmen
 
 	private void showOptionsDialog(CharSequence[] options, DialogInterface.OnClickListener listener) {
 		// show these simple dialogs to reset or center values.
-		AlertDialog.Builder builder = new AlertDialog.Builder(ParameterActivity.this);
+		AlertDialog.Builder builder = new AlertDialog.Builder(ParameterEditorActivity.this);
 
 		builder.setTitle("Select an Option");
 		builder.setItems(options, listener);
@@ -242,7 +242,7 @@ public class ParameterActivity extends Activity implements EditableDialogFragmen
 						// start new activity
 						Palette value = (Palette) fractal.get(p.a).value();
 
-						Intent i = new Intent(ParameterActivity.this, PaletteActivity.class);
+						Intent i = new Intent(ParameterEditorActivity.this, PaletteActivity.class);
 
 						i.putExtra(PaletteActivity.PALETTE_LABEL, BundleAdapter.paletteToBundle(value));
 						i.putExtra(PaletteActivity.ID_LABEL, p.a); // label should also be in here.
@@ -266,11 +266,11 @@ public class ParameterActivity extends Activity implements EditableDialogFragmen
 						showOptionsDialog(scaleOptions, new DialogInterface.OnClickListener() {
 							@Override
 							public void onClick(DialogInterface dialogInterface, int which) {
-								// FIXME!!! Externalize
 								Scale original = fractal.scale();
 								switch (which) {
+									// FIXME Put the rotations into Scale itself!
 									case 0: // Reset
-										fractal.setScaleToDefault();
+										fractal.setToDefault(Fractal.SCALE_KEY);
 										break;
 									case 1: // Origin
 										fractal.setScale(new Scale(original.xx(), original.xy(), original.yx(), original.yy(), 0, 0));
@@ -456,7 +456,7 @@ public class ParameterActivity extends Activity implements EditableDialogFragmen
 			@Override
 			public void onClick(View view) {
 				Intent data = new Intent();
-				data.putExtra("parameters", fractal);
+				data.putExtra("parameters", BundleAdapter.fractalToBundle(fractal));
 				setResult(1, data);
 				finish();
 			}
@@ -466,7 +466,7 @@ public class ParameterActivity extends Activity implements EditableDialogFragmen
 	@Override
 	public void onSaveInstanceState(@NotNull Bundle savedInstanceState) {
 		// Save the user's current game state
-		savedInstanceState.putParcelable("fractal", fractal);
+		savedInstanceState.putBundle("fractal", BundleAdapter.fractalToBundle(fractal));
 
 		// Always call the superclass so it can save the view hierarchy state
 		super.onSaveInstanceState(savedInstanceState);
@@ -480,19 +480,11 @@ public class ParameterActivity extends Activity implements EditableDialogFragmen
 
 		if (requestCode == PaletteActivity.PALETTE_ACTIVITY_RETURN) {
 			if (resultCode == 1) { // = "Ok"
-				Bundle bundle = data.getBundle(PaletteActivity.PALETTE_LABEL);
+				Bundle bundle = data.getBundleExtra(PaletteActivity.PALETTE_LABEL);
 				String id = data.getStringExtra(PaletteActivity.ID_LABEL);
 
 				fractal.setPalette(id, BundleAdapter.bundleToPalette(bundle));
 				adapter.notifyDataSetChanged();
-			}
-		} else if (requestCode == PROGRAM_ACTIVITY_RETURN) {
-			if (resultCode == 1) { // = "Ok"
-				Bundle bundle = data.getBundle(SourceCodeActivity.FRACTAL_LABEL);
-                Fractal newFractal = BundleAdapter.bundleToFractal(bundle);
-                this.fractal = newFractal;
-			    adapter.init();
-			    adapter.notifyDataSetChanged();
 			}
 		}
 	}
@@ -534,11 +526,6 @@ public class ParameterActivity extends Activity implements EditableDialogFragmen
 
 				return true;
 			}
-			case R.id.action_edit_source: {
-				Intent i = new Intent(this, SourceEditorActivity.class);
-				i.putExtra(FRACTAL_LABEL, BundleAdapter.fractalToBundle(this.fractal));
-				startActivityForResult(i, PROGRAM_ACTIVITY_RETURN);
-			} return true;
 		}
 
 		return false;

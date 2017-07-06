@@ -22,16 +22,20 @@ import at.searles.parsing.ParsingError;
 
 public class SourceEditorActivity extends Activity implements EditableDialogFragment.Callback {
 
-    static public final String FRACTAL_LABEL = "fractal";
+	/**
+	 * Shared preferences that contains programs
+	 */
 	static public final String PREFS_NAME = "SavedPrograms";
-	
+
+    static public final String SOURCE_LABEL = "source";
+
 	static private final int LOAD_PROGRAM = -1;
 	static private final int SAVE_PROGRAM = -2;
 
 
     private EditText editor;
     
-	private Fractal original;
+	private String source;
 
 
 	@Override
@@ -41,9 +45,7 @@ public class SourceEditorActivity extends Activity implements EditableDialogFrag
 		setContentView(R.layout.program_layout);
 
 		// fetch program from intent
-		Bundle bundle = getIntent().getBundle(FRACTAL_LABEL);
-
-		this.original = BundleAdapter.bundleToFractal(bundle);
+		this.source = getIntent().getStringExtra(SOURCE_LABEL);
 
         
         
@@ -51,7 +53,7 @@ public class SourceEditorActivity extends Activity implements EditableDialogFrag
 		editor.setHorizontallyScrolling(true); // fixme Android Bug: the attribute in the xml is ignored
 
 		// set text in editor
-		editor.setText(this.original.sourceCode());
+		editor.setText(this.source);
 
 		editor.addTextChangedListener(new TextWatcher() {
 			// if the text is changed we set program to null to see whether we need fresh compiling
@@ -84,7 +86,7 @@ public class SourceEditorActivity extends Activity implements EditableDialogFrag
 				if(source != null || apply()) {
 					Intent data = new Intent();
                     
-					data.putExtra(FRACTAL_LABEL, );
+					data.putExtra(SOURCE_LABEL, source);
 					setResult(1, data);
 					finish();
 				}
@@ -102,7 +104,7 @@ public class SourceEditorActivity extends Activity implements EditableDialogFrag
 		source = editor.getText().toString();
 
 		try {
-			Fractal fractal = new Fractal(AssetsHelper.DEFAULT_SCALE, source, new HashMap<>());
+			Fractal fractal = new Fractal(source, new HashMap<>());
 			fractal.parse(); // Check whether parsing works
 			fractal.compile(); // Also checks default-values for external data.
 			return true;
