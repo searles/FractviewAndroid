@@ -3,21 +3,21 @@ package at.searles.fractal;
 
 /**
  * Use cases:
- * * Presets
- *     + Set source but keep data
+ * For Favorites. In order to also use this class outside of Android, the icon is stored 
+ * as binary png data.
  *
  */
 public class FractalEntry {
 
 	private Fractal fractal;
-	private byte[] iconBinary;  // icon may be null
+	private Bitmap icon;  // icon may be null
 	private String title;       // title may be null
 	private String description; // description may be null
 
-	public FractalEntry(String title, byte[] iconBinary, Fractal fractal, String description) {
+	public FractalEntry(String title, Bitmap icon, Fractal fractal, String description) {
 		this.fractal = fractal;
 		this.title = title;
-		this.iconBinary = iconBinary;
+		this.icon = icon;
 		this.description = description;
 	}
 
@@ -25,8 +25,8 @@ public class FractalEntry {
 		return title;
 	}
 
-	public byte[] iconBinary() {
-		return iconBinary;
+	public Bitmap icon() {
+		return icon;
 	}
 
 	public String description() {
