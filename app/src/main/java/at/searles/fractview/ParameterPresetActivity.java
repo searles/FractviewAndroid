@@ -78,7 +78,7 @@ public class ParameterPresetActivity extends Activity {
                     // Use defaults, therefore use empty parameters.
                     parameterMap = new HashMap<>();
                 } else {
-                    FractalEntry entry = entries.get(index);
+                    entry = entries.get(index);
                 }
 
                 entry = entry.parameterMap = Commons.merge(parameterMap, inFractal.parameterMap());

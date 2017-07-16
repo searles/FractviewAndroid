@@ -16,6 +16,8 @@ public enum Op implements Operation {
 	// New ops: labs, floor, ceil, round, only_decimals ...
 	// the next ones are not compiled and hence do not have a signature
 	derive {
+		// FIXME: Allow third argument = replacement map.
+
 		/**
 		 * returns the derivate of var
 		 * @param expr

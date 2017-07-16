@@ -1,10 +1,8 @@
 package at.searles.fractview.ui;
 
 import android.graphics.Color;
-import android.util.Log;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Iterator;
 import java.util.Random;
 
@@ -45,18 +43,16 @@ public class PaletteViewModel {
     }
 
     public Palette createPalette() {
-        int argbs[][] = new int[h][w];
+        int colors[] = new int[h * w];
 
         for (int y = 0; y < h; ++y) {
             ArrayList<Integer> row = table.get(y);
             for (int x = 0; x < w; ++x) {
-                argbs[y][x] = row.get(x);
+                colors[y * w + x] = row.get(x);
             }
         }
 
-        Log.d("PV", this.toString() + " returns " + Arrays.toString(argbs));
-
-        return new Palette(argbs);
+        return new Palette(w, h, colors);
     }
 
     /*public void removeColumn(int columnIndex) {
