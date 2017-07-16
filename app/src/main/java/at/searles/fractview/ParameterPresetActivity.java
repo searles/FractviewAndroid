@@ -29,7 +29,9 @@ public class ParameterPresetActivity extends Activity {
 
     static public final String FRACTAL_LABEL = "fractal";
 
-    private Fractal inFractal;
+    private Fractal currentFractal;
+
+    private ParameterAdapter adapter;
 
     // FIXME: First current, then assets, then elements stored in shared preference.
     // FIXME: Show only those, that are compilable with source
@@ -41,20 +43,13 @@ public class ParameterPresetActivity extends Activity {
         setContentView(R.layout.preset_parameters);
 
         Intent intent = getIntent();
-        this.inFractal = BundleAdapter.bundleToFractal(intent.getBundleExtra(FRACTAL_LABEL));
+        this.currentFractal = BundleAdapter.bundleToFractal(intent.getBundleExtra(FRACTAL_LABEL));
 
-        ListView lv = (ListView) findViewById(R.id.bookmarkListView);
+        initEntries();
 
-        // fetch assets
-        List<AssetsHelper.ParameterEntry> assets = AssetsHelper.parameterEntries(getAssets());
+        L8istView lv = (ListView) findViewById(R.id.bookmarkListView);
 
-        // entries contain a first empty dummy
-        List<FractalEntry> entries = new ArrayList<>(assets.size() + 1);
 
-        // first, add the 'keep'-entry
-        entries.add(new FractalEntry("Current", null, inFractal, ""));
-
-        // next, add assets
 
         // parse fractal
         try {
@@ -70,22 +65,13 @@ public class ParameterPresetActivity extends Activity {
         lv.setOnItemClickListener(new AdapterView.OnItemClickListener() {
             @Override
             public void onItemClick(AdapterView<?> parent, View view, int index, long id) {
-                Map<String, Fractal.Parameter> parameterMap;
+                Fractal outFractal = adapter.getFractal(index);
 
-                FractalEntry entry;
+                Intent data = new Intent();
 
-                if(index == 0 || index == 1) {
-                    // Use defaults, therefore use empty parameters.
-                    parameterMap = new HashMap<>();
-                } else {
-                    entry = entries.get(index);
-                }
-
-                entry = entry.parameterMap = Commons.merge(parameterMap, inFractal.parameterMap());
-
-                Fractal retVal = new Fractal( inFractal.sourceCode(), parameterMap);
-
-                returnFractal(retVal);
+                data.putExtra(FRACTAL_LABEL, BundleAdapter.fractalToBundle(outFractal));
+                setResult(1, data);
+                finish();
             }
         });
 
@@ -99,11 +85,54 @@ public class ParameterPresetActivity extends Activity {
         });
     }
 
-    private void returnFractal(Fractal f) {
-        Intent data = new Intent();
+    private void initEntries() {
+        // Step 1: Parse sourceCode of currentFractal (this one will remain unchanged)
+        currentFractal.parse();
 
-        data.putExtra(FRACTAL_LABEL, BundleAdapter.fractalToBundle(f));
-        setResult(1, data);
-        finish();
+        /*
+         * Entry 0: Current.
+         * Entry 1-n: Presets. Options allow to edit. If edited, then 'current' is set to '[name] (modified)'
+         * Entry n+1-m: Parameter sets in preferences.
+         * Since not all parameter sets will be useful, they are filtered out. For this purpose,
+         * the inFractal's source code is parsed and it is checked whether for all parameters in
+         * the current parameter map there exists one corresponding entry in the default data.
+         */
+    }
+
+    private class ParameterSetAdapter extends FractalEntryListAdapter {
+        @Override
+        public Fractal getFractal(int index) {
+            Map<String, Fractal.Parameter> parameterMap;
+
+            FractalEntry entry;
+
+            entry = entry.parameterMap = Commons.merge(parameterMap, inFractal.parameterMap());
+            new Fractal( inFractal.sourceCode(), parameterMap);
+        }
+
+        @Override
+        public String getTitle(int position) {
+        }
+
+        @Override
+        public Bitmap getIcon(int position) {
+        }
+
+        @Override
+        public String getDescription(int position) {
+        }
+
+        @Override
+        public void showOptions(int position) {
+            // Edit
+
+            // Rename/Delete if comes from shared preferences
+
+            // Copy to Clipboard
+        }
+
+        @Override
+        public int getCount() {
+        }
     }
 }
