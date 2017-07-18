@@ -60,7 +60,7 @@ public class FavoritesActivity extends Activity {
 	@Override
 	public void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
-		setContentView(R.layout.favorite_layout);
+		setContentView(R.layout.fractal_list_activity_layout);
 
         prefsHelper = new SharedPrefsHelper(this, FAVORITES);
 

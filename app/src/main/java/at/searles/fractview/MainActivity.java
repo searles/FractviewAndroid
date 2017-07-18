@@ -401,7 +401,7 @@ public class MainActivity extends Activity
 
 			case R.id.action_presets: {
 				// show new activity
-				Intent i = new Intent(MainActivity.this, SourcePresetActivity.class);
+				Intent i = new Intent(MainActivity.this, SourcesListActivity.class);
 				i.putExtra("fractal", BundleAdapter.fractalToBundle(bitmapFragment.fractal()));
 				startActivityForResult(i, PRESETS_ACTIVITY_RETURN);
 			} return true;

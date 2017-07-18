@@ -21,8 +21,8 @@
         <activity android:name=".FavoritesActivity"/>
         <activity android:name=".PaletteActivity"/>
         <activity android:name=".ParameterEditorActivity"/>
-        <activity android:name=".SourcePresetActivity"/>
-        <activity android:name=".ParameterPresetActivity"/>
+        <activity android:name=".SourcesListActivity"/>
+        <activity android:name=".ParametersListActivity"/>
         <activity android:name=".SourceEditorActivity"/>
     </application>
 

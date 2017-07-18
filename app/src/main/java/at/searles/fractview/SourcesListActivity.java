@@ -17,27 +17,30 @@ import at.searles.fractal.FractalLabel;
 
 /**
  * Source shows up here in the following order:
- * 1. "Current"
- * 2. "Current with Defaults"
- * 3..m. "Presets"
- * m+1..n "Saved Programs".
+ * 0. "Current"
+ * 1..m. "Presets"
+ * m+1..n "Saved Programs"
+ * + [X] Keep parameters
  */
-public class SourcePresetActivity extends Activity {
+public class SourcesListActivity extends Activity {
+
+	public static final String FRACTAL_INDENT_LABEL = "fractal";
 
 	public static final int PRESETS_PARAMETERS_RETURN = 102;
 
 	private Fractal inFractal;
+	private SourceListAdapter adapter;
 
 	@Override
 	public void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
-		setContentView(R.layout.favorite_layout); // image + text
+		setContentView(R.layout.fractal_list_activity_layout); // image + text
 
 		Intent intent = getIntent();
-		this.inFractal = intent.getParcelableExtra("fractal"); // FIXME test whether this is preserved on termination
+		this.inFractal = intent.getParcelableExtra(FRACTAL_INDENT_LABEL);
 
 		// and since it is sorted, use it to write label-map.
-		ListView lv = (ListView) findViewById(R.id.bookmarkListView);
+		ListView lv = (ListView) findViewById(R.id.fractalListView);
 
 		// fetch assets
 		List<AssetsHelper.SourceEntry> assets = AssetsHelper.entries(getAssets());
@@ -70,8 +73,8 @@ public class SourcePresetActivity extends Activity {
 				}
 
 				// Start new Parameter activity and put this source code inside.
-				Intent i = new Intent(SourcePresetActivity.this,
-						ParameterPresetActivity.class);
+				Intent i = new Intent(SourcesListActivity.this,
+						ParametersListActivity.class);
 				i.putExtra("fractal", f);
 				startActivityForResult(i, PRESETS_PARAMETERS_RETURN);
 			}
@@ -80,7 +83,7 @@ public class SourcePresetActivity extends Activity {
 		/*lv.setOnItemLongClickListener(new AdapterView.OnItemLongClickListener() {
 		  @Override
 		  public boolean onItemLongClick(AdapterView<?> adapterView, View view, int index, long id) {
-			  AlertDialog.Builder builder = new AlertDialog.Builder(SourcePresetActivity.this);
+			  AlertDialog.Builder builder = new AlertDialog.Builder(SourcesListActivity.this);
 
 			  builder.setTitle("Select an Option");
 			  builder.setItems(options, new DialogInterface.OnClickListener() {
@@ -152,7 +155,7 @@ public class SourcePresetActivity extends Activity {
 			@Override
 			public void onClick(View view) {
 				// end this activity.
-				SourcePresetActivity.this.finish();
+				SourcesListActivity.this.finish();
 			}
 		});
 	}
@@ -164,6 +167,46 @@ public class SourcePresetActivity extends Activity {
 		if (requestCode == PRESETS_PARAMETERS_RETURN) {
 			setResult(1, data);
 			finish();
+		}
+	}
+
+	private static class SourceListAdapter extends FractalEntryListAdapter {
+
+		/*
+		 * Index | Purpose
+		 * ------+-------------------------------
+		 *     0 | Current []
+		 */
+
+		@Override
+		public int getCount() {
+
+			return 0;
+		}
+
+		@Override
+		public Fractal getItem(int position) {
+			return null;
+		}
+
+		@Override
+		public Bitmap getIcon(int position) {
+			return null;
+		}
+
+		@Override
+		public String getTitle(int position) {
+			return null;
+		}
+
+		@Override
+		public String getDescription(int position) {
+			return null;
+		}
+
+		@Override
+		public void showOptions(int position) {
+
 		}
 	}
 }

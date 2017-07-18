@@ -8,12 +8,7 @@ import android.widget.AdapterView;
 import android.widget.Button;
 import android.widget.ListView;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.List;
 import java.util.Map;
-import java.util.TreeSet;
 
 import at.searles.fractal.Fractal;
 import at.searles.fractal.FractalEntry;
@@ -25,7 +20,7 @@ import at.searles.meelan.CompileException;
  * with a preset value, then it returns the new fractal. Data
  * are always merged here.
  */
-public class ParameterPresetActivity extends Activity {
+public class ParametersListActivity extends Activity {
 
     static public final String FRACTAL_LABEL = "fractal";
 
@@ -80,7 +75,7 @@ public class ParameterPresetActivity extends Activity {
             @Override
             public void onClick(View view) {
                 // end this activity.
-                ParameterPresetActivity.this.finish();
+                ParametersListActivity.this.finish();
             }
         });
     }
