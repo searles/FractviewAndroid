@@ -1,19 +1,25 @@
 package at.searles.fractview;
 
 import android.app.Activity;
+import android.content.Context;
 import android.content.Intent;
+import android.content.SharedPreferences;
+import android.content.res.AssetManager;
 import android.graphics.Bitmap;
 import android.os.Bundle;
+import android.util.Log;
 import android.view.View;
 import android.widget.AdapterView;
 import android.widget.Button;
+import android.widget.CheckBox;
 import android.widget.ListView;
 
 import java.util.ArrayList;
-import java.util.List;
 
 import at.searles.fractal.Fractal;
-import at.searles.fractal.FractalLabel;
+import at.searles.fractal.android.BundleAdapter;
+import at.searles.fractview.ui.DialogHelper;
+import at.searles.meelan.CompileException;
 
 /**
  * Source shows up here in the following order:
@@ -34,7 +40,7 @@ public class SourcesListActivity extends Activity {
 	@Override
 	public void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
-		setContentView(R.layout.fractal_list_activity_layout); // image + text
+		setContentView(R.layout.sources_list_layout); // image + text
 
 		Intent intent = getIntent();
 		this.inFractal = intent.getParcelableExtra(FRACTAL_INDENT_LABEL);
@@ -42,113 +48,55 @@ public class SourcesListActivity extends Activity {
 		// and since it is sorted, use it to write label-map.
 		ListView lv = (ListView) findViewById(R.id.fractalListView);
 
-		// fetch assets
-		List<AssetsHelper.SourceEntry> assets = AssetsHelper.entries(getAssets());
-
-		// entries contain a first empty dummy
-		List<AssetsHelper.SourceEntry> entries = new ArrayList<>(assets.size() + 1);
-
-		// first, add the 'keep'-entry
-
-		entries.addAll(assets);
+		CheckBox useDefaultsCheckBox = (CheckBox) findViewById(R.id.useDefaultsCheckBox);
 
 		// wrap the favorites-adapter so that first
-		final FractalEntryListAdapter adapter = new FractalEntryListAdapter(this);
-		adapter.setData(entries);
+		this.adapter = new SourceListAdapter(this, inFractal);
 
 		lv.setAdapter(adapter);
 
 		lv.setOnItemClickListener(new AdapterView.OnItemClickListener() {
 			@Override
 			public void onItemClick(AdapterView<?> parent, View view, int index, long id) {
-				Fractal f;
+				// FIXME if selection mode then select and unselect.
+				SourceEntry entry = adapter.getItem(index);
 
-				if(index == 0) {
-					// means 'keep'
-					f = inFractal;
+				boolean useDefaults = useDefaultsCheckBox.isChecked();
+
+				Fractal outFractal;
+
+				if(useDefaults) {
+					outFractal = new Fractal(entry.source, null);
 				} else {
-					String sourceCode =
-							((AssetsHelper.SourceEntry) entries.get(index)).source;
-					f = inFractal.copyNewSource(sourceCode, true);//new Fractal(inFractal.scale(), sourceCode, inFractal.data());
+					// compile it to assure that it works.
+					outFractal = new Fractal(entry.source, inFractal.parameterMap());
+
+					try {
+						outFractal.compile();
+					} catch (CompileException e) {
+						DialogHelper.error(SourcesListActivity.this, "Compile error (select \"useDefaults\" to avoid)\n" + e.getMessage());
+						outFractal = null;
+					}
 				}
 
-				// Start new Parameter activity and put this source code inside.
-				Intent i = new Intent(SourcesListActivity.this,
-						ParametersListActivity.class);
-				i.putExtra("fractal", f);
-				startActivityForResult(i, PRESETS_PARAMETERS_RETURN);
+				if(outFractal != null) {
+					// Start new Parameter activity and put this source code inside.
+					Intent i = new Intent(SourcesListActivity.this,
+							ParametersListActivity.class);
+					i.putExtra(FRACTAL_INDENT_LABEL, BundleAdapter.fractalToBundle(outFractal));
+					startActivityForResult(i, PRESETS_PARAMETERS_RETURN);
+				}
 			}
 		});
 
-		/*lv.setOnItemLongClickListener(new AdapterView.OnItemLongClickListener() {
+		lv.setOnItemLongClickListener(new AdapterView.OnItemLongClickListener() {
 		  @Override
 		  public boolean onItemLongClick(AdapterView<?> adapterView, View view, int index, long id) {
-			  AlertDialog.Builder builder = new AlertDialog.Builder(SourcesListActivity.this);
-
-			  builder.setTitle("Select an Option");
-			  builder.setItems(options, new DialogInterface.OnClickListener() {
-				  @Override
-				  public void onClick(DialogInterface dialog, int which) {
-					  String l = labels.get(index);
-
-					  Fractal selected = entries.get(labels.get(index)).fractal;
-
-					  switch (which) {
-						  case 0: {
-							  // Select
-							  returnFractal(selected);
-						  }
-						  break;
-						  case 1: {
-							  // Merge
-							  returnFractal(new Fractal(
-									  inFractal.scale(),
-									  selected.sourceCode(),
-									  inFractal.parameters().merge(selected.parameters())));
-						  }
-						  break;
-						  case 2: {
-							  // Merge Program
-							  returnFractal(new Fractal(
-									  inFractal.scale(),
-									  selected.sourceCode(),
-									  inFractal.parameters()));
-						  }
-						  break;
-						  case 3: {
-							  // Merge Parameters
-							  // ==> Merge parameters!
-							  returnFractal(new Fractal(
-									  inFractal.scale(),
-									  inFractal.sourceCode(),
-									  inFractal.parameters().merge(selected.parameters())));
-						  }
-						  break;
-						  case 4: {
-							  // Merge Parameters and Scale
-							  // ==> Merge parameters!
-							  returnFractal(new Fractal(
-									  selected.scale(),
-									  inFractal.sourceCode(),
-									  inFractal.parameters().merge(selected.parameters())));
-						  }
-						  break;
-					  }
-				  }
-			  });
-
-			  builder.setNegativeButton("Cancel", new DialogInterface.OnClickListener() {
-				  @Override
-				  public void onClick(DialogInterface dialogInterface, int which) {
-					  dialogInterface.dismiss();
-				  }
-			  });
-
-			  builder.show();
+			  // Select this entry
 
 			  return true;
 		  }
-	  	});*/
+	  	});
 
 		Button closeButton = (Button) findViewById(R.id.closeButton);
 		closeButton.setOnClickListener(new View.OnClickListener() {
@@ -170,43 +118,148 @@ public class SourcesListActivity extends Activity {
 		}
 	}
 
-	private static class SourceListAdapter extends FractalEntryListAdapter {
+	private static class SourceListAdapter extends FractalEntryListAdapter<SourceEntry> {
 
-		/*
-		 * Index | Purpose
-		 * ------+-------------------------------
-		 *     0 | Current []
-		 */
+		private SourceEntry inEntry;
+		private ArrayList<SourceEntry> customEntries;
+		private final SharedPreferences prefs;
 
-		@Override
-		public int getCount() {
+		public SourceListAdapter(Activity context, Fractal inFractal) {
+			super(context);
 
-			return 0;
+			this.inEntry = new SourceEntry("Current", null, "Current source", inFractal.sourceCode());
+
+			// FIXME put PREFS_NAME into resource file
+			this.prefs = context.getSharedPreferences(
+					SourceEditorActivity.PREFS_NAME,
+					Context.MODE_PRIVATE);
+			initEntries(context.getAssets());
+			initializeCustomEntries();
+		}
+
+		private void initializeCustomEntries() {
+			if(this.customEntries == null) {
+				this.customEntries = new ArrayList<>();
+			} else {
+				this.customEntries.clear();
+			}
+
+			for(String key : prefs.getAll().keySet()) {
+				String source = prefs.getString(key, null);
+
+				if(source == null) {
+					Log.e(getClass().getName(), "shared prefs contains entry " + key + " but no string");
+				} else {
+					this.customEntries.add(new SourceEntry(key, null, null, source));
+				}
+			}
 		}
 
 		@Override
-		public Fractal getItem(int position) {
-			return null;
+		public int getCount() {
+			return 1 + _ENTRIES.size() + customEntries.size();
+		}
+
+		@Override
+		public SourceEntry getItem(int position) {
+			if(position == 0) {
+				return inEntry;
+			} else if(position < 1 + _ENTRIES.size()) {
+				return _ENTRIES.get(position - 1);
+			} else {
+				return customEntries.get(position - _ENTRIES.size() - 1);
+			}
 		}
 
 		@Override
 		public Bitmap getIcon(int position) {
-			return null;
+			return getItem(position).icon;
 		}
 
 		@Override
 		public String getTitle(int position) {
-			return null;
+			return getItem(position).title;
 		}
 
 		@Override
 		public String getDescription(int position) {
-			return null;
+			return getItem(position).description;
 		}
 
 		@Override
 		public void showOptions(int position) {
-
+			// FIXME:
+			// Options are 'edit', 'copy', 'rename'.
 		}
 	}
+
+
+	// ======= Fetch assets =========
+
+	// Create a list of assets and icons that come with it.
+	// Read private entries
+	public static SourceEntry createEntry(AssetManager am, String title, String iconFilename, String description, String sourceFilename) {
+		String sourceCode = AssetsHelper.readSourcecode(am, sourceFilename);
+		Bitmap icon = AssetsHelper.readIcon(am, iconFilename);
+
+		if(sourceCode == null/* || icon == null*/) {
+			throw new IllegalArgumentException("bad asset: " + title);
+		}
+
+		return new SourceEntry(title, icon, description, sourceCode);
+	}
+
+	// And now for the presets.
+	public static class SourceEntry {
+		public final String title;
+		public final Bitmap icon;
+		public final String description;
+		public final String source;
+
+		private SourceEntry(String title, Bitmap icon, String description, String source) {
+			this.title = title;
+			this.icon = icon;
+			this.description = description;
+			this.source = source;
+		}
+	}
+
+	private static ArrayList<SourceEntry> _ENTRIES = null;
+
+	public static synchronized void initEntries(AssetManager am) {
+		if (_ENTRIES == null) {
+			// create entries.
+			_ENTRIES = new ArrayList<>();
+
+			// grouped : the ones with maxpower
+			_ENTRIES.add(createEntry(am, "Default", "default.png", "Basic fractal with bailout and lake coloring", "Default.fv"));
+			_ENTRIES.add(createEntry(am, "Julia Map", "juliamap.png", "Variation of \"Default\" that shows a map of julia sets.", "JuliaMap.fv"));
+			_ENTRIES.add(createEntry(am, "Branching", "branching.png", "\"Default\" with an addend for average coloring methods for polynom formulas", "Branching.fv"));
+			_ENTRIES.add(createEntry(am, "Cczcpaczcp", "ccz.png", "Default with a built-in special formula by Mark R Eggleston, called Cczcpaczcp", "Cczcpaczcp.fv"));
+
+			// the ones with orbit traps
+			_ENTRIES.add(createEntry(am, "Orbit Trap", "orbittrap.png", "\"Default\" with an orbit trap", "OrbitTrap.fv"));
+			_ENTRIES.add(createEntry(am, "Frame Orbit Trap", "frameorbittrap.png", "\"Default\" with an orbit trap", "FrameOrbitTrap.fv"));
+			_ENTRIES.add(createEntry(am, "Min/Max Trap", "minmaxtrap.png", "Picks the maximum distance to the orbit trap", "MinMaxOrbitTrap.fv"));
+
+			// the ones with fold
+			_ENTRIES.add(createEntry(am, "Fold", "fold.png", "\"Default\" with a more general addend (fold), also suitable for stripe coloring methods of non-polynomial fractals", "Fold.fv"));
+			_ENTRIES.add(createEntry(am, "Two Folds", "twofolds.png", "\"Default\" with two fold functions", "TwoFold.fv"));
+			_ENTRIES.add(createEntry(am, "Lake Fold", "lakefold.png", "Draws only the lake of a fractal, thus useful for bounded fractals like Duck or Newton", "Lake.fv"));
+
+			// Special Lake Fold ones
+			_ENTRIES.add(createEntry(am, "Newton", "newton.png", "Newton method for root finding fractals", "Newton.fv"));
+			_ENTRIES.add(createEntry(am, "Nova", "nova.png", "Nova fractal defined by z - R * (z^power + argument) / (z^power + argument)' + p", "Nova.fv"));
+			_ENTRIES.add(createEntry(am, "Secant", "secant.png", "Secant method for root finding fractals", "Secant.fv"));
+
+			// Completely different onces
+			_ENTRIES.add(createEntry(am, "Lyapunov", "lyapunov.png", "Lyapunov fractals", "Lyapunov.fv"));
+
+			_ENTRIES.add(createEntry(am, "Pendulum (Multiple Magnets)", "pendulum.png", "Magnetic Pendulum Simulation with 3 Magnets", "Pendulum.fv"));
+			_ENTRIES.add(createEntry(am, "Pendulum (3 Magnets)", "pendulum3.png", "Magnetic Pendulum Simulation with 3 Magnets", "Pendulum3.fv"));
+
+			_ENTRIES.add(createEntry(am, "Complex Function", "complexfn.png", "Drawing of Complex function (Color Wheel method by default)", "ComplexFn.fv"));
+		}
+	}
+
 }

@@ -10,14 +10,12 @@ import android.widget.Button;
 import android.widget.ImageView;
 import android.widget.TextView;
 
-import at.searles.fractal.Fractal;
-
 /**
  * Adapter for all kinds of fractal entries. Which fractal
  * is determined by the concrete implementation.
  */
 
-public abstract class FractalEntryListAdapter extends BaseAdapter {
+public abstract class FractalEntryListAdapter<A> extends BaseAdapter {
 
     private final Activity context;
 
@@ -29,7 +27,7 @@ public abstract class FractalEntryListAdapter extends BaseAdapter {
     public abstract int getCount();
 
     @Override
-    public abstract Fractal getItem(int position);
+    public abstract A getItem(int position);
     
     public abstract Bitmap getIcon(int position);
 
@@ -49,12 +47,21 @@ public abstract class FractalEntryListAdapter extends BaseAdapter {
         if (view == null) {
             // fixme avoid passing null
             view = context.getLayoutInflater().inflate(R.layout.fractal_entry_layout, null);
+
+            // set listener in optionsButton
+            Button optionsButton = (Button) view.findViewById(R.id.optionsButton);
+
+            optionsButton.setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View v) {
+                    showOptions(index);
+                }
+            });
         }
 
         ImageView iconView = (ImageView) view.findViewById(R.id.iconView);
         TextView titleView = (TextView) view.findViewById(R.id.titleView);
         TextView descriptionView = (TextView) view.findViewById(R.id.descriptionView);
-        Button optionsButton = (Button) view.findViewById(R.id.optionsButton);
 
         Bitmap icon = getIcon(index);
         iconView.setImageBitmap(icon);

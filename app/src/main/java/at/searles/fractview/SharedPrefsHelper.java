@@ -106,4 +106,8 @@ public class SharedPrefsHelper {
     public Map<String, ?> getAll() {
         return prefs.getAll();
     }
+
+    public int size() {
+        return prefs.getAll().size();
+    }
 }
