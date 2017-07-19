@@ -18,7 +18,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 import at.searles.fractal.Fractal;
-import at.searles.fractal.FractalEntry;
+import at.searles.fractal.FavoriteEntry;
 import at.searles.math.Cplx;
 import at.searles.math.Scale;
 import at.searles.math.color.Palette;
@@ -43,7 +43,7 @@ public class Serializers {
             gsonBuilder.registerTypeAdapter(Scale.class, new ScaleAdapter());
             gsonBuilder.registerTypeAdapter(Palette.class, new PaletteAdapter());
             gsonBuilder.registerTypeAdapter(Fractal.class, new FractalAdapter());
-            gsonBuilder.registerTypeAdapter(FractalEntry.class, new FractalEntryAdapter());
+            gsonBuilder.registerTypeAdapter(FavoriteEntry.class, new FractalEntryAdapter());
 
             gson = gsonBuilder.create();
         }
@@ -152,14 +152,14 @@ public class Serializers {
 
     // Next is FavoritesEntry
 
-    public static class FractalEntryAdapter implements JsonDeserializer<FractalEntry>, JsonSerializer<FractalEntry> {
+    public static class FractalEntryAdapter implements JsonDeserializer<FavoriteEntry>, JsonSerializer<FavoriteEntry> {
         private static final String FRACTAL_LABEL = "fractal";
         private static final String ICON_LABEL = "icon"; // this is optional
         private static final String TITLE_LABEL = "title";
         private static final String DESCRIPTION_LABEL = "description"; // this is optional
 
         @Override
-        public FractalEntry deserialize(JsonElement json, Type typeOfT, JsonDeserializationContext context) throws JsonParseException {
+        public FavoriteEntry deserialize(JsonElement json, Type typeOfT, JsonDeserializationContext context) throws JsonParseException {
             // In older versions, title and descriptor did not exist in this object.
             JsonObject obj = (JsonObject) json;
             Fractal fractal = context.deserialize(obj.get(FRACTAL_LABEL), Fractal.class);
@@ -179,11 +179,11 @@ public class Serializers {
             String title = titleJson == null ? null : titleJson.getAsString();
             String description = descriptionJson == null ? null : descriptionJson.getAsString();
 
-            return new FractalEntry(title, iconBinary, fractal, description);
+            return new FavoriteEntry(title, iconBinary, fractal, description);
         }
 
         @Override
-        public JsonElement serialize(FractalEntry entry, Type typeOfSrc, JsonSerializationContext context) {
+        public JsonElement serialize(FavoriteEntry entry, Type typeOfSrc, JsonSerializationContext context) {
             JsonObject obj = new JsonObject();
 
             obj.addProperty(TITLE_LABEL, entry.title());

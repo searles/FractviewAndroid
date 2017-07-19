@@ -37,7 +37,7 @@ import java.io.File;
 import java.util.HashMap;
 
 import at.searles.fractal.Fractal;
-import at.searles.fractal.FractalEntry;
+import at.searles.fractal.FavoriteEntry;
 import at.searles.fractal.android.BundleAdapter;
 import at.searles.fractal.gson.Serializers;
 import at.searles.fractview.ui.BitmapFragmentView;
@@ -395,7 +395,7 @@ public class MainActivity extends Activity
 
 			case R.id.action_favorites: {
 				// show new activity
-				Intent i = new Intent(MainActivity.this, FavoritesActivity.class);
+				Intent i = new Intent(MainActivity.this, FavoritesListActivity.class);
 				startActivityForResult(i, BOOKMARK_ACTIVITY_RETURN);
 			} return true;
 
@@ -656,13 +656,13 @@ public class MainActivity extends Activity
 		icon.compress(Bitmap.CompressFormat.PNG, 100, byteArrayBitmapStream);
 		byte[] iconPngStream = byteArrayBitmapStream.toByteArray();
 
-		FractalEntry fav = new FractalEntry(name, iconPngStream, fractal, Commons.timestamp());
+		FavoriteEntry fav = new FavoriteEntry(name, iconPngStream, fractal, Commons.timestamp());
 
 		String entryString = Serializers.serializer().toJson(fav);
 
 		Log.d(getClass().getName(), "Storing " + entryString);
 
-		new SharedPrefsHelper(this, FavoritesActivity.FAVORITES).add(name, entryString, SharedPrefsHelper.SaveMethod.FindNext);
+		new SharedPrefsHelper(this, FavoritesListActivity.FAVORITES_SHARED_PREF).add(name, entryString, SharedPrefsHelper.SaveMethod.FindNext);
 
 	}
 

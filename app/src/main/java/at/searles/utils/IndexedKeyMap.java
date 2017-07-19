@@ -31,6 +31,11 @@ public class IndexedKeyMap<A> {
         // invalid state remains the same.
     }
 
+    public synchronized void sort() {
+        indexed.sort(String::compareToIgnoreCase);
+        invalid = true;
+    }
+
     public synchronized void sort(Comparator<String> comparator) {
         indexed.sort(comparator);
         invalid = true;

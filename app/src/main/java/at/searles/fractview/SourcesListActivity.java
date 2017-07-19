@@ -118,7 +118,7 @@ public class SourcesListActivity extends Activity {
 		}
 	}
 
-	private static class SourceListAdapter extends FractalEntryListAdapter<SourceEntry> {
+	private static class SourceListAdapter extends FractalListAdapter<SourceEntry> {
 
 		private SourceEntry inEntry;
 		private ArrayList<SourceEntry> customEntries;

@@ -15,11 +15,11 @@ import android.widget.TextView;
  * is determined by the concrete implementation.
  */
 
-public abstract class FractalEntryListAdapter<A> extends BaseAdapter {
+public abstract class FractalListAdapter<A> extends BaseAdapter {
 
     private final Activity context;
 
-    public FractalEntryListAdapter(Activity context) {
+    public FractalListAdapter(Activity context) {
         this.context = context;
     }
 

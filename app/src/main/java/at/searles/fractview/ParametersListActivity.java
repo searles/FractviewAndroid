@@ -58,7 +58,7 @@ public class ParametersListActivity extends Activity {
 
         ListView lv = (ListView) findViewById(R.id.fractalListView);
 
-        final FractalEntryListAdapter adapter = new FractalEntryListAdapter(this);
+        final FractalListAdapter adapter = new FractalListAdapter(this);
 
         lv.setAdapter(adapter);
 
@@ -99,7 +99,7 @@ public class ParametersListActivity extends Activity {
          */
     }
 
-    private class ParameterListAdapter extends FractalEntryListAdapter<ParameterEntry> {
+    private class ParameterListAdapter extends FractalListAdapter<ParameterEntry> {
 
         private ParameterEntry inEntry;
         private ArrayList<ParameterEntry> customEntries;

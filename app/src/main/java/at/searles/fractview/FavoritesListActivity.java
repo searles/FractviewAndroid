@@ -2,8 +2,11 @@ package at.searles.fractview;
 
 import android.app.Activity;
 import android.app.AlertDialog;
+import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
+import android.content.SharedPreferences;
+import android.graphics.Bitmap;
 import android.net.Uri;
 import android.os.Bundle;
 import android.view.Menu;
@@ -24,24 +27,25 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
-import at.searles.fractal.FractalEntry;
+import at.searles.fractal.FavoriteEntry;
 import at.searles.fractal.android.BundleAdapter;
 import at.searles.fractal.gson.Serializers;
 import at.searles.fractview.ui.DialogHelper;
+import at.searles.utils.IndexedKeyMap;
 
 /**
  *
  */
-public class FavoritesActivity extends Activity {
+public class FavoritesListActivity extends Activity {
 
-	public static final String FAVORITES = "favorites";
+	public static final String FAVORITES_SHARED_PREF = "favorites";
 
 
 	private static final String[] options = {"Rename", "Delete", "Copy To Clipboard"};
 
 	private SharedPrefsHelper prefsHelper;
 
-	private FractalEntryListAdapter adapter;
+	private FavoritesListAdapter adapter;
 
 	private void initData() {
 		Map<String, ?> sharedPrefs = prefsHelper.getAll();
@@ -49,7 +53,7 @@ public class FavoritesActivity extends Activity {
 		for(String key : sharedPrefs.keySet()) {
 			String specification = (String) sharedPrefs.get(key);
 
-			FractalEntry entry = Serializers.serializer().fromJson(specification, FractalEntry.class);
+			FavoriteEntry entry = Serializers.serializer().fromJson(specification, FavoriteEntry.class);
 
 			adapter.add(entry);
 		}
@@ -62,11 +66,9 @@ public class FavoritesActivity extends Activity {
 		super.onCreate(savedInstanceState);
 		setContentView(R.layout.fractal_list_activity_layout);
 
-        prefsHelper = new SharedPrefsHelper(this, FAVORITES);
-
 		ListView lv = (ListView) findViewById(R.id.bookmarkListView);
 
-		this.adapter = new FractalEntryListAdapter(this);
+		this.adapter = new FavoritesListAdapter(this);
 
 		initData();
 
@@ -77,7 +79,7 @@ public class FavoritesActivity extends Activity {
 			@Override
 			public void onItemClick(AdapterView<?> parent, View view, int index, long id) {
 				// get bookmark
-				FractalEntry entry = adapter.getItem(index);
+				FavoriteEntry entry = adapter.getItem(index);
 
 				Intent data = new Intent();
 				data.putExtra("fractal", BundleAdapter.fractalToBundle(entry.fractal()));
@@ -89,21 +91,21 @@ public class FavoritesActivity extends Activity {
 		lv.setOnItemLongClickListener(new AdapterView.OnItemLongClickListener() {
 			@Override
 			public boolean onItemLongClick(AdapterView<?> adapterView, final View view, final int index, long id) {
-				AlertDialog.Builder builder = new AlertDialog.Builder(FavoritesActivity.this);
+				AlertDialog.Builder builder = new AlertDialog.Builder(FavoritesListActivity.this);
 
 				builder.setTitle("Choose an option");
 				builder.setItems(options, new DialogInterface.OnClickListener() {
 					@Override
 					public void onClick(DialogInterface dialog, int which) {
-						FractalEntry entry = adapter.getItem(index);
+						FavoriteEntry entry = adapter.getItem(index);
 
 						switch (which) {
 							case 0: {
                                 // Show dialog for new name
-								DialogHelper.inputText(FavoritesActivity.this, "Rename entry", entry.title(), new Commons.KeyAction() {
+								DialogHelper.inputText(FavoritesListActivity.this, "Rename entry", entry.title(), new Commons.KeyAction() {
 									@Override
 									public void apply(String newKey) {
-										prefsHelper.rename(entry.title(), newKey, SharedPrefsHelper.SaveMethod.FindNext, FavoritesActivity.this);
+										prefsHelper.rename(entry.title(), newKey, SharedPrefsHelper.SaveMethod.FindNext, FavoritesListActivity.this);
 										initData(); // reinitialize because order might have changed
 									}
 								});
@@ -111,7 +113,7 @@ public class FavoritesActivity extends Activity {
 							break;
 							case 1: {
 								// delete it
-								prefsHelper.remove(entry.title(), FavoritesActivity.this);
+								prefsHelper.remove(entry.title(), FavoritesListActivity.this);
 								initData();
 							}
 							break;
@@ -143,7 +145,7 @@ public class FavoritesActivity extends Activity {
 			@Override
 			public void onClick(View view) {
 				// end this activity.
-				FavoritesActivity.this.finish();
+				FavoritesListActivity.this.finish();
 			}
 		});
 	}
@@ -163,10 +165,10 @@ public class FavoritesActivity extends Activity {
 			case R.id.action_export_collection: {
 
 				// Fetch map from adapter
-				List<FractalEntry> entries = new ArrayList<>(adapter.getCount());
+				List<FavoriteEntry> entries = new ArrayList<>(adapter.getCount());
 
 				for(int i = 0; i < adapter.getCount(); ++i) {
-					FractalEntry entry = adapter.getItem(i);
+					FavoriteEntry entry = adapter.getItem(i);
 					entries.add(entry);
 				}
 
@@ -201,6 +203,72 @@ public class FavoritesActivity extends Activity {
 			} return true;
 			default:
 				return super.onOptionsItemSelected(item);
+		}
+	}
+
+	private class FavoritesListAdapter extends FractalListAdapter<FavoriteEntry> {
+
+		private final SharedPreferences prefs;
+
+		private IndexedKeyMap<String> jsonEntries;
+		private Map<String, FavoriteEntry> entries;
+
+		public FavoritesListAdapter(Activity context) {
+			super(context);
+
+			// Fetch shared preferences
+			this.prefs = context.getSharedPreferences(
+					FAVORITES_SHARED_PREF,
+					Context.MODE_PRIVATE);
+
+			this.jsonEntries = new IndexedKeyMap<>();
+
+			for(String key : this.prefs.getAll().keySet()) {
+				String value = this.prefs.getString(key, null);
+
+				if(value != null) {
+					this.jsonEntries.add(key, value);
+				}
+			}
+
+			this.jsonEntries.sort();
+		}
+
+		@Override
+		public int getCount() {
+			return jsonEntries.size();
+		}
+
+		@Override
+		public FavoriteEntry getItem(int position) {
+			String key = jsonEntries.keyAt(position);
+
+			if(!this.entries.containsKey(key)) {
+				String json = jsonEntries.get(key);
+				FavoriteEntry entry = Serializers.serializer().fromJson()
+			}
+
+			return null;
+		}
+
+		@Override
+		public Bitmap getIcon(int position) {
+			return null;
+		}
+
+		@Override
+		public String getTitle(int position) {
+			return null;
+		}
+
+		@Override
+		public String getDescription(int position) {
+			return null;
+		}
+
+		@Override
+		public void showOptions(int position) {
+
 		}
 	}
 }
