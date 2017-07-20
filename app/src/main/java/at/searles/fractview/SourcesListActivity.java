@@ -43,10 +43,10 @@ public class SourcesListActivity extends Activity {
 		setContentView(R.layout.sources_list_layout); // image + text
 
 		Intent intent = getIntent();
-		this.inFractal = intent.getParcelableExtra(FRACTAL_INDENT_LABEL);
+		this.inFractal = BundleAdapter.bundleToFractal(intent.getBundleExtra(FRACTAL_INDENT_LABEL));
 
 		// and since it is sorted, use it to write label-map.
-		ListView lv = (ListView) findViewById(R.id.fractalListView);
+		ListView lv = (ListView) findViewById(R.id.sourceListView);
 
 		CheckBox useDefaultsCheckBox = (CheckBox) findViewById(R.id.useDefaultsCheckBox);
 

@@ -1,6 +1,7 @@
 package at.searles.fractal.gson;
 
 import android.graphics.Bitmap;
+import android.util.Base64;
 
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
@@ -12,8 +13,6 @@ import com.google.gson.JsonObject;
 import com.google.gson.JsonParseException;
 import com.google.gson.JsonSerializationContext;
 import com.google.gson.JsonSerializer;
-
-import org.apache.commons.codec.binary.Base64;
 
 import java.lang.reflect.Type;
 import java.util.HashMap;
@@ -38,7 +37,7 @@ public class Serializers {
     public static Gson serializer() {
         // No need for synchronization since this will usually
         // be only called from the ui thread.
-        if(gson != null) {
+        if(gson == null) {
             GsonBuilder gsonBuilder = new GsonBuilder();
 
             // register some types
@@ -173,7 +172,7 @@ public class Serializers {
 
             if(iconJson != null) {
                 String iconBase64 = iconJson.getAsString();
-                byte[] iconBinary = Base64.decodeBase64(iconBase64);
+                byte[] iconBinary = Base64.decode(iconBase64, Base64.DEFAULT);
                 icon = Commons.fromPNG(iconBinary);
             }
 
@@ -194,7 +193,7 @@ public class Serializers {
 
             // encode icon byte stream as Base64
             byte[] icon = Commons.toPNG(entry.icon());
-            obj.addProperty(ICON_LABEL, Base64.encodeBase64String(icon));
+            obj.addProperty(ICON_LABEL, Base64.encodeToString(icon, Base64.DEFAULT));
 
             obj.add(FRACTAL_LABEL, context.serialize(entry.fractal(), Fractal.class));
 

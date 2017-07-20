@@ -22,6 +22,7 @@ import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -49,7 +50,7 @@ public class FavoritesListActivity extends Activity {
 		super.onCreate(savedInstanceState);
 		setContentView(R.layout.fractal_list_activity_layout);
 
-		ListView lv = (ListView) findViewById(R.id.bookmarkListView);
+		ListView lv = (ListView) findViewById(R.id.fractalListView);
 
 		this.adapter = new FavoritesListAdapter(this);
 
@@ -151,6 +152,7 @@ public class FavoritesListActivity extends Activity {
 					Context.MODE_PRIVATE);
 
 			this.jsonEntries = new IndexedKeyMap<>();
+			this.entries = new HashMap<>();
 
 			for(String key : this.prefs.getAll().keySet()) {
 				String value = this.prefs.getString(key, null);
