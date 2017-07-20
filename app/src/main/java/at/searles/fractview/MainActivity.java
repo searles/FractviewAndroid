@@ -219,7 +219,7 @@ public class MainActivity extends Activity
 		Log.d("MA", "on save instance called in MA");
 
 		// FIXME make sure that fractal is compilable!
-		bitmapFragment.getArguments().putBundle("fractal", BundleAdapter.fractalToBundle(bitmapFragment.fractal()));
+		bitmapFragment.getArguments().putBundle(SourcesListActivity.FRACTAL_INDENT_LABEL, BundleAdapter.fractalToBundle(bitmapFragment.fractal()));
 
 		// Always call the superclass so it can save the view hierarchy state
 		super.onSaveInstanceState(savedInstanceState);
@@ -388,7 +388,7 @@ public class MainActivity extends Activity
 
 			case R.id.action_parameters: {
 				Intent i = new Intent(MainActivity.this, ParameterEditorActivity.class);
-				i.putExtra("fractal", BundleAdapter.fractalToBundle(bitmapFragment.fractal()));
+				i.putExtra(SourcesListActivity.FRACTAL_INDENT_LABEL, BundleAdapter.fractalToBundle(bitmapFragment.fractal()));
 				startActivityForResult(i, PARAMETER_ACTIVITY_RETURN);
 			} return true;
 
@@ -401,7 +401,7 @@ public class MainActivity extends Activity
 			case R.id.action_presets: {
 				// show new activity
 				Intent i = new Intent(MainActivity.this, SourcesListActivity.class);
-				i.putExtra("fractal", BundleAdapter.fractalToBundle(bitmapFragment.fractal()));
+				i.putExtra(SourcesListActivity.FRACTAL_INDENT_LABEL, BundleAdapter.fractalToBundle(bitmapFragment.fractal()));
 				startActivityForResult(i, PRESETS_ACTIVITY_RETURN);
 			} return true;
 
@@ -686,12 +686,12 @@ public class MainActivity extends Activity
 				}
 			} else if (requestCode == BOOKMARK_ACTIVITY_RETURN) {
 				if (resultCode == 1) { // = "a fractal was selected"
-					Fractal newFractal = data.getParcelableExtra("fractal");
+					Fractal newFractal = BundleAdapter.bundleToFractal(data.getBundleExtra(SourcesListActivity.FRACTAL_INDENT_LABEL));
 					setNewFractal(newFractal);
 				}
 			} else if (requestCode == PRESETS_ACTIVITY_RETURN) {
 				if (resultCode == 1) {
-					Fractal newFractal = data.getParcelableExtra("fractal");
+					Fractal newFractal = BundleAdapter.bundleToFractal(data.getBundleExtra(SourcesListActivity.FRACTAL_INDENT_LABEL));
 					setNewFractal(newFractal);
 				}
 			}

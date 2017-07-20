@@ -220,7 +220,7 @@ public class BitmapFragment extends Fragment {
 		}
 
 		// and also the fractal.
-		this.fractal = getArguments().getParcelable("fractal");
+		this.fractal = BundleAdapter.bundleToFractal(getArguments().getBundle(SourcesListActivity.FRACTAL_INDENT_LABEL));
 
 		if(this.fractal == null) throw new IllegalArgumentException("no fractal in arguments!");
 

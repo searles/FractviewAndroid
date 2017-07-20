@@ -173,62 +173,42 @@ The following operations are applied component-wise to cplx and quat.
 
 ### Special functions for complex and quat numbers
 	
-		cons(
-			new Signature().r(Type.real).r(Type.real).w(Type.cplx),
-			new Signature().r(Type.real).r(Type.real).r(Type.real).r(Type.real).w(Type.quat)
+* cons: Creates either a cplx out of two real arguments (mostly using the infix operator `:`)
+or a `quat` out of four.
+* re: real part of a cplx. Also written as `value.x`.
+* im: imaginary part of a cply. Also written as `value.y`.
+* rad: Absolute value of a complex number.
+* rad2: Squared absolute of a complex number. Faster than `rad` and with double precision.
+* dist2(
+			new Signature().r(Type.cplx).r(Type.cplx).w(Type.real)
+	) {
+* dist(
+			new Signature().r(Type.cplx).r(Type.cplx).w(Type.real)
+	) {
+* arc: Argument of a complex number. Uses 32 bit precision. Value ranges from -pi to +pi.
+* arcnorm(
+			new Signature().r(Type.cplx).w(Type.real)
+	) {
+* polar(
+			new Signature().r(Type.cplx).w(Type.cplx)
 	) {
 
-	
-	re(
+* rect(
+			new Signature().r(Type.cplx).w(Type.cplx)
+	) {
+
 			new Signature().r(Type.cplx).w(Type.real)
 	) {
-	im(
-			new Signature().r(Type.cplx).w(Type.real)
-	) {
-	rad2(
-			new Signature().r(Type.cplx).w(Type.real)
-	) {
-	rad(
-			new Signature().r(Type.cplx).w(Type.real)
-	) {
-	arc(
-			new Signature().r(Type.cplx).w(Type.real)
-	) {
-	scalarmul(
+* scalarmul(
 			new Signature().r(Type.cplx).r(Type.cplx).w(Type.cplx)
-	},	arcnorm(
-			new Signature().r(Type.cplx).w(Type.real)
-	) {
-
-	polar(
-			new Signature().r(Type.cplx).w(Type.cplx)
-	) {
-
-	rect(
-			new Signature().r(Type.cplx).w(Type.cplx)
-	) {
-
-	dist2(
-			new Signature().r(Type.cplx).r(Type.cplx).w(Type.real)
-	) {
-	dist(
-			new Signature().r(Type.cplx).r(Type.cplx).w(Type.real)
-	) {
-	conj(
-			new Signature().r(Type.cplx).w(Type.cplx)
-	) {
-		@NonNull
-		@Override
-		public Tree eval(List<Tree> arguments) {
-			return unaryEval(arguments);
-		}
-
-		@Override
-		String generateCase(Signature signature, List<Value> values) {
-			return generateExprCase(name(), signature, values);
-		}
 	},
-	dot(
+
+
+* conj(
+			new Signature().r(Type.cplx).w(Type.cplx)
+	) {
+	},
+* dot(
 			new Signature().r(Type.cplx).r(Type.cplx).w(Type.real)
 	) {
 	rabs(
