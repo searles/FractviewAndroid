@@ -129,6 +129,17 @@ public class Commons {
         throw new IllegalArgumentException("not yet implemented");
     }
 
+    public static byte[] toPNG(Bitmap bitmap) {
+        ByteArrayOutputStream byteArrayBitmapStream = new ByteArrayOutputStream();
+        bitmap.compress(Bitmap.CompressFormat.PNG, 100, byteArrayBitmapStream);
+        return byteArrayBitmapStream.toByteArray();
+    }
+
+    public static Bitmap fromPNG(byte[] data) {
+        ByteArrayOutputStream byteArrayBitmapStream = new ByteArrayOutputStream();
+        return BitmapFactory.decodeByteArray(data, 0, data.length);
+    }
+
     /**
      * Converts a term to a palette
      * @param t

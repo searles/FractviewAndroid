@@ -1,9 +1,7 @@
 package at.searles.fractview;
 
 import android.app.Activity;
-import android.app.AlertDialog;
 import android.content.Context;
-import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.graphics.Bitmap;
@@ -40,26 +38,11 @@ public class FavoritesListActivity extends Activity {
 
 	public static final String FAVORITES_SHARED_PREF = "favorites";
 
-
 	private static final String[] options = {"Rename", "Delete", "Copy To Clipboard"};
-
-	private SharedPrefsHelper prefsHelper;
 
 	private FavoritesListAdapter adapter;
 
-	private void initData() {
-		Map<String, ?> sharedPrefs = prefsHelper.getAll();
-
-		for(String key : sharedPrefs.keySet()) {
-			String specification = (String) sharedPrefs.get(key);
-
-			FavoriteEntry entry = Serializers.serializer().fromJson(specification, FavoriteEntry.class);
-
-			adapter.add(entry);
-		}
-
-		adapter.notifyDataSetChanged();
-	}
+	// FIXME rename, delete, copy
 
 	@Override
 	public void onCreate(Bundle savedInstanceState) {
@@ -69,8 +52,6 @@ public class FavoritesListActivity extends Activity {
 		ListView lv = (ListView) findViewById(R.id.bookmarkListView);
 
 		this.adapter = new FavoritesListAdapter(this);
-
-		initData();
 
 		lv.setAdapter(adapter);
 
@@ -85,58 +66,6 @@ public class FavoritesListActivity extends Activity {
 				data.putExtra("fractal", BundleAdapter.fractalToBundle(entry.fractal()));
 				setResult(1, data);
 				finish();
-			}
-		});
-
-		lv.setOnItemLongClickListener(new AdapterView.OnItemLongClickListener() {
-			@Override
-			public boolean onItemLongClick(AdapterView<?> adapterView, final View view, final int index, long id) {
-				AlertDialog.Builder builder = new AlertDialog.Builder(FavoritesListActivity.this);
-
-				builder.setTitle("Choose an option");
-				builder.setItems(options, new DialogInterface.OnClickListener() {
-					@Override
-					public void onClick(DialogInterface dialog, int which) {
-						FavoriteEntry entry = adapter.getItem(index);
-
-						switch (which) {
-							case 0: {
-                                // Show dialog for new name
-								DialogHelper.inputText(FavoritesListActivity.this, "Rename entry", entry.title(), new Commons.KeyAction() {
-									@Override
-									public void apply(String newKey) {
-										prefsHelper.rename(entry.title(), newKey, SharedPrefsHelper.SaveMethod.FindNext, FavoritesListActivity.this);
-										initData(); // reinitialize because order might have changed
-									}
-								});
-							}
-							break;
-							case 1: {
-								// delete it
-								prefsHelper.remove(entry.title(), FavoritesListActivity.this);
-								initData();
-							}
-							break;
-							case 2: {
-								// copy to clipboard
-								ClipboardHelper.copyFractal(view.getContext(), entry.fractal());
-							}
-							break;
-						}
-					}
-				});
-
-				builder.setNegativeButton("Cancel", new DialogInterface.OnClickListener() {
-					@Override
-					public void onClick(DialogInterface dialogInterface, int which) {
-						// just dismiss it.
-						dialogInterface.dismiss();
-					}
-				});
-
-				builder.show();
-
-				return true;
 			}
 		});
 
@@ -206,7 +135,7 @@ public class FavoritesListActivity extends Activity {
 		}
 	}
 
-	private class FavoritesListAdapter extends FractalListAdapter<FavoriteEntry> {
+	private static class FavoritesListAdapter extends FractalListAdapter<FavoriteEntry> {
 
 		private final SharedPreferences prefs;
 
@@ -243,32 +172,36 @@ public class FavoritesListActivity extends Activity {
 		public FavoriteEntry getItem(int position) {
 			String key = jsonEntries.keyAt(position);
 
-			if(!this.entries.containsKey(key)) {
-				String json = jsonEntries.get(key);
-				FavoriteEntry entry = Serializers.serializer().fromJson()
+			FavoriteEntry entry = this.entries.get(key);
+
+			if(entry == null) {
+				String json = jsonEntries.valueAt(position);
+				entry = Serializers.serializer().fromJson(json, FavoriteEntry.class);
+
+				this.entries.put(key, entry);
 			}
 
-			return null;
+			return entry;
 		}
 
 		@Override
 		public Bitmap getIcon(int position) {
-			return null;
+			return getItem(position).icon();
 		}
 
 		@Override
 		public String getTitle(int position) {
-			return null;
+			return getItem(position).title();
 		}
 
 		@Override
 		public String getDescription(int position) {
-			return null;
+			return getItem(position).description();
 		}
 
 		@Override
 		public void showOptions(int position) {
-
+			// FIXME
 		}
 	}
 }

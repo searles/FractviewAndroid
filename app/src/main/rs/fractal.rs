@@ -19,9 +19,9 @@ static double4 __attribute__((overloadable)) convert_quat(double2 d) { return (d
 static long __attribute__((overloadable)) dbl2bits(double d) { return *((long*) &d); }
 static double __attribute__((overloadable)) bits2dbl(long l) { return *((double*) &l); }
 
-static long __attribute__((overloadable)) mantissa(double d) { dbl2bits(d) & 0x000fffffffffffffL; }
-static int __attribute__((overloadable)) exponent(double d) { ((dbl2bits(d) & 0x7FF0000000000000L) >> 52) - 1023; }
-static double __attribute__((overloadable)) fromRaw(long mantissa, int exponent) { 
+static long __attribute__((overloadable)) mantissa(double d) { return dbl2bits(d) & 0x000fffffffffffffL; }
+static int __attribute__((overloadable)) exponent(double d) { return ((dbl2bits(d) & 0x7FF0000000000000L) >> 52) - 1023; }
+static double __attribute__((overloadable)) fromRaw(long mantissa, long exponent) {
 	if(exponent > 1024) {
 		// this is infinity
 		 return bits2dbl(0x7ff0000000000000L);

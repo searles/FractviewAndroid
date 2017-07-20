@@ -1,5 +1,7 @@
 package at.searles.fractal.gson;
 
+import android.graphics.Bitmap;
+
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.JsonArray;
@@ -17,8 +19,9 @@ import java.lang.reflect.Type;
 import java.util.HashMap;
 import java.util.Map;
 
-import at.searles.fractal.Fractal;
 import at.searles.fractal.FavoriteEntry;
+import at.searles.fractal.Fractal;
+import at.searles.fractview.Commons;
 import at.searles.math.Cplx;
 import at.searles.math.Scale;
 import at.searles.math.color.Palette;
@@ -43,7 +46,7 @@ public class Serializers {
             gsonBuilder.registerTypeAdapter(Scale.class, new ScaleAdapter());
             gsonBuilder.registerTypeAdapter(Palette.class, new PaletteAdapter());
             gsonBuilder.registerTypeAdapter(Fractal.class, new FractalAdapter());
-            gsonBuilder.registerTypeAdapter(FavoriteEntry.class, new FractalEntryAdapter());
+            gsonBuilder.registerTypeAdapter(FavoriteEntry.class, new FavoriteEntryAdapter());
 
             gson = gsonBuilder.create();
         }
@@ -152,7 +155,7 @@ public class Serializers {
 
     // Next is FavoritesEntry
 
-    public static class FractalEntryAdapter implements JsonDeserializer<FavoriteEntry>, JsonSerializer<FavoriteEntry> {
+    public static class FavoriteEntryAdapter implements JsonDeserializer<FavoriteEntry>, JsonSerializer<at.searles.fractal.FavoriteEntry> {
         private static final String FRACTAL_LABEL = "fractal";
         private static final String ICON_LABEL = "icon"; // this is optional
         private static final String TITLE_LABEL = "title";
@@ -166,11 +169,12 @@ public class Serializers {
 
             JsonElement iconJson = obj.get(ICON_LABEL);
 
-            byte[] iconBinary = null;
+            Bitmap icon = null;
 
             if(iconJson != null) {
                 String iconBase64 = iconJson.getAsString();
-                iconBinary = Base64.decodeBase64(iconBase64);
+                byte[] iconBinary = Base64.decodeBase64(iconBase64);
+                icon = Commons.fromPNG(iconBinary);
             }
 
             JsonElement titleJson = obj.get(TITLE_LABEL);
@@ -179,7 +183,7 @@ public class Serializers {
             String title = titleJson == null ? null : titleJson.getAsString();
             String description = descriptionJson == null ? null : descriptionJson.getAsString();
 
-            return new FavoriteEntry(title, iconBinary, fractal, description);
+            return new FavoriteEntry(title, icon, fractal, description);
         }
 
         @Override
@@ -189,7 +193,7 @@ public class Serializers {
             obj.addProperty(TITLE_LABEL, entry.title());
 
             // encode icon byte stream as Base64
-            byte[] icon = entry.iconBinary();
+            byte[] icon = Commons.toPNG(entry.icon());
             obj.addProperty(ICON_LABEL, Base64.encodeBase64String(icon));
 
             obj.add(FRACTAL_LABEL, context.serialize(entry.fractal(), Fractal.class));

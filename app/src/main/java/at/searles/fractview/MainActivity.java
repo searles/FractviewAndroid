@@ -32,12 +32,11 @@ import android.widget.Toast;
 
 import org.jetbrains.annotations.NotNull;
 
-import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.util.HashMap;
 
-import at.searles.fractal.Fractal;
 import at.searles.fractal.FavoriteEntry;
+import at.searles.fractal.Fractal;
 import at.searles.fractal.android.BundleAdapter;
 import at.searles.fractal.gson.Serializers;
 import at.searles.fractview.ui.BitmapFragmentView;
@@ -651,12 +650,7 @@ public class MainActivity extends Activity
 		// create icon out of bitmap
 		Bitmap icon = bitmapFragment.createIcon(ICON_SIZE);
 
-		// create byte-stream of compressed png.
-		ByteArrayOutputStream byteArrayBitmapStream = new ByteArrayOutputStream();
-		icon.compress(Bitmap.CompressFormat.PNG, 100, byteArrayBitmapStream);
-		byte[] iconPngStream = byteArrayBitmapStream.toByteArray();
-
-		FavoriteEntry fav = new FavoriteEntry(name, iconPngStream, fractal, Commons.timestamp());
+		FavoriteEntry fav = new FavoriteEntry(name, icon, fractal, Commons.timestamp());
 
 		String entryString = Serializers.serializer().toJson(fav);
 

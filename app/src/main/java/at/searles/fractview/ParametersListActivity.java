@@ -1,13 +1,10 @@
 package at.searles.fractview;
 
 import android.app.Activity;
-import android.content.Context;
 import android.content.Intent;
-import android.content.SharedPreferences;
 import android.content.res.AssetManager;
 import android.graphics.Bitmap;
 import android.os.Bundle;
-import android.util.Log;
 import android.view.View;
 import android.widget.AdapterView;
 import android.widget.Button;
@@ -32,8 +29,6 @@ public class ParametersListActivity extends Activity {
 
     private Fractal inFractal;
 
-    private ParameterListAdapter adapter;
-
     // FIXME: First current, then assets, then elements stored in shared preference.
     // FIXME: Show only those, that are compilable with source
 
@@ -54,22 +49,22 @@ public class ParametersListActivity extends Activity {
             throw new IllegalArgumentException(e);
         }
 
-        initEntries();
-
         ListView lv = (ListView) findViewById(R.id.fractalListView);
 
-        final FractalListAdapter adapter = new FractalListAdapter(this);
+        final ParameterListAdapter adapter = new ParameterListAdapter(this, inFractal);
 
         lv.setAdapter(adapter);
 
         lv.setOnItemClickListener(new AdapterView.OnItemClickListener() {
             @Override
             public void onItemClick(AdapterView<?> parent, View view, int index, long id) {
-                Fractal outFractal = adapter.getFractal(index);
+                ParameterEntry selected = adapter.getItem(index);
+
+                Fractal outFractal = inFractal.copyNewData(selected.parameters, true);
 
                 Intent data = new Intent();
 
-                data.putExtra(FRACTAL_LABEL, BundleAdapter.fractalToBundle(outFractal));
+                data.putExtra(SourcesListActivity.FRACTAL_INDENT_LABEL, BundleAdapter.fractalToBundle(outFractal));
                 setResult(1, data);
                 finish();
             }
@@ -86,9 +81,7 @@ public class ParametersListActivity extends Activity {
     }
 
     private void initEntries() {
-        // Step 1: Parse sourceCode of currentFractal (this one will remain unchanged)
-        currentFractal.parse();
-
+        // Fractal is parsed in onCreate.
         /*
          * Entry 0: Current.
          * Entry 1-n: Presets. Options allow to edit. If edited, then 'current' is set to '[name] (modified)'
@@ -99,21 +92,21 @@ public class ParametersListActivity extends Activity {
          */
     }
 
-    private class ParameterListAdapter extends FractalListAdapter<ParameterEntry> {
+    private static class ParameterListAdapter extends FractalListAdapter<ParameterEntry> {
 
         private ParameterEntry inEntry;
         private ArrayList<ParameterEntry> customEntries;
-        private final SharedPreferences prefs;
+        // FIXME private final SharedPreferences prefs;
 
         public ParameterListAdapter(Activity context, Fractal inFractal) {
             super(context);
             inEntry = new ParameterEntry("Current", null, "", inFractal.parameterMap());
             // FIXME put PREFS_NAME into resource file
-            this.prefs = context.getSharedPreferences(
+            /*this.prefs = context.getSharedPreferences(
                     SourceEditorActivity.PREFS_NAME,
                     Context.MODE_PRIVATE);
             initEntries(context.getAssets());
-            initializeCustomEntries();
+            initializeCustomEntries();*/
         }
 
         private void initializeCustomEntries() {
@@ -123,7 +116,9 @@ public class ParametersListActivity extends Activity {
                 this.customEntries.clear();
             }
 
-            for(String key : prefs.getAll().keySet()) {
+            // No format yet for prefs.
+
+            /*for(String key : prefs.getAll().keySet()) {
                 String source = prefs.getString(key, null);
 
                 if(source == null) {
@@ -131,16 +126,21 @@ public class ParametersListActivity extends Activity {
                 } else {
                     this.customEntries.add(new SourcesListActivity.SourceEntry(key, null, null, source));
                 }
-            }
+            }*/
         }
 
         @Override
         public int getCount() {
-            return 1 + _ENTRIES.size() + customEntries.size();
+            return 1 + _ENTRIES.size();
         }
 
         @Override
         public ParameterEntry getItem(int position) {
+            if(position == 0) {
+                return inEntry;
+            } else {
+                return _ENTRIES.get(position - 1);
+            }
         }
 
         @Override
