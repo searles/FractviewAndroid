@@ -16,40 +16,27 @@ static double4 __attribute__((overloadable)) convert_quat(int d) { return (doubl
 static double4 __attribute__((overloadable)) convert_quat(double d) { return (double4) {d, 0, 0, 0}; }
 static double4 __attribute__((overloadable)) convert_quat(double2 d) { return (double4) {d.x, d.y, 0, 0}; }
 
+static long __attribute__((overloadable)) dbl2bits(double d) { return *((long*) &d); }
+static double __attribute__((overloadable)) bits2dbl(long l) { return *((double*) &l); }
 
-// fixme only float available...
-static double __attribute__((overloadable)) sqrt(double d) {
-	return sqrt((float) d);
-	/*if(d < 0) return nan(0); // not a number.
-
-	double ret;
-
-	if(d > 3.4e38) {
-		// divide until below this bound.
-		// avoid such situations. They are complex.
-		// normally one should use frexp/ldexp but
-		// they are not implemented for doubles.
-		// so, get at least close
-		ret = ret / (d > 1e256 ? 1e192 : d > 1e128 ? 1e96 : d > 1e64 ? 1e48 : 1e24);
+static long __attribute__((overloadable)) mantissa(double d) { dbl2bits(d) & 0x000fffffffffffffL; }
+static int __attribute__((overloadable)) exponent(double d) { ((dbl2bits(d) & 0x7FF0000000000000L) >> 52) - 1023; }
+static double __attribute__((overloadable)) fromRaw(long mantissa, int exponent) { 
+	if(exponent > 1024) {
+		// this is infinity
+		 return bits2dbl(0x7ff0000000000000L);
+	} else if(exponent < 1023) {
+		// this is 0
+		return 0.;
 	} else {
-		// use float sqrt as initial guess.
-		ret = sqrt((float) d);
+		return bits2dbl(mantissa | ((exponent + 1023) << 52));
 	}
-
-    double dhalf = d / 2;
-
-    for(int i = 0; i < 10; ++i) {
-        double nret = ret / 2 + dhalf / ret;
-        if(nret == ret) return nret;
-        ret = nret;
-    }
-
-    return ret;*/
 }
 
-
-static double __attribute__((overloadable)) atan2(double y, double x) { return atan2((float) y, (float) x); }
-static double __attribute__((overloadable)) log(double f) { return log((float) f); }
+// fixme only float available...
+static double __attribute__((overloadable)) sqrt(double d) { return sqrt((float) d); } // FIXME
+static double __attribute__((overloadable)) atan2(double y, double x) { return atan2((float) y, (float) x); } // FIXME allow larger values
+static double __attribute__((overloadable)) log(double f) { return log((float) f); } // FIXME adapt to
 static double __attribute__((overloadable)) exp(double f) { return exp((float) f); }
 static double __attribute__((overloadable)) sin(double f) { return sin((float) f); }
 static double __attribute__((overloadable)) cos(double f) { return cos((float) f); }
