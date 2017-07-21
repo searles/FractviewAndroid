@@ -534,20 +534,6 @@ public class MainActivity extends Activity
         }
     }
 
-	/*@Override
-	public void initValueRequest(int requestCode, EditableDialogFragment fragment, View view) {
-		switch(requestCode) {
-			case 1: {
-				fragment.setValue(12, view);
-			} break;
-			case 2: {
-				fragment.setValue(24, view);
-			} break;
-			default:
-				throw new IllegalArgumentException("bad request code: " + requestCode);
-		}
-	}*/
-
 	private void saveImage() {
         DialogHelper.inputCustom(this, "Enter filename", R.layout.save_image_layout,
                 new DialogHelper.DialogFunction() {
@@ -609,33 +595,6 @@ public class MainActivity extends Activity
                 });
 	}
 
-	// Labels for EditableDialogFragment
-	/*private static final int IMAGE_SIZE = 2; // dialog to change image resolution
-
-	@Override
-	public void apply(int resourceCode, Object o) {
-		switch (resourceCode) {
-			case IMAGE_SIZE: {
-                // FIXME Is this still used???
-				int[] retVal = (int[]) o;
-
-				int w = retVal[0], h = retVal[1];
-				boolean setAsDefault = retVal[2] == 1;
-
-				if(w == bitmapFragment.width() && h == bitmapFragment.height()) {
-					Toast.makeText(this, "size not changed", Toast.LENGTH_SHORT).show();
-
-					if(setAsDefault) storeDefaultSize(w, h);
-				} else {
-					// call editor
-					bitmapFragment.setSize(w, h, setAsDefault);
-				}
-			} break;
-			default:
-				throw new IllegalArgumentException("Did not expect this: " + resourceCode);
-		}
-	}*/
-
 	private static final int ICON_SIZE = 64;
 
 	private void saveFavorite(String name) {
@@ -648,7 +607,7 @@ public class MainActivity extends Activity
 		Fractal fractal = bitmapFragment.fractal();
 
 		// create icon out of bitmap
-		Bitmap icon = bitmapFragment.createIcon(ICON_SIZE);
+		Bitmap icon = Commons.createIcon(bitmapFragment.getBitmap(), ICON_SIZE);
 
 		FavoriteEntry fav = new FavoriteEntry(name, icon, fractal, Commons.timestamp());
 
@@ -681,7 +640,7 @@ public class MainActivity extends Activity
 		if(data != null) {
 			if (requestCode == PARAMETER_ACTIVITY_RETURN) {
 				if (resultCode == 1) { // = "Ok"
-					Fractal newFractal = data.getParcelableExtra("parameters");
+					Fractal newFractal = BundleAdapter.bundleToFractal(data.getBundleExtra(SourcesListActivity.FRACTAL_INDENT_LABEL));
 					setNewFractal(newFractal);
 				}
 			} else if (requestCode == BOOKMARK_ACTIVITY_RETURN) {
@@ -709,7 +668,7 @@ public class MainActivity extends Activity
 		if(bitmapFragment.historyIsEmpty()) {
 			if(warnedAboutHistoryEmpty) return false;
 			else {
-				Toast.makeText(this, "History is empty", Toast.LENGTH_SHORT).show();
+				Toast.makeText(this, "No elements left in history.", Toast.LENGTH_SHORT).show();
 				warnedAboutHistoryEmpty = true;
 				return true;
 			}

@@ -149,9 +149,9 @@ public class ParameterEditorActivity extends Activity implements EditableDialogF
 
 		if(savedInstanceState == null) {
 			Intent intent = getIntent();
-			this.fractal = intent.getParcelableExtra("fractal");
+			this.fractal = BundleAdapter.bundleToFractal(intent.getBundleExtra(SourcesListActivity.FRACTAL_INDENT_LABEL));
 		} else {
-			this.fractal = savedInstanceState.getParcelable("fractal");
+			this.fractal = BundleAdapter.bundleToFractal(savedInstanceState.getBundle(SourcesListActivity.FRACTAL_INDENT_LABEL));
 		}
 
 		if(this.fractal == null) {
@@ -455,7 +455,7 @@ public class ParameterEditorActivity extends Activity implements EditableDialogF
 			@Override
 			public void onClick(View view) {
 				Intent data = new Intent();
-				data.putExtra("parameters", BundleAdapter.fractalToBundle(fractal));
+				data.putExtra(SourcesListActivity.FRACTAL_INDENT_LABEL, BundleAdapter.fractalToBundle(fractal));
 				setResult(1, data);
 				finish();
 			}
@@ -465,7 +465,7 @@ public class ParameterEditorActivity extends Activity implements EditableDialogF
 	@Override
 	public void onSaveInstanceState(@NotNull Bundle savedInstanceState) {
 		// Save the user's current game state
-		savedInstanceState.putBundle("fractal", BundleAdapter.fractalToBundle(fractal));
+		savedInstanceState.putBundle(SourcesListActivity.FRACTAL_INDENT_LABEL, BundleAdapter.fractalToBundle(fractal));
 
 		// Always call the superclass so it can save the view hierarchy state
 		super.onSaveInstanceState(savedInstanceState);

@@ -191,6 +191,11 @@ public class FavoritesListActivity extends Activity {
 				}
 			}
 
+			if(entry.title() == null) {
+				// Work-around - in old versions there was no title in here.
+				entry.setTitle(key);
+			}
+
 			return entry;
 		}
 

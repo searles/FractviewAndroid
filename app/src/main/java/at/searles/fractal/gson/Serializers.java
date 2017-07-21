@@ -11,6 +11,7 @@ import com.google.gson.JsonDeserializer;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParseException;
+import com.google.gson.JsonPrimitive;
 import com.google.gson.JsonSerializationContext;
 import com.google.gson.JsonSerializer;
 
@@ -166,9 +167,9 @@ public class Serializers {
             JsonObject obj = (JsonObject) json;
             Fractal fractal = context.deserialize(obj.get(FRACTAL_LABEL), Fractal.class);
 
-            JsonElement iconJson = obj.get(ICON_LABEL);
-
             Bitmap icon = null;
+
+            JsonElement iconJson = obj.get(ICON_LABEL);
 
             if(iconJson != null) {
                 String iconBase64 = iconJson.getAsString();
@@ -176,10 +177,25 @@ public class Serializers {
                 icon = Commons.fromPNG(iconBinary);
             }
 
+            String title = null;
+
             JsonElement titleJson = obj.get(TITLE_LABEL);
+
+            // There was a bug so that in some cases title contains a fractal, hence a work-around
+            // Keep it to prevent crashes because of past app versions.
+
+            if(titleJson != null) {
+                if(titleJson.isJsonPrimitive()) {
+                    JsonPrimitive jsonPrimitive = titleJson.getAsJsonPrimitive();
+
+                    if(jsonPrimitive.isString()) {
+                        title = jsonPrimitive.getAsString();
+                    }
+                }
+            }
+
             JsonElement descriptionJson = obj.get(DESCRIPTION_LABEL);
 
-            String title = titleJson == null ? null : titleJson.getAsString();
             String description = descriptionJson == null ? null : descriptionJson.getAsString();
 
             return new FavoriteEntry(title, icon, fractal, description);

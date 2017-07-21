@@ -51,16 +51,22 @@ public class SavePlugin implements BitmapFragmentPlugin, BitmapFragment.BitmapFr
     }
 
     public static SavePlugin createSave(File file) {
-        return new SavePlugin((fragment) -> {
-            SavePlugin.saveImage(file, fragment);
-            // this is executed after saving was successful
-            // Add it to the gallery
-            Commons.uiRun(() -> {
-                Intent mediaScanIntent = new Intent(Intent.ACTION_MEDIA_SCANNER_SCAN_FILE);
-                Uri contentUri = Uri.fromFile(file);
-                mediaScanIntent.setData(contentUri);
-                fragment.getActivity().sendBroadcast(mediaScanIntent);
-            });
+        return new SavePlugin(new Action() {
+            @Override
+            public void apply(BitmapFragment fragment) {
+                SavePlugin.saveImage(file, fragment);
+                // this is executed after saving was successful
+                // Add it to the gallery
+                Commons.uiRun(new Runnable() {
+                    @Override
+                    public void run() {
+                        Intent mediaScanIntent = new Intent(Intent.ACTION_MEDIA_SCANNER_SCAN_FILE);
+                        Uri contentUri = Uri.fromFile(file);
+                        mediaScanIntent.setData(contentUri);
+                        fragment.getActivity().sendBroadcast(mediaScanIntent);
+                    }
+                });
+            }
         });
     }
 

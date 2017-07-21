@@ -38,4 +38,9 @@ public class FavoriteEntry {
 	public Fractal fractal() {
 		return fractal;
 	}
+
+	public void setTitle(String title) {
+		// Immutable because in old versions there was no title here.
+		this.title = title;
+	}
 }

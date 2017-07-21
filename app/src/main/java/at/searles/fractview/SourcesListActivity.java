@@ -1,13 +1,10 @@
 package at.searles.fractview;
 
 import android.app.Activity;
-import android.content.Context;
 import android.content.Intent;
-import android.content.SharedPreferences;
 import android.content.res.AssetManager;
 import android.graphics.Bitmap;
 import android.os.Bundle;
-import android.util.Log;
 import android.view.View;
 import android.widget.AdapterView;
 import android.widget.Button;
@@ -121,8 +118,8 @@ public class SourcesListActivity extends Activity {
 	private static class SourceListAdapter extends FractalListAdapter<SourceEntry> {
 
 		private SourceEntry inEntry;
-		private ArrayList<SourceEntry> customEntries;
-		private final SharedPreferences prefs;
+		//private ArrayList<SourceEntry> customEntries;
+		//private final SharedPreferences prefs;
 
 		public SourceListAdapter(Activity context, Fractal inFractal) {
 			super(context);
@@ -130,14 +127,14 @@ public class SourcesListActivity extends Activity {
 			this.inEntry = new SourceEntry("Current", null, "Current source", inFractal.sourceCode());
 
 			// FIXME put PREFS_NAME into resource file
-			this.prefs = context.getSharedPreferences(
+			/*this.prefs = context.getSharedPreferences(
 					SourceEditorActivity.PREFS_NAME,
 					Context.MODE_PRIVATE);
 			initEntries(context.getAssets());
-			initializeCustomEntries();
+			initializeCustomEntries();*/
 		}
 
-		private void initializeCustomEntries() {
+		/*private void initializeCustomEntries() {
 			if(this.customEntries == null) {
 				this.customEntries = new ArrayList<>();
 			} else {
@@ -153,22 +150,22 @@ public class SourcesListActivity extends Activity {
 					this.customEntries.add(new SourceEntry(key, null, null, source));
 				}
 			}
-		}
+		}*/
 
 		@Override
 		public int getCount() {
-			return 1 + _ENTRIES.size() + customEntries.size();
+			return 1 + _ENTRIES.size();// + customEntries.size();
 		}
 
 		@Override
 		public SourceEntry getItem(int position) {
 			if(position == 0) {
 				return inEntry;
-			} else if(position < 1 + _ENTRIES.size()) {
+			} else /*if(position < 1 + _ENTRIES.size())*/ {
 				return _ENTRIES.get(position - 1);
-			} else {
+			} /*else {
 				return customEntries.get(position - _ENTRIES.size() - 1);
-			}
+			}*/
 		}
 
 		@Override

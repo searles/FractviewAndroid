@@ -10,11 +10,8 @@ import android.os.Looper;
 
 import java.io.ByteArrayOutputStream;
 import java.text.SimpleDateFormat;
-import java.util.Collections;
 import java.util.Date;
 import java.util.HashMap;
-import java.util.LinkedList;
-import java.util.List;
 import java.util.Map;
 
 import at.searles.math.Scale;
@@ -151,54 +148,71 @@ public class Commons {
             throw new CompileException("Missing list value");
         }
 
-        LinkedList<List<Integer>> p = new LinkedList<List<Integer>>();
-
-        int w = 0, h = 0;
+        int w, h;
+        int colors[];
 
         if(t instanceof Tree.Vec) {
-            for(Tree arg : (Tree.Vec) t) {
-                List<Integer> row = new LinkedList<Integer>();
+            Tree.Vec vec = (Tree.Vec) t;
 
-                if(arg instanceof Tree.Vec) {
-                    for(Tree item : (Tree.Vec) arg) {
-                        if(item instanceof Value.Int) {
-                            row.add(((Value.Int) item).value);
+            if(vec.size() > 0) {
+                Tree element = vec.get(0);
+
+                if(element instanceof Tree.Vec) {
+                    // two dimensional palette.
+                    h = vec.size();
+                    w = ((Tree.Vec) element).size();
+
+                    colors = new int[w * h];
+
+                    int y = 0;
+
+                    for(Tree row : vec) {
+                        if(row instanceof Tree.Vec) {
+                            if(((Tree.Vec) row).size() == w) {
+                                for(int x = 0; x < w; ++x) {
+                                    Tree color = ((Tree.Vec) row).get(x);
+
+                                    if(color instanceof Value.Int) {
+                                        colors[x + y * w] = ((Value.Int) color).value;
+                                    } else {
+                                        throw new CompileException("invalid entry in palette");
+                                    }
+                                }
+                            }
                         } else {
-                            throw new CompileException("int was expected here");
+                            throw new CompileException("invalid row in palette");
+                        }
+
+                        y++;
+                    }
+                } else if(element instanceof Value.Int) {
+                    // just one row.
+                    h = 1;
+                    w = vec.size();
+
+                    colors = new int[w];
+
+                    for(int x = 0; x < w; ++x) {
+                        Tree color = vec.get(x);
+
+                        if(color instanceof Value.Int) {
+                            colors[x] = ((Value.Int) color).value;
+                        } else {
+                            throw new CompileException("invalid entry in palette row");
                         }
                     }
-                } else if(arg instanceof Value.Int) {
-                    row.add(((Value.Int) arg).value);
                 } else {
-                    throw new CompileException("int was expected here");
+                    throw new CompileException("invalid row in palette");
                 }
-
-                if(row.isEmpty()) {
-                    throw new CompileException("no empty row allowed in palette");
-                }
-
-                if(w < row.size()) w = row.size();
-
-
-                p.add(row);
-                h++;
+            } else {
+                throw new CompileException("palette must not be empty");
             }
         } else if(t instanceof Value.Int) {
             w = h = 1;
-            p.add(Collections.singletonList(((Value.Int) t).value));
-        }
-
-        // p now contains lists of lists, h and w contain width and height.
-        int[] colors = new int[h * w];
-
-        int y = 0;
-
-        for(List<Integer> row : p) {
-            int i = 0;
-
-            for(Integer color : row) {
-                colors[i++] = color;
-            }
+            colors = new int[1];
+            colors[0] = ((Value.Int) t).value;
+        } else {
+            throw new CompileException("invalid palette");
         }
 
         return new Palette(w, h, colors);
@@ -216,28 +230,26 @@ public class Commons {
 
 
 
-    private static final int ICON_LEN = 64;
-
     /**
      * creates a new bitmap with size 64x64 containing the center of the current image
      * @return
      */
-    private static Bitmap createIcon(Bitmap original) {
+    public static Bitmap createIcon(Bitmap original, int iconSize) {
         // FIXME Move somewhere else!
         // create a square icon. Should  only contain central square.
-        Bitmap icon = Bitmap.createBitmap(ICON_LEN, ICON_LEN, Bitmap.Config.ARGB_8888);
+        Bitmap icon = Bitmap.createBitmap(iconSize, iconSize, Bitmap.Config.ARGB_8888);
 
         Canvas canvas = new Canvas(icon);
 
-        float scale = ((float) ICON_LEN) / Math.min(original.getWidth(), original.getHeight());
+        float scale = ((float) iconSize) / Math.min(original.getWidth(), original.getHeight());
 
         float w = original.getWidth();
         float h = original.getHeight();
 
         Matrix transformation = new Matrix();
         transformation.setValues(new float[]{
-                scale, 0, (ICON_LEN - scale * w) * .5f,
-                0, scale, (ICON_LEN - scale * h) * .5f,
+                scale, 0, (iconSize - scale * w) * .5f,
+                0, scale, (iconSize - scale * h) * .5f,
                 0, 0, 1,
         });
 
@@ -248,22 +260,4 @@ public class Commons {
 
         return icon;
     }
-
-    private static byte[] getBitmapBinary(Bitmap bitmapPicture) {
-        // FIXME Move somewhere else!
-        // Thanks to http://mobile.cs.fsu.edu/converting-images-to-json-objects/
-        ByteArrayOutputStream byteArrayBitmapStream = new ByteArrayOutputStream();
-        bitmapPicture.compress(Bitmap.CompressFormat.PNG, 100, byteArrayBitmapStream);
-        return byteArrayBitmapStream.toByteArray();
-    }
-
-    /**
-     * Convert a Base64 encoded icon to a bitmap
-     * @return
-     */
-    private static Bitmap getBitmapFromBinary(byte[] binaryData) {
-        // Thanks to http://mobile.cs.fsu.edu/converting-images-to-json-objects/
-        return BitmapFactory.decodeByteArray(binaryData, 0, binaryData.length);
-    }
-
 }
