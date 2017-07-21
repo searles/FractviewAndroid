@@ -7,6 +7,7 @@ import android.content.SharedPreferences;
 import android.graphics.Bitmap;
 import android.net.Uri;
 import android.os.Bundle;
+import android.util.Log;
 import android.view.Menu;
 import android.view.MenuInflater;
 import android.view.MenuItem;
@@ -159,6 +160,9 @@ public class FavoritesListActivity extends Activity {
 
 				if(value != null) {
 					this.jsonEntries.add(key, value);
+					System.out.println("===" + key + "===\n\n" + value + "\n\n\n");
+				} else {
+					Log.e(getClass().getName(), "Value for key " + key + " was null!");
 				}
 			}
 
@@ -178,9 +182,13 @@ public class FavoritesListActivity extends Activity {
 
 			if(entry == null) {
 				String json = jsonEntries.valueAt(position);
-				entry = Serializers.serializer().fromJson(json, FavoriteEntry.class);
 
-				this.entries.put(key, entry);
+				try {
+					entry = Serializers.serializer().fromJson(json, FavoriteEntry.class);
+					this.entries.put(key, entry);
+				} catch (Throwable th) {
+					entry = null;
+				}
 			}
 
 			return entry;

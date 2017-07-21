@@ -177,7 +177,7 @@ public class Serializers {
             }
 
             JsonElement titleJson = obj.get(TITLE_LABEL);
-            JsonElement descriptionJson = obj.get(TITLE_LABEL);
+            JsonElement descriptionJson = obj.get(DESCRIPTION_LABEL);
 
             String title = titleJson == null ? null : titleJson.getAsString();
             String description = descriptionJson == null ? null : descriptionJson.getAsString();
