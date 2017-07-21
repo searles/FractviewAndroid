@@ -157,7 +157,7 @@ public class BundleAdapter {
         }
 
         for(String key : boolBundle.keySet()) {
-            data.put(key, new Fractal.Parameter(Fractal.Type.Bool, intBundle.getBoolean(key)));
+            data.put(key, new Fractal.Parameter(Fractal.Type.Bool, boolBundle.getBoolean(key)));
         }
 
         for(String key : exprBundle.keySet()) {

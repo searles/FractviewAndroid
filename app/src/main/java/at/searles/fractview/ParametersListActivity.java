@@ -36,7 +36,7 @@ public class ParametersListActivity extends Activity {
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.preset_parameters);
+        setContentView(R.layout.parameters_list_layout);
 
         Intent intent = getIntent();
         this.inFractal = BundleAdapter.bundleToFractal(intent.getBundleExtra(SourcesListActivity.FRACTAL_INDENT_LABEL));
@@ -49,7 +49,7 @@ public class ParametersListActivity extends Activity {
             throw new IllegalArgumentException(e);
         }
 
-        ListView lv = (ListView) findViewById(R.id.fractalListView);
+        ListView lv = (ListView) findViewById(R.id.parametersListView);
 
         final ParameterListAdapter adapter = new ParameterListAdapter(this, inFractal);
 
@@ -101,15 +101,16 @@ public class ParametersListActivity extends Activity {
         public ParameterListAdapter(Activity context, Fractal inFractal) {
             super(context);
             inEntry = new ParameterEntry("Current", null, "", inFractal.parameterMap());
+            initEntries(context.getAssets());
             // FIXME put PREFS_NAME into resource file
             /*this.prefs = context.getSharedPreferences(
                     SourceEditorActivity.PREFS_NAME,
                     Context.MODE_PRIVATE);
-            initEntries(context.getAssets());
+
             initializeCustomEntries();*/
         }
 
-        private void initializeCustomEntries() {
+        /*private void initializeCustomEntries() {
             if(this.customEntries == null) {
                 this.customEntries = new ArrayList<>();
             } else {
@@ -126,8 +127,8 @@ public class ParametersListActivity extends Activity {
                 } else {
                     this.customEntries.add(new SourcesListActivity.SourceEntry(key, null, null, source));
                 }
-            }*/
-        }
+            }*
+        }*/
 
         @Override
         public int getCount() {

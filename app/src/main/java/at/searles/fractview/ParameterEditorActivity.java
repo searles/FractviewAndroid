@@ -7,6 +7,7 @@ import android.content.DialogInterface;
 import android.content.Intent;
 import android.graphics.Typeface;
 import android.os.Bundle;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.MenuInflater;
@@ -473,8 +474,6 @@ public class ParameterEditorActivity extends Activity implements EditableDialogF
 
 	@Override
 	protected void onActivityResult(int requestCode, int resultCode, Intent data) {
-		// TODO I should also be able to use this one for dialogs?
-
 		super.onActivityResult(requestCode, resultCode, data);
 
 		if (requestCode == PaletteActivity.PALETTE_ACTIVITY_RETURN) {
@@ -549,7 +548,7 @@ public class ParameterEditorActivity extends Activity implements EditableDialogF
 			elements.clear();
 
 			// First add scale.
-			elements.add(new Pair<>("Scale", Fractal.Type.Scale));
+			// elements.add(new Pair<>("Scale", Fractal.Type.Scale));
 
 			for(String id : fractal.parameters()) {
 				elements.add(new Pair<>(id, fractal.get(id).type()));
@@ -635,11 +634,12 @@ public class ParameterEditorActivity extends Activity implements EditableDialogF
 						case Real: text2.setText("Real Number"); break;
 						case Cplx: text2.setText("Complex Number"); break;
 						case Color: text2.setText("Color"); break;
-						case Palette: text2.setText("Palette"); break;
+                        case Palette: text2.setText("Palette"); break;
+                        case Scale: text2.setText("Scale"); break;
+                        default: Log.e(getClass().getName(), "missing label for " + e.b);
 					}
 				} break;
 			}
-
 
 			return view;
 		}

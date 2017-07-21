@@ -126,11 +126,12 @@ public class SourcesListActivity extends Activity {
 
 			this.inEntry = new SourceEntry("Current", null, "Current source", inFractal.sourceCode());
 
+			initEntries(context.getAssets());
+
 			// FIXME put PREFS_NAME into resource file
 			/*this.prefs = context.getSharedPreferences(
 					SourceEditorActivity.PREFS_NAME,
 					Context.MODE_PRIVATE);
-			initEntries(context.getAssets());
 			initializeCustomEntries();*/
 		}
 

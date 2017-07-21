@@ -79,12 +79,12 @@ public class Fractal implements ExternalData {
 	 * @param parameters
 	 */
 	public Fractal(String sourceCode, Map<String, Parameter> parameters) {
-		if(sourceCode == null || parameters == null) {
+		if(sourceCode == null) {
 			throw new NullPointerException();
 		}
 
 		this.sourceCode = sourceCode;
-		this.data = parameters;
+		this.data = parameters == null ? new HashMap<>() : parameters;
 	}
 
 	/**
@@ -195,7 +195,7 @@ public class Fractal implements ExternalData {
 
 	public void setScale(Scale sc) {
 		// The default scale that is used for the zoom
-		data.put(SCALE_KEY, new Parameter(Type.Scale, sc));
+		setScale(SCALE_KEY, sc);
 	}
 
 	/**

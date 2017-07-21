@@ -64,10 +64,15 @@ public class FavoritesListActivity extends Activity {
 				// get bookmark
 				FavoriteEntry entry = adapter.getItem(index);
 
-				Intent data = new Intent();
-				data.putExtra("fractal", BundleAdapter.fractalToBundle(entry.fractal()));
-				setResult(1, data);
-				finish();
+				if(entry.fractal() != null) {
+					// This is due to a bug in an old  version.
+					Intent data = new Intent();
+					data.putExtra(SourcesListActivity.FRACTAL_INDENT_LABEL, BundleAdapter.fractalToBundle(entry.fractal()));
+					setResult(1, data);
+					finish();
+				} else {
+					DialogHelper.error(FavoritesListActivity.this, "not available. If you think it should be, please provide feedback.");
+				}
 			}
 		});
 

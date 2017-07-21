@@ -6,7 +6,6 @@ import android.graphics.Bitmap;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.BaseAdapter;
-import android.widget.Button;
 import android.widget.ImageView;
 import android.widget.TextView;
 
@@ -49,14 +48,14 @@ public abstract class FractalListAdapter<A> extends BaseAdapter {
             view = context.getLayoutInflater().inflate(R.layout.fractal_entry_layout, null);
 
             // set listener in optionsButton
-            Button optionsButton = (Button) view.findViewById(R.id.optionsButton);
+            /*Button optionsButton = (Button) view.findViewById(R.id.optionsButton);
 
             optionsButton.setOnClickListener(new View.OnClickListener() {
                 @Override
                 public void onClick(View v) {
                     showOptions(index);
                 }
-            });
+            });*/
         }
 
         ImageView iconView = (ImageView) view.findViewById(R.id.iconView);
