@@ -4,6 +4,7 @@ import android.app.Activity;
 import android.app.AlertDialog;
 import android.app.WallpaperManager;
 import android.content.Context;
+import android.content.DialogInterface;
 import android.content.Intent;
 import android.graphics.Bitmap;
 import android.net.Uri;
@@ -140,8 +141,18 @@ public class SavePlugin implements BitmapFragmentPlugin, BitmapFragment.BitmapFr
                 // Can cancel and skip
                 builder.setTitle("Rendering not finished");
                 builder.setMessage("Image will be saved after rendering is finished.");
-                builder.setNeutralButton("Save Now", (dialog, which) -> performSaveOperation());
-                builder.setNegativeButton("Cancel", (dialog, which) -> dispose());
+                builder.setNeutralButton("Save Now", new DialogInterface.OnClickListener() {
+                    @Override
+                    public void onClick(DialogInterface dialog, int which) {
+                        performSaveOperation();
+                    }
+                });
+                builder.setNegativeButton("Cancel", new DialogInterface.OnClickListener() {
+                    @Override
+                    public void onClick(DialogInterface dialog, int which) {
+                        dispose();
+                    }
+                });
             } break;
             case SAVING: {
                 builder.setTitle("Saving image");
