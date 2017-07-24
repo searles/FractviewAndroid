@@ -1,3 +1,5 @@
+# Function Reference
+
 ## Extended operations
 
 These operations are not hardcoded in the virtual machine but instead they are expanded
