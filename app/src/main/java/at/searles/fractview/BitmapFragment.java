@@ -361,7 +361,11 @@ public class BitmapFragment extends Fragment {
 	}
 
 	public void setFractal(Fractal f) {
-		edit(() -> setFractalUnsafe(f));
+		edit(new Runnable() {
+			public void run() {
+				setFractalUnsafe(f);
+			}
+		});
 	}
 
 	private void setFractalUnsafe(Fractal f) {

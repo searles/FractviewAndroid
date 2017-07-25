@@ -217,7 +217,9 @@ public class Fractal implements ExternalData {
 	public Fractal copyNewScale(Scale newScale) {
         HashMap<String, Parameter> newData = new HashMap<String, Parameter>();
         newData.put(SCALE_KEY, new Parameter(Type.Scale, newScale));
-		return copyNewData(newData, true);
+		Fractal newFractal = copyNewData(newData, true);
+		newFractal.code = this.code;
+		return newFractal;
 	}
 
 	/**

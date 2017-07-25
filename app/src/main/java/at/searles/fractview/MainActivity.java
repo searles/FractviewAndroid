@@ -355,13 +355,15 @@ public class MainActivity extends Activity
 
 								// Image size is set in a runnable because there might be an additional
 								// check that allows cancellation on low memory.
-								Runnable setSizeRunnable = () -> {
-									if(setAsDefault) storeDefaultSize(w, h);
+								Runnable setSizeRunnable = new Runnable() {
+									public void run() {
+										if(setAsDefault) storeDefaultSize(w, h);
 
-									if(w == bitmapFragment.width() && h == bitmapFragment.height()) {
-										DialogHelper.info(((AlertDialog) d).getContext(), "size not changed");
-									} else {
-										bitmapFragment.setSize(w, h);
+										if(w == bitmapFragment.width() && h == bitmapFragment.height()) {
+											DialogHelper.info(((AlertDialog) d).getContext(), "size not changed");
+										} else {
+											bitmapFragment.setSize(w, h);
+										}
 									}
 								};
 
