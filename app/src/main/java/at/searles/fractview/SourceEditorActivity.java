@@ -160,7 +160,7 @@ public class SourceEditorActivity extends Activity implements EditableDialogFrag
 	public boolean onCreateOptionsMenu(Menu menu) {
 		// Inflate the menu items for use in the action bar
 		MenuInflater inflater = getMenuInflater();
-		inflater.inflate(R.menu.program_activity_actions, menu);
+		inflater.inflate(R.menu.activity_source_editor, menu);
 		return super.onCreateOptionsMenu(menu);
 	}
 

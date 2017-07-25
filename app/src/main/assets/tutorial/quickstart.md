@@ -21,9 +21,9 @@ Fractview uses a framework called Renderscript to generate images. A compiler cr
 All exported data use easily readable Json that can also be manipulated.
 
 * Further reading:
-	+ [User Interface and Menus](): More details on the user interface
-	+ [Creating Custom Fractals](): Modify parameters to your liking
-	+ [Function Reference](): All functions implemented.
+	+ [User Interface and Menus](ui.html): More details on the user interface
+	+ [Creating Custom Fractals](custom.html): Modify parameters to your liking
+	+ [Function Reference](functionref.html): All functions implemented.
 
 Please refer to [the blog](http://fractview.wordpress.com) for further topics on the app. 
 

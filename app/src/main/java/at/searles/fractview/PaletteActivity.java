@@ -121,7 +121,7 @@ public class PaletteActivity extends Activity implements EditableDialogFragment.
 	public boolean onCreateOptionsMenu(Menu menu) {
 		// Inflate the menu items for use in the action bar
 		MenuInflater inflater = getMenuInflater();
-		inflater.inflate(R.menu.palette_activity_actions, menu);
+		inflater.inflate(R.menu.activity_palette, menu);
 		return super.onCreateOptionsMenu(menu);
 	}
 

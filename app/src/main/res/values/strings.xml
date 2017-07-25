@@ -57,4 +57,5 @@
     <string name="action_export_palette">Copy to Clipboard</string>
     <string name="rotation_lock">Rotation Lock</string>
     <string name="action_gui_settings">UI Settings</string>
+    <string name="action_tutorial">Tutorial</string>
 </resources>

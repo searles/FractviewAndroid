@@ -39,4 +39,7 @@
     <item android:id="@+id/action_gui_settings"
           android:title="@string/action_gui_settings"
         />
+    <item android:id="@+id/action_tutorial"
+          android:title="@string/action_tutorial"
+        />
 </menu>

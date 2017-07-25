@@ -42,6 +42,7 @@ import at.searles.fractal.gson.Serializers;
 import at.searles.fractview.ui.BitmapFragmentView;
 import at.searles.fractview.ui.DialogHelper;
 import at.searles.meelan.CompileException;
+import at.searles.tutorial.TutorialActivity;
 
 
 // Activity is the glue between BitmapFragment and Views.
@@ -236,7 +237,7 @@ public class MainActivity extends Activity
 	public boolean onCreateOptionsMenu(Menu menu) {
 		// Inflate the menu items for use in the action bar
 		MenuInflater inflater = getMenuInflater();
-		inflater.inflate(R.menu.main_activity_actions, menu);
+		inflater.inflate(R.menu.activity_main, menu);
 
 		return super.onCreateOptionsMenu(menu);
 	}
@@ -529,6 +530,12 @@ public class MainActivity extends Activity
 				builder.show();
 
 
+			} return true;
+
+			case R.id.action_tutorial: {
+				// show new activity
+				Intent i = new Intent(MainActivity.this, TutorialActivity.class);
+				startActivity(i);
 			} return true;
 
             default:

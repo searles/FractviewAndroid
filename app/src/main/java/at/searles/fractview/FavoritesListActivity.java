@@ -90,7 +90,7 @@ public class FavoritesListActivity extends Activity {
 	public boolean onCreateOptionsMenu(Menu menu) {
 		// Inflate the menu items for use in the action bar
 		MenuInflater inflater = getMenuInflater();
-		inflater.inflate(R.menu.favorites_activity_actions, menu);
+		inflater.inflate(R.menu.activity_favorites, menu);
 		return super.onCreateOptionsMenu(menu);
 	}
 
