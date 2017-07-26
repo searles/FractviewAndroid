@@ -73,6 +73,12 @@ public class BitmapFragment extends Fragment {
     private int height, width;
 	private Fractal fractal;
 	private Bitmap bitmap;
+    
+    
+	/**
+	 * List of past fractals that were drawn using this bitmap fragment.
+	 */
+	private History history;
 
 	// Now the drawing stuff
 	private Drawer drawer;
@@ -111,10 +117,6 @@ public class BitmapFragment extends Fragment {
 	}
 
 
-	/**
-	 * List of past fractals that were drawn using this bitmap fragment.
-	 */
-	private History history = new History();
 
 	@Override
 	public void onAttach(Activity context) {
@@ -234,6 +236,11 @@ public class BitmapFragment extends Fragment {
 			e.printStackTrace();
 			throw new IllegalArgumentException("initial fractal is not compilable: " + e.getMessage());
 		}
+        
+                
+        // initialize history with first fractal.
+        this.history = new History();
+        this.history.addToHistory(this.fractal);
 
 		// initialize drawer. This might take some time, thus do it from
 		// a plugin.
