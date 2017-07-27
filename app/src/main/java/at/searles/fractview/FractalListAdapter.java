@@ -2,6 +2,7 @@ package at.searles.fractview;
 
 
 import android.app.Activity;
+import android.content.res.Resources;
 import android.graphics.Bitmap;
 import android.view.View;
 import android.view.ViewGroup;
@@ -17,9 +18,11 @@ import android.widget.TextView;
 public abstract class FractalListAdapter<A> extends BaseAdapter {
 
     private final Activity context;
+    private Resources.Theme theme;
 
     public FractalListAdapter(Activity context) {
         this.context = context;
+        this.theme = context.getTheme();
     }
 
     @Override
@@ -45,17 +48,7 @@ public abstract class FractalListAdapter<A> extends BaseAdapter {
     public View getView(int index, View view, ViewGroup parent) {
         if (view == null) {
             // fixme avoid passing null
-            view = context.getLayoutInflater().inflate(R.layout.fractal_entry_layout, null);
-
-            // set listener in optionsButton
-            /*Button optionsButton = (Button) view.findViewById(R.id.optionsButton);
-
-            optionsButton.setOnClickListener(new View.OnClickListener() {
-                @Override
-                public void onClick(View v) {
-                    showOptions(index);
-                }
-            });*/
+            view = context.getLayoutInflater().inflate(R.layout.list_entry_with_icon, null);
         }
 
         ImageView iconView = (ImageView) view.findViewById(R.id.iconView);

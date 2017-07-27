@@ -8,10 +8,12 @@ import android.graphics.Bitmap;
 import android.net.Uri;
 import android.os.Bundle;
 import android.util.Log;
+import android.view.ActionMode;
 import android.view.Menu;
 import android.view.MenuInflater;
 import android.view.MenuItem;
 import android.view.View;
+import android.widget.AbsListView;
 import android.widget.AdapterView;
 import android.widget.Button;
 import android.widget.ListView;
@@ -26,6 +28,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.TreeSet;
 
 import at.searles.fractal.FavoriteEntry;
 import at.searles.fractal.android.BundleAdapter;
@@ -43,6 +46,11 @@ public class FavoritesListActivity extends Activity {
 	private static final String[] options = {"Rename", "Delete", "Copy To Clipboard"};
 
 	private FavoritesListAdapter adapter;
+
+	/**
+	 * Selected elements
+	 */
+	private TreeSet<Integer> selected;
 
 	// FIXME rename, delete, copy
 
@@ -73,6 +81,50 @@ public class FavoritesListActivity extends Activity {
 				} else {
 					DialogHelper.error(FavoritesListActivity.this, "not available. If you think it should be, please provide feedback.");
 				}
+			}
+		});
+
+		/*lv.setOnItemLongClickListener(new AdapterView.OnItemLongClickListener() {
+			@Override
+			public boolean onItemLongClick(AdapterView<?> parent, View view, int position, long id) {
+				adapter.toggleSelected(position);
+
+				// FIXME Check whether mode changed
+				// There is a context dialog to rename or delete items.
+
+				return true;
+			}
+		});*/
+
+		// Enable selection mode
+		lv.setChoiceMode(ListView.CHOICE_MODE_MULTIPLE_MODAL);
+
+		lv.setMultiChoiceModeListener(new AbsListView.MultiChoiceModeListener() {
+			@Override
+			public void onItemCheckedStateChanged(ActionMode mode, int position, long id, boolean checked) {
+				Log.d(getClass().getName(), position + " selected = " + checked);
+			}
+
+			@Override
+			public boolean onCreateActionMode(ActionMode mode, Menu menu) {
+				MenuInflater inflater = mode.getMenuInflater();
+				inflater.inflate(R.menu.context_favorites, menu);
+				return true;
+			}
+
+			@Override
+			public boolean onPrepareActionMode(ActionMode mode, Menu menu) {
+				return false;
+			}
+
+			@Override
+			public boolean onActionItemClicked(ActionMode mode, MenuItem item) {
+				return false;
+			}
+
+			@Override
+			public void onDestroyActionMode(ActionMode mode) {
+
 			}
 		});
 
