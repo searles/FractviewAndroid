@@ -8,6 +8,7 @@ import android.graphics.Bitmap;
 import android.net.Uri;
 import android.os.Bundle;
 import android.util.Log;
+import android.util.SparseBooleanArray;
 import android.view.ActionMode;
 import android.view.Menu;
 import android.view.MenuInflater;
@@ -26,9 +27,9 @@ import java.io.FileWriter;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
-import java.util.TreeSet;
 
 import at.searles.fractal.FavoriteEntry;
 import at.searles.fractal.android.BundleAdapter;
@@ -50,7 +51,7 @@ public class FavoritesListActivity extends Activity {
 	/**
 	 * Selected elements
 	 */
-	private TreeSet<Integer> selected;
+	private ListView listView;
 
 	// FIXME rename, delete, copy
 
@@ -59,13 +60,30 @@ public class FavoritesListActivity extends Activity {
 		super.onCreate(savedInstanceState);
 		setContentView(R.layout.fractal_list_activity_layout);
 
-		ListView lv = (ListView) findViewById(R.id.fractalListView);
-
 		this.adapter = new FavoritesListAdapter(this);
 
-		lv.setAdapter(adapter);
+		initListView();
 
-		lv.setOnItemClickListener(new AdapterView.OnItemClickListener() {
+		initCloseButton();
+	}
+
+	private void initCloseButton() {
+		Button closeButton = (Button) findViewById(R.id.closeButton);
+		closeButton.setOnClickListener(new View.OnClickListener() {
+			@Override
+			public void onClick(View view) {
+				// end this activity.
+				FavoritesListActivity.this.finish();
+			}
+		});
+	}
+
+	private void initListView() {
+		this.listView = (ListView) findViewById(R.id.fractalListView);
+
+		listView.setAdapter(adapter);
+
+		listView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
 			// On click return the selected fractal.
 			@Override
 			public void onItemClick(AdapterView<?> parent, View view, int index, long id) {
@@ -84,31 +102,18 @@ public class FavoritesListActivity extends Activity {
 			}
 		});
 
-		/*lv.setOnItemLongClickListener(new AdapterView.OnItemLongClickListener() {
-			@Override
-			public boolean onItemLongClick(AdapterView<?> parent, View view, int position, long id) {
-				adapter.toggleSelected(position);
-
-				// FIXME Check whether mode changed
-				// There is a context dialog to rename or delete items.
-
-				return true;
-			}
-		});*/
-
 		// Enable selection mode
-		lv.setChoiceMode(ListView.CHOICE_MODE_MULTIPLE_MODAL);
+		listView.setChoiceMode(ListView.CHOICE_MODE_MULTIPLE_MODAL);
 
-		lv.setMultiChoiceModeListener(new AbsListView.MultiChoiceModeListener() {
+		listView.setMultiChoiceModeListener(new AbsListView.MultiChoiceModeListener() {
 			@Override
 			public void onItemCheckedStateChanged(ActionMode mode, int position, long id, boolean checked) {
-				Log.d(getClass().getName(), position + " selected = " + checked);
 			}
 
 			@Override
 			public boolean onCreateActionMode(ActionMode mode, Menu menu) {
 				MenuInflater inflater = mode.getMenuInflater();
-				inflater.inflate(R.menu.context_favorites, menu);
+				inflater.inflate(R.menu.activity_favorites_selected, menu);
 				return true;
 			}
 
@@ -119,6 +124,21 @@ public class FavoritesListActivity extends Activity {
 
 			@Override
 			public boolean onActionItemClicked(ActionMode mode, MenuItem item) {
+				switch(item.getItemId()) {
+					case R.id.action_select_all: {
+						selectAll();
+					} return true;
+					case R.id.action_rename: {
+						// TODO
+					} return true;
+					case R.id.action_delete: {
+						// TODO
+					} return true;
+					case R.id.action_export: {
+						// TODO
+					} return true;
+				}
+
 				return false;
 			}
 
@@ -127,15 +147,26 @@ public class FavoritesListActivity extends Activity {
 
 			}
 		});
+	}
 
-		Button closeButton = (Button) findViewById(R.id.closeButton);
-		closeButton.setOnClickListener(new View.OnClickListener() {
-			@Override
-			public void onClick(View view) {
-				// end this activity.
-				FavoritesListActivity.this.finish();
+	private List<FavoriteEntry> selected() {
+		List<FavoriteEntry> elements = new LinkedList<>();
+
+		SparseBooleanArray checkedItemPositions = listView.getCheckedItemPositions();
+
+		for(int i = 0; i < checkedItemPositions.size(); ++i) {
+			if(checkedItemPositions.get(i)) {
+				elements.add(adapter.getItem(i));
 			}
-		});
+		}
+
+		return elements;
+	}
+
+	private void selectAll() {
+		for(int i = 0; i < adapter.getCount(); ++i) {
+			listView.setItemChecked(i, true);
+		}
 	}
 
 	@Override
@@ -150,48 +181,51 @@ public class FavoritesListActivity extends Activity {
 	public boolean onOptionsItemSelected(MenuItem item) {
 		// Handle presses on the action bar items
 		switch (item.getItemId()) {
-			case R.id.action_export_collection: {
-
-				// Fetch map from adapter
-				List<FavoriteEntry> entries = new ArrayList<>(adapter.getCount());
-
-				for(int i = 0; i < adapter.getCount(); ++i) {
-					FavoriteEntry entry = adapter.getItem(i);
-					entries.add(entry);
-				}
-
-				try {
-					File textFile = File.createTempFile("fractview_collection-" + Commons.timestamp(),
-							".fv", this.getExternalCacheDir()); // extension fv for fractview
-
-					BufferedWriter bw = new BufferedWriter(new FileWriter(textFile));
-
-					JsonWriter writer = new JsonWriter(bw);
-
-					writer.setIndent("  ");
-
-					Serializers.serializer().toJson(entries, ArrayList.class, writer);
-
-					writer.close();
-
-					// Share text file
-					Uri contentUri = Uri.fromFile(textFile);
-					// after it was successfully saved, share it.
-					Intent share = new Intent(Intent.ACTION_SEND);
-					share.setType("text/plain");
-					share.putExtra(Intent.EXTRA_STREAM, contentUri);
-					startActivity(Intent.createChooser(share, "Share Collection"));
-				} catch (IOException e) {
-					e.printStackTrace();
-					DialogHelper.error(this, e.getMessage());
-				}
-			} return true;
 			case R.id.action_import_collection: {
 				// FIXME
+			} return true;
+			case R.id.action_select_all: {
+				selectAll();
 			} return true;
 			default:
 				return super.onOptionsItemSelected(item);
 		}
+	}
+
+	private void export(int selectedElements[]) {
+		// Fetch map from adapter
+		List<FavoriteEntry> entries = new ArrayList<>(adapter.getCount());
+
+		for(int selected : selectedElements) {
+            FavoriteEntry entry = adapter.getItem(selected);
+            entries.add(entry);
+        }
+
+		try {
+            File textFile = File.createTempFile("fractview_collection-" + Commons.timestamp(),
+                    ".fv", this.getExternalCacheDir()); // extension fv for fractview
+
+            BufferedWriter bw = new BufferedWriter(new FileWriter(textFile));
+
+            JsonWriter writer = new JsonWriter(bw);
+
+            writer.setIndent("  ");
+
+            Serializers.serializer().toJson(entries, ArrayList.class, writer);
+
+            writer.close();
+
+            // Share text file
+            Uri contentUri = Uri.fromFile(textFile);
+            // after it was successfully saved, share it.
+            Intent share = new Intent(Intent.ACTION_SEND);
+            share.setType("text/plain");
+            share.putExtra(Intent.EXTRA_STREAM, contentUri);
+            startActivity(Intent.createChooser(share, "Share Collection"));
+        } catch (IOException e) {
+            e.printStackTrace();
+            DialogHelper.error(this, e.getMessage());
+        }
 	}
 
 	private static class FavoritesListAdapter extends FractalListAdapter<FavoriteEntry> {
@@ -217,7 +251,6 @@ public class FavoritesListActivity extends Activity {
 
 				if(value != null) {
 					this.jsonEntries.add(key, value);
-					System.out.println("===" + key + "===\n\n" + value + "\n\n\n");
 				} else {
 					Log.e(getClass().getName(), "Value for key " + key + " was null!");
 				}
@@ -242,15 +275,11 @@ public class FavoritesListActivity extends Activity {
 
 				try {
 					entry = Serializers.serializer().fromJson(json, FavoriteEntry.class);
+					entry.setTitle(key);
 					this.entries.put(key, entry);
 				} catch (Throwable th) {
 					entry = null;
 				}
-			}
-
-			if(entry.title() == null) {
-				// Work-around - in old versions there was no title in here.
-				entry.setTitle(key);
 			}
 
 			return entry;
@@ -269,11 +298,6 @@ public class FavoritesListActivity extends Activity {
 		@Override
 		public String getDescription(int position) {
 			return getItem(position).description();
-		}
-
-		@Override
-		public void showOptions(int position) {
-			// FIXME
 		}
 	}
 }

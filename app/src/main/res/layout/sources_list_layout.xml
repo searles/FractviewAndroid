@@ -10,13 +10,6 @@
         android:id="@+id/sourceListView"
         android:layout_weight="1" />
 
-
-    <CheckBox
-        android:layout_width="fill_parent"
-        android:layout_height="wrap_content"
-        android:text="Use Defaults"
-        android:id="@+id/useDefaultsCheckBox" />
-
     <Button
         android:layout_width="fill_parent"
         android:layout_height="wrap_content"

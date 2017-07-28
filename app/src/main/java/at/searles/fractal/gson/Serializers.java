@@ -11,7 +11,6 @@ import com.google.gson.JsonDeserializer;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParseException;
-import com.google.gson.JsonPrimitive;
 import com.google.gson.JsonSerializationContext;
 import com.google.gson.JsonSerializer;
 
@@ -158,7 +157,6 @@ public class Serializers {
     public static class FavoriteEntryAdapter implements JsonDeserializer<FavoriteEntry>, JsonSerializer<at.searles.fractal.FavoriteEntry> {
         private static final String FRACTAL_LABEL = "fractal";
         private static final String ICON_LABEL = "icon"; // this is optional
-        private static final String TITLE_LABEL = "title";
         private static final String DESCRIPTION_LABEL = "description"; // this is optional
 
         @Override
@@ -177,35 +175,16 @@ public class Serializers {
                 icon = Commons.fromPNG(iconBinary);
             }
 
-            String title = null;
-
-            JsonElement titleJson = obj.get(TITLE_LABEL);
-
-            // There was a bug so that in some cases title contains a fractal, hence a work-around
-            // Keep it to prevent crashes because of past app versions.
-
-            if(titleJson != null) {
-                if(titleJson.isJsonPrimitive()) {
-                    JsonPrimitive jsonPrimitive = titleJson.getAsJsonPrimitive();
-
-                    if(jsonPrimitive.isString()) {
-                        title = jsonPrimitive.getAsString();
-                    }
-                }
-            }
-
             JsonElement descriptionJson = obj.get(DESCRIPTION_LABEL);
 
             String description = descriptionJson == null ? null : descriptionJson.getAsString();
 
-            return new FavoriteEntry(title, icon, fractal, description);
+            return new FavoriteEntry(icon, fractal, description);
         }
 
         @Override
         public JsonElement serialize(FavoriteEntry entry, Type typeOfSrc, JsonSerializationContext context) {
             JsonObject obj = new JsonObject();
-
-            obj.addProperty(TITLE_LABEL, entry.title());
 
             // encode icon byte stream as Base64
             byte[] icon = Commons.toPNG(entry.icon());

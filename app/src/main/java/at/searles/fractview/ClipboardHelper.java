@@ -7,6 +7,7 @@ import android.widget.Toast;
 
 import at.searles.fractal.Fractal;
 import at.searles.fractal.gson.Serializers;
+import at.searles.fractview.ui.DialogHelper;
 
 /**
  * Created by searles on 17.01.17.
@@ -24,7 +25,7 @@ public class ClipboardHelper {
         if(pasteText != null) {
             return Serializers.serializer().fromJson(pasteText.toString(), Fractal.class);
         } else {
-            // TODO
+            DialogHelper.error(context, "Clipboard is empty");
             return null;
         }
     }
@@ -32,7 +33,7 @@ public class ClipboardHelper {
 
 
     public static void copy(Context context, String copyText) {
-        ClipboardManager clipboard = (ClipboardManager) context.getSystemService(context.CLIPBOARD_SERVICE);
+        ClipboardManager clipboard = (ClipboardManager) context.getSystemService(Context.CLIPBOARD_SERVICE);
         ClipData clip = ClipData.newPlainText("fractview", copyText);
         clipboard.setPrimaryClip(clip);
     }
@@ -42,7 +43,7 @@ public class ClipboardHelper {
      * @return null if clipboard was empty
      */
     public static CharSequence paste(Context context) {
-        ClipboardManager clipboard = (ClipboardManager) context.getSystemService(context.CLIPBOARD_SERVICE);
+        ClipboardManager clipboard = (ClipboardManager) context.getSystemService(Context.CLIPBOARD_SERVICE);
 
         if(!clipboard.hasPrimaryClip()) {
             Toast.makeText(context, "Clipboard is empty", Toast.LENGTH_LONG).show();

@@ -8,15 +8,12 @@ import android.os.Bundle;
 import android.view.View;
 import android.widget.AdapterView;
 import android.widget.Button;
-import android.widget.CheckBox;
 import android.widget.ListView;
 
 import java.util.ArrayList;
 
 import at.searles.fractal.Fractal;
 import at.searles.fractal.android.BundleAdapter;
-import at.searles.fractview.ui.DialogHelper;
-import at.searles.meelan.CompileException;
 
 /**
  * Source shows up here in the following order:
@@ -42,58 +39,9 @@ public class SourcesListActivity extends Activity {
 		Intent intent = getIntent();
 		this.inFractal = BundleAdapter.bundleToFractal(intent.getBundleExtra(FRACTAL_INDENT_LABEL));
 
-		// and since it is sorted, use it to write label-map.
-		ListView lv = (ListView) findViewById(R.id.sourceListView);
-
-		CheckBox useDefaultsCheckBox = (CheckBox) findViewById(R.id.useDefaultsCheckBox);
-
-		// wrap the favorites-adapter so that first
 		this.adapter = new SourceListAdapter(this, inFractal);
 
-		lv.setAdapter(adapter);
-
-		lv.setOnItemClickListener(new AdapterView.OnItemClickListener() {
-			@Override
-			public void onItemClick(AdapterView<?> parent, View view, int index, long id) {
-				// FIXME if selection mode then select and unselect.
-				SourceEntry entry = adapter.getItem(index);
-
-				boolean useDefaults = useDefaultsCheckBox.isChecked();
-
-				Fractal outFractal;
-
-				if(useDefaults) {
-					outFractal = new Fractal(entry.source, null);
-				} else {
-					// compile it to assure that it works.
-					outFractal = new Fractal(entry.source, inFractal.parameterMap());
-
-					try {
-						outFractal.compile();
-					} catch (CompileException e) {
-						DialogHelper.error(SourcesListActivity.this, "Compile error (select \"useDefaults\" to avoid)\n" + e.getMessage());
-						outFractal = null;
-					}
-				}
-
-				if(outFractal != null) {
-					// Start new Parameter activity and put this source code inside.
-					Intent i = new Intent(SourcesListActivity.this,
-							ParametersListActivity.class);
-					i.putExtra(FRACTAL_INDENT_LABEL, BundleAdapter.fractalToBundle(outFractal));
-					startActivityForResult(i, PRESETS_PARAMETERS_RETURN);
-				}
-			}
-		});
-
-		lv.setOnItemLongClickListener(new AdapterView.OnItemLongClickListener() {
-		  @Override
-		  public boolean onItemLongClick(AdapterView<?> adapterView, View view, int index, long id) {
-			  // Select this entry
-
-			  return true;
-		  }
-	  	});
+		initListView();
 
 		Button closeButton = (Button) findViewById(R.id.closeButton);
 		closeButton.setOnClickListener(new View.OnClickListener() {
@@ -101,6 +49,28 @@ public class SourcesListActivity extends Activity {
 			public void onClick(View view) {
 				// end this activity.
 				SourcesListActivity.this.finish();
+			}
+		});
+	}
+
+	private void initListView() {
+		// and since it is sorted, use it to write label-map.
+		ListView lv = (ListView) findViewById(R.id.sourceListView);
+
+		lv.setAdapter(adapter);
+
+		lv.setOnItemClickListener(new AdapterView.OnItemClickListener() {
+			@Override
+			public void onItemClick(AdapterView<?> parent, View view, int index, long id) {
+				SourceEntry entry = adapter.getItem(index);
+
+				Fractal outFractal = new Fractal(entry.source, inFractal.parameterMap());
+
+				// Start new Parameter activity and put this source code inside.
+				Intent i = new Intent(SourcesListActivity.this,
+						ParametersListActivity.class);
+				i.putExtra(FRACTAL_INDENT_LABEL, BundleAdapter.fractalToBundle(outFractal));
+				startActivityForResult(i, PRESETS_PARAMETERS_RETURN);
 			}
 		});
 	}
@@ -182,12 +152,6 @@ public class SourcesListActivity extends Activity {
 		@Override
 		public String getDescription(int position) {
 			return getItem(position).description;
-		}
-
-		@Override
-		public void showOptions(int position) {
-			// FIXME:
-			// Options are 'edit', 'copy', 'rename'.
 		}
 	}
 

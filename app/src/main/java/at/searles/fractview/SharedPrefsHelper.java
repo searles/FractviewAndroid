@@ -2,112 +2,45 @@ package at.searles.fractview;
 
 import android.content.Context;
 import android.content.SharedPreferences;
+import android.util.Log;
 
-import java.util.Map;
-
-import at.searles.fractview.ui.DialogHelper;
+import at.searles.fractal.gson.Serializers;
 
 /**
  * Helper for Shared Preferences
  */
 public class SharedPrefsHelper {
 
-    public enum SaveMethod { Override, FindNext };
+    // FIXME title names are now out of sync from keys.
 
-    private final SharedPreferences prefs;
+    public static <A> void storeInSharedPreferences(Context context, String name, A element, String preferencesName) {
+        String entryString = Serializers.serializer().toJson(element);
 
-    public SharedPrefsHelper(Context context, String prefsName) {
-        this.prefs = context.getSharedPreferences(
-                prefsName,
+        Log.d("Shared Pref", "Storing " + entryString);
+
+        SharedPreferences preferences = context.getSharedPreferences(
+                preferencesName,
                 Context.MODE_PRIVATE);
-    }
 
-    private String findNextAvailableName(String name) {
-        // if title exists, append an index
-        if(prefs.contains(name)) {
-            int index = 1; // start from 1
-            while(prefs.contains(name + " (" + index + ")")) {
-                index ++;
-            }
-
-            name = name + " (" + index + ")";
-        }
-
-        return name;
-    }
-
-    /**
-     * @param key The key for the provided shared preferences
-     * @return a String stored in sharedPreferences
-     */
-    public String get(String key) {
-        return prefs.getString(key, null);
-    }
-
-    public void add(String key, String value, SaveMethod method) {
-        keyAction(key, new Commons.KeyAction() {
-            @Override
-            public void apply(String key) {
-                add(key, value);
-            }
-        }, method);
-    }
-
-    private void keyAction(String key, Commons.KeyAction action, SaveMethod method) {
-        if(prefs.contains(key)) {
-            // now, it depends on save method.
-            switch (method) {
-                case Override:
-                    action.apply(key);
+        if(preferences.contains(name)) {
+            for(int i = 1;; ++i) {
+                String indexedName = name + "(" + i + ")";
+                if(!preferences.contains(indexedName)) {
+                    name = indexedName;
                     break;
-                case FindNext:
-                    action.apply(findNextAvailableName(key));
-                    break;
-            }
-        } else {
-            action.apply(key);
-        }
-    }
-
-    private void add(String key, String value) {
-        SharedPreferences.Editor edit = prefs.edit();
-        edit.putString(key, value);
-        edit.apply();
-    }
-
-    public void rename(String key, String newKey, SaveMethod method, Context context) {
-        if(key.equals(newKey)) {
-            DialogHelper.error(context, "Names unchanged");
-        } else if(prefs.contains(key)) {
-            String value = get(key);
-
-            keyAction(newKey, new Commons.KeyAction() {
-                @Override
-                public void apply(String newKey) {
-                    add(newKey, value);
-                    remove(key, context);
                 }
-            }, method);
-        } else {
-            DialogHelper.error(context, "Shared Preferences do not contain " + key);
+            }
         }
+
+        preferences.edit().putString(name, entryString).apply();
     }
 
-    public void remove(String key, Context context) {
-        if(!prefs.contains(key)) {
-            DialogHelper.error(context, "Trying to remove an inexistent key!");
-        } else {
-            SharedPreferences.Editor edit = prefs.edit();
-            edit.remove(key);
-            edit.apply();
-        }
+    public static String loadFromSharedPreferences(Context context, String name, String preferencesName) {
+        SharedPreferences preferences = context.getSharedPreferences(
+                preferencesName,
+                Context.MODE_PRIVATE);
+
+        return preferences.getString(name, null);
     }
 
-    public Map<String, ?> getAll() {
-        return prefs.getAll();
-    }
-
-    public int size() {
-        return prefs.getAll().size();
-    }
 }

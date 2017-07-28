@@ -169,6 +169,35 @@ public class ParameterEditorActivity extends Activity implements EditableDialogF
 
 		adapter = new ParameterAdapter(this);
 
+		initListView();
+
+		initButtons();
+	}
+
+	private void initButtons() {
+		Button okButton = (Button) findViewById(R.id.okButton);
+		Button cancelButton = (Button) findViewById(R.id.cancelButton);
+
+		cancelButton.setOnClickListener(new View.OnClickListener() {
+			@Override
+			public void onClick(View view) {
+				setResult(0);
+				finish();
+			}
+		});
+
+		okButton.setOnClickListener(new View.OnClickListener() {
+			@Override
+			public void onClick(View view) {
+				Intent data = new Intent();
+				data.putExtra(SourcesListActivity.FRACTAL_INDENT_LABEL, BundleAdapter.fractalToBundle(fractal));
+				setResult(1, data);
+				finish();
+			}
+		});
+	}
+
+	private void initListView() {
 		listView = (ListView) findViewById(R.id.parameterListView);
 
 		listView.setAdapter(adapter);
@@ -440,27 +469,6 @@ public class ParameterEditorActivity extends Activity implements EditableDialogF
 				return false;
 			}
 		});
-
-		Button okButton = (Button) findViewById(R.id.okButton);
-		Button cancelButton = (Button) findViewById(R.id.cancelButton);
-
-		cancelButton.setOnClickListener(new View.OnClickListener() {
-			@Override
-			public void onClick(View view) {
-				setResult(0);
-				finish();
-			}
-		});
-
-		okButton.setOnClickListener(new View.OnClickListener() {
-			@Override
-			public void onClick(View view) {
-				Intent data = new Intent();
-				data.putExtra(SourcesListActivity.FRACTAL_INDENT_LABEL, BundleAdapter.fractalToBundle(fractal));
-				setResult(1, data);
-				finish();
-			}
-		});
 	}
 
 	@Override
@@ -482,6 +490,15 @@ public class ParameterEditorActivity extends Activity implements EditableDialogF
 				String id = data.getStringExtra(PaletteActivity.ID_LABEL);
 
 				fractal.setPalette(id, BundleAdapter.bundleToPalette(bundle));
+				adapter.notifyDataSetChanged();
+			}
+		} else if(requestCode == SourceEditorActivity.SOURCE_EDITOR_ACTIVITY_RETURN) {
+			if (resultCode == 1) { // = "Ok"
+				String source = data.getStringExtra(SourceEditorActivity.SOURCE_LABEL);
+
+				fractal = fractal.copyNewSource(source, true);
+
+				adapter.init(); // resets content of adapter.
 				adapter.notifyDataSetChanged();
 			}
 		}
@@ -524,9 +541,16 @@ public class ParameterEditorActivity extends Activity implements EditableDialogF
 
 				return true;
 			}
-		}
+			case R.id.action_edit_source: {
+				Intent i = new Intent(ParameterEditorActivity.this, SourceEditorActivity.class);
 
-		return false;
+				i.putExtra(SourceEditorActivity.SOURCE_LABEL, fractal.sourceCode());
+				startActivityForResult(i, SourceEditorActivity.SOURCE_EDITOR_ACTIVITY_RETURN);
+			} return true;
+
+			default:
+				throw new IllegalArgumentException("not implemented");
+		}
 	}
 
 	private class ParameterAdapter extends BaseAdapter implements ListAdapter {

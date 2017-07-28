@@ -7,6 +7,7 @@ import java.util.LinkedHashMap;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 import at.searles.fractview.Commons;
 import at.searles.math.Cplx;
@@ -91,7 +92,7 @@ public class Fractal implements ExternalData {
 	 * Returns an iterable of all parameters.
 	 * @return
 	 */
-	public Iterable<String> parameters() {
+	public Set<String> parameters() {
 		if(defaultData == null) {
 			throw new IllegalArgumentException("parse has not been called yet!");
 		}

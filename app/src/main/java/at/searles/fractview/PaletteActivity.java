@@ -58,8 +58,6 @@ public class PaletteActivity extends Activity implements EditableDialogFragment.
 		super.onCreate(savedInstanceState);
 		setContentView(R.layout.palette_layout);
 
-		this.prefsHelper = new SharedPrefsHelper(this, PREFS_NAME);
-
 		this.id = getIntent().getStringExtra(ID_LABEL);
 
 		Bundle bundle;
@@ -188,7 +186,7 @@ public class PaletteActivity extends Activity implements EditableDialogFragment.
 			case LOAD_PALETTE: {
 				String name = (String) o;
 
-				String paletteString = prefsHelper.get(name);
+				String paletteString = SharedPrefsHelper.loadFromSharedPreferences(this, name, PREFS_NAME);
 
 				Log.d(getClass().getName(), "Palette string is " + paletteString + ", name is " + name);
 
@@ -207,9 +205,7 @@ public class PaletteActivity extends Activity implements EditableDialogFragment.
 			} break;
 			case SAVE_PALETTE: {
 				String name = (String) o;
-				String paletteString = Serializers.serializer().toJson(model.createPalette(), Palette.class);
-
-				prefsHelper.add(name, paletteString, SharedPrefsHelper.SaveMethod.FindNext);
+				SharedPrefsHelper.storeInSharedPreferences(this, name, model.createPalette(), PREFS_NAME);
 			} break;
 			default: {
 				// Tag when it is a color are the coordinates
@@ -229,5 +225,4 @@ public class PaletteActivity extends Activity implements EditableDialogFragment.
 		MultiScrollView msView = (MultiScrollView) findViewById(R.id.multiScrollView);
 		msView.updateSize();
 	}
-
 }

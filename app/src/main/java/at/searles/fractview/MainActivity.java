@@ -38,7 +38,6 @@ import java.util.HashMap;
 import at.searles.fractal.FavoriteEntry;
 import at.searles.fractal.Fractal;
 import at.searles.fractal.android.BundleAdapter;
-import at.searles.fractal.gson.Serializers;
 import at.searles.fractview.ui.BitmapFragmentView;
 import at.searles.fractview.ui.DialogHelper;
 import at.searles.meelan.CompileException;
@@ -57,11 +56,11 @@ public class MainActivity extends Activity
 	public static final int PARAMETER_ACTIVITY_RETURN = 101;
 	public static final int PRESETS_ACTIVITY_RETURN = 102;
 	public static final int BOOKMARK_ACTIVITY_RETURN = 103;
+
 	private static final String WIDTH_LABEL = "width";
 	private static final String HEIGHT_LABEL = "height";
 
-	private BitmapFragmentView imageView; // fixme don't forget to change size of this one.
-	// FIXME this one should be in BitmapFragmentView! ProgressBar progressBar;
+	private BitmapFragmentView imageView;
 
 	/**
 	 * Bitmap fragment contains the only image
@@ -73,9 +72,9 @@ public class MainActivity extends Activity
 	 */
 	private BitmapFragment.BitmapFragmentListener bitmapFragmentListener;
 
-	SharedPreferences prefs;
+	private SharedPreferences prefs;
 
-	FragmentManager fm;
+	private FragmentManager fm;
 
 	public static Point screenDimensions(Context context) {
 		Point dim = new Point();
@@ -109,57 +108,15 @@ public class MainActivity extends Activity
 
 		fm = getFragmentManager();
 
-		bitmapFragment = (BitmapFragment) fm.findFragmentByTag("bitmap_fragment");
+		initBitmapFragment();
+		initBitmapFragmentListener();
 
-		if(bitmapFragment == null) {
-			Log.d("MA", "bitmap fragment is null");
 
-			// fetch dimensions from preferences or display size.
+		// now we have a valid bitmap fragment, but careful! it is not yet initialized.
+		imageView.setBitmapFragment(bitmapFragment);
+	}
 
-			int w = prefs.getInt(WIDTH_LABEL, -1);
-			int h = prefs.getInt(HEIGHT_LABEL, -1);
-
-			boolean useDisplaySizeForImage = w == -1 || h == -1;
-			
-			if(useDisplaySizeForImage) {
-				Log.i("BMF", "No dimensions in shared preferences, using display size");
-
-				Point dim = screenDimensions(this);
-
-				w = dim.x;
-				h = dim.y;
-			}
-
-			// create bitmap fragment
-			Log.d("MA", "Creating new BitmapFragment");
-
-			String sourceCode = AssetsHelper.readSourcecode(getAssets(), "Default.fv");
-
-			Fractal initFractal = new Fractal(sourceCode, new HashMap<>());
-			
-			boolean reducedImageSizeDueToMemory = false;
-
-			// one pixel requires two argb fields, ie 8 bytes.
-
-			while(availMem() * 16 < w * h) {
-				// image consumption must be at most half of available memory!
-				w /= 2; h /= 2;
-				reducedImageSizeDueToMemory = true;
-				Log.d(getClass().getName(), "Reducing size of image to " + w + " x " + h);
-			}
-
-			bitmapFragment = BitmapFragment.newInstance(w, h, initFractal);
-			
-			if(!useDisplaySizeForImage && reducedImageSizeDueToMemory) {
-				// If the image size was used, no need to tell that you have a superb display :)
-				DialogHelper.error(this, "Reduced image size due to low memory");
-			}
-
-			FragmentTransaction transaction = getFragmentManager().beginTransaction();
-			transaction.add(bitmapFragment, "bitmap_fragment");
-			transaction.commitAllowingStateLoss(); // Question: Why should there be a stateloss?
-		}
-
+	private void initBitmapFragmentListener() {
 		// set up listeners for bitmap fragment
 		bitmapFragmentListener = new BitmapFragment.BitmapFragmentListener() {
 
@@ -195,9 +152,59 @@ public class MainActivity extends Activity
 				// ignore
 			}
 		};
+	}
 
-		// now we have a valid bitmap fragment, but careful! it is not yet initialized.
-		imageView.setBitmapFragment(bitmapFragment);
+	private void initBitmapFragment() {
+		bitmapFragment = (BitmapFragment) fm.findFragmentByTag("bitmap_fragment");
+
+		if(bitmapFragment == null) {
+			Log.d("MA", "bitmap fragment is null");
+
+			// fetch dimensions from preferences or display size.
+
+			int w = prefs.getInt(WIDTH_LABEL, -1);
+			int h = prefs.getInt(HEIGHT_LABEL, -1);
+
+			boolean useDisplaySizeForImage = w == -1 || h == -1;
+
+			if(useDisplaySizeForImage) {
+				Log.i("BMF", "No dimensions in shared preferences, using display size");
+
+				Point dim = screenDimensions(this);
+
+				w = dim.x;
+				h = dim.y;
+			}
+
+			// create bitmap fragment
+			Log.d("MA", "Creating new BitmapFragment");
+
+			String sourceCode = AssetsHelper.readSourcecode(getAssets(), "Default.fv");
+
+			Fractal initFractal = new Fractal(sourceCode, new HashMap<>());
+
+			boolean reducedImageSizeDueToMemory = false;
+
+			// one pixel requires two argb fields, ie 8 bytes.
+
+			while(availMem() * 16 < w * h) {
+				// image consumption must be at most half of available memory!
+				w /= 2; h /= 2;
+				reducedImageSizeDueToMemory = true;
+				Log.d(getClass().getName(), "Reducing size of image to " + w + " x " + h);
+			}
+
+			bitmapFragment = BitmapFragment.newInstance(w, h, initFractal);
+
+			if(!useDisplaySizeForImage && reducedImageSizeDueToMemory) {
+				// If the image size was used, no need to tell that you have a superb display :)
+				DialogHelper.error(this, "Reduced image size due to low memory");
+			}
+
+			FragmentTransaction transaction = getFragmentManager().beginTransaction();
+			transaction.add(bitmapFragment, "bitmap_fragment");
+			transaction.commitAllowingStateLoss(); // Question: Why should there be a stateloss?
+		}
 	}
 
 	protected long availMem() {
@@ -219,7 +226,6 @@ public class MainActivity extends Activity
 	public void onSaveInstanceState(@NotNull Bundle savedInstanceState) {
 		Log.d("MA", "on save instance called in MA");
 
-		// FIXME make sure that fractal is compilable!
 		bitmapFragment.getArguments().putBundle(SourcesListActivity.FRACTAL_INDENT_LABEL, BundleAdapter.fractalToBundle(bitmapFragment.fractal()));
 
 		// Always call the superclass so it can save the view hierarchy state
@@ -283,101 +289,8 @@ public class MainActivity extends Activity
         // Handle presses on the action bar items
         switch (item.getItemId()) {
 			case R.id.action_size: {
-				// change size of the image
-                DialogHelper.inputCustom(this, "Resize Image", R.layout.image_size_editor,
-                        new DialogHelper.DialogFunction() {
-                            @Override
-                            public void apply(DialogInterface d) {
-                                // insert current size
-                                EditText widthView = (EditText) ((AlertDialog) d).findViewById(R.id.widthEditText);
-                                EditText heightView = (EditText) ((AlertDialog) d).findViewById(R.id.heightEditText);
+				openChangeImageSizeDialog();
 
-                                widthView.setText(Integer.toString(bitmapFragment.width()));
-                                heightView.setText(Integer.toString(bitmapFragment.height()));
-
-                                // listener to button
-                                Button resetButton = (Button) ((AlertDialog) d).findViewById(R.id.resetSizeButton);
-
-                                resetButton.setOnClickListener(new View.OnClickListener() {
-                                    @Override
-                                    public void onClick(View view) {
-                                        SharedPreferences prefs =
-                                                PreferenceManager.getDefaultSharedPreferences(view.getContext());
-
-                                        Point dim = new Point();
-
-                                        dim.set(prefs.getInt(WIDTH_LABEL, -1), prefs.getInt(HEIGHT_LABEL, -1));
-
-                                        if (dim.x <= 0 || dim.y <= 0) {
-                                            dim = MainActivity.screenDimensions(view.getContext());
-                                        }
-
-                                        widthView.setText(Integer.toString(dim.x));
-                                        heightView.setText(Integer.toString(dim.y));
-                                    }
-                                });
-
-                            }
-                        },
-                        new DialogHelper.DialogFunction() {
-                            @Override
-                            public void apply(DialogInterface d) {
-                                // insert current size
-                                EditText widthView = (EditText) ((AlertDialog) d).findViewById(R.id.widthEditText);
-                                EditText heightView = (EditText) ((AlertDialog) d).findViewById(R.id.heightEditText);
-
-                                boolean setAsDefault = ((CheckBox) ((AlertDialog) d).findViewById(R.id.defaultCheckBox)).isChecked();
-
-                                int w, h;
-
-                                try {
-                                    w = Integer.parseInt(widthView.getText().toString());
-                                } catch(NumberFormatException e) {
-                                    DialogHelper.error(((AlertDialog) d).getContext(), "invalid width");
-                                    return;
-                                }
-
-                                try {
-                                    h = Integer.parseInt(heightView.getText().toString());
-                                } catch(NumberFormatException e) {
-                                    DialogHelper.error(((AlertDialog) d).getContext(), "invalid height");
-                                    return;
-                                }
-
-                                if(w < 1) {
-                                    DialogHelper.error(((AlertDialog) d).getContext(), "width must be >= 1");
-                                    return;
-                                }
-
-                                if(h < 1) {
-                                    DialogHelper.error(((AlertDialog) d).getContext(), "height must be >= 1");
-                                    return;
-                                }
-
-								// Image size is set in a runnable because there might be an additional
-								// check that allows cancellation on low memory.
-								Runnable setSizeRunnable = new Runnable() {
-									public void run() {
-										if(setAsDefault) storeDefaultSize(w, h);
-
-										if(w == bitmapFragment.width() && h == bitmapFragment.height()) {
-											DialogHelper.info(((AlertDialog) d).getContext(), "size not changed");
-										} else {
-											bitmapFragment.setSize(w, h);
-										}
-									}
-								};
-
-								if(8 * w * h > availMem()) {
-									double availMB = availMem() / (1024. * 1024.);
-
-									DialogHelper.confirm(MainActivity.this,
-											"Low on memory", "There is only " + String.format("%.2", availMB) + "mb available. Resize still?", setSizeRunnable);
-								} else {
-									setSizeRunnable.run();
-								}
-                            }
-                        });
 			} return true;
 
 			case R.id.action_add_favorite: {
@@ -423,113 +336,11 @@ public class MainActivity extends Activity
 			} return true;
 
 			case R.id.action_gui_settings: {
-				// show alert dialog with two checkboxes
-				final CharSequence[] items = {"Show Grid","Rotation Lock", "Confirm Zoom with Tab", "Deactivate Zoom"};
-
-				new AlertDialog.Builder(this)
-						.setCancelable(true)
-						.setMultiChoiceItems(items,
-								new boolean[]{
-										imageView.scaleableImageView().getShowGrid(),
-										imageView.scaleableImageView().getRotationLock(),
-										imageView.scaleableImageView().getConfirmZoom(),
-										imageView.scaleableImageView().getDeactivateZoom()
-								},
-								new DialogInterface.OnMultiChoiceClickListener() {
-							@Override
-							public void onClick(DialogInterface dialog, int indexSelected, boolean isChecked) {
-								// fixme can move the editor to BitmapFragmentView?
-								switch(indexSelected) {
-									case 0: {
-										// show/hide grid
-										imageView.scaleableImageView().setShowGrid(isChecked);
-									} break;
-									case 1: {
-										// rotation lock
-										imageView.scaleableImageView().setRotationLock(isChecked);
-									} break;
-									case 2: {
-										// confirm edit with a tab
-										imageView.scaleableImageView().setConfirmZoom(isChecked);
-									} break;
-									case 3: {
-										// deactivate zoom
-										imageView.scaleableImageView().setDeactivateZoom(isChecked);
-									} break;
-								}
-							}
-						}).setPositiveButton("Close", new DialogInterface.OnClickListener() {
-							@Override
-							public void onClick(DialogInterface dialog, int id) {}
-						}).create().show();
+				openUiSettingsDialog();
 			} return true;
 
 			case R.id.action_share: {
-				AlertDialog.Builder builder = new AlertDialog.Builder(this);
-
-				String[] items = {"Share Image", "Save Image", "Set Image as Wallpaper"};
-
-				builder.setItems(items,
-						new DialogInterface.OnClickListener() {
-							@Override
-							public void onClick(DialogInterface dialog, int which) {
-								switch (which) {
-									case 0: { // Share
-										// save/share image
-										int readPermission = ContextCompat.checkSelfPermission(MainActivity.this, Manifest.permission.READ_EXTERNAL_STORAGE);
-										int writePermission = ContextCompat.checkSelfPermission(MainActivity.this, Manifest.permission.WRITE_EXTERNAL_STORAGE);
-
-										if(readPermission != PackageManager.PERMISSION_GRANTED || writePermission != PackageManager.PERMISSION_GRANTED) {
-											// I am anyways showing a Toast that I can't write if I can't write.
-											ActivityCompat.requestPermissions(MainActivity.this,
-													new String[]{
-															Manifest.permission.READ_EXTERNAL_STORAGE,
-															Manifest.permission.WRITE_EXTERNAL_STORAGE
-													}, IMAGE_PERMISSIONS_SHARE);
-										} else {
-											SavePlugin.createShare().init(bitmapFragment);
-										}
-									}
-									break;
-									case 1: { // save
-										int readPermission = ContextCompat.checkSelfPermission(MainActivity.this, Manifest.permission.READ_EXTERNAL_STORAGE);
-										int writePermission = ContextCompat.checkSelfPermission(MainActivity.this, Manifest.permission.WRITE_EXTERNAL_STORAGE);
-
-										if(readPermission != PackageManager.PERMISSION_GRANTED || writePermission != PackageManager.PERMISSION_GRANTED) {
-											// I am anyways showing a Toast that I can't write if I can't write.
-											ActivityCompat.requestPermissions(MainActivity.this,
-													new String[]{
-															Manifest.permission.READ_EXTERNAL_STORAGE,
-															Manifest.permission.WRITE_EXTERNAL_STORAGE
-													}, IMAGE_PERMISSIONS_SAVE);
-										} else {
-											saveImage();
-										}
-									}
-									break;
-									case 2: { // set as wallpaper
-										int wallpaperPermission = ContextCompat.checkSelfPermission(MainActivity.this, Manifest.permission.SET_WALLPAPER);
-
-										if(wallpaperPermission != PackageManager.PERMISSION_GRANTED) {
-											ActivityCompat.requestPermissions(MainActivity.this,
-													new String[]{
-															Manifest.permission.SET_WALLPAPER
-													}, WALLPAPER_PERMISSIONS);
-										} else {
-											SavePlugin.createSetWallpaper().init(bitmapFragment);
-										}
-									}
-									break;
-									default:
-										throw new IllegalArgumentException("no such selection: " + which);
-								}
-							}
-						});
-				builder.setCancelable(true);
-
-				builder.show();
-
-
+				openShareDialog();
 			} return true;
 
 			case R.id.action_tutorial: {
@@ -542,6 +353,212 @@ public class MainActivity extends Activity
                 return super.onOptionsItemSelected(item);
         }
     }
+
+	private void openShareDialog() {
+		AlertDialog.Builder builder = new AlertDialog.Builder(this);
+
+		String[] items = {"Share Image", "Save Image", "Set Image as Wallpaper"};
+
+		builder.setItems(items,
+                new DialogInterface.OnClickListener() {
+                    @Override
+                    public void onClick(DialogInterface dialog, int which) {
+                        switch (which) {
+                            case 0: { // Share
+                                // save/share image
+                                int readPermission = ContextCompat.checkSelfPermission(MainActivity.this, Manifest.permission.READ_EXTERNAL_STORAGE);
+                                int writePermission = ContextCompat.checkSelfPermission(MainActivity.this, Manifest.permission.WRITE_EXTERNAL_STORAGE);
+
+                                if(readPermission != PackageManager.PERMISSION_GRANTED || writePermission != PackageManager.PERMISSION_GRANTED) {
+                                    // I am anyways showing a Toast that I can't write if I can't write.
+                                    ActivityCompat.requestPermissions(MainActivity.this,
+                                            new String[]{
+                                                    Manifest.permission.READ_EXTERNAL_STORAGE,
+                                                    Manifest.permission.WRITE_EXTERNAL_STORAGE
+                                            }, IMAGE_PERMISSIONS_SHARE);
+                                } else {
+                                    SavePlugin.createShare().init(bitmapFragment);
+                                }
+                            }
+                            break;
+                            case 1: { // save
+                                int readPermission = ContextCompat.checkSelfPermission(MainActivity.this, Manifest.permission.READ_EXTERNAL_STORAGE);
+                                int writePermission = ContextCompat.checkSelfPermission(MainActivity.this, Manifest.permission.WRITE_EXTERNAL_STORAGE);
+
+                                if(readPermission != PackageManager.PERMISSION_GRANTED || writePermission != PackageManager.PERMISSION_GRANTED) {
+                                    // I am anyways showing a Toast that I can't write if I can't write.
+                                    ActivityCompat.requestPermissions(MainActivity.this,
+                                            new String[]{
+                                                    Manifest.permission.READ_EXTERNAL_STORAGE,
+                                                    Manifest.permission.WRITE_EXTERNAL_STORAGE
+                                            }, IMAGE_PERMISSIONS_SAVE);
+                                } else {
+                                    saveImage();
+                                }
+                            }
+                            break;
+                            case 2: { // set as wallpaper
+                                int wallpaperPermission = ContextCompat.checkSelfPermission(MainActivity.this, Manifest.permission.SET_WALLPAPER);
+
+                                if(wallpaperPermission != PackageManager.PERMISSION_GRANTED) {
+                                    ActivityCompat.requestPermissions(MainActivity.this,
+                                            new String[]{
+                                                    Manifest.permission.SET_WALLPAPER
+                                            }, WALLPAPER_PERMISSIONS);
+                                } else {
+                                    SavePlugin.createSetWallpaper().init(bitmapFragment);
+                                }
+                            }
+                            break;
+                            default:
+                                throw new IllegalArgumentException("no such selection: " + which);
+                        }
+                    }
+                });
+		builder.setCancelable(true);
+
+		builder.show();
+	}
+
+	private void openUiSettingsDialog() {
+		// show alert dialog with two checkboxes
+		final CharSequence[] items = {"Show Grid","Rotation Lock", "Confirm Zoom with Tab", "Deactivate Zoom"};
+
+		new AlertDialog.Builder(this)
+                .setCancelable(true)
+                .setMultiChoiceItems(items,
+                        new boolean[]{
+                                imageView.scaleableImageView().getShowGrid(),
+                                imageView.scaleableImageView().getRotationLock(),
+                                imageView.scaleableImageView().getConfirmZoom(),
+                                imageView.scaleableImageView().getDeactivateZoom()
+                        },
+                        new DialogInterface.OnMultiChoiceClickListener() {
+                    @Override
+                    public void onClick(DialogInterface dialog, int indexSelected, boolean isChecked) {
+                        // fixme can move the editor to BitmapFragmentView?
+                        switch(indexSelected) {
+                            case 0: {
+                                // show/hide grid
+                                imageView.scaleableImageView().setShowGrid(isChecked);
+                            } break;
+                            case 1: {
+                                // rotation lock
+                                imageView.scaleableImageView().setRotationLock(isChecked);
+                            } break;
+                            case 2: {
+                                // confirm edit with a tab
+                                imageView.scaleableImageView().setConfirmZoom(isChecked);
+                            } break;
+                            case 3: {
+                                // deactivate zoom
+                                imageView.scaleableImageView().setDeactivateZoom(isChecked);
+                            } break;
+                        }
+                    }
+                }).setPositiveButton("Close", new DialogInterface.OnClickListener() {
+                    @Override
+                    public void onClick(DialogInterface dialog, int id) {}
+                }).create().show();
+	}
+
+	private void openChangeImageSizeDialog() {
+		// change size of the image
+		DialogHelper.inputCustom(this, "Resize Image", R.layout.image_size_editor,
+                new DialogHelper.DialogFunction() {
+                    @Override
+                    public void apply(DialogInterface d) {
+                        // insert current size
+                        EditText widthView = (EditText) ((AlertDialog) d).findViewById(R.id.widthEditText);
+                        EditText heightView = (EditText) ((AlertDialog) d).findViewById(R.id.heightEditText);
+
+                        widthView.setText(Integer.toString(bitmapFragment.width()));
+                        heightView.setText(Integer.toString(bitmapFragment.height()));
+
+                        // listener to button
+                        Button resetButton = (Button) ((AlertDialog) d).findViewById(R.id.resetSizeButton);
+
+                        resetButton.setOnClickListener(new View.OnClickListener() {
+                            @Override
+                            public void onClick(View view) {
+                                SharedPreferences prefs =
+                                        PreferenceManager.getDefaultSharedPreferences(view.getContext());
+
+                                Point dim = new Point();
+
+                                dim.set(prefs.getInt(WIDTH_LABEL, -1), prefs.getInt(HEIGHT_LABEL, -1));
+
+                                if (dim.x <= 0 || dim.y <= 0) {
+                                    dim = MainActivity.screenDimensions(view.getContext());
+                                }
+
+                                widthView.setText(Integer.toString(dim.x));
+                                heightView.setText(Integer.toString(dim.y));
+                            }
+                        });
+
+                    }
+                },
+                new DialogHelper.DialogFunction() {
+                    @Override
+                    public void apply(DialogInterface d) {
+                        // insert current size
+                        EditText widthView = (EditText) ((AlertDialog) d).findViewById(R.id.widthEditText);
+                        EditText heightView = (EditText) ((AlertDialog) d).findViewById(R.id.heightEditText);
+
+                        boolean setAsDefault = ((CheckBox) ((AlertDialog) d).findViewById(R.id.defaultCheckBox)).isChecked();
+
+                        int w, h;
+
+                        try {
+                            w = Integer.parseInt(widthView.getText().toString());
+                        } catch(NumberFormatException e) {
+                            DialogHelper.error(((AlertDialog) d).getContext(), "invalid width");
+                            return;
+                        }
+
+                        try {
+                            h = Integer.parseInt(heightView.getText().toString());
+                        } catch(NumberFormatException e) {
+                            DialogHelper.error(((AlertDialog) d).getContext(), "invalid height");
+                            return;
+                        }
+
+                        if(w < 1) {
+                            DialogHelper.error(((AlertDialog) d).getContext(), "width must be >= 1");
+                            return;
+                        }
+
+                        if(h < 1) {
+                            DialogHelper.error(((AlertDialog) d).getContext(), "height must be >= 1");
+                            return;
+                        }
+
+                        // Image size is set in a runnable because there might be an additional
+                        // check that allows cancellation on low memory.
+                        Runnable setSizeRunnable = new Runnable() {
+                            public void run() {
+                                if(setAsDefault) storeDefaultSize(w, h);
+
+                                if(w == bitmapFragment.width() && h == bitmapFragment.height()) {
+                                    DialogHelper.info(((AlertDialog) d).getContext(), "size not changed");
+                                } else {
+                                    bitmapFragment.setSize(w, h);
+                                }
+                            }
+                        };
+
+                        if(8 * w * h > availMem()) {
+                            double availMB = availMem() / (1024. * 1024.);
+
+                            DialogHelper.confirm(MainActivity.this,
+                                    "Low on memory", "There is only " + String.format("%.2", availMB) + "mb available. Resize still?", setSizeRunnable);
+                        } else {
+                            setSizeRunnable.run();
+                        }
+                    }
+                });
+	}
 
 	private void saveImage() {
         DialogHelper.inputCustom(this, "Enter filename", R.layout.save_image_layout,
@@ -565,6 +582,11 @@ public class MainActivity extends Activity
                         String filename = editText.getText().toString();
                         boolean addToFavorites = checkBox.isChecked();
 
+						// Strip .png extension if it is entered (it will be added later either way)
+						if(filename.endsWith(".png")) {
+							filename = filename.substring(0, filename.length() - ".png".length());
+						}
+
                         if(filename.isEmpty()) {
                             DialogHelper.error(MainActivity.this, "Filename must not be empty");
                             return;
@@ -587,19 +609,18 @@ public class MainActivity extends Activity
                             }
                         }
 
+						File imageFile = new File(directory, filename + ".png");
+
                         // loop up index
-                        for(int i = 0;; ++i) {
-                            final File imageFile = new File(directory, filename
-                                    + (i == 0 ? "" : ("(" + i + ")"))
-                                    + (filename.endsWith(".png") ? "" : ".png"));
+						if(imageFile.exists()) {
+							for (int i = 1; ; ++i) {
+								imageFile = new File(directory, filename + " (" + i + ").png");
+								if(!imageFile.exists()) break;
+							}
+						}
 
-                            if(!imageFile.exists()) {
-                                // Saving is done in the following plugin
-								SavePlugin.createSave(imageFile).init(bitmapFragment);
-                                return;
-                            }
-                        }
-
+						// Saving is done in the following plugin
+						SavePlugin.createSave(imageFile).init(bitmapFragment);
                     }
                 });
 	}
@@ -618,14 +639,9 @@ public class MainActivity extends Activity
 		// create icon out of bitmap
 		Bitmap icon = Commons.createIcon(bitmapFragment.getBitmap(), ICON_SIZE);
 
-		FavoriteEntry fav = new FavoriteEntry(name, icon, fractal, Commons.timestamp());
+		FavoriteEntry fav = new FavoriteEntry(icon, fractal, Commons.timestamp());
 
-		String entryString = Serializers.serializer().toJson(fav);
-
-		Log.d(getClass().getName(), "Storing " + entryString);
-
-		new SharedPrefsHelper(this, FavoritesListActivity.FAVORITES_SHARED_PREF).add(name, entryString, SharedPrefsHelper.SaveMethod.FindNext);
-
+		SharedPrefsHelper.storeInSharedPreferences(this, name, fav, FavoritesListActivity.FAVORITES_SHARED_PREF);
 	}
 
 	void setNewFractal(final Fractal newFractal) {

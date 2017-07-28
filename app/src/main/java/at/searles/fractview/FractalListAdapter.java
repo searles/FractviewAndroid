@@ -2,7 +2,6 @@ package at.searles.fractview;
 
 
 import android.app.Activity;
-import android.content.res.Resources;
 import android.graphics.Bitmap;
 import android.view.View;
 import android.view.ViewGroup;
@@ -18,11 +17,9 @@ import android.widget.TextView;
 public abstract class FractalListAdapter<A> extends BaseAdapter {
 
     private final Activity context;
-    private Resources.Theme theme;
 
-    public FractalListAdapter(Activity context) {
+    protected FractalListAdapter(Activity context) {
         this.context = context;
-        this.theme = context.getTheme();
     }
 
     @Override
@@ -36,8 +33,6 @@ public abstract class FractalListAdapter<A> extends BaseAdapter {
     public abstract String getTitle(int position);
     
     public abstract String getDescription(int position);
-    
-    public abstract void showOptions(int position);
 
     @Override
     public long getItemId(int position) {

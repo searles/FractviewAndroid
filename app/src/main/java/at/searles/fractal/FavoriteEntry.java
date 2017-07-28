@@ -13,18 +13,25 @@ public class FavoriteEntry {
 
 	private Fractal fractal;
 	private Bitmap icon;  // icon may be null
-	private String title;       // title may be null
 	private String description; // description may be null
 
-	public FavoriteEntry(String title, Bitmap icon, Fractal fractal, String description) {
+	/**
+	 * The title is set via the key in the mapping
+	 */
+	private transient String title;
+
+	public FavoriteEntry(Bitmap icon, Fractal fractal, String description) {
 		this.fractal = fractal;
-		this.title = title;
 		this.icon = icon;
 		this.description = description;
 	}
 
 	public String title() {
 		return title;
+	}
+
+	public void setTitle(String title) {
+		this.title = title;
 	}
 
 	public Bitmap icon() {
@@ -37,10 +44,5 @@ public class FavoriteEntry {
 
 	public Fractal fractal() {
 		return fractal;
-	}
-
-	public void setTitle(String title) {
-		// Immutable because in old versions there was no title here.
-		this.title = title;
 	}
 }

@@ -31,9 +31,10 @@ public class SourceEditorActivity extends Activity implements EditableDialogFrag
 
 	static private final int LOAD_PROGRAM = -1;
 	static private final int SAVE_PROGRAM = -2;
+	public static final int SOURCE_EDITOR_ACTIVITY_RETURN = 98;
 
 
-    private EditText editor;
+	private EditText editor;
     
 	private String source;
 
@@ -240,11 +241,12 @@ public class SourceEditorActivity extends Activity implements EditableDialogFrag
 			case SAVE_PROGRAM: {
 				Log.d(getClass().getName(), "Saving program " + o);
 				String name = (String) o;
-				new SharedPrefsHelper(this, PREFS_NAME).add(name, source, SharedPrefsHelper.SaveMethod.FindNext);
+				SharedPrefsHelper.storeInSharedPreferences(this, name, source, PREFS_NAME);
 			} break;
 			case LOAD_PROGRAM: {
 				String name = (String) o;
-				source = new SharedPrefsHelper(this, PREFS_NAME).get(name);
+
+				source = SharedPrefsHelper.loadFromSharedPreferences(this, name, PREFS_NAME);
 				editor.setText(source);
 			} break;
 			default:

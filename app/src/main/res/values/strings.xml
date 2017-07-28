@@ -41,11 +41,10 @@
     <string name="action_scale">Scale</string>
     <string name="action_load_palette">Load Palette</string>
     <string name="action_save_palette">Save Palette</string>
-    <string name="action_import_bookmark">Paste Bookmark From Clipboard</string>
-    <string name="action_import">Paste from Clipboard</string>
-    <string name="action_export">Copy to Clipboard</string>
-    <string name="action_presets">Samples</string>
-    <string name="action_reset">\"Reset All\"</string>
+    <string name="action_import">Import</string>
+    <string name="action_export">Export</string>
+    <string name="action_presets">Presets</string>
+    <string name="action_reset">Reset All</string>
     <string name="action_show_grid">Show Grid</string>
     <string name="label_default_size">Reset to Default</string>
     <string name="file_exists">File already exists</string>
@@ -59,4 +58,6 @@
     <string name="action_gui_settings">UI Settings</string>
     <string name="action_tutorial">Tutorial</string>
     <string name="action_delete">Delete</string>
+    <string name="action_select_all">Select All</string>
+    <string name="action_rename">Rename</string>
 </resources>
