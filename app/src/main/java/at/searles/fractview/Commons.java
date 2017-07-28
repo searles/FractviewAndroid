@@ -35,6 +35,11 @@ public class Commons {
         return simpleDateFormat.format(new Date());
     }
 
+    public static String fancyTimestamp() {
+        SimpleDateFormat simpleDateFormat = new SimpleDateFormat("yyyy-MM-dd, HH:mm");
+        return simpleDateFormat.format(new Date());
+    }
+
     public static String duration(long ms) {
         StringBuilder sb = new StringBuilder();
 

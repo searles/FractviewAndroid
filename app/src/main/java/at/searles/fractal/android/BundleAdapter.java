@@ -90,10 +90,10 @@ public class BundleAdapter {
             
             switch (type) {
             case Int:
-                intBundle.putInt(key, (Integer) value);
+                intBundle.putInt(key, ((Number) value).intValue());
                 break;
             case Real:
-                realBundle.putDouble(key, (Double) value);
+                realBundle.putDouble(key, ((Number) value).doubleValue());
                 break;
             case Cplx:
                 cplxBundle.putDoubleArray(key, cplxToArray((Cplx) value));

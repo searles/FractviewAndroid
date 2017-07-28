@@ -22,27 +22,16 @@ public class TutorialActivity extends Activity {
         webView = (WebView) findViewById(R.id.webView);
         webView.loadUrl("file:///android_asset/tutorial/quickstart.html");
 
-
         webView.setWebViewClient(new WebViewClient(){
             public boolean shouldOverrideUrlLoading(WebView view, WebResourceRequest request) {
                 Uri uri = request.getUrl();
-                if (uri != null && (uri.getScheme().equals("http:") || uri.equals("https:"))) {
+                if (uri != null && !uri.getScheme().equals("file")) {
                     view.getContext().startActivity(
                             new Intent(Intent.ACTION_VIEW, uri));
                     return true;
                 } else {
                     return false;
                 }
-            }
-        });
-
-
-        webView.setWebViewClient(new WebViewClient() {
-            @Override
-            public boolean shouldOverrideUrlLoading(WebView view, WebResourceRequest request) {
-                view.loadUrl(request.getUrl().toString());
-                // FIXME Load http-stuff in browser.
-                return false;
             }
         });
 
