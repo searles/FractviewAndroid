@@ -12,11 +12,11 @@ import android.view.MenuItem;
 import android.view.View;
 import android.widget.Button;
 import android.widget.EditText;
-import android.widget.Toast;
 
 import java.util.HashMap;
 
 import at.searles.fractal.Fractal;
+import at.searles.fractview.ui.DialogHelper;
 import at.searles.meelan.CompileException;
 import at.searles.parsing.ParsingError;
 
@@ -27,7 +27,7 @@ public class SourceEditorActivity extends Activity implements EditableDialogFrag
 	 */
 	static public final String PREFS_NAME = "SavedPrograms";
 
-    static public final String SOURCE_LABEL = "source";
+    static public final String SOURCE_LABEL = "acceptedSource";
 
 	static private final int LOAD_PROGRAM = -1;
 	static private final int SAVE_PROGRAM = -2;
@@ -36,7 +36,7 @@ public class SourceEditorActivity extends Activity implements EditableDialogFrag
 
 	private EditText editor;
     
-	private String source;
+	private String acceptedSource;
 
 
 	@Override
@@ -46,15 +46,13 @@ public class SourceEditorActivity extends Activity implements EditableDialogFrag
 		setContentView(R.layout.program_layout);
 
 		// fetch program from intent
-		this.source = getIntent().getStringExtra(SOURCE_LABEL);
+		this.acceptedSource = getIntent().getStringExtra(SOURCE_LABEL);
 
-        
-        
 		editor = (EditText) findViewById(R.id.programEditText);
 		editor.setHorizontallyScrolling(true); // fixme Android Bug: the attribute in the xml is ignored
 
 		// set text in editor
-		editor.setText(this.source);
+		editor.setText(this.acceptedSource);
 
 		editor.addTextChangedListener(new TextWatcher() {
 			// if the text is changed we set program to null to see whether we need fresh compiling
@@ -66,7 +64,7 @@ public class SourceEditorActivity extends Activity implements EditableDialogFrag
 
 			@Override
 			public void onTextChanged(CharSequence s, int start, int before, int count) {
-				source = null;
+				acceptedSource = null;
 			}
 		});
 
@@ -84,77 +82,34 @@ public class SourceEditorActivity extends Activity implements EditableDialogFrag
 		okButton.setOnClickListener(new View.OnClickListener() {
 			@Override
 			public void onClick(View view) {
-				if(source != null || apply()) {
+				if(checkCompile()) {
 					Intent data = new Intent();
                     
-					data.putExtra(SOURCE_LABEL, source);
+					data.putExtra(SOURCE_LABEL, acceptedSource);
 					setResult(1, data);
 					finish();
 				}
 			}
 		});
 	}
-    
-    
 
-	private boolean apply() {
-		// if there is an error, store it.
-		ParsingError parsingError = null;
-		CompileException compilerException = null;
-
-		source = editor.getText().toString();
+	private boolean checkCompile() {
+		String source = currentSource();
 
 		try {
 			Fractal fractal = new Fractal(source, new HashMap<>());
 			fractal.parse(); // Check whether parsing works
 			fractal.compile(); // Also checks default-values for external data.
+
+			acceptedSource = source;
+
 			return true;
-		} catch(ParsingError e) {
-			parsingError = e;
-		} catch(CompileException e) {
-			compilerException = e;
+		} catch(ParsingError | CompileException e) {
+			DialogHelper.error(this, "Compiler Error: " + e.getMessage());
+			e.printStackTrace();
+
+			return false;
 		}
-
-		/*SpannableString span = new SpannableString(source);
-
-		// red background with 25% coverage
-		int bgColor = Color.argb(64, 255, 128, 128);
-		*/
-		int cursor;
-
-		// there must have been an exception
-		if(compilerException != null) {
-			// set underline of length at least 1.
-			//Log.d("PE", start + " and end is " + end);
-			//span.setSpan(new BackgroundColorSpan(bgColor), start, end, 0);
-
-			// FIXME
-			// FIXME
-			// FIXME
-			// FIXME
-			// FIXME
-			// FIXME
-			// FIXME
-			cursor = 0; // compilerException.topPosition();
-
-			Toast.makeText(this, "Compiler Error: " + compilerException.getMessage(), Toast.LENGTH_LONG).show();
-			compilerException.printStackTrace();
-		} else {
-			// it is a parsing error
-			cursor = parsingError.pos();
-
-			Toast.makeText(this, "Parsing Error: " + parsingError.getMessage(), Toast.LENGTH_LONG).show();
-			parsingError.printStackTrace();
-		}
-
-		if(cursor >= 0) {
-			editor.setSelection(cursor, cursor);
-		}
-
-		// todo next line needed?
-		source = null;
-
-		return false;
 	}
 
 	@Override
@@ -182,57 +137,18 @@ public class SourceEditorActivity extends Activity implements EditableDialogFrag
 				ft.getArguments().putString("prefs_name", PREFS_NAME);
 			} return true;
 			case R.id.action_compile: {
-				if(apply()) {
-					Toast.makeText(this, "Program compiled without errors", Toast.LENGTH_SHORT).show();
-					// [done?] fixme if successful, don't overwrite it in the end.
+				if(checkCompile()) {
+					DialogHelper.info(this, "Program compiled without errors");
 				}
 			} return true;
-			//case R.id.action_presets: {
-				// open dialog with possible pre-selections
-				/*AlertDialog.Builder builder = new AlertDialog.Builder(this);
-
-				String[] presetIds = new String[PresetFractals.PRESETS.length];
-
-				// FIXME
-				// FIXME
-				// FIXME
-				// FIXME
-				// FIXME
-				String mb = PresetFractals.readFromAsset(this, "Mandelbrot.fv");
-				// FIXME
-				// FIXME
-				// FIXME
-				// FIXME
-				// FIXME
-				if(mb != null) PresetFractals.PRESETS[0][1] = mb;
-
-				for(int i = 0; i < PresetFractals.PRESETS.length; ++i) {
-					presetIds[i] = PresetFractals.PRESETS[i][0];
-				}
-
-				builder.setItems(
-						presetIds,
-						new DialogInterface.OnClickListener() {
-							@Override
-							public void onClick(DialogInterface dialog, int index) {
-								editor.setText(PresetFractals.PRESETS[index][1]);
-								dialog.dismiss();
-							}
-						}
-				);
-
-				builder.setNegativeButton("Close", new DialogInterface.OnClickListener() {
-					@Override
-					public void onClick(DialogInterface dialog, int which) {
-						dialog.dismiss();
-					}
-				});
-
-				builder.show();*/
-			//}
 			default:
 				return super.onOptionsItemSelected(item);
 		}
+	}
+
+	private String currentSource() {
+		// unchecked acceptedSource code
+		return editor.getText().toString();
 	}
 
 	@Override
@@ -241,16 +157,16 @@ public class SourceEditorActivity extends Activity implements EditableDialogFrag
 			case SAVE_PROGRAM: {
 				Log.d(getClass().getName(), "Saving program " + o);
 				String name = (String) o;
-				SharedPrefsHelper.storeInSharedPreferences(this, name, source, PREFS_NAME);
+				SharedPrefsHelper.storeInSharedPreferences(this, name, currentSource(), PREFS_NAME);
 			} break;
 			case LOAD_PROGRAM: {
 				String name = (String) o;
 
-				source = SharedPrefsHelper.loadFromSharedPreferences(this, name, PREFS_NAME);
-				editor.setText(source);
+				acceptedSource = SharedPrefsHelper.loadFromSharedPreferences(this, name, PREFS_NAME);
+				editor.setText(acceptedSource);
 			} break;
 			default:
-				throw new IllegalArgumentException("Bad call to apply, code: " + requestCode);
+				throw new IllegalArgumentException("Bad call to checkCompile, code: " + requestCode);
 		}
 	}
 }
