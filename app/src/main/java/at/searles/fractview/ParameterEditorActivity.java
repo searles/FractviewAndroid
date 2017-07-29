@@ -26,13 +26,16 @@ import android.widget.Toast;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 
 import at.searles.fractal.Fractal;
 import at.searles.fractal.android.BundleAdapter;
+import at.searles.fractview.ui.DialogHelper;
 import at.searles.math.Cplx;
 import at.searles.math.Scale;
 import at.searles.math.color.Palette;
 import at.searles.meelan.CompileException;
+import at.searles.parsing.ParsingError;
 import at.searles.utils.Pair;
 
 public class ParameterEditorActivity extends Activity implements EditableDialogFragment.Callback {
@@ -496,10 +499,47 @@ public class ParameterEditorActivity extends Activity implements EditableDialogF
 			if (resultCode == 1) { // = "Ok"
 				String source = data.getStringExtra(SourceEditorActivity.SOURCE_LABEL);
 
-				fractal = fractal.copyNewSource(source, true);
+				Fractal newFractal = fractal.copyNewSource(source, true);
 
-				adapter.init(); // resets content of adapter.
-				adapter.notifyDataSetChanged();
+				try {
+					newFractal.parse();
+
+					try {
+						newFractal.compile();
+						this.fractal = newFractal;
+						adapter.init(); // resets content of adapter.
+						adapter.notifyDataSetChanged();
+					} catch(CompileException e) {
+						DialogHelper.confirm(
+								ParameterEditorActivity.this,
+								"Cannot compile parameters",
+								"Reset parameters?",
+								new Runnable() {
+									@Override
+									public void run() {
+										Fractal newResetFractal = new Fractal(source, new HashMap<>());
+
+										try {
+											newResetFractal.parse();
+											newResetFractal.compile();
+											fractal = newResetFractal;
+										} catch(ParsingError | CompileException e) {
+											DialogHelper.error(ParameterEditorActivity.this, e.getMessage());
+										}
+									}
+								},
+								new Runnable() {
+									@Override
+									public void run() {
+										startSourceEditActivity();
+									}
+								});
+					}
+				} catch(ParsingError | CompileException error) {
+					// This one should not happen
+					DialogHelper.error(this, "Invalid source code.");
+					error.printStackTrace();
+				}
 			}
 		}
 	}
@@ -542,15 +582,19 @@ public class ParameterEditorActivity extends Activity implements EditableDialogF
 				return true;
 			}
 			case R.id.action_edit_source: {
-				Intent i = new Intent(ParameterEditorActivity.this, SourceEditorActivity.class);
-
-				i.putExtra(SourceEditorActivity.SOURCE_LABEL, fractal.sourceCode());
-				startActivityForResult(i, SourceEditorActivity.SOURCE_EDITOR_ACTIVITY_RETURN);
+				startSourceEditActivity();
 			} return true;
 
 			default:
 				throw new IllegalArgumentException("not implemented");
 		}
+	}
+
+	private void startSourceEditActivity() {
+		Intent i = new Intent(ParameterEditorActivity.this, SourceEditorActivity.class);
+
+		i.putExtra(SourceEditorActivity.SOURCE_LABEL, fractal.sourceCode());
+		startActivityForResult(i, SourceEditorActivity.SOURCE_EDITOR_ACTIVITY_RETURN);
 	}
 
 	private class ParameterAdapter extends BaseAdapter implements ListAdapter {

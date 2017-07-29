@@ -60,7 +60,15 @@ public class DialogHelper {
         builder.show();
     }
 
-    public static void confirm(Context context, String title, String message, Runnable action) {
+    public static void confirm(Context context, String title, String message, Runnable yesAction) {
+        confirm(context, title, message, yesAction, new Runnable() {
+            @Override
+            public void run() {
+            }
+        });
+    }
+
+        public static void confirm(Context context, String title, String message, Runnable yesAction, Runnable noAction) {
         AlertDialog.Builder yesNoBuilder = new AlertDialog.Builder(context);
         yesNoBuilder.setIcon(android.R.drawable.ic_delete);
         yesNoBuilder.setTitle(title);
@@ -69,7 +77,7 @@ public class DialogHelper {
         yesNoBuilder.setPositiveButton("Yes", new DialogInterface.OnClickListener() {
             @Override
             public void onClick(DialogInterface dialogInterface, int which) {
-                action.run();
+                yesAction.run();
                 dialogInterface.dismiss();
             }
         });
@@ -77,6 +85,7 @@ public class DialogHelper {
         yesNoBuilder.setNegativeButton("No", new DialogInterface.OnClickListener() {
             @Override
             public void onClick(DialogInterface dialogInterface, int which) {
+                noAction.run();
                 dialogInterface.dismiss();
             }
         });

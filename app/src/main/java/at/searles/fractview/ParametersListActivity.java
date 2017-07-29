@@ -12,6 +12,7 @@ import android.widget.Button;
 import android.widget.ListView;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 
 import at.searles.fractal.Fractal;
 import at.searles.fractal.ParameterEntry;
@@ -127,11 +128,13 @@ public class ParametersListActivity extends Activity {
 
     private static class ParameterListAdapter extends FractalListAdapter<ParameterEntry> {
 
+        private ParameterEntry empty;
         private ParameterEntry inEntry;
         private ArrayList<ParameterEntry> entries;
 
         ParameterListAdapter(Activity context, Fractal inFractal) {
             super(context);
+            this.empty = new ParameterEntry("Default", null, "", new HashMap<>());
             inEntry = new ParameterEntry("Current", null, "", inFractal.parameterMap());
 
             this.entries = new ArrayList<>();
@@ -146,15 +149,17 @@ public class ParametersListActivity extends Activity {
 
         @Override
         public int getCount() {
-            return 1 + entries.size();
+            return 2 + entries.size();
         }
 
         @Override
         public ParameterEntry getItem(int position) {
             if(position == 0) {
+                return empty;
+            } else if(position == 1) {
                 return inEntry;
             } else {
-                return entries.get(position - 1);
+                return entries.get(position - 2);
             }
         }
 
