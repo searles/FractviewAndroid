@@ -639,7 +639,7 @@ public class MainActivity extends Activity
 		// create icon out of bitmap
 		Bitmap icon = Commons.createIcon(bitmapFragment.getBitmap(), ICON_SIZE);
 
-		FavoriteEntry fav = new FavoriteEntry(icon, fractal, "Created " + Commons.timestamp());
+		FavoriteEntry fav = new FavoriteEntry(icon, fractal, Commons.fancyTimestamp());
 
 		SharedPrefsHelper.storeInSharedPreferences(this, name, fav, FavoritesListActivity.FAVORITES_SHARED_PREF);
 	}
