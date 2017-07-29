@@ -1,0 +1,337 @@
+<h1 id="function-reference">Function Reference</h1>
+<h2 id="extended-operations">Extended operations</h2>
+<p>These operations are not hardcoded in the virtual machine but instead they are expanded into other ones.</p>
+<ul>
+<li>derive: Returns the derivate of a function.
+<ul>
+<li>Arguments:
+<ol style="list-style-type: decimal">
+<li>Variable to be derived</li>
+<li>Function to be derived</li>
+<li>(Version 3.2.2 and higher): Variable mappings (otherwise, variables are interpreted as constants)</li>
+</ol></li>
+<li>Errors:
+<ul>
+<li>If the function is not derivable (eg <code>conj</code>).</li>
+</ul></li>
+<li>Example:
+<ul>
+<li><code>derive(z, z^2 + z + 2)</code> returns <code>2z + 1</code></li>
+<li>(from Version 3.2.2): <code>derive(c, z^2 + c, [[z, foldvalue]])</code> returns <code>2 * z * foldvalue + 1</code><br />
+</li>
+</ul></li>
+<li>Use cases: For Nova fractals and distance estimation.</li>
+</ul></li>
+<li>newton: Returns the term for the newton approximation to find the root of a function (see <a href="https://en.wikipedia.org/wiki/Newton%27s_method">Newton's method</a>)
+<ul>
+<li>Arguments:
+<ol style="list-style-type: decimal">
+<li>Variable parameter</li>
+<li>Function of which a root should be found (wrt variable)</li>
+</ol></li>
+<li>Errors:
+<ul>
+<li>If the function is not derivable (eg <code>conj</code>).</li>
+</ul></li>
+<li>Example: <code>newton(z, z^2 + z + 2)</code> returns <code>z - (z^2 + z + 2) / (2z + 1)</code></li>
+<li>Use cases: For Newton fractals.</li>
+</ul></li>
+</ul>
+<h2 id="functions-for-vectors">Functions for vectors</h2>
+<ul>
+<li>length: Returns amount of elements in a vector (constant)
+<ul>
+<li>Arguments:
+<ol style="list-style-type: decimal">
+<li>The vector</li>
+</ol></li>
+<li>Example: <code>length [1, 2, 3]</code> returns 3</li>
+</ul></li>
+<li>select: Selects one single argument in the vector that is in argument 2.
+<ul>
+<li>Arguments
+<ol style="list-style-type: decimal">
+<li>The index (will always use the positive remainder wrt the length)</li>
+<li>The vector</li>
+</ol></li>
+<li>Errors:
+<ul>
+<li>If the vector is empty (TODO: test!)</li>
+</ul></li>
+<li><h2 id="example">Example:</h2></li>
+</ul></li>
+</ul>
+<h2 id="boolean-operations-and-comparisons">Boolean operations and comparisons</h2>
+<h3 id="logic-operations">Logic operations</h3>
+<ul>
+<li>and: Logic and</li>
+<li>or: Logic or</li>
+<li>not: Logic negation</li>
+</ul>
+<h3 id="comparisons">Comparisons</h3>
+<ul>
+<li>next: Logic increment operation: Increments an integer variable by 1 and returns true if the result is smaller than another value provided. Equivalent to the C expression <code>++i &lt; k</code> where <code>i</code> and <code>k</code> are the arguments.
+<ul>
+<li>Arguments
+<ul>
+<li><ol style="list-style-type: decimal">
+<li>An integer variable</li>
+</ol></li>
+<li><ol start="2" style="list-style-type: decimal">
+<li>The limit for the value.</li>
+</ol></li>
+</ul></li>
+</ul></li>
+<li>g: Usually written in infix notation <code>a &gt; b</code>. Greater than comparison (only available for scalar types real and int).</li>
+<li>ge: Usually written in infix notation <code>a &gt;= b</code>. Greater than or equal to comparison (only available for scalar types real and int).</li>
+<li>eq: Usually written in infix notation <code>a == b</code>. Equal to comparison (only available for scalar types real and int, but not really useful for real because of rounding mistakes).</li>
+<li>ne: Usually written in infix notation <code>a &gt;&lt; b</code>. Not qqual to comparison (only available for scalar types real and int, but not really useful for real because of rounding mistakes).</li>
+<li>le: Usually written in infix notation <code>a =&lt; b</code>. Less than or equal to comparison (only available for scalar types real and int).</li>
+<li>l: Usually written in infix notation <code>a &lt; b</code>. Less than comparison (only available for scalar types real and int).</li>
+</ul>
+<h3 id="special-comparisons-for-complex-numbers">Special comparisons for complex numbers</h3>
+<ul>
+<li>radless: Equivalent to <code>rad(a) &lt; b</code>.
+<ul>
+<li>Arguments
+<ul>
+<li><ol style="list-style-type: decimal">
+<li>The complex number <code>a</code></li>
+</ol></li>
+<li><ol start="2" style="list-style-type: decimal">
+<li>The scalar (int or real) <code>b</code></li>
+</ol></li>
+</ul></li>
+</ul></li>
+<li>distless: Equivalent to <code>dist(a, b) &lt; c</code>. - 1. The complex number <code>a</code> - 2. The complex number <code>b</code> - 3. The scalar (int or real) <code>c</code></li>
+<li>radrange: Combination to the previous two: <code>radrange(a, b, upper, lower, block1, block2)</code> is a short form of the following code snippet</li>
+</ul>
+<pre><code>radless(a, upper) and { block1, true } or distless(a, b, lower) and { block2, true }</code></pre>
+<h2 id="arithmetics">Arithmetics</h2>
+<h3 id="mathematics">Mathematics</h3>
+<h4 id="standard-operations-with-64-bit-precision">Standard operations with 64 bit precision</h4>
+<h5 id="binary">Binary</h5>
+<p>Binary operations can be chained in the following way:</p>
+<pre><code>op(a, b, c, ...) = op(...op(a, b), c)...)</code></pre>
+<ul>
+<li>add: Addition (usually denoted using infixed <code>+</code>)</li>
+<li>sub: Subtraction (usually denoted using infixed <code>-</code>)</li>
+<li>mul: Multiplication (usually denoted using infixed <code>*</code> or no symbol at all)
+<ul>
+<li>Example: <code>2 x</code> and <code>2 * x</code> are equivalent, but <code>2 x</code> binds the strongest. For instance, <code>2 x^2</code> is the same as <code>(2^2) * (x^2)</code> where <code>2 * x ^ 2</code> is in fact <code>2 * (x ^ 2)</code>.</li>
+<li>TODO: Implementation for <code>quat</code>.</li>
+</ul></li>
+<li>div: Division (usually denoted using infixed <code>/</code>).
+<ul>
+<li>Remark: Division of integers will always yield a real value.</li>
+<li>TODO: Implementation for <code>quat</code>.</li>
+<li>TODO: Remove integer implementation because of automated conversion</li>
+</ul></li>
+<li>mod: Remainder of the division, usually denoted using infixed <code>%</code>.
+<ul>
+<li>Remark: Only available for integers.</li>
+</ul></li>
+<li>pow: Power operation (usually denoted using <code>^</code>)
+<ul>
+<li>Remark: Not implemented for <code>quat</code>.</li>
+<li>Remark: There are different implementations depending on whether the second argument is an integer, a real or a cplx.</li>
+<li>TODO: Remove implementation for <code>quat</code></li>
+</ul></li>
+</ul>
+<h5 id="unary">Unary</h5>
+<ul>
+<li>neg: Additive inverse, usually denoted using prefixed <code>-</code></li>
+<li>recip: Multiplicative inverse, equivalent to <code>1 / a</code>, usually denoted using prefixed <code>/</code>
+<ul>
+<li>Example: <code>/3</code> is one third (about <code>0.333333...</code>).</li>
+<li>Remark: Reciprocal value of an integer is always a real value.</li>
+<li>TODO: Remove integer implementation because of automated conversion</li>
+</ul></li>
+<li>sqr: Square
+<ul>
+<li>TODO (?): Remove implementation for <code>quat</code></li>
+</ul></li>
+</ul>
+<h4 id="standard-operations-with-limited-precision">Standard operations with limited precision</h4>
+<p>The following operations use the corresponding 32-bit operations in the GPU and therefore only allow limited precision. None of the following operations is available for the quat type.</p>
+<h5 id="power-functions">Power functions</h5>
+<ul>
+<li>sqrt: Square root
+<ul>
+<li>Remark: <code>sqrt</code> of a negative real will return &quot;not a number&quot;. Use cplx as input type if you want a complex result.</li>
+<li>TODO: Bug: complex root of 0 returns &quot;not a number&quot;</li>
+<li>TODO: Possible efficient 64-bit implementation using 4 newton iterations.</li>
+</ul></li>
+<li>exp: Exponential function. Equivalent to <code>E^x</code>.
+<ul>
+<li>Remark: Since this operation grows very fast but is only supported for 32 bit, values higer than around 40 will return infinity</li>
+<li>TODO: Improve precision by cutting off mantissa.</li>
+</ul></li>
+<li>log: Logarithm (inverse of exp)
+<ul>
+<li>Remark: <code>log</code> of a negative number will return &quot;not a number&quot;. Use cplx as input type if you want a complex result.</li>
+<li>TODO: Improve precision by cutting off mantissa</li>
+</ul></li>
+</ul>
+<h5 id="trigonometric-functions">Trigonometric functions</h5>
+<ul>
+<li>sin: Sine function</li>
+<li>cos: Cosine function</li>
+<li>tan: Tangens function</li>
+<li>atan: Inverse of the tangens function</li>
+</ul>
+<h5 id="hyperbolic-functions">Hyperbolic functions</h5>
+<ul>
+<li>sinh</li>
+<li>cosh</li>
+<li>tanh</li>
+<li>atanh</li>
+</ul>
+<h4 id="non-differentialbe-operations">Non-differentialbe operations</h4>
+<p>The following operations are applied component-wise to cplx and quat.</p>
+<ul>
+<li>min: Minimum of two values</li>
+<li>max: Maximum of two valuesa(</li>
+<li>abs: Positive value
+<ul>
+<li>Example: <code>abs (-2:-1)</code> is <code>2:1</code>.</li>
+</ul></li>
+<li>floor: Closest lower integer
+<ul>
+<li>Example: <code>floor (2.5:-1.5)</code> is <code>2:-2</code>.</li>
+<li>TODO: Not implemented for quat</li>
+</ul></li>
+<li>ceil: Closest larger integer
+<ul>
+<li>TODO: Not implemented for quat</li>
+</ul></li>
+<li>fract: Fractional part (equivalent to <code>x - floor(x)</code>)
+<ul>
+<li>TODO: Not implemented for quat</li>
+</ul></li>
+<li>circlefn: Maps values between 0 and 1 (-1) to a
+<ul>
+<li>Motivation: Used for rounded orbit traps</li>
+<li>Example:</li>
+<li>TODO: Remove implementation for cplx. It is not needed.</li>
+</ul></li>
+<li>real2int: Convert a real to an integer. Similar to <code>floor</code> but the return type is int.</li>
+</ul>
+<h3 id="special-functions-for-complex-and-quat-numbers">Special functions for complex and quat numbers</h3>
+<ul>
+<li>cons: Creates either a cplx out of two real arguments (mostly using the infix operator <code>:</code>) or a <code>quat</code> out of four.</li>
+<li>re: real part of a cplx. Also written as <code>value.x</code>.</li>
+<li>im: imaginary part of a cply. Also written as <code>value.y</code>.</li>
+<li>rad: Absolute value of a complex number.</li>
+<li>rad2: Squared absolute of a complex number. Faster than <code>rad</code> and with double precision.</li>
+<li>dist2( new Signature().r(Type.cplx).r(Type.cplx).w(Type.real) ) {</li>
+<li>dist( new Signature().r(Type.cplx).r(Type.cplx).w(Type.real) ) {</li>
+<li>arc: Argument of a complex number. Uses 32 bit precision. Value ranges from -pi to +pi.</li>
+<li>arcnorm( new Signature().r(Type.cplx).w(Type.real) ) {</li>
+<li><p>polar( new Signature().r(Type.cplx).w(Type.cplx) ) {</p></li>
+<li><p>rect( new Signature().r(Type.cplx).w(Type.cplx) ) {</p>
+<pre><code>    new Signature().r(Type.cplx).w(Type.real)</code></pre>
+) {</li>
+<li><p>scalarmul( new Signature().r(Type.cplx).r(Type.cplx).w(Type.cplx) },</p></li>
+<li>conj( new Signature().r(Type.cplx).w(Type.cplx) ) { },</li>
+<li><p>dot( new Signature().r(Type.cplx).r(Type.cplx).w(Type.real) ) { rabs( new Signature().r(Type.cplx).w(Type.cplx) ) { iabs( new Signature().r(Type.cplx).w(Type.cplx) ) { flip( new Signature().r(Type.cplx).w(Type.cplx) ) {</p>
+<p>mandelbrot( new Signature().r(Type.cplx).r(Type.cplx).w(Type.cplx) ) { smooth( // bad smooth function, only kept for compatibility new Signature().r(Type.cplx).r(Type.real).r(Type.real).w(Type.real) ) { smoothen( new Signature().r(Type.cplx).r(Type.real).r(Type.real).w(Type.real) ) {</p></li>
+</ul>
+<h3 id="for-scaling">For scaling</h3>
+<p>TODO: There is no support yet to use other scales exvept for the extern <code>scale</code> that is left implicit in most cases. A solution for this will involve a generic solution also for <code>__ld_palette</code>.</p>
+<ul>
+<li>map( new Signature().r(Type.real).r(Type.real).w(Type.cplx), new Signature().r(Type.cplx).w(Type.cplx) ) {</li>
+</ul>
+<h3 id="geometry">Geometry</h3>
+<pre><code>circle(
+        new Signature().r(Type.cplx).r(Type.real).r(Type.cplx).w(Type.real)
+) {
+line(
+        new Signature().r(Type.cplx).r(Type.cplx).r(Type.cplx).w(Type.real)
+) {
+segment(
+        new Signature().r(Type.cplx).r(Type.cplx).r(Type.cplx).w(Type.real)
+) {
+box(
+        new Signature().r(Type.cplx).r(Type.cplx).r(Type.cplx).w(Type.real)
+) {
+
+// Translate coordinates</code></pre>
+<h3 id="color-handling">Color handling</h3>
+<p>Colors are represented in multiple ways</p>
+<ul>
+<li>As integers in format <code>AARRGGBB</code> (there are some problems with alpha though)
+<ul>
+<li>The color output is supposed to be of this type.</li>
+</ul></li>
+<li>As quats (variable consisting of 4 floats)
+<ul>
+<li>This quat can either be in LAB format (L ranges from 0 to 100, the others vary but are centered aroung 0)</li>
+<li>Or in RGB (all values range from 0 to 1)</li>
+<li>The 4th element is the alpha value.</li>
+</ul></li>
+</ul>
+<h4 id="color-functions">Color functions</h4>
+<ul>
+<li>over( new Signature().r(Type.quat).r(Type.quat).w(Type.quat) ) {</li>
+<li>lab2rgb( new Signature().r(Type.quat).w(Type.quat) ) {</li>
+<li>rgb2lab( new Signature().r(Type.quat).w(Type.quat) ) {</li>
+<li>int2rgb( new Signature().r(Type.integer).w(Type.quat) ) {</li>
+<li>rgb2int( new Signature().r(Type.quat).w(Type.integer) ) {</li>
+<li>int2lab( new Signature().r(Type.integer).w(Type.quat) ) {</li>
+<li>lab2int( new Signature().r(Type.quat).w(Type.integer) ) {</li>
+</ul>
+<h2 id="internal-operations">Internal operations</h2>
+<ul>
+<li><code>mov</code>: Internal assignment function. TODO: Rename to <code>__mov</code></li>
+<li><code>whileOp</code>: Internal <code>while</code>-loop. TODO: Rename to <code>__while</code></li>
+<li><code>ifOp</code>: Internal <code>if</code>-condition. TODO: Rename to <code>__if</code></li>
+<li><code>forOp</code>: Internal <code>for</code>-condition. TODO: Rename to <code>__for</code></li>
+<li><code>__jump</code>: Jump</li>
+<li><code>__jumprel</code>: Relative jump</li>
+<li><code>__ld_palette</code>: Loads the palette from storage. TODO: Palettes are very specialized. Having this function hardcoded in meelan is not very pretty.</li>
+</ul>
+<h2 id="experimental-operations">Experimental operations</h2>
+<ul>
+<li>solve2: Solution of the quadratic equation <code>a * z^2 + b * z + c</code>.
+<ul>
+<li>COMMENT: This function might be modified or removed in the future!</li>
+<li>Arguments: 1-3. a, b and c
+<ol start="4" style="list-style-type: decimal">
+<li>Integer 1 or 2 for the index of the solution.</li>
+</ol></li>
+<li>Errors:
+<ul>
+<li>If the index is neither 1 nor 2</li>
+</ul></li>
+<li>Examples:
+<ul>
+<li><code>solve2(1, 0, -1, 1)</code> returns <code>1</code></li>
+<li><code>solve2(1, 0, -1, -1)</code> returns <code>-1</code></li>
+</ul></li>
+<li>Errors:
+<ul>
+<li>If the function is not derivable (eg <code>conj</code>).</li>
+</ul></li>
+<li>Use cases:
+<ul>
+<li>To easily get mandelinit for power-3 fractals.</li>
+</ul></li>
+</ul></li>
+</ul>
+<h2 id="want-to-have">Want to have</h2>
+<ul>
+<li>solve: Finds a root of a polynomial function up to at most degree 4
+<ul>
+<li>Arguments:
+<ol style="list-style-type: decimal">
+<li>Variable for which the equation <code>function = 0</code> should be 0</li>
+<li>Function itself</li>
+</ol></li>
+<li>Use cases:
+<ul>
+<li><code>function</code> is <code>z^4-2*z^3+z+c</code></li>
+<li><code>mandelinit</code> is <code>solve(z, derive(function))</code></li>
+</ul></li>
+</ul></li>
+</ul>

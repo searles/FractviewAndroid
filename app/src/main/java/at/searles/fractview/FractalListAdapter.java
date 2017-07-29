@@ -51,6 +51,7 @@ public abstract class FractalListAdapter<A> extends BaseAdapter {
         TextView descriptionView = (TextView) view.findViewById(R.id.descriptionView);
 
         Bitmap icon = getIcon(index);
+
         iconView.setImageBitmap(icon);
         iconView.setScaleType(ImageView.ScaleType.CENTER_INSIDE);
 

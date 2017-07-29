@@ -24,6 +24,10 @@ public class Scale {
 	 */
 	public final double data[];
 
+	public Scale(double[] components) {
+		this(components[0], components[1], components[2], components[3], components[4], components[5]);
+	}
+
 	public Scale(double xx, double xy, double yx, double yy, double cx, double cy) {
 		data = new double[6];
 		data[XX] = xx;

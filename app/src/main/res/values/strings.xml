@@ -43,7 +43,7 @@
     <string name="action_save_palette">Save Palette</string>
     <string name="action_import">Import</string>
     <string name="action_export">Export</string>
-    <string name="action_presets">Presets</string>
+    <string name="action_demos">Demos</string>
     <string name="action_reset">Reset All</string>
     <string name="action_show_grid">Show Grid</string>
     <string name="label_default_size">Reset to Default</string>

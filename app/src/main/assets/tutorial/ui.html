@@ -1,0 +1,116 @@
+<h1 id="user-interface-and-menus">User Interface and Menus</h1>
+<p>Fractview works in each orientation and it will also rotate the image to fill the screen as much as possible. If the image is rotated, a small triangle will point out the top left corner of the image.</p>
+<div class="figure">
+<img src="" alt="Triangle showing orientation" />
+<p class="caption">Triangle showing orientation</p>
+</div>
+<h2 id="fractview-mainscreen">Fractview Mainscreen</h2>
+<p>Fractview allows very intuitive pinch-to-zoom gestures. Dragging one finger on the screen will move the image. Dragging two fingers will stretch and rotate the fractal like in pretty much every map viewer. With three fingers you obtain a shearing effect. Once you release the touch screen, the image is re-rendered.</p>
+<p>You can modify this behaviour using some options in UI-Settings:</p>
+<ul>
+<li>Rotation Lock: Prevents rotations apart from 90-degrees angle.</li>
+<li>Confirm Zoom with Tab: After scaling the image, you have to confirm the selection with a single tap.</li>
+<li>Deactivate Zoom: Disables any interaction with the main screen.</li>
+<li>Show Grid: This option displays a grid that makes it easier to</li>
+</ul>
+<p>If you want to undo your changes, you can tap the back button (if there have not been any changes, this will terminate the app).</p>
+<div class="figure">
+<img src="" alt="Screenshot of the UI-Settings and the menu below it" />
+<p class="caption">Screenshot of the UI-Settings and the menu below it</p>
+</div>
+<h3 id="technical-comment">Technical Comment</h3>
+<ul>
+<li>The app uses <code>double</code> precision which means you can double the image size about 100 times until the numerical precision will create artifacts that limit further depth. There are some arbitrary-precision fractal renderers, but this is outside the scope of Fractview.</li>
+<li>If you use functions like <code>sin</code> or <code>exp</code>, the app uses (is forced to use) 32-bit precision due to the use of the GPU.</li>
+</ul>
+<h3 id="future-development">Future development</h3>
+<ul>
+<li>Show coordinates.</li>
+<li>Allow editing parameters on-screen.
+<ul>
+<li>Allow color cycling</li>
+<li>Allow real time modifications of 3d parameters.</li>
+</ul></li>
+</ul>
+<h2 id="changing-the-image-size">Changing the image size</h2>
+<p>By default the image size is determined by the screen size. You can change the image size by selecting &quot;Image Size&quot; in the menu and entering a new size. The upper limit is restricted by the memory available (usually around 5000x5000). You can pick a default size that then will be used at start up. I personally use 900x500 on my Nexus 5X. For large renderings I then use sizes around 4000x3000, but I even managed to render images with size 9000x5000.</p>
+<p><em>Using a very high limit may cause the app to become slow and unstable.</em></p>
+<h3 id="behaviour">Behaviour</h3>
+<ul>
+<li>The image size is modified independently of the fractal, ie, tapping &quot;back&quot; will not revert changes of the image size but instead return to the last image using the current image size.</li>
+<li>Changing the ratio of the image size will not disort the image. The image always contains the same inner square instead.</li>
+</ul>
+<h3 id="future-development-1">Future development</h3>
+<ul>
+<li>Instead of allowing unlimited image size, add a &quot;Create Rendering&quot; menu.</li>
+</ul>
+<h2 id="favorites">Favorites</h2>
+<p>The specification of a fractal (the &quot;rendering plan&quot;) can be stored to favorites. For this, select &quot;Add to favorites&quot; and enter a non-empty name. If there already is an entry of this name in &quot;Favorites&quot;, a new name is created by adding &quot;(index)&quot; as a suffix.</p>
+<p>In Favorites you can use a simple tap to return to a previous rendering and explore it further. A long tap opens a menu that lets you rename or delete an entry.</p>
+<div class="figure">
+<img src="" alt="Favorites image" />
+<p class="caption">Favorites image</p>
+</div>
+<p>TODO: Import</p>
+<h3 id="selection-mode">Selection mode</h3>
+<p>After a long tap on an entry you can &quot;Select&quot; the entry. This toggles the selection mode in which you can select and unselect entries using a single tap. In selection mode, there are some new menus:</p>
+<ul>
+<li>Select all: Selects all entries. This is useful if you want to back up your collection.</li>
+<li>Export: All selected entries are put into a simple text file that then is shared.</li>
+<li>Delete: Deletes the selected entries and ends selection mode.</li>
+</ul>
+<p>Selection mode ends after tapping the back button.</p>
+<h2 id="saving-the-image">Saving the image</h2>
+<p>You can save the image in PNG format using the <img src="" alt="Share icon" />. In the following context menu, you can pick one of the following three options:</p>
+<ul>
+<li>Share image: Share image to some other app (eg share on Facebook, Dropbox, ...)</li>
+<li>Save image: Saves the image to the Media Gallery. You can also decide to instantly add the image to the Favorites under the same name as the file.</li>
+<li>Set as wallpaper: Sets the current image as wallpaper.</li>
+</ul>
+<p>All these options will wait until the rendering is finished. If you want to save the image instantly you can select &quot;Skip&quot; in the waiting dialog.</p>
+<div class="figure">
+<img src="" alt="Screenshot of the waiting dialog" />
+<p class="caption">Screenshot of the waiting dialog</p>
+</div>
+<h2 id="parameters">Parameters</h2>
+<p>In Parameters you can modify parameters that are used to render the fractal. They might be a bit overwhelming in the beginning.</p>
+<p>Each parameter is either set internally by the fractal program, or it has some custom value (in this case it is written in bold letters). Using a long tap, you can pick various options, for instance to reset the value to its default.</p>
+<p>The most important parameters in the Default program are:</p>
+<ul>
+<li>&quot;Scale&quot;: The current zoom, consisting of the current x-vector, y-vector and the current center.</li>
+<li>&quot;max_depth&quot;: A fractal is calculated by repeatedly applying a function to itself. &quot;max_depth&quot; is the maximum amount of times this is done. If the edges of the fractals are too smooth, increase this value. If you pick a too large value (around 10000 or higher), the app will be less responsive to changes. In any case, a value of 5000 should be enough even for very deep zooms.</li>
+</ul>
+<div class="figure">
+<img src="" alt="Screenshot with two different precisions." />
+<p class="caption">Screenshot with two different precisions.</p>
+</div>
+<ul>
+<li>&quot;light&quot;: You can select &quot;light&quot; to enable lighting effects.</li>
+<li>&quot;julia_set&quot;: By selecting this, you can toggle between Mandelbrot sets and Julia sets (see below for a more detailed explanation what that means).</li>
+<li>&quot;julia_point&quot;: The start point for julia sets.</li>
+<li>&quot;bailout palette&quot;: Palette for points that exceed the bailout value (see below).</li>
+<li>&quot;lake palette&quot;: Palette for points that remain below the bailout value (see below).</li>
+</ul>
+<p>You can reset all parameters using &quot;Reset All&quot;.</p>
+<h2 id="palettes-and-colors">Palettes and colors</h2>
+<p>Parameters contains different types of parameters: Integers like <code>max_depth</code>, Real values like <code>epsilon</code> or <code>bailout</code>, complex numbers like <code>julia_point</code>, colors and color palettes. Selecting a color palette opens a userfriendly two-dimensional palette editor (complex numbers consist of two dimensions, so why not use two-dimensional color palettes?).</p>
+<p>In the palette editor you can use drag-and-drop to copy colors, move and shift columns and rows, and a long tap into the first or last value opens a menu to randomize or delete columns/rows or delete the entire palette. By dragging the last row/column you can resize the entire palette.</p>
+<div class="figure">
+<img src="" alt="Palette Editor" />
+<p class="caption">Palette Editor</p>
+</div>
+<p>A simple tap on a color opens a color dialog that shows a colored hexagon. The slider on the right allows to modify the brightness. The philosophy behind this color picker is that all colors are arranged in a cube and the slider allows you to select a point in the palette.</p>
+<p>When dragging a color, the drag is locked in a color triangle to make it easier to select some color.</p>
+<div class="figure">
+<img src="" alt="Color Editor dragging" />
+<p class="caption">Color Editor dragging</p>
+</div>
+<h2 id="presets">Presets</h2>
+<p>In the presets menu you can select a program, and after selecting a program also a parameter set.</p>
+<h2 id="copy-and-paste">Copy and paste</h2>
+<p>The specification of the rendering can be copied to the clipboard (in case you know a bit about programming, it uses Json) and pasted in some test program (I use WhatsApp to share nice fractals with my daughter). This text representation can be pasted into the app again.</p>
+<div class="figure">
+<img src="" alt="Copying and pasting" />
+<p class="caption">Copying and pasting</p>
+</div>
+<p>This is really useful if you found a very nice spot in some fractal, added nice colors to it and just want others to also explore the area around your image.</p>

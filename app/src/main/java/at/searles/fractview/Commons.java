@@ -127,8 +127,35 @@ public class Commons {
         }
     }
 
-    public static Scale toScale(Tree init) {
-        throw new IllegalArgumentException("not yet implemented");
+    public static Scale toScale(Tree init) throws CompileException {
+        if(init instanceof Tree.Vec) {
+            Tree.Vec vec = (Tree.Vec) init;
+
+            if(vec.size() == 3) {
+                double[] scale = new double[3];
+
+                for(int i = 0; i < 3; ++i) {
+                    Tree child = vec.get(i);
+
+                    if(child instanceof Value.Int) {
+                        scale[2 * i] = ((Value.Int) child).value;
+                        scale[2 * i + 1] = 0;
+                    } else if(child instanceof Value.Real) {
+                        scale[2 * i] = ((Value.Real) child).value;
+                        scale[2 * i + 1] = 0;
+                    } else if(child instanceof Value.CplxVal) {
+                        scale[2 * i] = ((Value.CplxVal) child).value.re();
+                        scale[2 * i + 1] = ((Value.CplxVal) child).value.im();
+                    } else {
+                        throw new CompileException("Components of scale must be complex numbers");
+                    }
+                }
+
+                return new Scale(scale);
+            }
+        }
+
+        throw new CompileException("Scale must be vector of 3 numbers");
     }
 
     public static byte[] toPNG(Bitmap bitmap) {

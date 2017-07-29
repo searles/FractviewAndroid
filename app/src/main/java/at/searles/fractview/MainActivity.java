@@ -314,7 +314,7 @@ public class MainActivity extends Activity
 				startActivityForResult(i, BOOKMARK_ACTIVITY_RETURN);
 			} return true;
 
-			case R.id.action_presets: {
+			case R.id.action_demos: {
 				// show new activity
 				Intent i = new Intent(MainActivity.this, SourcesListActivity.class);
 				i.putExtra(SourcesListActivity.FRACTAL_INDENT_LABEL, BundleAdapter.fractalToBundle(bitmapFragment.fractal()));

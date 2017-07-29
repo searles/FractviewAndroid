@@ -513,7 +513,7 @@ public class ParameterEditorActivity extends Activity implements EditableDialogF
 						DialogHelper.confirm(
 								ParameterEditorActivity.this,
 								"Cannot compile parameters",
-								"Reset parameters?",
+								e.getMessage() + "! Reset parameters?",
 								new Runnable() {
 									@Override
 									public void run() {
@@ -531,7 +531,7 @@ public class ParameterEditorActivity extends Activity implements EditableDialogF
 								new Runnable() {
 									@Override
 									public void run() {
-										startSourceEditActivity();
+										startSourceEditActivity(source);
 									}
 								});
 					}
@@ -582,7 +582,7 @@ public class ParameterEditorActivity extends Activity implements EditableDialogF
 				return true;
 			}
 			case R.id.action_edit_source: {
-				startSourceEditActivity();
+				startSourceEditActivity(fractal.sourceCode());
 			} return true;
 
 			default:
@@ -590,10 +590,10 @@ public class ParameterEditorActivity extends Activity implements EditableDialogF
 		}
 	}
 
-	private void startSourceEditActivity() {
+	private void startSourceEditActivity(String source) {
 		Intent i = new Intent(ParameterEditorActivity.this, SourceEditorActivity.class);
 
-		i.putExtra(SourceEditorActivity.SOURCE_LABEL, fractal.sourceCode());
+		i.putExtra(SourceEditorActivity.SOURCE_LABEL, source);
 		startActivityForResult(i, SourceEditorActivity.SOURCE_EDITOR_ACTIVITY_RETURN);
 	}
 

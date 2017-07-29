@@ -131,9 +131,26 @@ public class ParameterEntry {
                             .add("mandelinit", Fractal.Type.Expr, "0.5")
             ));
 
-            // TODO: GenericLambda
-            // TODO: Simonbrot Normal
-            // TODO: Simonbrot Inner
+            _ENTRIES.add(createEntry(am, "Generic Lambda", "generic_lambda.png", "Lambda Fractal",
+                    Fractal.parameterBuilder()
+                            .add("max_power", Fractal.Type.Real, 4)
+                            .add("function", Fractal.Type.Expr, "p (1 - z^(max_power - 1)) z")
+                            .add("mandelinit", Fractal.Type.Expr, "/max_power ^ /(max_power - 1)")
+            ));
+
+            _ENTRIES.add(createEntry(am, "Simonbrot Normal", "simonbrot_normal.png", "Lambda Fractal",
+                    Fractal.parameterBuilder()
+                            .add("max_power", Fractal.Type.Real, 4)
+                            .add("function", Fractal.Type.Expr, "sqr z abs z + p")
+                    )
+            );
+
+            _ENTRIES.add(createEntry(am, "Simonbrot Inverted", "simonbrot_inverted.png", "Lambda Fractal",
+                    Fractal.parameterBuilder()
+                            .add("max_power", Fractal.Type.Real, 4)
+                            .add("function", Fractal.Type.Expr, "{ var t = sqr z; t * abs t } + p")
+                    )
+            );
 
             _ENTRIES.add(createEntry(am, "Phoenix Julia Set", "phoenix.png", "Julia Set of the Phoenix Fractal",
                     Fractal.parameterBuilder()
@@ -284,6 +301,14 @@ public class ParameterEntry {
                             .add("bailoutvalue", Fractal.Type.Expr, "log(E^2 + foldvalue.x)")
                             .add("lakevalue", Fractal.Type.Expr, "log(1 + foldvalue.x)")
             ));
+
+            _ENTRIES.add(createEntry(am, "Distance Estimation (Mandelbrot)", "distance_esimation.png", "A nice variation for newton",
+                    Fractal.parameterBuilder()
+                            .add("foldfn", Fractal.Type.Expr, "2 znext foldvalue + 1")
+                            .add("bailoutvalue", Fractal.Type.Expr, "rad znext / rad foldvalue / 2 * log rad znext")
+            ));
+
+            // FIXME Lyapunov
 
             _ENTRIES.add(createEntry(am, "Exponential Smoothing (Bailout)", "expsmoothbailout.png", "A nice variation for newton",
                     Fractal.parameterBuilder()

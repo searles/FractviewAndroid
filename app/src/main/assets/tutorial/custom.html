@@ -1,0 +1,40 @@
+<h1 id="creating-custom-fractals">Creating custom fractals</h1>
+<p>In Fractview, a fractal is rendered using a program and parameters for this program. The program that is used on start-up is called &quot;Default&quot; and it is used to render fractals like the mandelbrot set.</p>
+<p>In the following, some parameters are explained. For further information on other parameters please refer to <a href="http://fractview.wordpress.com">my blog</a>.</p>
+<h2 id="fractals-like-the-mandelbrot-set-the-default-preset.">&quot;Fractals like the Mandelbrot Set&quot;: The Default Preset.</h2>
+<h3 id="orbits-lakes-and-bailouts">Orbits, lakes and bailouts</h3>
+<p>Fractals are usually created by applying some function to the outcome of the same function. For the mandelbrot set, this function is <code>f(z) = sqr z + p</code>. <code>p</code> can be any complex value, hence the images have two dimensions.</p>
+<p>Repeatedly applying the function to itself creates a sequence <code>&lt;start, f(start), f(f(start)), f(f(f(start))), ...&gt;</code> which is called the <em>orbit</em>. Starting with 0 and picking <code>p = 2</code>, the sequence is <code>&lt;0, 2, 6, 38, 1446&gt;</code>. This sequence is unbounded. If we pick <code>p = 0.5</code>, the sequence is also unbounded although it grows much slower.</p>
+<p>For each point of the screen, a color is picked based on properties of the orbit, most commonly how fast it grows, or simpler, at what index does it exceed a certain value. This value is the <em>bailout</em> parameter.</p>
+<p>For <code>p = 0</code> the sequence remains constant, for <code>p = -1</code> it is <code>&lt;0, -1, 0, -1, ...&gt;</code>. For other values of p, the orbit will be bounded but chaotic, and actually, these values of <code>p</code> are the Mandelbrot set (check out <a href="https://en.wikipedia.org/wiki/Mandelbrot_set">Wikipedia</a> for more details). Such points are in the &quot;lake&quot; of the fractal.</p>
+<p>For many points in the lake, the orbit converges towards a value. We therefore can stop the calculation once consecutive values are close to each other. The value used for this speed-up is the &quot;epsilon&quot; parameter: If the difference of two consecutive elements in the orbit is below epsilon, the calculation terminates. If you encounter circular lake artifacts at very deep zooms into spiral structures, use a smaller value for epsilon.</p>
+<div class="figure">
+<img src="" alt="Comparison epsilon circle and no circle" />
+<p class="caption">Comparison epsilon circle and no circle</p>
+</div>
+<h3 id="julia-sets-and-mandelbrot-sets">Julia sets and Mandelbrot sets</h3>
+<p>Depending on the start value of the orbit and the parameter <code>p</code> Fractview distinguishes Julia sets and Mandelbrot sets. In Mandelbrot set, the start value of the orbit is a constant (&quot;mandelinit&quot;) and <code>p</code> is the current point. In Julia sets it is the other way round.</p>
+<p>In the Mandelbrot set, a good value for <code>mandelinit</code> is a root of the first derivation of function. The function of the mandelbrot set is <code>f(z) = sqr z + p</code> and since <code>f'(z) = 2z</code> a start value should satisfy <code>2 z = 0</code>, therefore <code>mandelinit</code> is 0.</p>
+<p>For the Julia set, the start value is always <code>c</code> and <code>p</code> is <code>julia_point</code>. The julia set will resemble the Mandelbrot set centered around this point.</p>
+<div class="figure">
+<img src="" alt="Close up of mandelbrot set with julia next to it" />
+<p class="caption">Close up of mandelbrot set with julia next to it</p>
+</div>
+<h3 id="custom-functions">Custom functions</h3>
+<p>The Default program is useful for fractals that use a polynom (something like <code>z^n + p</code>) as input. A nice function is <code>(1 - z^3) * z * p</code> (this is similar to the lambda preset). Yet, if you enter this function, you will just obtain a black screen because for a start value of 0, every orbit only consists of zeros.</p>
+<p>The first derivation of <code>f(z) = (1 - z^3) * z * p</code> is <code>(1 - z^3) + (-3 * z^2) * z = 1 - 2 * z^3</code>. A root is therefore <code>(1 / 2)^(1 / 3)</code> or shorter <code>/2 ^ /3</code>. This should be <code>mandelinit</code>.</p>
+<p>The Default program uses a method to provide a smooth gradient that depends on a parameter &quot;max_power&quot;. This should contain the largest power of <code>z</code> in the function. For <code>(1 - z^3) * z * p = (z - z^4) * p</code> this is 4. After correcting this, we obtain a nice smooth image.</p>
+<div class="figure">
+<img src="" alt="Lambda with power 3" />
+<p class="caption">Lambda with power 3</p>
+</div>
+<h3 id="custom-values-and-transfers">Custom values and transfers</h3>
+<p>There are further parameters &quot;bailout_value&quot;, &quot;bailout_transfer&quot;, and &quot;lake_value&quot; and &quot;lake_transfer&quot;. <code>*_value</code> is an expression that returns a real value. It is used as depth information if the image is rendered with a 3d effect.</p>
+<p>Transfer is an expression that returns a complex number. It is used to pick a color from the corresponding palette.</p>
+<p>For the 3D effects there are many parameters:</p>
+<ul>
+<li><code>valuetransfer</code> is a function that converts the height information. It is useful to divide it through some constant to smoothen it a bit or simply use <code>-/value</code> (same as <code>-1 / value</code>).</li>
+<li>There are two angles to specify the position of the light source</li>
+<li>Ambient light, diffuse light and specular reflection specify</li>
+<li>Shininess is a parameter used in specular reflection</li>
+</ul>
