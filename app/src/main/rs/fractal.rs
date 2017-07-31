@@ -19,19 +19,200 @@ static double4 __attribute__((overloadable)) convert_quat(double2 d) { return (d
 static long __attribute__((overloadable)) dbl2bits(double d) { return *((long*) &d); }
 static double __attribute__((overloadable)) bits2dbl(long l) { return *((double*) &l); }
 
-static long __attribute__((overloadable)) mantissa(double d) { return dbl2bits(d) & 0x000fffffffffffffL; }
-static int __attribute__((overloadable)) exponent(double d) { return ((dbl2bits(d) & 0x7FF0000000000000L) >> 52) - 1023; }
-static double __attribute__((overloadable)) fromRaw(long mantissa, long exponent) {
-	if(exponent > 1024) {
+static long2 __attribute__((overloadable)) split(double d) { 
+    long bits = dbl2bits(d);
+    return (long2){ bits  & 0x000fffffffffffffL, bits & 0x7FF0000000000000L) >> 52) - 1023 };
+}
+
+// fixme nan + infinity as constants if they don't exist yet
+
+static double __attribute__((overloadable)) unsplit(long2 l2) {
+	if(l2.y > 1024) {
 		// this is infinity
 		 return bits2dbl(0x7ff0000000000000L);
-	} else if(exponent < 1023) {
+	} else if(l2.y < 1023) {
 		// this is 0
 		return 0.;
 	} else {
-		return bits2dbl(mantissa | ((exponent + 1023) << 52));
+		return bits2dbl(l2.x | ((l2.y + 1023) << 52));
 	}
 }
+
+ 	/*static long exponent(double d) {
+		// fixme return values so that fully aligned.
+		return ((Double.doubleToRawLongBits(d) & 0x7FF0000000000000L) >> 52) - 1023;
+	}
+	
+	static long mantissa(double d) {
+		return Double.doubleToRawLongBits(d) & 0x000fffffffffffffL;
+	}
+	
+	static double createDbl(long mantissa, long exponent) {
+		if(exponent < -1023) {
+			return 0;
+		} else if(exponent > 1024) {
+			return Double.POSITIVE_INFINITY;
+		} else {
+			return Double.longBitsToDouble(mantissa | ((exponent + 1023) << 52));
+		}
+	}*/
+	
+	/**
+	 * Good precision for proper doubles. For values very close to 0 a bit worse but manageable.
+	 * @param d
+	 * @return
+	 */
+	static double sqrt(double d) {
+		if(d < 0) {
+			return Double.NaN;
+		} else if(d == 0) {
+			return d;
+		} else {
+			long m = mantissa(d);
+			long e = exponent(d);
+			
+			if((e & 1) != 0) {
+				m |= 0x0010000000000000L;
+				e -= 1;
+			}
+			
+			double x = createDbl(m >> 1, e >> 1);
+
+			// start newton approximation			
+			for(int i = 0; i < 4; ++i) {
+				x = (d / x + x) / 2;
+			}
+			
+			return x;
+		}
+	}
+	
+	/**
+	 * Based on the observation that you can pull out the exponent of sqrt(x^2 + y^2)
+	 * @param x
+	 * @param y
+	 * @return
+	 */
+	public static double rad(double x, double y) {
+		if(x < 0) x = -x;
+		if(y < 0) y = -y;
+		if(x < y) { double t = x; x = y; y = t; }
+		
+		// x and y are positive and x is larger.
+		
+		long m1 = mantissa(x);
+		long e1 = exponent(x);
+		
+		long m2 = mantissa(y);
+		long e2 = exponent(y);
+		
+		double x2 = createDbl(m1, 0);
+		double y2 = createDbl(m2, e2 - e1);
+		
+		double rad = sqrt(x2 * x2 + y2 * y2);
+		
+		long m = mantissa(rad);
+		long e = exponent(rad);
+		
+		return createDbl(m, e + e1);
+	}
+
+	static double atan2(double y, double x) {
+		long m1 = mantissa(x);
+		long e1 = exponent(x);
+		
+		long m2 = mantissa(y);
+		long e2 = exponent(y);
+
+		if(e1 > e2) {
+			e1 -= e2;
+			e2 = 0;
+		} else {
+			e2 -= e1;
+			e1 = 0;
+		}
+		
+		double x2 = createDbl(m1, e1);
+		double y2 = createDbl(m2, e2);
+		
+		if(x < 0) x2 = -x2;
+		if(y < 0) y2 = -y2;
+		
+		if(x2 / y2 != x / y) {
+			System.out.println(x2 / y2 + " vs " + x / y);
+		}
+		
+		return Math.atan2(y2, x2);
+	}
+
+	/**
+	 * log2 (m * 2^e) = log m + e
+	 * @param d
+	 * @return
+	 */
+	static double log2(double d) {
+		if(d < 0) {
+			return Double.NaN;
+		}
+		
+		long m = mantissa(d);
+		long e = exponent(d);
+		
+		double d2 = createDbl(m, 0);
+		
+		return Math.log(d2) / Math.log(2) + e;
+	}
+	
+	/**
+	 * 2^d = m * 2^e [1 <= m < 2]
+	 * d = log2(m) + e [0 <= log2(n) < 1]
+	 * Thus, e = floor(d), m = exp2(fract(d)). Observe that floor(d) must be in the range [-1024, 1023].
+	 * @param d
+	 * @return
+	 */
+	static double exp2(double d) {
+		double exponent = Math.floor(d);
+		
+		if(d < -1024) {
+			return 0;
+		} else if(d > 1023) {
+			return Double.POSITIVE_INFINITY;
+		} else {
+			double log2 = d - exponent; // must be between 0 and 1.
+			
+			double base = Math.exp(log2 * Math.log(2)); // no exp2 in java...
+			
+			// base is between 1 and 2.
+			
+			long m = mantissa(base);
+			long e = exponent(base); // should be 1
+					
+			return createDbl(m, (long) exponent + e);
+		}
+	}
+
+	/**
+	 * x ^ y = (m * 2^e) ^ y = m' * 2^e'
+	 * (m * 2^e) ^ y = m' * 2^e' ==> / log2
+	 * y * log2(m) + y * e = e' + log2(m')
+	 * @param x
+	 * @param y
+	 * @return
+	 */
+	static double pow(double x, double y) {
+		if(x < 0) {
+			return Double.NaN;
+		} else if(x == 0) {
+			return y > 0 ? 0 : y == 0 ? 1 : Double.POSITIVE_INFINITY;
+		} else {
+			long m = mantissa(x);
+			long e = exponent(x);
+			
+			double log2 = Math.log(createDbl(m, 0)) / Math.log(2);
+			
+			return exp2((log2 + e) * y);
+		}
+	}
 
 // fixme only float available...
 static double __attribute__((overloadable)) sqrt(double d) { return sqrt((float) d); } // FIXME
