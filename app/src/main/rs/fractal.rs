@@ -16,30 +16,50 @@ static double4 __attribute__((overloadable)) convert_quat(int d) { return (doubl
 static double4 __attribute__((overloadable)) convert_quat(double d) { return (double4) {d, 0, 0, 0}; }
 static double4 __attribute__((overloadable)) convert_quat(double2 d) { return (double4) {d.x, d.y, 0, 0}; }
 
-static long __attribute__((overloadable)) dbl2bits(double d) { return *((long*) &d); }
-static double __attribute__((overloadable)) bits2dbl(long l) { return *((double*) &l); }
-
-static long2 __attribute__((overloadable)) split(double d) { 
-    long bits = dbl2bits(d);
-    return (long2){ bits  & 0x000fffffffffffffL, ((bits & 0x7FF0000000000000L) >> 52) - 1023 };
+static long __attribute__((overloadable)) dbl2bits(double d) {
+    return *((long*) &d);
+}
+static double __attribute__((overloadable)) bits2dbl(long l) {
+    return *((double*) &l);
 }
 
-// fixme nan + infinity as constants if they don't exist yet
-static const double nanum = 0;
-static const double infty = 0;
+static double __attribute__((overloadable)) nanum(void) {
+    return bits2dbl(0x7ff0000000000000l);
+}
 
+static double __attribute__((overloadable)) infty(void) {
+    return bits2dbl(0x7ff7ffffffffffffl);
+}
+
+static long __attribute__((overloadable)) mantissa(double d) {
+    long bits = dbl2bits(d);
+    return (long) (bits & 0x000fffffffffffffl);
+}
+
+static long __attribute__((overloadable)) exponent(double d) {
+    long bits = dbl2bits(d);
+    return ((bits >> 52) & 0x7ffl) - 1023 ;
+}
+
+static long2 __attribute__((overloadable)) split(double d) {
+    return (long2){ mantissa(d), exponent(d) };
+}
 
 static double __attribute__((overloadable)) unsplit(long m, long e) {
-	if(e > 1024) {
+	if(e > 1024l) {
 		// this is infinity
-		 return bits2dbl(0x7ff0000000000000L);
-	} else if(e < 1023) {
+		 return infty();
+	} else if(e < -1023l) {
 		// this is 0
 		return 0.;
 	} else {
-		return bits2dbl(m | ((e + 1023) << 52));
+		return bits2dbl(m | ((e + 1023l) << 52));
 	}
 }
+
+
+// fixme nan + infinity as constants if they don't exist yet
+
 
 /*
  * Good precision for proper doubles. For values very close to 0 a bit worse but manageable.
@@ -47,8 +67,10 @@ static double __attribute__((overloadable)) unsplit(long m, long e) {
  * @return
  */
 static double __attribute__((overloadable)) sqrt(double d) {
+    //return sqrt((float) joined);
+
     if(d < 0) {
-        return nanum;
+        return nanum();
     } else if(d == 0) {
         return d;
     } else {
@@ -98,6 +120,8 @@ static double __attribute__((overloadable)) rad(double x, double y) {
 }
 
 static double __attribute__((overloadable)) atan2(double y, double x) {
+    //return atan2((float) y, (float) x);
+
     long2 l1 = split(x);
     long2 l2 = split(y);
 
@@ -115,7 +139,7 @@ static double __attribute__((overloadable)) atan2(double y, double x) {
     if(x < 0) x2 = -x2;
     if(y < 0) y2 = -y2;
 
-    return atan2(y2, x2);
+    return atan2((float) y2, (float) x2);
 }
 
 /*
@@ -124,12 +148,14 @@ static double __attribute__((overloadable)) atan2(double y, double x) {
  * @return
  */
 static double __attribute__((overloadable)) log2(double d) {
+    //return log2((float) d);
+
     if(d < 0) {
-        return nanum;
+        return nanum();
     } else {
         long2 l = split(d);
         double d2 = unsplit(l.x, 0);
-        return log2(d2) + l.y;
+        return log2((float) d2) + l.y;
     }
 }
 
@@ -141,16 +167,18 @@ static double __attribute__((overloadable)) log2(double d) {
  * @return
  */
 static double __attribute__((overloadable)) exp2(double d) {
+    //return exp2((float) d);
+
     double exponent = floor((float) d);
 
     if(d < -1024) {
         return 0;
     } else if(d > 1023) {
-        return infty;
+        return infty();
     } else {
         double ld = d - exponent; // must be between 0 and 1.
 
-        double base = exp2(ld); // no exp2 in java...
+        double base = exp2((float) ld); // no exp2 in java...
 
         // base is between 1 and 2.
 
@@ -169,10 +197,11 @@ static double __attribute__((overloadable)) exp2(double d) {
  * @return
  */
 static double __attribute__((overloadable)) pow(double x, double y) {
+    //return pow((float) x, (float) y);
     if(x < 0) {
-        return nanum;
+        return nanum();
     } else if(x == 0) {
-        return y > 0 ? 0 : y == 0 ? 1 : infty;
+        return y > 0 ? 0 : y == 0 ? 1 : infty();
     } else {
         long2 l = split(x);
 
@@ -184,7 +213,7 @@ static double __attribute__((overloadable)) pow(double x, double y) {
 
 static const double ln2 = 0.693147180559945309417232121458;
 
-static double __attribute__((overloadable)) exp(double f) { return exp2(f * ln2); }
+static double __attribute__((overloadable)) exp(double f) { return exp2(f / ln2); }
 static double __attribute__((overloadable)) log(double f) { return log2(f) * ln2; }
 
 static double __attribute__((overloadable)) sinh(double f) { return sinh((float) f); }
