@@ -110,8 +110,8 @@ public class FavoritesListActivity extends Activity {
 		listView.setMultiChoiceModeListener(new AbsListView.MultiChoiceModeListener() {
 			@Override
 			public void onItemCheckedStateChanged(ActionMode mode, int position, long id, boolean checked) {
-				final int RENAME_INDEX_IN_MENU = 3;
-				int selectCount = listView.getCheckedItemPositions().size();
+				final int RENAME_INDEX_IN_MENU = 2;
+				int selectCount = getSelectedCount();
 				mode.getMenu().getItem(RENAME_INDEX_IN_MENU).setEnabled(selectCount == 1);
 				mode.setTitle(selectCount + " selected");
 			}
@@ -180,6 +180,20 @@ public class FavoritesListActivity extends Activity {
 
 			}
 		});
+	}
+
+	private int getSelectedCount() {
+		SparseBooleanArray checkedItemPositions = listView.getCheckedItemPositions();
+
+		int count = 0;
+
+		for(int i = 0; i < checkedItemPositions.size(); ++i) {
+			if(checkedItemPositions.get(checkedItemPositions.keyAt(i))) {
+				count++;
+			}
+		}
+
+		return count;
 	}
 
 	private List<String> extractKeys(List<FavoriteEntry> entries) {

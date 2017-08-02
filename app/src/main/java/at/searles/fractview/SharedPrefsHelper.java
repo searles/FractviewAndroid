@@ -58,10 +58,11 @@ public class SharedPrefsHelper {
      */
     public static boolean renameKey(Context context, String oldKey, String newKey, SharedPreferences prefs) {
         // Name did not change, nothing to do.
+        Log.d("HELLO", "Rename from " + oldKey + " to " + newKey);
         if(oldKey.equals(newKey)) return true;
 
-        if(!oldKey.isEmpty()) {
-            String value = prefs.getString(newKey, null);
+        if(!newKey.isEmpty()) {
+            String value = prefs.getString(oldKey, null);
 
             if(value != null) {
                 storeInSharedPreferences(newKey, value, prefs);
