@@ -52,7 +52,7 @@ public class EditableDialogFragment extends DialogFragment {
         Bundle b = new Bundle();
         b.putInt("request_code", requestCode);
         b.putBoolean("call_fragment", callFragment);
-        if(title != null) b.putString("title", title);
+        if(title != null) b.putString("key", title);
 
         b.putBoolean("closed", false);
         // this one is here to check whether the dialog should still
@@ -66,11 +66,11 @@ public class EditableDialogFragment extends DialogFragment {
     }
 
     /**
-     * @return may return null if there is no title
+     * @return may return null if there is no key
      */
     protected String title() {
-        if(getArguments().containsKey("title")) {
-            return getArguments().getString("title");
+        if(getArguments().containsKey("key")) {
+            return getArguments().getString("key");
         } else {
             return null;
         }
@@ -653,7 +653,7 @@ public class EditableDialogFragment extends DialogFragment {
             public boolean onItemLongClick(AdapterView<?> parent, View view, int position, long id) {
                 final String selected = adapter.getItem(position);
 
-                DialogHelper.showOptionsDialog(view.getContext(), SHARED_PREF_LV_OPTIONS, new DialogInterface.OnClickListener() {
+                DialogHelper.showOptionsDialog(view.getContext(), SHARED_PREF_LV_OPTIONS, true, new DialogInterface.OnClickListener() {
                             @Override
                             public void onClick(DialogInterface dialog, int which) {
                                 switch (which) {
@@ -701,26 +701,12 @@ public class EditableDialogFragment extends DialogFragment {
                 new Commons.KeyAction() {
                     @Override
                     public void apply(String key) {
-                        // Name did not change, nothing to do.
-                        if(key.equals(selected)) return;
-
-                        if(!key.isEmpty()) {
-                            String value = prefs.getString(selected, null);
-
-                            if(value != null) {
-                                SharedPrefsHelper.storeInSharedPreferences(key, value, prefs);
-                                prefs.edit().remove(selected).apply();
-                                initializePreferencesAdapterData(prefs, adapter);
-                            } else {
-                                DialogHelper.error(view.getContext(), "Content was empty");
-                            }
-
-                            // remove it and re-add it.
-
-                        } else {
-                            DialogHelper.error(view.getContext(), "Name must not be empty");
+                        Context context = view.getContext();
+                        if (SharedPrefsHelper.renameKey(context, key, selected, prefs)) {
+                            initializePreferencesAdapterData(prefs, adapter);
                         }
                     }
                 });
     }
+
 }

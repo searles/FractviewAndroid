@@ -161,7 +161,7 @@ public class Serializers {
 
         @Override
         public FavoriteEntry deserialize(JsonElement json, Type typeOfT, JsonDeserializationContext context) throws JsonParseException {
-            // In older versions, title and descriptor did not exist in this object.
+            // In older versions, key and descriptor did not exist in this object.
             JsonObject obj = (JsonObject) json;
             Fractal fractal = context.deserialize(obj.get(FRACTAL_LABEL), Fractal.class);
 

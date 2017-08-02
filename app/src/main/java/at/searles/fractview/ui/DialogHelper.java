@@ -93,7 +93,7 @@ public class DialogHelper {
         yesNoBuilder.show();
     }
 
-    public static void showOptionsDialog(Context context, CharSequence[] options, DialogInterface.OnClickListener listener) {
+    public static void showOptionsDialog(Context context, CharSequence[] options, boolean cancelable, DialogInterface.OnClickListener listener) {
         // show these simple dialogs to reset or center values.
         AlertDialog.Builder builder = new AlertDialog.Builder(context);
 
@@ -106,6 +106,8 @@ public class DialogHelper {
                 dialogInterface.dismiss();
             }
         });
+
+        builder.setCancelable(cancelable);
 
         builder.show();
     }

@@ -3,4 +3,7 @@
     <item android:id="@+id/action_select_all"
           android:title="@string/action_select_all"
         />
+    <item android:id="@+id/action_import_collection"
+          android:title="@string/action_import_collection"
+        />
 </menu>

@@ -278,7 +278,7 @@ public class ParameterEditorActivity extends Activity implements EditableDialogF
 
 				switch (p.b) {
 					case Scale: {
-						DialogHelper.showOptionsDialog(ParameterEditorActivity.this, scaleOptions, new DialogInterface.OnClickListener() {
+						DialogHelper.showOptionsDialog(ParameterEditorActivity.this, scaleOptions, true, new DialogInterface.OnClickListener() {
 							@Override
 							public void onClick(DialogInterface dialogInterface, int which) {
 								Scale original = fractal.scale();
@@ -335,7 +335,7 @@ public class ParameterEditorActivity extends Activity implements EditableDialogF
 						return true;
 					}
 					case Expr: {
-						DialogHelper.showOptionsDialog(ParameterEditorActivity.this, exprOptions, new DialogInterface.OnClickListener() {
+						DialogHelper.showOptionsDialog(ParameterEditorActivity.this, exprOptions, true, new DialogInterface.OnClickListener() {
 							@Override
 							public void onClick(DialogInterface dialogInterface, int which) {
 								switch (which) {
@@ -350,7 +350,7 @@ public class ParameterEditorActivity extends Activity implements EditableDialogF
 						return true;
 					}
 					case Bool: {
-						DialogHelper.showOptionsDialog(ParameterEditorActivity.this, boolOptions, new DialogInterface.OnClickListener() {
+						DialogHelper.showOptionsDialog(ParameterEditorActivity.this, boolOptions, true, new DialogInterface.OnClickListener() {
 							@Override
 							public void onClick(DialogInterface dialogInterface, int which) {
 								switch (which) {
@@ -368,7 +368,7 @@ public class ParameterEditorActivity extends Activity implements EditableDialogF
 						return true;
 					}
 					case Int: {
-						DialogHelper.showOptionsDialog(ParameterEditorActivity.this, intOptions, new DialogInterface.OnClickListener() {
+						DialogHelper.showOptionsDialog(ParameterEditorActivity.this, intOptions, true, new DialogInterface.OnClickListener() {
 							@Override
 							public void onClick(DialogInterface dialogInterface, int which) {
 								switch (which) {
@@ -384,7 +384,7 @@ public class ParameterEditorActivity extends Activity implements EditableDialogF
 						return true;
 					}
 					case Real: {
-						DialogHelper.showOptionsDialog(ParameterEditorActivity.this, realOptions, new DialogInterface.OnClickListener() {
+						DialogHelper.showOptionsDialog(ParameterEditorActivity.this, realOptions, true, new DialogInterface.OnClickListener() {
 							@Override
 							public void onClick(DialogInterface dialogInterface, int which) {
 								switch (which) {
@@ -400,7 +400,7 @@ public class ParameterEditorActivity extends Activity implements EditableDialogF
 						return true;
 					}
 					case Cplx: {
-						DialogHelper.showOptionsDialog(ParameterEditorActivity.this, cplxOptions, new DialogInterface.OnClickListener() {
+						DialogHelper.showOptionsDialog(ParameterEditorActivity.this, cplxOptions, true, new DialogInterface.OnClickListener() {
 							@Override
 							public void onClick(DialogInterface dialogInterface, int which) {
 								switch (which) {
@@ -419,7 +419,7 @@ public class ParameterEditorActivity extends Activity implements EditableDialogF
 						return true;
 					}
 					case Color: {
-						DialogHelper.showOptionsDialog(ParameterEditorActivity.this, colorOptions, new DialogInterface.OnClickListener() {
+						DialogHelper.showOptionsDialog(ParameterEditorActivity.this, colorOptions, true, new DialogInterface.OnClickListener() {
 							@Override
 							public void onClick(DialogInterface dialogInterface, int which) {
 								switch (which) {
@@ -435,7 +435,7 @@ public class ParameterEditorActivity extends Activity implements EditableDialogF
 						return true;
 					}
 					case Palette: {
-						DialogHelper.showOptionsDialog(ParameterEditorActivity.this, paletteOptions, new DialogInterface.OnClickListener() {
+						DialogHelper.showOptionsDialog(ParameterEditorActivity.this, paletteOptions, true, new DialogInterface.OnClickListener() {
 							@Override
 							public void onClick(DialogInterface dialogInterface, int which) {
 								switch (which) {

@@ -80,4 +80,10 @@ public class IndexedKeyMap<A> {
     public int size() {
         return indexed.size();
     }
+
+    public void clear() {
+        indexed.clear();
+        indexMap.clear();
+        indexed.clear();
+    }
 }

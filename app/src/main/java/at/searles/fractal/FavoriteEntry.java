@@ -15,8 +15,10 @@ public class FavoriteEntry {
 	private Bitmap icon;  // icon may be null
 	private String description; // description may be null
 
+	// FIXME: do not put title here.
+
 	/**
-	 * The title is set via the key in the mapping
+	 * The key is set via the key in the mapping
 	 */
 	private transient String title;
 
@@ -26,11 +28,11 @@ public class FavoriteEntry {
 		this.description = description;
 	}
 
-	public String title() {
+	public String key() {
 		return title;
 	}
 
-	public void setTitle(String title) {
+	public void setKey(String title) {
 		this.title = title;
 	}
 

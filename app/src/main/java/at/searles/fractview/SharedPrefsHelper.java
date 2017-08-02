@@ -5,13 +5,14 @@ import android.content.SharedPreferences;
 import android.util.Log;
 
 import at.searles.fractal.gson.Serializers;
+import at.searles.fractview.ui.DialogHelper;
 
 /**
  * Helper for Shared Preferences
  */
 public class SharedPrefsHelper {
 
-    // FIXME title names are now out of sync from keys.
+    // FIXME key names are now out of sync from keys.
 
     public static <A> void storeInSharedPreferences(Context context, String name, A element, String preferencesName) {
         String entryString = Serializers.serializer().toJson(element);
@@ -45,5 +46,43 @@ public class SharedPrefsHelper {
                 Context.MODE_PRIVATE);
 
         return preferences.getString(name, null);
+    }
+
+    /**
+     *
+     * @param context
+     * @param oldKey
+     * @param newKey
+     * @param prefs
+     * @return true if successfully renamed
+     */
+    public static boolean renameKey(Context context, String oldKey, String newKey, SharedPreferences prefs) {
+        // Name did not change, nothing to do.
+        if(oldKey.equals(newKey)) return true;
+
+        if(!oldKey.isEmpty()) {
+            String value = prefs.getString(newKey, null);
+
+            if(value != null) {
+                storeInSharedPreferences(newKey, value, prefs);
+                prefs.edit().remove(oldKey).apply();
+                return true;
+            } else {
+                DialogHelper.error(context, "Content was empty");
+            }
+        } else {
+            DialogHelper.error(context, "Name must not be empty");
+        }
+
+        return false;
+    }
+
+    public static boolean removeEntry(Context context, String key, SharedPreferences prefs) {
+        if(prefs.contains(key)) {
+            prefs.edit().remove(key).apply();
+            return true;
+        } else {
+            return false;
+        }
     }
 }
