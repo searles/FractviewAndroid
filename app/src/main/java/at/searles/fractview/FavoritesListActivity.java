@@ -34,7 +34,6 @@ import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
-import java.util.TreeMap;
 
 import at.searles.fractal.FavoriteEntry;
 import at.searles.fractal.android.BundleAdapter;
@@ -148,6 +147,7 @@ public class FavoritesListActivity extends Activity {
 							public void apply(String newKey) {
 								if(SharedPrefsHelper.renameKey(FavoritesListActivity.this, key, newKey, adapter.prefs)) {
 									adapter.initializeAdapter();
+									mode.finish();
 								}
 							}
 						});
@@ -163,6 +163,8 @@ public class FavoritesListActivity extends Activity {
 										for(String key : keys) {
 											SharedPrefsHelper.removeEntry(FavoritesListActivity.this, key, adapter.prefs);
 										}
+										adapter.initializeAdapter();
+										mode.finish();
 									}
 								});
 					} return true;
@@ -286,35 +288,32 @@ public class FavoritesListActivity extends Activity {
 						sb.append("\n");
 					}
 
-					Map<?, ?> newEntries = Serializers.serializer().fromJson(sb.toString(), Map.class);
+					FavoriteEntry.Collection newEntries = Serializers.serializer().fromJson(sb.toString(), FavoriteEntry.Collection.class);
 
 					// Find duplicates
 					Map<String, FavoriteEntry> duplicates = new HashMap<>();
 
-					for(Map.Entry<?, ?> entry : newEntries.entrySet()) {
-						if(entry.getKey() instanceof String && entry.getValue() instanceof FavoriteEntry) {
-							FavoriteEntry favEntry = (FavoriteEntry) entry.getValue();
+					for(Map.Entry<?, ?> entry : newEntries.getAll()) {
+						FavoriteEntry favEntry = (FavoriteEntry) entry.getValue();
 
-							String key = (String) entry.getKey();
+						String key = (String) entry.getKey();
 
-							if(adapter.prefs.contains(key)) {
-								duplicates.put(key, favEntry);
-							} else {
-								// add it
-								adapter.prefs.edit().putString(key, Serializers.serializer().toJson(favEntry)).apply();
-							}
+						if(adapter.prefs.contains(key)) {
+							duplicates.put(key, favEntry);
 						} else {
-							Log.e(getClass().getName(), "Bad entry: " + newEntries);
+							// add it
+							adapter.prefs.edit().putString(key, Serializers.serializer().toJson(favEntry)).apply();
 						}
 					}
 
 					adapter.initializeAdapter();
 
+
 					if(!duplicates.isEmpty()) {
 						// Ask what to do with duplicates
 						DialogHelper.showOptionsDialog(this, new CharSequence[]{
 								"Do not add items with existing keys",
-								"Add index to already existing keys",
+								"Add with \"(count)\" suffix to collection",
 								"Overwrite existing entries"
 						}, false, new DialogInterface.OnClickListener() {
 							@Override
@@ -354,9 +353,6 @@ public class FavoritesListActivity extends Activity {
 					DialogHelper.error(this, e.getLocalizedMessage());
 				}
 
-
-				Log.d("HELLO", "Something was imported");
-				// FIXME Allow to select a prefix
 				// If there are duplicated
 			}
 		}
@@ -366,10 +362,10 @@ public class FavoritesListActivity extends Activity {
 		// Fetch map from adapter
 		try {
 			// Create a map
-			Map<String, FavoriteEntry> map = new TreeMap<>();
+			FavoriteEntry.Collection collection = new FavoriteEntry.Collection();
 
 			for(FavoriteEntry entry : entries) {
-				map.put(entry.key(), entry);
+				collection.add(entry.key(), entry);
 			}
 
 			File textFile = File.createTempFile("fractview_collection-" + Commons.timestamp(),
@@ -381,7 +377,7 @@ public class FavoritesListActivity extends Activity {
 
             writer.setIndent("  ");
 
-            Serializers.serializer().toJson(map, Map.class, writer);
+            Serializers.serializer().toJson(collection, FavoriteEntry.Collection.class, writer);
 
             writer.close();
 
@@ -420,6 +416,7 @@ public class FavoritesListActivity extends Activity {
 		}
 
 		protected void initializeAdapter() {
+			this.entries.clear();
 			this.jsonEntries.clear();
 
 			for(String key : this.prefs.getAll().keySet()) {
@@ -433,6 +430,7 @@ public class FavoritesListActivity extends Activity {
 			}
 
 			this.jsonEntries.sort();
+			notifyDataSetChanged();
 		}
 
 		@Override

@@ -46,6 +46,7 @@ public class Serializers {
             gsonBuilder.registerTypeAdapter(Palette.class, new PaletteAdapter());
             gsonBuilder.registerTypeAdapter(Fractal.class, new FractalAdapter());
             gsonBuilder.registerTypeAdapter(FavoriteEntry.class, new FavoriteEntryAdapter());
+            gsonBuilder.registerTypeAdapter(FavoriteEntry.Collection.class, new FavoritesCollectionAdapter());
 
             gson = gsonBuilder.create();
         }
@@ -195,6 +196,34 @@ public class Serializers {
             obj.addProperty(DESCRIPTION_LABEL, entry.description());
 
             return obj;
+        }
+    }
+
+    public static class FavoritesCollectionAdapter implements JsonSerializer<FavoriteEntry.Collection>, JsonDeserializer<FavoriteEntry.Collection> {
+
+        @Override
+        public FavoriteEntry.Collection deserialize(JsonElement json, Type typeOfT, JsonDeserializationContext context) throws JsonParseException {
+            JsonObject obj = (JsonObject) json;
+
+            FavoriteEntry.Collection collection = new FavoriteEntry.Collection();
+
+            for(Map.Entry<String, JsonElement> entry : obj.entrySet()) {
+                collection.add(entry.getKey(), context.deserialize(entry.getValue(), FavoriteEntry.class));
+            }
+
+            return collection;
+        }
+
+        @Override
+        public JsonElement serialize(FavoriteEntry.Collection src, Type typeOfSrc, JsonSerializationContext context) {
+            JsonObject object = new JsonObject();
+
+            for(Map.Entry<String, FavoriteEntry> entry : src.getAll()) {
+                JsonElement jsonEntry = context.serialize(entry.getValue(), FavoriteEntry.class);
+                object.add(entry.getKey(), jsonEntry);
+            }
+
+            return object;
         }
     }
 

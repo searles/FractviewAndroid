@@ -3,6 +3,9 @@ package at.searles.fractal;
 
 import android.graphics.Bitmap;
 
+import java.util.Map;
+import java.util.TreeMap;
+
 /**
  * Use cases:
  * For Favorites. In order to also use this class outside of Android, the icon is stored 
@@ -46,5 +49,17 @@ public class FavoriteEntry {
 
 	public Fractal fractal() {
 		return fractal;
+	}
+
+	public static class Collection {
+		private Map<String, FavoriteEntry> entries = new TreeMap<>();
+
+		public void add(String key, FavoriteEntry entry) {
+			entries.put(key, entry);
+		}
+
+		public Iterable<Map.Entry<String, FavoriteEntry>> getAll() {
+			return entries.entrySet();
+		}
 	}
 }
