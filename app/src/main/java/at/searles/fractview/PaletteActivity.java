@@ -46,8 +46,6 @@ public class PaletteActivity extends Activity implements EditableDialogFragment.
 
 	private String id;
 
-	private SharedPrefsHelper prefsHelper;
-
 	// if something is currently edited, these two
 	// contain its coordinates
 	//private int editX = -1;

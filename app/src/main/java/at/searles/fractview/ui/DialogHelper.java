@@ -93,11 +93,11 @@ public class DialogHelper {
         yesNoBuilder.show();
     }
 
-    public static void showOptionsDialog(Context context, CharSequence[] options, boolean cancelable, DialogInterface.OnClickListener listener) {
+    public static void showOptionsDialog(Context context, String title, CharSequence[] options, boolean cancelable, DialogInterface.OnClickListener listener) {
         // show these simple dialogs to reset or center values.
         AlertDialog.Builder builder = new AlertDialog.Builder(context);
 
-        builder.setTitle("Select an Option");
+        if(title != null) builder.setTitle(title);
         builder.setItems(options, listener);
 
         builder.setNegativeButton("Cancel", new DialogInterface.OnClickListener() {

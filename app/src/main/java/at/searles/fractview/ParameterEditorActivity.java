@@ -275,10 +275,13 @@ public class ParameterEditorActivity extends Activity implements EditableDialogF
 			@Override
 			public boolean onItemLongClick(AdapterView<?> parent, View view, int position, long id) {
 				Pair<String, Fractal.Type> p = adapter.elements.get(position);
+				String name = p.a;
+
+				String dialogTitle = "Select an option for \"" + name + "\"";
 
 				switch (p.b) {
 					case Scale: {
-						DialogHelper.showOptionsDialog(ParameterEditorActivity.this, scaleOptions, true, new DialogInterface.OnClickListener() {
+						DialogHelper.showOptionsDialog(ParameterEditorActivity.this, dialogTitle, scaleOptions, true, new DialogInterface.OnClickListener() {
 							@Override
 							public void onClick(DialogInterface dialogInterface, int which) {
 								Scale original = fractal.scale();
@@ -335,7 +338,7 @@ public class ParameterEditorActivity extends Activity implements EditableDialogF
 						return true;
 					}
 					case Expr: {
-						DialogHelper.showOptionsDialog(ParameterEditorActivity.this, exprOptions, true, new DialogInterface.OnClickListener() {
+						DialogHelper.showOptionsDialog(ParameterEditorActivity.this, dialogTitle, exprOptions, true, new DialogInterface.OnClickListener() {
 							@Override
 							public void onClick(DialogInterface dialogInterface, int which) {
 								switch (which) {
@@ -350,7 +353,7 @@ public class ParameterEditorActivity extends Activity implements EditableDialogF
 						return true;
 					}
 					case Bool: {
-						DialogHelper.showOptionsDialog(ParameterEditorActivity.this, boolOptions, true, new DialogInterface.OnClickListener() {
+						DialogHelper.showOptionsDialog(ParameterEditorActivity.this, dialogTitle, boolOptions, true, new DialogInterface.OnClickListener() {
 							@Override
 							public void onClick(DialogInterface dialogInterface, int which) {
 								switch (which) {
@@ -368,7 +371,7 @@ public class ParameterEditorActivity extends Activity implements EditableDialogF
 						return true;
 					}
 					case Int: {
-						DialogHelper.showOptionsDialog(ParameterEditorActivity.this, intOptions, true, new DialogInterface.OnClickListener() {
+						DialogHelper.showOptionsDialog(ParameterEditorActivity.this, dialogTitle, intOptions, true, new DialogInterface.OnClickListener() {
 							@Override
 							public void onClick(DialogInterface dialogInterface, int which) {
 								switch (which) {
@@ -384,7 +387,7 @@ public class ParameterEditorActivity extends Activity implements EditableDialogF
 						return true;
 					}
 					case Real: {
-						DialogHelper.showOptionsDialog(ParameterEditorActivity.this, realOptions, true, new DialogInterface.OnClickListener() {
+						DialogHelper.showOptionsDialog(ParameterEditorActivity.this, dialogTitle, realOptions, true, new DialogInterface.OnClickListener() {
 							@Override
 							public void onClick(DialogInterface dialogInterface, int which) {
 								switch (which) {
@@ -400,7 +403,7 @@ public class ParameterEditorActivity extends Activity implements EditableDialogF
 						return true;
 					}
 					case Cplx: {
-						DialogHelper.showOptionsDialog(ParameterEditorActivity.this, cplxOptions, true, new DialogInterface.OnClickListener() {
+						DialogHelper.showOptionsDialog(ParameterEditorActivity.this, dialogTitle, cplxOptions, true, new DialogInterface.OnClickListener() {
 							@Override
 							public void onClick(DialogInterface dialogInterface, int which) {
 								switch (which) {
@@ -419,7 +422,7 @@ public class ParameterEditorActivity extends Activity implements EditableDialogF
 						return true;
 					}
 					case Color: {
-						DialogHelper.showOptionsDialog(ParameterEditorActivity.this, colorOptions, true, new DialogInterface.OnClickListener() {
+						DialogHelper.showOptionsDialog(ParameterEditorActivity.this, dialogTitle, colorOptions, true, new DialogInterface.OnClickListener() {
 							@Override
 							public void onClick(DialogInterface dialogInterface, int which) {
 								switch (which) {
@@ -435,7 +438,7 @@ public class ParameterEditorActivity extends Activity implements EditableDialogF
 						return true;
 					}
 					case Palette: {
-						DialogHelper.showOptionsDialog(ParameterEditorActivity.this, paletteOptions, true, new DialogInterface.OnClickListener() {
+						DialogHelper.showOptionsDialog(ParameterEditorActivity.this, dialogTitle, paletteOptions, true, new DialogInterface.OnClickListener() {
 							@Override
 							public void onClick(DialogInterface dialogInterface, int which) {
 								switch (which) {

@@ -653,7 +653,7 @@ public class EditableDialogFragment extends DialogFragment {
             public boolean onItemLongClick(AdapterView<?> parent, View view, int position, long id) {
                 final String selected = adapter.getItem(position);
 
-                DialogHelper.showOptionsDialog(view.getContext(), SHARED_PREF_LV_OPTIONS, true, new DialogInterface.OnClickListener() {
+                DialogHelper.showOptionsDialog(view.getContext(), "Select an option", SHARED_PREF_LV_OPTIONS, true, new DialogInterface.OnClickListener() {
                             @Override
                             public void onClick(DialogInterface dialog, int which) {
                                 switch (which) {

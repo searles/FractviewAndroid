@@ -311,9 +311,9 @@ public class FavoritesListActivity extends Activity {
 
 					if(!duplicates.isEmpty()) {
 						// Ask what to do with duplicates
-						DialogHelper.showOptionsDialog(this, new CharSequence[]{
+						DialogHelper.showOptionsDialog(this, "Pick an option for new entries with already existing keys", new CharSequence[]{
 								"Do not add items with existing keys",
-								"Add with \"(count)\" suffix to collection",
+								"Append suffix \"(count)\" to new entries",
 								"Overwrite existing entries"
 						}, false, new DialogInterface.OnClickListener() {
 							@Override
