@@ -22,6 +22,7 @@ import android.widget.Toast;
 import java.util.TreeSet;
 
 import at.searles.fractview.ui.ColorView;
+import at.searles.fractview.ui.DialogHelper;
 import at.searles.math.Scale;
 import at.searles.math.color.Colors;
 
@@ -629,6 +630,10 @@ public class EditableDialogFragment extends DialogFragment {
         }
     }
 
+    private final static String[] SHARED_PREF_LV_OPTIONS = { "Delete", "Rename" };
+
+
+
     /**
      * The next one is for convenience because I need it in load pref and save pref.
      * @param lv Listview containing data of the shared preferences
@@ -641,8 +646,40 @@ public class EditableDialogFragment extends DialogFragment {
                 android.R.layout.select_dialog_item);
         lv.setAdapter(adapter);
 
+        initializePreferencesAdapterData(prefs, adapter);
+
+        lv.setOnItemLongClickListener(new AdapterView.OnItemLongClickListener() {
+            @Override
+            public boolean onItemLongClick(AdapterView<?> parent, View view, int position, long id) {
+                final String selected = adapter.getItem(position);
+
+                DialogHelper.showOptionsDialog(view.getContext(), SHARED_PREF_LV_OPTIONS, new DialogInterface.OnClickListener() {
+                            @Override
+                            public void onClick(DialogInterface dialog, int which) {
+                                switch (which) {
+                                    case 0: {
+                                        SharedPreferences.Editor edit = prefs.edit();
+                                        edit.remove(selected);
+                                        edit.apply();
+                                        dialog.dismiss();
+                                        initializePreferencesAdapterData(prefs, adapter);
+                                    } break;
+                                    case 1: {
+                                        openRenamePreferenceDialog(view, selected, prefs, adapter);
+                                    } break;
+                                }
+                            }
+                        });
+                return true;
+            }
+        });
+    }
+
+    private static void initializePreferencesAdapterData(SharedPreferences prefs, ArrayAdapter<String> adapter) {
         // add all elements to it.
         // but have them sorted.
+        adapter.clear();
+
         TreeSet<String> set = new TreeSet<>();
 
         for(String entry : prefs.getAll().keySet()) {
@@ -656,43 +693,34 @@ public class EditableDialogFragment extends DialogFragment {
         }
 
         adapter.addAll(set);
+    }
 
-        lv.setOnItemLongClickListener(new AdapterView.OnItemLongClickListener() {
-            @Override
-            public boolean onItemLongClick(AdapterView<?> parent, View view, int position, long id) {
-                // todo add Copy to Clipboard-context menu?
-
-                // offer to delete it
-
-                // This dialog will be removed on rotation.
-                final String selected = adapter.getItem(position);
-
-                AlertDialog.Builder yesNoBuilder = new AlertDialog.Builder(view.getContext());
-                yesNoBuilder.setIcon(android.R.drawable.ic_delete);
-                yesNoBuilder.setTitle("Delete entry " + selected + "?");
-
-                yesNoBuilder.setPositiveButton("Yes", new DialogInterface.OnClickListener() {
+    private static void openRenamePreferenceDialog(final View view, final String selected, final SharedPreferences prefs, ArrayAdapter<String> adapter) {
+        DialogHelper.inputText(view.getContext(),
+                "Rename " + selected, selected,
+                new Commons.KeyAction() {
                     @Override
-                    public void onClick(DialogInterface dialogInterface, int which) {
-                        SharedPreferences.Editor edit = prefs.edit();
-                        edit.remove(selected);
-                        edit.apply();
-                        dialogInterface.dismiss();
-                        adapter.remove(selected);
+                    public void apply(String key) {
+                        // Name did not change, nothing to do.
+                        if(key.equals(selected)) return;
+
+                        if(!key.isEmpty()) {
+                            String value = prefs.getString(selected, null);
+
+                            if(value != null) {
+                                SharedPrefsHelper.storeInSharedPreferences(key, value, prefs);
+                                prefs.edit().remove(selected).apply();
+                                initializePreferencesAdapterData(prefs, adapter);
+                            } else {
+                                DialogHelper.error(view.getContext(), "Content was empty");
+                            }
+
+                            // remove it and re-add it.
+
+                        } else {
+                            DialogHelper.error(view.getContext(), "Name must not be empty");
+                        }
                     }
                 });
-
-                yesNoBuilder.setNegativeButton("No", new DialogInterface.OnClickListener() {
-                    @Override
-                    public void onClick(DialogInterface dialogInterface, int which) {
-                        dialogInterface.dismiss();
-                    }
-                });
-
-                yesNoBuilder.show();
-
-                return true;
-            }
-        });
     }
 }

@@ -216,9 +216,9 @@ static const double ln2 = 0.693147180559945309417232121458;
 static double __attribute__((overloadable)) exp(double f) { return exp2(f / ln2); }
 static double __attribute__((overloadable)) log(double f) { return log2(f) * ln2; }
 
-static double __attribute__((overloadable)) sinh(double f) { return sinh((float) f); }
-static double __attribute__((overloadable)) cosh(double f) { return cosh((float) f); }
-static double __attribute__((overloadable)) tanh(double f) { return tanh((float) f); }
+static double __attribute__((overloadable)) sinh(double f) { double e = exp(f); return (e + 1. / e) / 2.; }
+static double __attribute__((overloadable)) cosh(double f) { double e = exp(f); return (e - 1. / e) / 2.; }
+static double __attribute__((overloadable)) tanh(double f) { double e = exp(f); return (e - 1. / e) / (e + 1. / e); }
 
 // For the next ones only the float version is available
 static double __attribute__((overloadable)) sin(double f) { return sin((float) f); }
@@ -268,9 +268,6 @@ int len;
 
 struct palette * palettes;
 struct lab_surface * palette_data;
-
-
-
 
 static double2 __attribute__((overloadable)) map(double x, double y) {
     return (double2) { xx.x * x + yy.x * y + tt.x, xx.y * x + yy.y * y  + tt.y }; // apply affine tranformation

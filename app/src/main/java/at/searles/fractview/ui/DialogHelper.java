@@ -68,7 +68,7 @@ public class DialogHelper {
         });
     }
 
-        public static void confirm(Context context, String title, String message, Runnable yesAction, Runnable noAction) {
+    public static void confirm(Context context, String title, String message, Runnable yesAction, Runnable noAction) {
         AlertDialog.Builder yesNoBuilder = new AlertDialog.Builder(context);
         yesNoBuilder.setIcon(android.R.drawable.ic_delete);
         if(title != null) yesNoBuilder.setTitle(title);
@@ -91,6 +91,23 @@ public class DialogHelper {
         });
 
         yesNoBuilder.show();
+    }
+
+    public static void showOptionsDialog(Context context, CharSequence[] options, DialogInterface.OnClickListener listener) {
+        // show these simple dialogs to reset or center values.
+        AlertDialog.Builder builder = new AlertDialog.Builder(context);
+
+        builder.setTitle("Select an Option");
+        builder.setItems(options, listener);
+
+        builder.setNegativeButton("Cancel", new DialogInterface.OnClickListener() {
+            @Override
+            public void onClick(DialogInterface dialogInterface, int i) {
+                dialogInterface.dismiss();
+            }
+        });
+
+        builder.show();
     }
 
     public static void inputCustom(Context context, String title, int layoutId, DialogFunction initView, DialogFunction acceptView) {

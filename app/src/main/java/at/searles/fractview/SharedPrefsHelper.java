@@ -22,6 +22,10 @@ public class SharedPrefsHelper {
                 preferencesName,
                 Context.MODE_PRIVATE);
 
+        storeInSharedPreferences(name, entryString, preferences);
+    }
+
+    public static void storeInSharedPreferences(String name, String entryString, SharedPreferences preferences) {
         if(preferences.contains(name)) {
             for(int i = 1;; ++i) {
                 String indexedName = name + "(" + i + ")";
@@ -42,5 +46,4 @@ public class SharedPrefsHelper {
 
         return preferences.getString(name, null);
     }
-
 }
