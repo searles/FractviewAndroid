@@ -144,12 +144,12 @@ public class PaletteActivity extends Activity implements EditableDialogFragment.
 				// the fragment needs the name of the prefs as an argument.
 				ft.getArguments().putString("prefs_name", PaletteActivity.PREFS_NAME);
 			} return true;
-			case R.id.action_export_palette: {
+			case R.id.action_copy_to_clipboard: {
 				// copy
 				String entry = Serializers.serializer().toJson(model.createPalette(), Palette.class);
 				ClipboardHelper.copy(this, entry);
 			} return true;
-			case R.id.action_import_palette: {
+			case R.id.action_paste_from_clipboard: {
 				// paste
 				CharSequence pastedText = ClipboardHelper.paste(this);
 

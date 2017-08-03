@@ -6,13 +6,17 @@
 
     <ImageView
         android:layout_width="64dp"
-        android:layout_height="match_parent"
+        android:layout_height="64dp"
+        android:scaleType="centerCrop"
+        android:adjustViewBounds="true"
+        android:layout_gravity="center_vertical"
         android:id="@+id/iconView" />
 
     <LinearLayout
         android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        android:orientation="vertical">
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:layout_gravity="center_vertical">
 
         <TextView
                 android:id="@+id/titleView"
@@ -20,7 +24,8 @@
                 android:layout_height="wrap_content"
                 android:elegantTextHeight="false"
                 android:gravity="center_vertical"
-                android:paddingStart="24dp"
+                android:paddingStart="12dp"
+                android:paddingEnd="12dp"
                 android:text="Large Text"
                 android:textAppearance="?android:attr/textAppearanceLarge"/>
 
@@ -28,10 +33,10 @@
                 android:id="@+id/descriptionView"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:text="TextView"
+                android:text=""
                 android:textAlignment="textEnd"
-                android:textAppearance="?android:attr/textAppearanceSmall"/>
+                android:textAppearance="?android:attr/textAppearanceSmall"
+                android:paddingStart="12dp"
+                android:paddingEnd="12dp"/>
     </LinearLayout>
-
-
 </LinearLayout>

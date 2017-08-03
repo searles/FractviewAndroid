@@ -52,8 +52,8 @@
     <string name="action_set_wallpaper">Set as Wallpaper</string>
     <string name="action_save_image">Save Image</string>
     <string name="action_wallpaper">Set as wallpaper</string>
-    <string name="action_import_palette">Paste from Clipboard</string>
-    <string name="action_export_palette">Copy to Clipboard</string>
+    <string name="action_paste_from_clipboard">Paste from Clipboard</string>
+    <string name="action_copy_to_clipboard">Copy to Clipboard</string>
     <string name="rotation_lock">Rotation Lock</string>
     <string name="action_gui_settings">UI Settings</string>
     <string name="action_tutorial">Tutorial</string>

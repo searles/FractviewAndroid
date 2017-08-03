@@ -10,9 +10,8 @@ import at.searles.fractal.gson.Serializers;
 import at.searles.fractview.ui.DialogHelper;
 
 /**
- * Created by searles on 17.01.17.
+ * Helper class for clipboard stuff.
  */
-
 public class ClipboardHelper {
     public static void copyFractal(Context context, Fractal fractal) {
         String export = Serializers.serializer().toJson(fractal);
@@ -49,11 +48,6 @@ public class ClipboardHelper {
             Toast.makeText(context, "Clipboard is empty", Toast.LENGTH_LONG).show();
             return null;
         }
-
-        /*if(!clipboard.getPrimaryClipDescription().hasMimeType(ClipDescription.MIMETYPE_TEXT_PLAIN)) {
-            Toast.makeText(this, "Clipboard does not contain text", Toast.LENGTH_LONG).show();
-            return false;
-        }*/
 
         return clipboard.getPrimaryClip().getItemAt(0).getText();
     }

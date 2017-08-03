@@ -13,7 +13,6 @@ import android.widget.TextView;
  * Adapter for all kinds of fractal entries. Which fractal
  * is determined by the concrete implementation.
  */
-
 public abstract class FractalListAdapter<A> extends BaseAdapter {
 
     private final Activity context;
@@ -53,11 +52,15 @@ public abstract class FractalListAdapter<A> extends BaseAdapter {
         Bitmap icon = getIcon(index);
 
         iconView.setImageBitmap(icon);
-        iconView.setScaleType(ImageView.ScaleType.CENTER_INSIDE);
 
         titleView.setText(getTitle(index));
         descriptionView.setText(getDescription(index));
 
+        view.invalidate();
+
         return view;
+    }
+
+    private void setIcon(ImageView imageView, Bitmap bitmap, int targetSize){
     }
 }

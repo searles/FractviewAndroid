@@ -2,6 +2,7 @@ package at.searles.fractal.gson;
 
 import android.graphics.Bitmap;
 import android.util.Base64;
+import android.util.Log;
 
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
@@ -37,7 +38,7 @@ public class Serializers {
     public static Gson serializer() {
         // No need for synchronization since this will usually
         // be only called from the ui thread.
-        if(gson == null) {
+        if (gson == null) {
             GsonBuilder gsonBuilder = new GsonBuilder();
 
             // register some types
@@ -58,12 +59,18 @@ public class Serializers {
         @Override
         public Cplx deserialize(JsonElement json, Type typeOfT, JsonDeserializationContext context)
                 throws JsonParseException {
-            JsonArray array = (JsonArray) json;
+            try {
+                JsonArray array = (JsonArray) json;
 
-            double re = array.get(0).getAsDouble();
-            double im = array.get(1).getAsDouble();
+                double re = array.get(0).getAsDouble();
+                double im = array.get(1).getAsDouble();
 
-            return new Cplx(re, im);
+                return new Cplx(re, im);
+            } catch (Throwable th) {
+                Log.e(getClass().getName(), th.getMessage());
+                return null;
+            }
+
         }
 
         @Override
@@ -81,14 +88,20 @@ public class Serializers {
         @Override
         public Scale deserialize(JsonElement json, Type typeOfT, JsonDeserializationContext context)
                 throws JsonParseException {
-            JsonArray array = (JsonArray) json;
+            try {
+                JsonArray array = (JsonArray) json;
 
-            double data[] = new double[6];
+                double data[] = new double[6];
 
-            for (int i = 0; i < 6; ++i)
-                data[i] = array.get(i).getAsDouble();
+                for (int i = 0; i < 6; ++i)
+                    data[i] = array.get(i).getAsDouble();
 
-            return new Scale(data[0], data[1], data[2], data[3], data[4], data[5]);
+                return new Scale(data[0], data[1], data[2], data[3], data[4], data[5]);
+            } catch (Throwable th) {
+                Log.e(getClass().getName(), th.getMessage());
+                return null;
+            }
+
         }
 
         @Override
@@ -116,20 +129,25 @@ public class Serializers {
         @Override
         public Palette deserialize(JsonElement json, Type typeOfT, JsonDeserializationContext context)
                 throws JsonParseException {
-            JsonObject object = (JsonObject) json;
+            try {
+                JsonObject object = (JsonObject) json;
 
-            int width = object.get(WIDTH_LABEL).getAsInt();
-            int height = object.get(HEIGHT_LABEL).getAsInt();
+                int width = object.get(WIDTH_LABEL).getAsInt();
+                int height = object.get(HEIGHT_LABEL).getAsInt();
 
-            JsonArray array = object.getAsJsonArray(COLORS_LABEL);
+                JsonArray array = object.getAsJsonArray(COLORS_LABEL);
 
-            int colors[] = new int[height * width];
+                int colors[] = new int[height * width];
 
-            for (int i = 0; i < colors.length; ++i) {
-                colors[i] = array.get(i).getAsInt();
+                for (int i = 0; i < colors.length; ++i) {
+                    colors[i] = array.get(i).getAsInt();
+                }
+
+                return new Palette(width, height, colors);
+            } catch (Throwable th) {
+                Log.e(getClass().getName(), th.getMessage());
+                return null;
             }
-
-            return new Palette(width, height, colors);
         }
 
         @Override
@@ -162,25 +180,35 @@ public class Serializers {
 
         @Override
         public FavoriteEntry deserialize(JsonElement json, Type typeOfT, JsonDeserializationContext context) throws JsonParseException {
-            // In older versions, key and descriptor did not exist in this object.
-            JsonObject obj = (JsonObject) json;
-            Fractal fractal = context.deserialize(obj.get(FRACTAL_LABEL), Fractal.class);
+            try {
+                // In older versions, key and descriptor did not exist in this object.
+                JsonObject obj = (JsonObject) json;
+                Fractal fractal = context.deserialize(obj.get(FRACTAL_LABEL), Fractal.class);
 
-            Bitmap icon = null;
+                Bitmap icon = null;
 
-            JsonElement iconJson = obj.get(ICON_LABEL);
+                JsonElement iconJson = obj.get(ICON_LABEL);
 
-            if(iconJson != null) {
-                String iconBase64 = iconJson.getAsString();
-                byte[] iconBinary = Base64.decode(iconBase64, Base64.DEFAULT);
-                icon = Commons.fromPNG(iconBinary);
+                if (iconJson != null) {
+                    String iconBase64 = iconJson.getAsString();
+                    try {
+                        byte[] iconBinary = Base64.decode(iconBase64, Base64.DEFAULT);
+                        icon = Commons.fromPNG(iconBinary);
+                    } catch(Throwable e) {
+                        e.printStackTrace();
+                    }
+                }
+
+                JsonElement descriptionJson = obj.get(DESCRIPTION_LABEL);
+
+                String description = descriptionJson == null ? null : descriptionJson.getAsString();
+
+                return new FavoriteEntry(icon, fractal, description);
+            } catch (Throwable th) {
+                Log.e(getClass().getName(), th.getMessage());
+                return null;
             }
 
-            JsonElement descriptionJson = obj.get(DESCRIPTION_LABEL);
-
-            String description = descriptionJson == null ? null : descriptionJson.getAsString();
-
-            return new FavoriteEntry(icon, fractal, description);
         }
 
         @Override
@@ -203,22 +231,33 @@ public class Serializers {
 
         @Override
         public FavoriteEntry.Collection deserialize(JsonElement json, Type typeOfT, JsonDeserializationContext context) throws JsonParseException {
-            JsonObject obj = (JsonObject) json;
+            try {
+                JsonObject obj = (JsonObject) json;
 
-            FavoriteEntry.Collection collection = new FavoriteEntry.Collection();
+                FavoriteEntry.Collection collection = new FavoriteEntry.Collection();
 
-            for(Map.Entry<String, JsonElement> entry : obj.entrySet()) {
-                collection.add(entry.getKey(), context.deserialize(entry.getValue(), FavoriteEntry.class));
+                for (Map.Entry<String, JsonElement> entry : obj.entrySet()) {
+                    FavoriteEntry favoriteEntry = context.deserialize(entry.getValue(), FavoriteEntry.class);
+                    if(favoriteEntry != null) {
+                        collection.add(entry.getKey(), favoriteEntry);
+                    } else {
+                        Log.e(getClass().getName(), "Error adding " + entry.getKey());
+                    }
+                }
+
+                return collection;
+            } catch (Throwable th) {
+                Log.e(getClass().getName(), th.getMessage());
+                return null;
             }
 
-            return collection;
         }
 
         @Override
         public JsonElement serialize(FavoriteEntry.Collection src, Type typeOfSrc, JsonSerializationContext context) {
             JsonObject object = new JsonObject();
 
-            for(Map.Entry<String, FavoriteEntry> entry : src.getAll()) {
+            for (Map.Entry<String, FavoriteEntry> entry : src.getAll()) {
                 JsonElement jsonEntry = context.serialize(entry.getValue(), FavoriteEntry.class);
                 object.add(entry.getKey(), jsonEntry);
             }
@@ -265,7 +304,7 @@ public class Serializers {
             JsonObject palettes = new JsonObject();
             JsonObject scales = new JsonObject();
 
-            for(Map.Entry<String, Fractal.Parameter> pair : fractal.nonDefaultParameters()) {
+            for (Map.Entry<String, Fractal.Parameter> pair : fractal.nonDefaultParameters()) {
                 String id = pair.getKey();
                 Fractal.Parameter element = pair.getValue();
                 Object value = element.value();
@@ -317,78 +356,91 @@ public class Serializers {
         }
 
         public Fractal deserialize(JsonElement json, Type typeOfT, JsonDeserializationContext context) throws JsonParseException {
-            // Scale is stored as double-array
-            JsonObject obj = (JsonObject) json;
+            try {
+                // Scale is stored as double-array
+                JsonObject obj = (JsonObject) json;
 
 
-            StringBuilder sourceCode = new StringBuilder();
-            JsonArray sourceArray = obj.getAsJsonArray(SOURCE_LABEL);
+                StringBuilder sourceCode = new StringBuilder();
+                JsonArray sourceArray = obj.getAsJsonArray(SOURCE_LABEL);
 
-            for (JsonElement line : sourceArray) {
-                sourceCode.append(line.getAsString()).append('\n');
+                for (JsonElement line : sourceArray) {
+                    sourceCode.append(line.getAsString()).append('\n');
+                }
+
+                // Fetch data.
+                Map<String, Fractal.Parameter> dataMap = new HashMap<>();
+
+                JsonObject data = obj.getAsJsonObject(DATA_LABEL);
+
+                if (data != null) {
+                    // all of them are optional.
+                    JsonObject ints = data.getAsJsonObject(INTS_LABEL);
+                    JsonObject reals = data.getAsJsonObject(REALS_LABEL);
+                    JsonObject cplxs = data.getAsJsonObject(CPLXS_LABEL);
+                    JsonObject bools = data.getAsJsonObject(BOOLS_LABEL);
+                    JsonObject exprs = data.getAsJsonObject(EXPRS_LABEL);
+                    JsonObject colors = data.getAsJsonObject(COLORS_LABEL);
+                    JsonObject palettes = data.getAsJsonObject(PALETTES_LABEL);
+                    JsonObject scales = data.getAsJsonObject(SCALES_LABEL);
+
+                    if (ints != null) for (Map.Entry<String, JsonElement> entry : ints.entrySet()) {
+                        dataMap.put(entry.getKey(), new Fractal.Parameter(Fractal.Type.Int, entry.getValue().getAsInt()));
+                    }
+
+                    if (reals != null)
+                        for (Map.Entry<String, JsonElement> entry : reals.entrySet()) {
+                            dataMap.put(entry.getKey(), new Fractal.Parameter(Fractal.Type.Real, entry.getValue().getAsDouble()));
+                        }
+
+                    if (cplxs != null)
+                        for (Map.Entry<String, JsonElement> entry : cplxs.entrySet()) {
+                            dataMap.put(entry.getKey(), new Fractal.Parameter(Fractal.Type.Cplx, context.deserialize(entry.getValue(), Cplx.class)));
+                        }
+
+                    if (bools != null)
+                        for (Map.Entry<String, JsonElement> entry : bools.entrySet()) {
+                            dataMap.put(entry.getKey(), new Fractal.Parameter(Fractal.Type.Bool, entry.getValue().getAsBoolean()));
+                        }
+
+                    if (exprs != null)
+                        for (Map.Entry<String, JsonElement> entry : exprs.entrySet()) {
+                            dataMap.put(entry.getKey(), new Fractal.Parameter(Fractal.Type.Expr, entry.getValue().getAsString()));
+                        }
+
+                    if (colors != null)
+                        for (Map.Entry<String, JsonElement> entry : colors.entrySet()) {
+                            dataMap.put(entry.getKey(), new Fractal.Parameter(Fractal.Type.Color, entry.getValue().getAsInt()));
+                        }
+
+                    if (palettes != null)
+                        for (Map.Entry<String, JsonElement> entry : palettes.entrySet()) {
+                            dataMap.put(entry.getKey(), new Fractal.Parameter(Fractal.Type.Palette, context.deserialize(entry.getValue(), Palette.class)));
+                        }
+
+                    if (scales != null)
+                        for (Map.Entry<String, JsonElement> entry : scales.entrySet()) {
+                            dataMap.put(entry.getKey(), new Fractal.Parameter(Fractal.Type.Scale, context.deserialize(entry.getValue(), Scale.class)));
+                        }
+                }
+
+
+                // In old versions, scale was on top. There will be
+                // most likely forever Jsons with a dedicated scale
+                // field. For these, read scale from here.
+                JsonElement element = obj.get(SCALE_LABEL);
+
+                if (element != null) {
+                    Scale scale = context.deserialize(element, Scale.class);
+                    dataMap.put(Fractal.SCALE_KEY, new Fractal.Parameter(Fractal.Type.Scale, scale));
+                }
+
+                return new Fractal(sourceCode.toString(), dataMap);
+            } catch (Throwable th) {
+                Log.e(getClass().getName(), th.getMessage());
+                return null;
             }
 
-            // Fetch data.
-            Map<String, Fractal.Parameter> dataMap = new HashMap<>();
-
-            JsonObject data = obj.getAsJsonObject(DATA_LABEL);
-
-            if (data != null) {
-                // all of them are optional.
-                JsonObject ints = data.getAsJsonObject(INTS_LABEL);
-                JsonObject reals = data.getAsJsonObject(REALS_LABEL);
-                JsonObject cplxs = data.getAsJsonObject(CPLXS_LABEL);
-                JsonObject bools = data.getAsJsonObject(BOOLS_LABEL);
-                JsonObject exprs = data.getAsJsonObject(EXPRS_LABEL);
-                JsonObject colors = data.getAsJsonObject(COLORS_LABEL);
-                JsonObject palettes = data.getAsJsonObject(PALETTES_LABEL);
-                JsonObject scales = data.getAsJsonObject(SCALES_LABEL);
-
-                if (ints != null) for (Map.Entry<String, JsonElement> entry : ints.entrySet()) {
-                    dataMap.put(entry.getKey(), new Fractal.Parameter(Fractal.Type.Int, entry.getValue().getAsInt()));
-                }
-
-                if (reals != null) for (Map.Entry<String, JsonElement> entry : reals.entrySet()) {
-                    dataMap.put(entry.getKey(), new Fractal.Parameter(Fractal.Type.Real, entry.getValue().getAsDouble()));
-                }
-
-                if (cplxs != null) for (Map.Entry<String, JsonElement> entry : cplxs.entrySet()) {
-                    dataMap.put(entry.getKey(), new Fractal.Parameter(Fractal.Type.Cplx, context.deserialize(entry.getValue(), Cplx.class)));
-                }
-
-                if (bools != null) for (Map.Entry<String, JsonElement> entry : bools.entrySet()) {
-                    dataMap.put(entry.getKey(), new Fractal.Parameter(Fractal.Type.Bool, entry.getValue().getAsBoolean()));
-                }
-
-                if (exprs != null) for (Map.Entry<String, JsonElement> entry : exprs.entrySet()) {
-                    dataMap.put(entry.getKey(), new Fractal.Parameter(Fractal.Type.Expr, entry.getValue().getAsString()));
-                }
-
-                if (colors != null) for (Map.Entry<String, JsonElement> entry : colors.entrySet()) {
-                    dataMap.put(entry.getKey(), new Fractal.Parameter(Fractal.Type.Color, entry.getValue().getAsInt()));
-                }
-
-                if (palettes != null) for (Map.Entry<String, JsonElement> entry : palettes.entrySet()) {
-                    dataMap.put(entry.getKey(), new Fractal.Parameter(Fractal.Type.Palette, context.deserialize(entry.getValue(), Palette.class)));
-                }
-
-                if (scales != null) for (Map.Entry<String, JsonElement> entry : scales.entrySet()) {
-                    dataMap.put(entry.getKey(), new Fractal.Parameter(Fractal.Type.Scale, context.deserialize(entry.getValue(), Scale.class)));
-                }
-            }
-            
-            
-            // In old versions, scale was on top. There will be
-            // most likely forever Jsons with a dedicated scale
-            // field. For these, read scale from here.
-            JsonElement element = obj.get(SCALE_LABEL);
-
-            if(element != null) {
-                Scale scale = context.deserialize(element, Scale.class);
-                dataMap.put(Fractal.SCALE_KEY, new Fractal.Parameter(Fractal.Type.Scale, scale));
-            }
-
-            return new Fractal(sourceCode.toString(), dataMap);
         }
     }
 }

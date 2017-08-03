@@ -125,7 +125,7 @@ static double __attribute__((overloadable)) atan2(double y, double x) {
     long2 l1 = split(x);
     long2 l2 = split(y);
 
-    if(l1.y > l2.y) {
+    if(l1.y < l2.y) {
         l1.y -= l2.y;
         l2.y = 0;
     } else {

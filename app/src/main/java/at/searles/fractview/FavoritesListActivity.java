@@ -290,6 +290,10 @@ public class FavoritesListActivity extends Activity {
 
 					FavoriteEntry.Collection newEntries = Serializers.serializer().fromJson(sb.toString(), FavoriteEntry.Collection.class);
 
+					if(newEntries == null) {
+						DialogHelper.error(FavoritesListActivity.this, "Bad file format!");
+					}
+
 					// Find duplicates
 					Map<String, FavoriteEntry> duplicates = new HashMap<>();
 

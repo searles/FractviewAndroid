@@ -10,10 +10,10 @@
           android:icon="@android:drawable/ic_menu_save"
           android:showAsAction="ifRoom"
         />
-    <item android:id="@+id/action_export_palette"
-          android:title="@string/action_export_palette"
+    <item android:id="@+id/action_copy_to_clipboard"
+          android:title="@string/action_copy_to_clipboard"
         />
-    <item android:id="@+id/action_import_palette"
-          android:title="@string/action_import_palette"
+    <item android:id="@+id/action_paste_from_clipboard"
+          android:title="@string/action_paste_from_clipboard"
         />
 </menu>
