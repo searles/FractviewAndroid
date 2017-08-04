@@ -167,6 +167,11 @@ public class ScaleableImageView extends View {
 		initTouch();
 	}
 
+	private void setImageMatrix(Matrix matrix) {
+		this.imageMatrix = matrix;
+
+	}
+
 	public void setListener(Listener listener) {
 		this.listener = listener;
 	}
@@ -174,6 +179,7 @@ public class ScaleableImageView extends View {
 	public void setBitmap(Bitmap bitmap) {
 		multitouch.cancel();
 		this.bitmap = bitmap;
+		requestLayout();
 	}
 
 
@@ -365,7 +371,7 @@ public class ScaleableImageView extends View {
 
 		bitmap2view.invert(view2bitmap);
 
-		this.imageMatrix = multitouch.viewMatrix();
+		setImageMatrix(multitouch.viewMatrix());
 
 		width = (int) vw;
 		height = (int) vh;
@@ -466,7 +472,7 @@ public class ScaleableImageView extends View {
 		if(!lastScale.isEmpty()) {
 			Matrix l = lastScale.removeLast();
 			// update the viewMatrix.
-			this.imageMatrix = multitouch.viewMatrix();
+			setImageMatrix(multitouch.viewMatrix());
 			invalidate();
 		}
 	}
@@ -660,7 +666,7 @@ public class ScaleableImageView extends View {
 
 			if(isScrollEvent) {
 				isScrollEvent = false;
-				imageMatrix = viewMatrix();
+				setImageMatrix(viewMatrix());
 				invalidate();
 			}
 		}
@@ -745,7 +751,7 @@ public class ScaleableImageView extends View {
 
 			// for now, we will set the latest view matrix.
 			// it will be reset later when the first preview has been generated.
-			imageMatrix = viewMatrix();
+			setImageMatrix(viewMatrix());
 
 			return true;
 		}

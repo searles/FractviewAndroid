@@ -134,7 +134,10 @@ public class BitmapFragmentView extends FrameLayout {
         }
 
         this.bitmapFragment = bitmapFragment;
-        this.imageView.setBitmap(bitmapFragment.getBitmap());
+
+        if(bitmapFragment.getBitmap() != null) {
+            this.imageView.setBitmap(bitmapFragment.getBitmap());
+        }
 
         this.bitmapFragmentListener = new BitmapFragment.BitmapFragmentListener() {
             @Override

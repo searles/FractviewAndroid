@@ -18,39 +18,12 @@ static double4 __attribute__((overloadable)) convert_quat(double2 d) { return (d
 
 
 // fixme only float available...
-static double __attribute__((overloadable)) sqrt(double d) {
-	return sqrt((float) d);
-	/*if(d < 0) return nan(0); // not a number.
-
-	double ret;
-
-	if(d > 3.4e38) {
-		// divide until below this bound.
-		// avoid such situations. They are complex.
-		// normally one should use frexp/ldexp but
-		// they are not implemented for doubles.
-		// so, get at least close
-		ret = ret / (d > 1e256 ? 1e192 : d > 1e128 ? 1e96 : d > 1e64 ? 1e48 : 1e24);
-	} else {
-		// use float sqrt as initial guess.
-		ret = sqrt((float) d);
-	}
-
-    double dhalf = d / 2;
-
-    for(int i = 0; i < 10; ++i) {
-        double nret = ret / 2 + dhalf / ret;
-        if(nret == ret) return nret;
-        ret = nret;
-    }
-
-    return ret;*/
-}
-
-
+static double __attribute__((overloadable)) sqrt(double d) { return sqrt((float) d); }
+static double __attribute__((overloadable)) rad(double x, double y) { return sqrt(x * x + y * y); }
 static double __attribute__((overloadable)) atan2(double y, double x) { return atan2((float) y, (float) x); }
 static double __attribute__((overloadable)) log(double f) { return log((float) f); }
 static double __attribute__((overloadable)) exp(double f) { return exp((float) f); }
+static double __attribute__((overloadable)) pow(double y, double x) { return pow((float) y, (float) x); }
 static double __attribute__((overloadable)) sin(double f) { return sin((float) f); }
 static double __attribute__((overloadable)) cos(double f) { return cos((float) f); }
 static double __attribute__((overloadable)) tan(double f) { return tan((float) f); }
@@ -61,8 +34,11 @@ static double __attribute__((overloadable)) tanh(double f) { return tanh((float)
 static double __attribute__((overloadable)) atanh(double f) { return atanh((float) f); }
 static double __attribute__((overloadable)) cbrt(double f) { return cbrt((float) f); }
 static double __attribute__((overloadable)) floor(double f) { return floor((float) f); }
-static double __attribute__((overloadable)) pow(double y, double x) { return pow((float) y, (float) x); }
+static double __attribute__((overloadable)) ceil(double d) { return ceil((float) d); }
+static double __attribute__((overloadable)) fract(double d) { return fract((float) d); }
 
+
+// FIXME scale is missing
 
 // structures cannot contain pointers in renderscript
 struct palette {
@@ -80,18 +56,6 @@ struct lab_surface {
 
 // here goes the data
 
-// From here RS-code.
-
-/*typedef struct {
-    double s0;
-    double s1;
-    double s2;
-    double s3;
-} double4;*/
-
-// here goes the data
-
-
 // scale
 double2 xx;
 double2 yy;
@@ -102,9 +66,6 @@ int len;
 
 struct palette * palettes;
 struct lab_surface * palette_data;
-
-
-
 
 static double2 __attribute__((overloadable)) map(double x, double y) {
     return (double2) { xx.x * x + yy.x * y + tt.x, xx.y * x + yy.y * y  + tt.y }; // apply affine tranformation
@@ -191,13 +152,13 @@ static double __attribute__((overloadable)) sqr(double a) { return a * a; }
 static double2 __attribute__((overloadable)) sqr(double2 a) { return (double2){ a.x * a.x - a.y * a.y, 2 * a.x * a.y }; }
 static double4 __attribute__((overloadable)) sqr(double4 a) { return (double4){ sqr(a.s0), sqr(a.s1), sqr(a.s2), sqr(a.s3) }; } // fixme
 
+static double __attribute__((overloadable)) rad(double2 f) { return rad(f.x, f.y); }
 static double __attribute__((overloadable)) rad2(double2 f) { return f.x * f.x + f.y * f.y; }
 
 static double __attribute__((overloadable)) dot(double2 a, double2 b) { return a.x * b.x + a.y * b.y; }
-static double __attribute__((overloadable)) dist2(double2 a, double2 b) { double t = a.x - b.x; double u = a.y - b.y; return t * t + u * u; }
-static double __attribute__((overloadable)) dist(double2 a, double2 b) { return sqrt(dist2(a, b)); }
+static double __attribute__((overloadable)) dist2(double2 a, double2 b) { return rad2(a - b); }
+static double __attribute__((overloadable)) dist(double2 a, double2 b) { return rad(a - b); }
 
-static double __attribute__((overloadable)) rad(double2 f) { return sqrt(rad2(f)); }
 static double __attribute__((overloadable)) arc(double2 f) { return atan2(f.y, f.x); }
 static double __attribute__((overloadable)) arcnorm(double2 f) { return atan2(f.y, f.x) / (2 * M_PI); }
 
@@ -366,16 +327,8 @@ static double2 __attribute__((overloadable)) floor(double2 z) {
 	return (double2) { floor(z.x), floor(z.y) };
 }
 
-static double __attribute__((overloadable)) ceil(double d) {
-	return ceil((float) d);
-}
-
 static double2 __attribute__((overloadable)) ceil(double2 z) {
 	return (double2) { ceil((float) z.x), ceil((float) z.y) };
-}
-
-static double __attribute__((overloadable)) fract(double d) {
-	return fract((float) d);
 }
 
 static double2 __attribute__((overloadable)) fract(double2 z) {
