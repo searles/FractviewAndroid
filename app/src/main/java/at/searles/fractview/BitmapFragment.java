@@ -318,7 +318,12 @@ public class BitmapFragment extends Fragment {
 	// ------------------------
 
 	public void setSize(int width, int height) {
-		edit(() -> setSizeUnsafe(width, height));
+		edit(new Runnable() {
+			@Override
+			public void run() {
+				setSizeUnsafe(width, height);
+			}
+		});
 	}
 
 	private boolean setSizeUnsafe(int width, int height) {
@@ -337,7 +342,9 @@ public class BitmapFragment extends Fragment {
 			Commons.uiRun(new Runnable() {
 				@Override
 				public void run() {
-					listeners.forEach((l) -> l.newBitmapCreated(bitmap, BitmapFragment.this));
+					for(BitmapFragmentListener listener : listeners) {
+						listener.newBitmapCreated(bitmap, BitmapFragment.this);
+					}
 				}
 			});
 
@@ -346,19 +353,29 @@ public class BitmapFragment extends Fragment {
             // FIXME!!! Potential crash!
             // New in Java 7. Weird syntax...
 			Log.d(getClass().getName(), "Out of memory");
-			Commons.uiRun(() ->
-                    DialogHelper.error(getActivity(), "Image too large...")
-			);
+			Commons.uiRun(new Runnable() {
+				public void run() {
+					DialogHelper.error(getActivity(), "Image too large...");
+				}
+			});
 			return false;
 		}
 	}
 
 	public void setScale(Scale sc) {
-		edit(() -> setScaleUnsafe(sc));
+		edit(new Runnable() {
+			public void run() {
+				setScaleUnsafe(sc);
+			}
+		});
 	}
 
 	public void setScaleRelative(Scale sc) {
-		edit(() -> setScaleUnsafe(fractal.scale().relative(sc)));
+		edit(new Runnable() {
+			public void run() {
+				setScaleUnsafe(fractal.scale().relative(sc));
+			}
+		});
 	}
 
 	private void setScaleUnsafe(Scale sc) {
@@ -417,7 +434,9 @@ public class BitmapFragment extends Fragment {
         Log.d(getClass().getName(), "start drawing");
 		isRunning = true;
 
-		listeners.forEach((l) -> l.drawerStarted(this));
+		for(BitmapFragmentListener listener : listeners) {
+			listener.drawerStarted(this);
+		}
 
 		new Thread(drawer).start(); // fixme is that the android way?
     }

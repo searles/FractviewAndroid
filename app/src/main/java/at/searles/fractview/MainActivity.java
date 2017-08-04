@@ -545,6 +545,8 @@ public class MainActivity extends Activity
                                 if(w == bitmapFragment.width() && h == bitmapFragment.height()) {
                                     DialogHelper.info(((AlertDialog) d).getContext(), "size not changed");
                                 } else {
+									// FIXME reset selection in imageView
+									// imageView.
                                     bitmapFragment.setSize(w, h);
                                 }
                             }
