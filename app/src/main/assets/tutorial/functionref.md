@@ -120,9 +120,8 @@ op(a, b, c, ...) = op(...op(a, b), c)...)
 * sqr: Square
 	+ TODO (?): Remove implementation for `quat`
 
-#### Standard operations with limited precision
+#### Standard operations
 
-The following operations use the corresponding 32-bit operations in the GPU and therefore only allow limited precision.
 None of the following operations is available for the quat type.
 
 ##### Power functions
@@ -130,13 +129,10 @@ None of the following operations is available for the quat type.
 * sqrt: Square root
 	+ Remark: `sqrt` of a negative real will return "not a number". Use cplx as input type if you want a complex result.
 	+ TODO: Bug: complex root of 0 returns "not a number"
-	+ TODO: Possible efficient 64-bit implementation using 4 newton iterations.
 * exp: Exponential function. Equivalent to `E^x`.
 	+ Remark: Since this operation grows very fast but is only supported for 32 bit, values higer than around 40 will return infinity
-	+ TODO: Improve precision by cutting off mantissa.
 * log: Logarithm (inverse of exp)
 	+ Remark: `log` of a negative number will return "not a number". Use cplx as input type if you want a complex result.
-	+ TODO: Improve precision by cutting off mantissa
 
 ##### Trigonometric functions	
 
@@ -169,7 +165,6 @@ The following operations are applied component-wise to cplx and quat.
 	+ TODO: Not implemented for quat
 * circlefn: Maps values between 0 and 1 (-1) to a 
 	+ Motivation: Used for rounded orbit traps
-	+ Example: 
 	+ TODO: Remove implementation for cplx. It is not needed.
 * real2int: Convert a real to an integer. Similar to `floor` but the return type is int.
 
@@ -181,21 +176,12 @@ or a `quat` out of four.
 * im: imaginary part of a cply. Also written as `value.y`.
 * rad: Absolute value of a complex number.
 * rad2: Squared absolute of a complex number. Faster than `rad` and with double precision.
-* dist2(
-			new Signature().r(Type.cplx).r(Type.cplx).w(Type.real)
-	) {
-* dist(
-			new Signature().r(Type.cplx).r(Type.cplx).w(Type.real)
-	) {
-* arc: Argument of a complex number. Uses 32 bit precision. Value ranges from -pi to +pi.
-* arcnorm(
-			new Signature().r(Type.cplx).w(Type.real)
-	) {
-* polar(
-			new Signature().r(Type.cplx).w(Type.cplx)
-	) {
-
-* rect(
+* dist2: returns the square of the distance of two complex numbers
+* dist: returns the distance of two complex numbers
+* arc: Argument of a complex number. Value ranges from -pi to +pi.
+* arcnorm: arc normalized in the range 0 to 1.
+* polar: puts the absolute value into the real part and the argument into the imaginaty part of a complex number
+* rect: Inverse of polar.
 			new Signature().r(Type.cplx).w(Type.cplx)
 	) {
 
