@@ -38,8 +38,6 @@ into other ones.
 		2. The vector
 	+ Errors:
 		- If the vector is empty (TODO: test!)
-	+ Example:
-		- 
 
 ## Boolean operations and comparisons
 
@@ -182,67 +180,37 @@ or a `quat` out of four.
 * arcnorm: arc normalized in the range 0 to 1.
 * polar: puts the absolute value into the real part and the argument into the imaginaty part of a complex number
 * rect: Inverse of polar.
-			new Signature().r(Type.cplx).w(Type.cplx)
-	) {
-
-			new Signature().r(Type.cplx).w(Type.real)
-	) {
-* scalarmul(
-			new Signature().r(Type.cplx).r(Type.cplx).w(Type.cplx)
-	},
-
-
-* conj(
-			new Signature().r(Type.cplx).w(Type.cplx)
-	) {
-	},
-* dot(
-			new Signature().r(Type.cplx).r(Type.cplx).w(Type.real)
-	) {
-	rabs(
-			new Signature().r(Type.cplx).w(Type.cplx)
-			) {
-	iabs(
-			new Signature().r(Type.cplx).w(Type.cplx)
-			) {
-	flip(
-			new Signature().r(Type.cplx).w(Type.cplx)
-			) {
-
-
-	mandelbrot(
-			new Signature().r(Type.cplx).r(Type.cplx).w(Type.cplx)
-	) {
-	smooth( // bad smooth function, only kept for compatibility
-			new Signature().r(Type.cplx).r(Type.real).r(Type.real).w(Type.real)
-	) {
-	smoothen(
-			new Signature().r(Type.cplx).r(Type.real).r(Type.real).w(Type.real)
-	) {
+	+ TODO: This function has a useless output "real"-variant
+* scalarmul: Performs a scalar multiplication of two complex numbers
+* conj: Complex conjugate number
+* dot: Dot-product of two numbers
+* rabs: Replaces the real part by its absolute value
+* iabs: Replaces the imaginary part by its absolute value
+* flip: Exchanges real and imaginary part.
+* mandelbrot: Short for `arg1^2 + arg2`
+* smooth: Faulty `smoothen` function. Kept for compatibility with old versions of Fractview
+	+ TODO: Replace by a macro function
+* smoothen: Short form to obtain a smooth gradient for polynomial fractals.
+	+ Arguments are in this order: last z value, bailout, max_power.
 
 ### For scaling
 
-TODO: There is no support yet to use other scales exvept for the extern `scale` that is left implicit in most cases. A solution for this will involve a generic solution also for `__ld_palette`.
+TODO: There is no support yet to use other scales except for the extern `scale` that is left implicit in most cases. A solution for this will involve a generic solution also for `__ld_palette`.
 
-* map(
-	new Signature().r(Type.real).r(Type.real).w(Type.cplx),
-	new Signature().r(Type.cplx).w(Type.cplx)
-) {
-
-	
+* map: Maps a point (either two real values or one complex value) to a complex value using the current scale.
 	
 ### Geometry 
 
-	circle(
+* circle(
 			new Signature().r(Type.cplx).r(Type.real).r(Type.cplx).w(Type.real)
 	) {
-	line(
+* line(
 			new Signature().r(Type.cplx).r(Type.cplx).r(Type.cplx).w(Type.real)
 	) {
-	segment(
+* segment(
 			new Signature().r(Type.cplx).r(Type.cplx).r(Type.cplx).w(Type.real)
 	) {
-	box(
+* box(
 			new Signature().r(Type.cplx).r(Type.cplx).r(Type.cplx).w(Type.real)
 	) {
 
@@ -288,7 +256,7 @@ Colors are represented in multiple ways
 * `mov`: Internal assignment function. TODO: Rename to `__mov`
 * `whileOp`: Internal `while`-loop. TODO: Rename to `__while`
 * `ifOp`: Internal `if`-condition. TODO: Rename to `__if`
-* `forOp`: Internal `for`-condition. TODO: Rename to `__for`
+* `forOp`: Internal `for`-iteration. TODO: Rename to `__for`
 * `__jump`: Jump
 * `__jumprel`: Relative jump
 * `__ld_palette`: Loads the palette from storage. TODO: Palettes are very specialized. Having this function hardcoded in meelan is not very pretty.
