@@ -291,7 +291,8 @@ public class FavoritesListActivity extends Activity {
 					FavoriteEntry.Collection newEntries = Serializers.serializer().fromJson(sb.toString(), FavoriteEntry.Collection.class);
 
 					if(newEntries == null) {
-						DialogHelper.error(FavoritesListActivity.this, "Bad file format!");
+						DialogHelper.error(FavoritesListActivity.this, "Could not read file!");
+						return;
 					}
 
 					// Find duplicates

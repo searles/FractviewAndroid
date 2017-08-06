@@ -1,6 +1,7 @@
 package at.searles.utils;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.Map;
@@ -32,7 +33,13 @@ public class IndexedKeyMap<A> {
     }
 
     public synchronized void sort() {
-        indexed.sort(String::compareToIgnoreCase);
+        Collections.sort(indexed, new Comparator<String>() {
+            @Override
+            public int compare(String s1, String s2) {
+                return s1.compareToIgnoreCase(s2);
+            }
+        });
+
         invalid = true;
     }
 
