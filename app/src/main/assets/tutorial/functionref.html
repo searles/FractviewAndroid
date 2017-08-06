@@ -58,7 +58,6 @@
 <ul>
 <li>If the vector is empty (TODO: test!)</li>
 </ul></li>
-<li><h2 id="example">Example:</h2></li>
 </ul></li>
 </ul>
 <h2 id="boolean-operations-and-comparisons">Boolean operations and comparisons</h2>
@@ -152,25 +151,22 @@
 <li>TODO (?): Remove implementation for <code>quat</code></li>
 </ul></li>
 </ul>
-<h4 id="standard-operations-with-limited-precision">Standard operations with limited precision</h4>
-<p>The following operations use the corresponding 32-bit operations in the GPU and therefore only allow limited precision. None of the following operations is available for the quat type.</p>
+<h4 id="standard-operations">Standard operations</h4>
+<p>None of the following operations is available for the quat type.</p>
 <h5 id="power-functions">Power functions</h5>
 <ul>
 <li>sqrt: Square root
 <ul>
 <li>Remark: <code>sqrt</code> of a negative real will return &quot;not a number&quot;. Use cplx as input type if you want a complex result.</li>
 <li>TODO: Bug: complex root of 0 returns &quot;not a number&quot;</li>
-<li>TODO: Possible efficient 64-bit implementation using 4 newton iterations.</li>
 </ul></li>
 <li>exp: Exponential function. Equivalent to <code>E^x</code>.
 <ul>
 <li>Remark: Since this operation grows very fast but is only supported for 32 bit, values higer than around 40 will return infinity</li>
-<li>TODO: Improve precision by cutting off mantissa.</li>
 </ul></li>
 <li>log: Logarithm (inverse of exp)
 <ul>
 <li>Remark: <code>log</code> of a negative number will return &quot;not a number&quot;. Use cplx as input type if you want a complex result.</li>
-<li>TODO: Improve precision by cutting off mantissa</li>
 </ul></li>
 </ul>
 <h5 id="trigonometric-functions">Trigonometric functions</h5>
@@ -212,7 +208,6 @@
 <li>circlefn: Maps values between 0 and 1 (-1) to a
 <ul>
 <li>Motivation: Used for rounded orbit traps</li>
-<li>Example:</li>
 <li>TODO: Remove implementation for cplx. It is not needed.</li>
 </ul></li>
 <li>real2int: Convert a real to an integer. Similar to <code>floor</code> but the return type is int.</li>
@@ -224,39 +219,44 @@
 <li>im: imaginary part of a cply. Also written as <code>value.y</code>.</li>
 <li>rad: Absolute value of a complex number.</li>
 <li>rad2: Squared absolute of a complex number. Faster than <code>rad</code> and with double precision.</li>
-<li>dist2( new Signature().r(Type.cplx).r(Type.cplx).w(Type.real) ) {</li>
-<li>dist( new Signature().r(Type.cplx).r(Type.cplx).w(Type.real) ) {</li>
-<li>arc: Argument of a complex number. Uses 32 bit precision. Value ranges from -pi to +pi.</li>
-<li>arcnorm( new Signature().r(Type.cplx).w(Type.real) ) {</li>
-<li><p>polar( new Signature().r(Type.cplx).w(Type.cplx) ) {</p></li>
-<li><p>rect( new Signature().r(Type.cplx).w(Type.cplx) ) {</p>
-<pre><code>    new Signature().r(Type.cplx).w(Type.real)</code></pre>
-) {</li>
-<li><p>scalarmul( new Signature().r(Type.cplx).r(Type.cplx).w(Type.cplx) },</p></li>
-<li>conj( new Signature().r(Type.cplx).w(Type.cplx) ) { },</li>
-<li><p>dot( new Signature().r(Type.cplx).r(Type.cplx).w(Type.real) ) { rabs( new Signature().r(Type.cplx).w(Type.cplx) ) { iabs( new Signature().r(Type.cplx).w(Type.cplx) ) { flip( new Signature().r(Type.cplx).w(Type.cplx) ) {</p>
-<p>mandelbrot( new Signature().r(Type.cplx).r(Type.cplx).w(Type.cplx) ) { smooth( // bad smooth function, only kept for compatibility new Signature().r(Type.cplx).r(Type.real).r(Type.real).w(Type.real) ) { smoothen( new Signature().r(Type.cplx).r(Type.real).r(Type.real).w(Type.real) ) {</p></li>
+<li>dist2: returns the square of the distance of two complex numbers</li>
+<li>dist: returns the distance of two complex numbers</li>
+<li>arc: Argument of a complex number. Value ranges from -pi to +pi.</li>
+<li>arcnorm: arc normalized in the range 0 to 1.</li>
+<li>polar: puts the absolute value into the real part and the argument into the imaginaty part of a complex number</li>
+<li>rect: Inverse of polar.
+<ul>
+<li>TODO: This function has a useless output &quot;real&quot;-variant</li>
+</ul></li>
+<li>scalarmul: Performs a scalar multiplication of two complex numbers</li>
+<li>conj: Complex conjugate number</li>
+<li>dot: Dot-product of two numbers</li>
+<li>rabs: Replaces the real part by its absolute value</li>
+<li>iabs: Replaces the imaginary part by its absolute value</li>
+<li>flip: Exchanges real and imaginary part.</li>
+<li>mandelbrot: Short for <code>arg1^2 + arg2</code></li>
+<li>smooth: Faulty <code>smoothen</code> function. Kept for compatibility with old versions of Fractview
+<ul>
+<li>TODO: Replace by a macro function</li>
+</ul></li>
+<li>smoothen: Short form to obtain a smooth gradient for polynomial fractals.
+<ul>
+<li>Arguments are in this order: last z value, bailout, max_power.</li>
+</ul></li>
 </ul>
 <h3 id="for-scaling">For scaling</h3>
-<p>TODO: There is no support yet to use other scales exvept for the extern <code>scale</code> that is left implicit in most cases. A solution for this will involve a generic solution also for <code>__ld_palette</code>.</p>
+<p>TODO: There is no support yet to use other scales except for the extern <code>scale</code> that is left implicit in most cases. A solution for this will involve a generic solution also for <code>__ld_palette</code>.</p>
 <ul>
-<li>map( new Signature().r(Type.real).r(Type.real).w(Type.cplx), new Signature().r(Type.cplx).w(Type.cplx) ) {</li>
+<li>map: Maps a point (either two real values or one complex value) to a complex value using the current scale.</li>
 </ul>
 <h3 id="geometry">Geometry</h3>
-<pre><code>circle(
-        new Signature().r(Type.cplx).r(Type.real).r(Type.cplx).w(Type.real)
-) {
-line(
-        new Signature().r(Type.cplx).r(Type.cplx).r(Type.cplx).w(Type.real)
-) {
-segment(
-        new Signature().r(Type.cplx).r(Type.cplx).r(Type.cplx).w(Type.real)
-) {
-box(
-        new Signature().r(Type.cplx).r(Type.cplx).r(Type.cplx).w(Type.real)
-) {
-
-// Translate coordinates</code></pre>
+<ul>
+<li>circle( new Signature().r(Type.cplx).r(Type.real).r(Type.cplx).w(Type.real) ) {</li>
+<li>line( new Signature().r(Type.cplx).r(Type.cplx).r(Type.cplx).w(Type.real) ) {</li>
+<li>segment( new Signature().r(Type.cplx).r(Type.cplx).r(Type.cplx).w(Type.real) ) {</li>
+<li><p>box( new Signature().r(Type.cplx).r(Type.cplx).r(Type.cplx).w(Type.real) ) {</p>
+<p>// Translate coordinates</p></li>
+</ul>
 <h3 id="color-handling">Color handling</h3>
 <p>Colors are represented in multiple ways</p>
 <ul>
@@ -286,7 +286,7 @@ box(
 <li><code>mov</code>: Internal assignment function. TODO: Rename to <code>__mov</code></li>
 <li><code>whileOp</code>: Internal <code>while</code>-loop. TODO: Rename to <code>__while</code></li>
 <li><code>ifOp</code>: Internal <code>if</code>-condition. TODO: Rename to <code>__if</code></li>
-<li><code>forOp</code>: Internal <code>for</code>-condition. TODO: Rename to <code>__for</code></li>
+<li><code>forOp</code>: Internal <code>for</code>-iteration. TODO: Rename to <code>__for</code></li>
 <li><code>__jump</code>: Jump</li>
 <li><code>__jumprel</code>: Relative jump</li>
 <li><code>__ld_palette</code>: Loads the palette from storage. TODO: Palettes are very specialized. Having this function hardcoded in meelan is not very pretty.</li>
