@@ -20,25 +20,12 @@ After starting Fractview, a picture of the Mandelbrot Set is rendered. The progr
 
 The app supports portrait and landscape mode. The image is eventually rotated by 90 degrees to fill out as much space as possible while keeping the aspect ratio. If the image is rotated, a small triangle will appear to mark the top left corner of the image.
 
-Fractview is very feature rich. In the following some aspects that are interesting for beginners are discussed. You find further links below.
-
-## Presets/Demos
-
-Fractview contains some demos/presets, accessible via <img src="icons/demos_icon.png" style="height: 1em" />. The demos-view consists of two screens. In the first screen you pick a program that will render the image. There are many different programs to draw basic fractals, newton fractals, lyapunov fractals, magnetic pendulum simulations or simply complex functions. You can select a program using a single tap. The first entry ("Current") will keep the current program.
-
-The second view lets you select a parameter set: Each program contains some extern parameters that can be freely manipulated, for instance the current scale, the color palettes used to draw the fractal or even the function of the fractal. 
-
-Most parameter sets can be used for more than one program, for instance a parameter set like "Phoenix Set" provides a fractal function that can be used in the Default program, the Fold program and others. If a program cannot interpret a parameter set (for instance if the parameter set requires values that do not exist in a program), you might encounter an error message though.
-
-![Screenshots of the Demos-menu](screens/demos_screens.png) 
-
-You can mix parameter sets with your current settings using a long tab and selecting "Merge".
-
-![Example of merge](screens/merge_example.png)
+Fractview is very feature rich. In the following an overview of some features is given.
 
 ## Parameters
 
-You can manipulate these parameter sets directly by selecting "Parameters" in the menu or by tapping the icon <img src="icons/edit_icon.png" style="height: 1em" />. In this view you can edit all parameters and thereby enter custom formulas, change the color palettes or activate 3D effects. In the beginning, the most interesting paramter is most likely "maxdepth" because by increasing this number you can increase the amount of details at deeper zooms.
+Fractview allows you to freely modify parameters of the image that is drawn. 
+You can manipulate these parameter by selecting "Parameters" in the menu or by tapping the icon <img src="icons/edit_icon.png" style="height: 1em" />. In this view you can edit all parameters and thereby enter custom formulas, change the color palettes or add a 3D effects. When zooming into the fractal, the most important parameter is "maxdepth" because the larger it is the more details become visible at deeper zooms.
 
 ![Changing maximum depth](screens/changing_parameter.png) 
 
@@ -53,6 +40,20 @@ Another interesting parameter is "light". You can toggle its state with a single
 Fractview allows you to create custom (two dimensional) color palettes using an intuitive palette editor and color picker. The *bailoutpalette* contains the colors used of the outside of the fractal (in the Default program it uses only one dimension), the *lakepalette* is used for the inside (this one uses two dimensions).
 
 You find more information on parameters in this article: [Creating Custom Fractals](custom.html).
+
+## Presets/Demos
+
+Fractview contains some demos/presets, accessible via <img src="icons/demos_icon.png" style="height: 1em" />. The demos-view consists of two screens. In the first screen you pick a program that will render the image. There are many different programs to draw basic fractals, newton fractals, lyapunov fractals, magnetic pendulum simulations or simply complex functions. You can select a program using a single tap. The first entry ("Current") will keep the current program.
+
+The second view lets you select a parameter set: Each program contains some extern parameters that can be freely manipulated, for instance the current scale, the color palettes used to draw the fractal or even the function of the fractal. 
+
+Most parameter sets can be used for more than one program, for instance a parameter set like "Phoenix Set" provides a fractal function that can be used in the Default program, the Fold program and others. If a program cannot interpret a parameter set (for instance if the parameter set requires values that do not exist in a program), you might encounter an error message though.
+
+![Screenshots of the Demos-menu](screens/demos_screens.png) 
+
+You can mix parameter sets with your current settings using a long tab and selecting "Merge".
+
+![Example of merge](screens/merge_example.png)
 
 ## Favorites
 
