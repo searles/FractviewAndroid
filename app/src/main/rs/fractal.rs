@@ -16,8 +16,25 @@ static double4 __attribute__((overloadable)) convert_quat(int d) { return (doubl
 static double4 __attribute__((overloadable)) convert_quat(double d) { return (double4) {d, 0, 0, 0}; }
 static double4 __attribute__((overloadable)) convert_quat(double2 d) { return (double4) {d.x, d.y, 0, 0}; }
 
+union double_bits {
+    long l;
+    double d;
+};
 
-// fixme only float available...
+//static const long
+
+static double __attribute__((overloadable)) frexp(double d, int *exponent) {
+    union double_bits bits;
+    bits.d = d;
+    *exponent = (int) ((bits.l >> 52L) & 0x7fff) - 1024;
+}
+
+static double __attribute__((overloadable)) ldexp(double mantissa, int exponent) {
+
+    // TODO creates a double where
+    return mantissa;
+}
+
 static double __attribute__((overloadable)) sqrt(double d) { return sqrt((float) d); }
 static double __attribute__((overloadable)) rad(double x, double y) { return sqrt(x * x + y * y); }
 static double __attribute__((overloadable)) atan2(double y, double x) { return atan2((float) y, (float) x); }

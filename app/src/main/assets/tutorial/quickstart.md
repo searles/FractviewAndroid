@@ -27,7 +27,7 @@ Fractview is very feature rich. In the following an overview of some features is
 Fractview allows you to freely modify parameters of the image that is drawn. 
 You can manipulate these parameter by selecting "Parameters" in the menu or by tapping the icon <img src="icons/edit_icon.png" style="height: 1em" />. In this view you can edit all parameters and thereby enter custom formulas, change the color palettes or add a 3D effects. When zooming into the fractal, the most important parameter is "maxdepth" because the larger it is the more details become visible at deeper zooms.
 
-![Changing maximum depth](screens/changing_parameter.png) 
+![Changing maximum depth](screens/changing_depth.png) 
 
 Notice that the parameters that were modified appear now in bold letters, meaning that these parameters contain custom values (as opposed to default values). Using a long tap, a menu appears in which you can revert all parameters to their default value (some arguments also contain further options).
 
@@ -35,7 +35,7 @@ If you merge the current fractal with a parameter set in the Preset view, these 
 
 Another interesting parameter is "light". You can toggle its state with a single tap. If it is checked, you obtain a nice 3D effect.
 
-![Adding a 3D effect](screens/3d_effect.png) 
+![Adding a 3D effect](screens/changing_light.png) 
 
 Fractview allows you to create custom (two dimensional) color palettes using an intuitive palette editor and color picker. The *bailoutpalette* contains the colors used of the outside of the fractal (in the Default program it uses only one dimension), the *lakepalette* is used for the inside (this one uses two dimensions).
 

@@ -34,6 +34,8 @@ import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
+import java.util.TreeSet;
 
 import at.searles.fractal.FavoriteEntry;
 import at.searles.fractal.android.BundleAdapter;
@@ -110,13 +112,16 @@ public class FavoritesListActivity extends Activity {
 			@Override
 			public void onItemCheckedStateChanged(ActionMode mode, int position, long id, boolean checked) {
 				final int RENAME_INDEX_IN_MENU = 2;
+				final int SELECT_PREFIX_INDEX_IN_MENU = 4;
+				final int RENAME_PREFIX_INDEX_IN_MENU = 5;
+
 				int selectCount = getSelectedCount();
 				mode.setTitle(selectCount + " selected");
                 
 				mode.getMenu().getItem(RENAME_INDEX_IN_MENU).setEnabled(selectCount == 1);
-                
-                if(selectCount > 1) {
-                    String longestPrefix = ;
+
+				if(selectCount > 1) {
+                    String longestPrefix = findLongestSelectedPrefix();
                 
                     mode.getMenu().getItem(SELECT_PREFIX_INDEX_IN_MENU).setEnabled(!longestPrefix.isEmpty());
                     mode.getMenu().getItem(RENAME_PREFIX_INDEX_IN_MENU).setEnabled(true);
@@ -184,11 +189,20 @@ public class FavoritesListActivity extends Activity {
 						export(selected);
 					} return true;
                     case R.id.action_select_same_prefix: {
-                        find all with longest prefix and select them
+                        String prefix = findLongestSelectedPrefix();
+
+						if(prefix.length() == 0) {
+							throw new IllegalArgumentException("menu should not be active");
+						}
+
+						for(int i = 0; i < adapter.getCount(); ++i) {
+							listView.setItemChecked(i, adapter.getTitle(i).startsWith(prefix));
+						}
+
                     } return true;
                     case R.id.action_rename_prefix: {
-                        open dialog and change prefix.
-                            DialogHelper.input()...
+						// TODO
+						DialogHelper.inputText(FavoritesListActivity.this, "Rename prefix", "TODO", null);
                     } return true;
 				}
 
@@ -306,8 +320,10 @@ public class FavoritesListActivity extends Activity {
 						sb.append("\n");
 					}
 
+					FavoriteEntry.Collection newEntries;
+
                     try {
-					    FavoriteEntry.Collection newEntries Serializers.serializer().fromJson(sb.toString(), FavoriteEntry.Collection.class);
+					    newEntries = Serializers.serializer().fromJson(sb.toString(), FavoriteEntry.Collection.class);
                         
                         if(newEntries == null) {
                             DialogHelper.error(FavoritesListActivity.this, "Could not read file!");
@@ -320,7 +336,7 @@ public class FavoritesListActivity extends Activity {
                     }
 
 					// Find duplicates
-                    List<String> addedKeys = new LinkedList<String>();
+                    Set<String> addedKeys = new TreeSet<String>();
                     
 					Map<String, FavoriteEntry> duplicates = new HashMap<>();
 
@@ -393,16 +409,47 @@ public class FavoritesListActivity extends Activity {
 			}
 		}
 	}
-    
-    private void selectKeys(List<String> keys) {
-        find indices and set checked-status.
+
+	/**
+	 * Select entries in adapter with given keys
+	 * @param keys
+	 */
+	private void selectKeys(Set<String> keys) {
+        // find indices and set checked-status.
+
+		for(int i = 0; i < adapter.getCount(); ++i) {
+			String key = adapter.getTitle(i);
+
+			listView.setItemChecked(i, keys.contains(key));
+		}
     }
     
     private String findLongestSelectedPrefix() {
         List<String> keys = extractKeys(selected());
-        
-        String prefix = ...
-        for all checked, get key and find longest prefix. 
+
+		String prefix = null;
+
+		for(int len = 0; prefix == null; ++len) {
+			String checkPrefix = null;
+
+			for(String key : keys) {
+				if(checkPrefix == null) {
+					if(key.length() == len) {
+						// this means that key is the prefix.
+						prefix = key;
+						break;
+					} else {
+						checkPrefix = key.substring(0, len);
+					}
+				} else if(!key.startsWith(checkPrefix)) {
+					// not a prefix anymore...
+					prefix = checkPrefix.substring(0, checkPrefix.length() - 2);
+					break;
+				}
+			}
+		}
+
+        return prefix;
     }
 
 	private void export(List<FavoriteEntry> entries) {

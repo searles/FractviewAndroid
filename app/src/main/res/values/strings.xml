@@ -61,4 +61,6 @@
     <string name="action_select_all">Select All</string>
     <string name="action_rename">Rename</string>
     <string name="action_import_collection">Import Collection</string>
+    <string name="action_rename_prefix">Rename/Create common prefix</string>
+    <string name="action_select_prefix">Select all with common prefix</string>
 </resources>
