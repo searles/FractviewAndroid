@@ -306,12 +306,18 @@ public class FavoritesListActivity extends Activity {
 						sb.append("\n");
 					}
 
-					FavoriteEntry.Collection newEntries = Serializers.serializer().fromJson(sb.toString(), FavoriteEntry.Collection.class);
-
-					if(newEntries == null) {
-						DialogHelper.error(FavoritesListActivity.this, "Could not read file!");
-						return;
-					}
+                    try {
+					    FavoriteEntry.Collection newEntries Serializers.serializer().fromJson(sb.toString(), FavoriteEntry.Collection.class);
+                        
+                        if(newEntries == null) {
+                            DialogHelper.error(FavoritesListActivity.this, "Could not read file!");
+                            return;
+                        }
+                    } catch(Throwable e) {
+                        e.printStackTrace();
+                        DialogHelper.error(FavoritesListActivity.this, e.getMessage());
+                        return;
+                    }
 
 					// Find duplicates
                     List<String> addedKeys = new LinkedList<String>();
