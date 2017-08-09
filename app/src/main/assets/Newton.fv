@@ -18,12 +18,14 @@ func escapetime(c, breakcondition) {
 
     z = c if juliaset else mandelinit;
 
-    extern function expr = "z ^ 4 - 6 * z^2 - 2 p z + p";
+    extern newton_function expr = "z ^ 4 - 6 * z^2 - 2 p z + p";
+
+    extern function expr = "newton(newton_function, z)";
 
     var color quat;
 
     while {
-        znext = newton(function, z);
+        znext = function;
         not breakcondition(i, znext, z, zlast, c, p, color)
     } do {
         // advance to next values
