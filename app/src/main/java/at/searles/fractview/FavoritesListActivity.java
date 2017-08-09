@@ -111,8 +111,19 @@ public class FavoritesListActivity extends Activity {
 			public void onItemCheckedStateChanged(ActionMode mode, int position, long id, boolean checked) {
 				final int RENAME_INDEX_IN_MENU = 2;
 				int selectCount = getSelectedCount();
-				mode.getMenu().getItem(RENAME_INDEX_IN_MENU).setEnabled(selectCount == 1);
 				mode.setTitle(selectCount + " selected");
+                
+				mode.getMenu().getItem(RENAME_INDEX_IN_MENU).setEnabled(selectCount == 1);
+                
+                if(selectCount > 1) {
+                    String longestPrefix = ;
+                
+                    mode.getMenu().getItem(SELECT_PREFIX_INDEX_IN_MENU).setEnabled(!longestPrefix.isEmpty());
+                    mode.getMenu().getItem(RENAME_PREFIX_INDEX_IN_MENU).setEnabled(true);
+                } else {
+                    mode.getMenu().getItem(SELECT_PREFIX_INDEX_IN_MENU).setEnabled(false);
+                    mode.getMenu().getItem(RENAME_PREFIX_INDEX_IN_MENU).setEnabled(false);
+                }
 			}
 
 			@Override
@@ -172,6 +183,13 @@ public class FavoritesListActivity extends Activity {
 						List<FavoriteEntry> selected = selected();
 						export(selected);
 					} return true;
+                    case R.id.action_select_same_prefix: {
+                        find all with longest prefix and select them
+                    } return true;
+                    case R.id.action_rename_prefix: {
+                        open dialog and change prefix.
+                            DialogHelper.input()...
+                    } return true;
 				}
 
 				return false;
@@ -296,6 +314,8 @@ public class FavoritesListActivity extends Activity {
 					}
 
 					// Find duplicates
+                    List<String> addedKeys = new LinkedList<String>();
+                    
 					Map<String, FavoriteEntry> duplicates = new HashMap<>();
 
 					for(Map.Entry<?, ?> entry : newEntries.getAll()) {
@@ -307,14 +327,15 @@ public class FavoritesListActivity extends Activity {
 							duplicates.put(key, favEntry);
 						} else {
 							// add it
+                            addedKeys.add(key);
 							adapter.prefs.edit().putString(key, Serializers.serializer().toJson(favEntry)).apply();
 						}
 					}
 
-					adapter.initializeAdapter();
-
-
-					if(!duplicates.isEmpty()) {
+					if(duplicates.isEmpty()) {
+    					adapter.initializeAdapter();
+                        selectKeys(addedKeys);
+                    } else {
 						// Ask what to do with duplicates
 						DialogHelper.showOptionsDialog(this, "Pick an option for new entries with already existing keys", new CharSequence[]{
 								"Do not add items with existing keys",
@@ -338,17 +359,21 @@ public class FavoritesListActivity extends Activity {
 												}
 											}
 
+                                            addedKeys.add(key);
 											adapter.prefs.edit().putString(newKey, Serializers.serializer().toJson(entry.getValue())).apply();
 										}
 
 										adapter.initializeAdapter();
+                                        selectKeys(addedKeys);
 									} break;
 									case 2: {
 										for(Map.Entry<String, FavoriteEntry> entry : duplicates.entrySet()) {
+                                            addedKeys.add(entry.getKey());
 											adapter.prefs.edit().putString(entry.getKey(), Serializers.serializer().toJson(entry.getValue())).apply();
 										}
 
 										adapter.initializeAdapter();
+                                        selectKeys(addedKeys);
 									} break;
 								}
 							}
@@ -362,6 +387,17 @@ public class FavoritesListActivity extends Activity {
 			}
 		}
 	}
+    
+    private void selectKeys(List<String> keys) {
+        find indices and set checked-status.
+    }
+    
+    private String findLongestSelectedPrefix() {
+        List<String> keys = extractKeys(selected());
+        
+        String prefix = ...
+        for all checked, get key and find longest prefix. 
+    }
 
 	private void export(List<FavoriteEntry> entries) {
 		// Fetch map from adapter
@@ -437,7 +473,7 @@ public class FavoritesListActivity extends Activity {
 			this.jsonEntries.sort();
 			notifyDataSetChanged();
 		}
-
+        
 		@Override
 		public int getCount() {
 			return jsonEntries.size();
