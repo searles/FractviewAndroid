@@ -29,8 +29,8 @@ import java.io.File;
 import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
-import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
@@ -121,9 +121,7 @@ public class FavoritesListActivity extends Activity {
 				mode.getMenu().getItem(RENAME_INDEX_IN_MENU).setEnabled(selectCount == 1);
 
 				if(selectCount > 1) {
-                    // FIXME check only the first char of all selected!
-                
-                    mode.getMenu().getItem(SELECT_PREFIX_INDEX_IN_MENU).setEnabled(!longestPrefix.isEmpty());
+                    mode.getMenu().getItem(SELECT_PREFIX_INDEX_IN_MENU).setEnabled(haveCommonPrefix(extractKeys(selected())));
                     mode.getMenu().getItem(RENAME_PREFIX_INDEX_IN_MENU).setEnabled(true);
                 } else {
                     mode.getMenu().getItem(SELECT_PREFIX_INDEX_IN_MENU).setEnabled(false);
@@ -150,26 +148,24 @@ public class FavoritesListActivity extends Activity {
 						selectAll();
 					} return true;
 					case R.id.action_rename: {
-						List<String> keys = extractKeys(selected());
+						Iterable<String> keys = extractKeys(selected());
 
-						if(keys.size() != 1) {
-							throw new IllegalArgumentException("there should be only 1 element selectable!");
-						}
-
-						String key = keys.get(0);
+						String key = keys.iterator().next();
 
 						DialogHelper.inputText(FavoritesListActivity.this, "Rename " + key, key, new Commons.KeyAction() {
 							@Override
 							public void apply(String newKey) {
 								if(SharedPrefsHelper.renameKey(FavoritesListActivity.this, key, newKey, adapter.prefs)) {
 									adapter.initializeAdapter();
+
+									// FIXME keep renamed selected!
 									mode.finish();
 								}
 							}
 						});
 					} return true;
 					case R.id.action_delete: {
-						List<String> keys = extractKeys(selected());
+						Iterable<String> keys = extractKeys(selected());
 
 						DialogHelper.confirm(FavoritesListActivity.this, "Delete",
 								"Delete all selected favorites?",
@@ -185,25 +181,51 @@ public class FavoritesListActivity extends Activity {
 								});
 					} return true;
 					case R.id.action_export: {
-						List<FavoriteEntry> selected = selected();
+						Iterable<FavoriteEntry> selected = selected();
 						export(selected);
 					} return true;
                     case R.id.action_select_same_prefix: {
+						// FIXME put prefix stuff into Adapter.
                         String prefix = prefix(extractKeys(selected()));
 
 						if(prefix.length() == 0) {
 							throw new IllegalArgumentException("menu should not be active");
 						}
 
-						for(int i = 0; i < adapter.getCount(); ++i) {
-                            // FIXME 
-							listView.setItemChecked(i, hasPrefix(prefix, adapter.getTitle(i)));
+						// Fixme ugly.
+
+						int firstIndex = findFirstIndexWithPrefix(prefix);
+
+						// No need to unselect anything.
+
+						for(int i = firstIndex; i < adapter.getCount() && hasPrefix(prefix, adapter.getTitle(i)); ++i) {
+							listView.setItemChecked(i, true);
 						}
 
                     } return true;
                     case R.id.action_rename_prefix: {
-						// TODO
-						DialogHelper.inputText(FavoritesListActivity.this, "Rename prefix", "TODO", null);
+
+						String oldPrefix = prefix(extractKeys(selected()));
+
+						DialogHelper.inputText(FavoritesListActivity.this, "Rename prefix", oldPrefix,
+								new Commons.KeyAction() {
+									@Override
+									public void apply(String newPrefix) {
+										for(String oldKey : extractKeys(selected())) {
+											String newKey = newPrefix + oldKey.substring(oldPrefix.length());
+
+											if(!SharedPrefsHelper.renameKey(FavoritesListActivity.this, oldKey, newKey, adapter.prefs)) {
+												Log.e("HELLO", "could not rename " + oldKey + " to " + newKey);
+											}
+
+											adapter.initializeAdapter();
+
+											// FIXME keep renamed selected!
+											mode.finish();
+										}
+
+									}
+								});
                     } return true;
 				}
 
@@ -215,6 +237,18 @@ public class FavoritesListActivity extends Activity {
 
 			}
 		});
+	}
+
+	private int findFirstIndexWithPrefix(String prefix) {
+		// fixme replace with binary!!!
+
+		for(int i = 0; i < adapter.getCount(); ++i) {
+			if(hasPrefix(prefix, adapter.getTitle(i))) {
+				return i;
+			}
+		}
+
+		throw new IllegalArgumentException();
 	}
 
 	private int getSelectedCount() {
@@ -232,13 +266,25 @@ public class FavoritesListActivity extends Activity {
 	}
 
 	private Iterable<String> extractKeys(Iterable<FavoriteEntry> entries) {
-		// List<String> keys = new ArrayList<String>(entries.size());
+		return new Iterable<String>() {
+			@Override
+			public Iterator<String> iterator() {
 
-		for(FavoriteEntry entry : entries) {
-            keys.add(entry.key());
-        }
+				Iterator<FavoriteEntry> iterator = entries.iterator();
 
-        return keys;
+				return new Iterator<String>() {
+					@Override
+					public boolean hasNext() {
+						return iterator.hasNext();
+					}
+
+					@Override
+					public String next() {
+						return iterator.next().key();
+					}
+				};
+			}
+		};
 	}
 
 	private Iterable<FavoriteEntry> selected() {
@@ -425,36 +471,8 @@ public class FavoritesListActivity extends Activity {
 			listView.setItemChecked(i, keys.contains(key));
 		}
     }
-    
-    private String findLongestSelectedPrefix() {
-        List<String> keys = extractKeys(selected());
 
-		String prefix = null;
-
-		for(int len = 0; prefix == null; ++len) {
-			String checkPrefix = null;
-
-			for(String key : keys) {
-				if(checkPrefix == null) {
-					if(key.length() == len) {
-						// this means that key is the prefix.
-						prefix = key;
-						break;
-					} else {
-						checkPrefix = key.substring(0, len);
-					}
-				} else if(!key.startsWith(checkPrefix)) {
-					// not a prefix anymore...
-					prefix = checkPrefix.substring(0, checkPrefix.length() - 2);
-					break;
-				}
-			}
-		}
-
-        return prefix;
-    }
-
-	private void export(List<FavoriteEntry> entries) {
+	private void export(Iterable<FavoriteEntry> entries) {
 		// Fetch map from adapter
 		try {
 			// Create a map
@@ -492,7 +510,7 @@ public class FavoritesListActivity extends Activity {
 
 	private static class FavoritesListAdapter extends FractalListAdapter<FavoriteEntry> {
 
-		private final SharedPreferences prefs;
+		final SharedPreferences prefs;
 
 		private IndexedKeyMap<String> jsonEntries;
 		private Map<String, FavoriteEntry> entries;
@@ -574,12 +592,25 @@ public class FavoritesListActivity extends Activity {
     static boolean charEq(char a, char b) {
         return Character.toUpperCase(a) == Character.toUpperCase(b);
     }
-    
-    static boolean hasPrefix(String prefix, String string) {
+
+	private boolean haveCommonPrefix(Iterable<String> strings) {
+		int ch = -1;
+
+		for(String string : strings) {
+			if(ch == -1) {
+				ch = string.charAt(0);
+			} else if(!charEq((char) ch, string.charAt(0))) {
+				return false;
+			}
+		}
+		return true;
+	}
+
+	static boolean hasPrefix(String prefix, String string) {
         if(string.length() < prefix.length()) return false;
         
         for(int i = 0; i < prefix.length(); ++i) {
-            if(!charEq(prefix.charAt(i), charEq(string.charAt(i))) {
+            if(!charEq(prefix.charAt(i), string.charAt(i))) {
                 return false;
             }
         }
