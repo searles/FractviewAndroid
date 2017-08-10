@@ -568,4 +568,29 @@ public class FavoritesListActivity extends Activity {
 			return getItem(position).description();
 		}
 	}
+	
+	static String prefix(List<String> strings) {
+		for(int index = 0;; ++index) {
+			String first = null;
+			
+			char current = '\0';
+
+			for(String string : strings) {
+				if(first == null) {
+					first = string;
+					
+					if(first.length() == index) {
+						// reached length of first element, this means that the first element was
+						// successfully tested as a prefix so far.
+						return first;
+					}
+					
+					current = Character.toUpperCase(first.charAt(index));
+				} else if(string.length() == index || Character.toUpperCase(string.charAt(index)) != current) {
+					// not a prefix. this is the first difference.
+					return first.substring(0, index);
+				}
+			}
+		}
+	}
 }
