@@ -121,7 +121,7 @@ public class FavoritesListActivity extends Activity {
 				mode.getMenu().getItem(RENAME_INDEX_IN_MENU).setEnabled(selectCount == 1);
 
 				if(selectCount > 1) {
-                    String longestPrefix = findLongestSelectedPrefix();
+                    // FIXME check only the first char of all selected!
                 
                     mode.getMenu().getItem(SELECT_PREFIX_INDEX_IN_MENU).setEnabled(!longestPrefix.isEmpty());
                     mode.getMenu().getItem(RENAME_PREFIX_INDEX_IN_MENU).setEnabled(true);
@@ -189,14 +189,15 @@ public class FavoritesListActivity extends Activity {
 						export(selected);
 					} return true;
                     case R.id.action_select_same_prefix: {
-                        String prefix = findLongestSelectedPrefix();
+                        String prefix = prefix(extractKeys(selected()));
 
 						if(prefix.length() == 0) {
 							throw new IllegalArgumentException("menu should not be active");
 						}
 
 						for(int i = 0; i < adapter.getCount(); ++i) {
-							listView.setItemChecked(i, adapter.getTitle(i).startsWith(prefix));
+                            // FIXME 
+							listView.setItemChecked(i, hasPrefix(prefix, adapter.getTitle(i)));
 						}
 
                     } return true;
@@ -230,8 +231,8 @@ public class FavoritesListActivity extends Activity {
 		return count;
 	}
 
-	private List<String> extractKeys(List<FavoriteEntry> entries) {
-		List<String> keys = new ArrayList<String>(entries.size());
+	private Iterable<String> extractKeys(Iterable<FavoriteEntry> entries) {
+		// List<String> keys = new ArrayList<String>(entries.size());
 
 		for(FavoriteEntry entry : entries) {
             keys.add(entry.key());
@@ -240,7 +241,8 @@ public class FavoritesListActivity extends Activity {
         return keys;
 	}
 
-	private List<FavoriteEntry> selected() {
+	private Iterable<FavoriteEntry> selected() {
+		// FIXME do not create new list!
 		List<FavoriteEntry> elements = new LinkedList<>();
 
 		SparseBooleanArray checkedItemPositions = listView.getCheckedItemPositions();
@@ -569,7 +571,23 @@ public class FavoritesListActivity extends Activity {
 		}
 	}
 	
-	static String prefix(List<String> strings) {
+    static boolean charEq(char a, char b) {
+        return Character.toUpperCase(a) == Character.toUpperCase(b);
+    }
+    
+    static boolean hasPrefix(String prefix, String string) {
+        if(string.length() < prefix.length()) return false;
+        
+        for(int i = 0; i < prefix.length(); ++i) {
+            if(!charEq(prefix.charAt(i), charEq(string.charAt(i))) {
+                return false;
+            }
+        }
+               
+        return true;
+    }
+    
+	static String prefix(Iterable<String> strings) {
 		for(int index = 0;; ++index) {
 			String first = null;
 			
@@ -586,7 +604,7 @@ public class FavoritesListActivity extends Activity {
 					}
 					
 					current = Character.toUpperCase(first.charAt(index));
-				} else if(string.length() == index || Character.toUpperCase(string.charAt(index)) != current) {
+				} else if(string.length() == index || !charEq(string.charAt(index), current)) {
 					// not a prefix. this is the first difference.
 					return first.substring(0, index);
 				}
