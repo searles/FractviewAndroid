@@ -702,7 +702,7 @@ public class EditableDialogFragment extends DialogFragment {
                     @Override
                     public void apply(String key) {
                         Context context = view.getContext();
-                        if (SharedPrefsHelper.renameKey(context, selected, key, prefs)) {
+                        if (SharedPrefsHelper.renameKey(context, selected, key, prefs) != null) {
                             initializePreferencesAdapterData(prefs, adapter);
                         }
                     }
