@@ -26,7 +26,14 @@ public class SharedPrefsHelper {
         storeInSharedPreferences(name, entryString, preferences);
     }
 
-    public static void storeInSharedPreferences(String name, String entryString, SharedPreferences preferences) {
+    /**
+     *
+     * @param name
+     * @param entryString
+     * @param preferences
+     * @return the actual key under which this is stored
+     */
+    public static String storeInSharedPreferences(String name, String entryString, SharedPreferences preferences) {
         if(preferences.contains(name)) {
             for(int i = 1;; ++i) {
                 String indexedName = name + "(" + i + ")";
@@ -38,6 +45,8 @@ public class SharedPrefsHelper {
         }
 
         preferences.edit().putString(name, entryString).apply();
+
+        return name;
     }
 
     public static String loadFromSharedPreferences(Context context, String name, String preferencesName) {
@@ -56,17 +65,17 @@ public class SharedPrefsHelper {
      * @param prefs
      * @return true if successfully renamed
      */
-    public static boolean renameKey(Context context, String oldKey, String newKey, SharedPreferences prefs) {
+    public static String renameKey(Context context, String oldKey, String newKey, SharedPreferences prefs) {
         // Name did not change, nothing to do.
-        if(oldKey.equals(newKey)) return true;
+        if(oldKey.equals(newKey)) return newKey;
 
         if(!newKey.isEmpty()) {
             String value = prefs.getString(oldKey, null);
 
             if(value != null) {
-                storeInSharedPreferences(newKey, value, prefs);
+                newKey = storeInSharedPreferences(newKey, value, prefs);
                 prefs.edit().remove(oldKey).apply();
-                return true;
+                return newKey;
             } else {
                 DialogHelper.error(context, "Content was empty");
             }
@@ -74,7 +83,7 @@ public class SharedPrefsHelper {
             DialogHelper.error(context, "Name must not be empty");
         }
 
-        return false;
+        return null;
     }
 
     public static boolean removeEntry(Context context, String key, SharedPreferences prefs) {

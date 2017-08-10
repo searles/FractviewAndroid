@@ -155,7 +155,9 @@ public class FavoritesListActivity extends Activity {
 						DialogHelper.inputText(FavoritesListActivity.this, "Rename " + key, key, new Commons.KeyAction() {
 							@Override
 							public void apply(String newKey) {
-								if(SharedPrefsHelper.renameKey(FavoritesListActivity.this, key, newKey, adapter.prefs)) {
+								newKey = SharedPrefsHelper.renameKey(FavoritesListActivity.this, key, newKey, adapter.prefs);
+
+								if(newKey != null) {
 									adapter.initializeAdapter();
 									mode.finish(); // unselect all
 									listView.setItemChecked(adapter.getKeyIndex(newKey), true);
@@ -215,9 +217,7 @@ public class FavoritesListActivity extends Activity {
 										for(String oldKey : extractKeys(selected())) {
 											String newKey = newPrefix + oldKey.substring(oldPrefix.length());
 
-											if(!SharedPrefsHelper.renameKey(FavoritesListActivity.this, oldKey, newKey, adapter.prefs)) {
-												Log.e("HELLO", "could not rename " + oldKey + " to " + newKey);
-											}
+											newKeys.add(SharedPrefsHelper.renameKey(FavoritesListActivity.this, oldKey, newKey, adapter.prefs));
 
 											newKeys.add(newKey);
 										}
