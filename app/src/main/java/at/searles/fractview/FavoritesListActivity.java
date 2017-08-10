@@ -157,9 +157,8 @@ public class FavoritesListActivity extends Activity {
 							public void apply(String newKey) {
 								if(SharedPrefsHelper.renameKey(FavoritesListActivity.this, key, newKey, adapter.prefs)) {
 									adapter.initializeAdapter();
-
-									// FIXME keep renamed selected!
-									mode.finish();
+									mode.finish(); // unselect all
+									listView.setItemChecked(adapter.getKeyIndex(newKey), true);
 								}
 							}
 						});
@@ -211,6 +210,8 @@ public class FavoritesListActivity extends Activity {
 								new Commons.KeyAction() {
 									@Override
 									public void apply(String newPrefix) {
+										List<String> newKeys = new LinkedList<String>();
+
 										for(String oldKey : extractKeys(selected())) {
 											String newKey = newPrefix + oldKey.substring(oldPrefix.length());
 
@@ -218,12 +219,17 @@ public class FavoritesListActivity extends Activity {
 												Log.e("HELLO", "could not rename " + oldKey + " to " + newKey);
 											}
 
-											adapter.initializeAdapter();
-
-											// FIXME keep renamed selected!
-											mode.finish();
+											newKeys.add(newKey);
 										}
 
+										// unselect all
+										mode.finish();
+
+										adapter.initializeAdapter();
+
+										for(String key : newKeys) {
+											listView.setItemChecked(adapter.getKeyIndex(key), true);
+										}
 									}
 								});
                     } return true;
@@ -550,6 +556,10 @@ public class FavoritesListActivity extends Activity {
 		@Override
 		public int getCount() {
 			return jsonEntries.size();
+		}
+
+		public int getKeyIndex(String key) {
+			return jsonEntries.indexAt(key);
 		}
 
 		@Override
