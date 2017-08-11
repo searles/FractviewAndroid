@@ -650,4 +650,93 @@ public class FavoritesListActivity extends Activity {
 			}
 		}
 	}
+    
+    	/** 
+	 * Case insensitive char comparison
+	 * @param a
+	 * @param b
+	 * @return
+	 */
+	static int charCmp(char a, char b) {
+		return Character.compare(Character.toUpperCase(Character.toLowerCase(a)), Character.toUpperCase(Character.toLowerCase(b)));
+	}
+	
+	/**
+	 * Comparison
+	 * -1: str is before prefix, 0: prefix is a prefix of str, 1: str comes after elements with this prefix 
+	 * @param a
+	 * @param b
+	 * @return
+	 */
+	static int cmpPrefix(String str, String prefix) {
+		for(int i = 0; i < prefix.length(); ++i) {
+			if(str.length() == i) {
+				// str is actually a prefix of "prefix"
+				return -1;
+			} else {
+				int cmp = charCmp(str.charAt(i), prefix.charAt(i));
+				if(cmp != 0) {
+					// characters are not equal.
+					return cmp; 
+				}
+			}
+		}
+		
+		// "prefix" is a prefix
+		return 0;
+	}
+	
+	/**
+	 * Finds one index with the given prefix
+	 * @param strings
+	 * @param prefix
+	 * @return
+	 */
+	static int findPrefix(List<String> strings, String prefix, int startRange, int endRange, boolean findFirstIndex) {
+		// policy, first entry, last entry or any.
+		
+		int l = startRange; // l is inclusive
+		int r = endRange; // r is inclusive
+		
+		while(l <= r) {
+			// if we look for the last index, we round up.
+			int m = (l + r + (findFirstIndex ? 0 : 1)) / 2;
+			
+			int cmp = cmpPrefix(strings.get(m), prefix);
+			
+			if(cmp > 0) {
+				r = m - 1;
+			} else if(cmp < 0) {
+				l = m + 1;
+			} else {
+				// the first one is in the interval l .. m, the last one in m .. r
+				if(findFirstIndex) {
+					if(l == m) {
+						return l;
+					} else {
+						r = m;
+					}
+				} else {
+					if(m == r) {
+						return m;
+					} else {
+						l = m;
+					}
+				}
+			}
+		}
+		
+		return -1;
+	}
+	
+	static void selectPrefixRange(List<String> strings, String prefix) {
+		int l = findPrefix(strings, prefix, 0, strings.size() - 1, true);
+		
+		if(l == -1) return; // nothing to select
+
+		int r = findPrefix(strings, prefix, l, strings.size() - 1, false);
+
+		System.out.println(prefix + ": from " + strings.get(l) + " to " + strings.get(r));
+	}
+	
 }
