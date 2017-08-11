@@ -218,8 +218,6 @@ public class FavoritesListActivity extends Activity {
 											String newKey = newPrefix + oldKey.substring(oldPrefix.length());
 
 											newKeys.add(SharedPrefsHelper.renameKey(FavoritesListActivity.this, oldKey, newKey, adapter.prefs));
-
-											newKeys.add(newKey);
 										}
 
 										// unselect all
