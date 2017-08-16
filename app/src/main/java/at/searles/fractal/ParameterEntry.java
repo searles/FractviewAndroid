@@ -336,7 +336,7 @@ public class ParameterEntry {
                             .add("lakevalue", Fractal.Type.Expr, "1.3 atan foldvalue.x / PI"))
             );
 
-            _ENTRIES.add(createEntry(am, "Branching (Bailout and Lake)", "foldbranching.png", "Branching for fold for bailout and lake (fold)",
+            _ENTRIES.add(createEntry(am, "Fold-Branching (Bailout and Lake)", "foldbranching.png", "Branching for fold for bailout and lake (fold)",
                     Fractal.parameterBuilder()
                             .add("foldfn", Fractal.Type.Expr, "(0.5 + 0.5 cos 6 arc (z - znext)) / (12 + rad znext + /dist(znext, z)) + foldvalue")
                             .add("bailoutvalue", Fractal.Type.Expr, "log(1 + foldvalue.x)")
@@ -349,6 +349,12 @@ public class ParameterEntry {
                             .add("bailoutvalue", Fractal.Type.Expr, "log(1 + foldvalue.x)")
             ));
 
+            _ENTRIES.add(createEntry(am, "Fold-Geometry Pattern (Bailout)", "foldgeometrybailout.png", "Branching for fold for bailout (fold)",
+                    Fractal.parameterBuilder()
+                            .add("foldfn", Fractal.Type.Expr, "/line(0:0, 1:0, znext) + foldvalue")
+                            .add("bailoutvalue", Fractal.Type.Expr, "log(1 + foldvalue.x)")
+            ));
+
             _ENTRIES.add(createEntry(am, "Fold-Branching (Lake)", "foldbranchinglake.png", "Branching for fold for lake (fold)",
                     Fractal.parameterBuilder()
                             .add("foldfn", Fractal.Type.Expr, "(0.5 + 0.5 cos 6 arc(z - znext)) / (12 + /dist(znext, z)) + foldvalue")
@@ -358,6 +364,12 @@ public class ParameterEntry {
             _ENTRIES.add(createEntry(am, "Fold-Branching Alternative (Lake)", "foldbranchinglake2.png", "Branching based on atan for fold for lake (fold)",
                     Fractal.parameterBuilder()
                             .add("foldfn", Fractal.Type.Expr, "(0.5 + 0.5 cos 4 arc(z - znext)) * (1 - 2 atan(12 + /dist(znext, z)) / PI) + foldvalue")
+                            .add("lakevalue", Fractal.Type.Expr, "log(1 + foldvalue.x)")
+            ));
+
+            _ENTRIES.add(createEntry(am, "Fold-Geometry Pattern (Lake)", "foldgeometrylake.png", "Branching for fold for bailout (fold)",
+                    Fractal.parameterBuilder()
+                            .add("foldfn", Fractal.Type.Expr, "/line(0:0, 1:0, /(znext - z)) + foldvalue")
                             .add("lakevalue", Fractal.Type.Expr, "log(1 + foldvalue.x)")
             ));
 
