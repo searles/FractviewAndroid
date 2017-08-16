@@ -32,6 +32,49 @@ public class IndexedKeyMap<A> {
         // invalid state remains the same.
     }
 
+    /**
+     * Finds the first or last entry with the given prefix
+     * @param prefix
+     * @return
+     */
+    public int findPrefix(String prefix, int startRange, int endRange, boolean findFirstIndex) {
+        // policy, first entry, last entry or any.
+
+        int l = startRange; // l is inclusive
+        int r = endRange; // r is inclusive
+
+        while(l <= r) {
+            // if we look for the last index, we round up.
+            int m = (l + r + (findFirstIndex ? 0 : 1)) / 2;
+
+            int cmp = CharUtil.cmpPrefix(this.keyAt(m), prefix);
+
+            if(cmp > 0) {
+                r = m - 1;
+            } else if(cmp < 0) {
+                l = m + 1;
+            } else {
+                // the first one is in the interval l .. m, the last one in m .. r
+                if(findFirstIndex) {
+                    if(l == m) {
+                        return l;
+                    } else {
+                        r = m;
+                    }
+                } else {
+                    if(m == r) {
+                        return m;
+                    } else {
+                        l = m;
+                    }
+                }
+            }
+        }
+
+        return -1;
+    }
+
+
     public synchronized void sort() {
         Collections.sort(indexed, new Comparator<String>() {
             @Override

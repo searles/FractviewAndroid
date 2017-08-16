@@ -49,6 +49,8 @@ public class Serializers {
             gsonBuilder.registerTypeAdapter(FavoriteEntry.class, new FavoriteEntryAdapter());
             gsonBuilder.registerTypeAdapter(FavoriteEntry.Collection.class, new FavoritesCollectionAdapter());
 
+            gsonBuilder.setLenient();
+
             gson = gsonBuilder.create();
         }
 

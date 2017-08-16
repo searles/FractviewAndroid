@@ -327,8 +327,7 @@ public class MainActivity extends Activity
 
 				if(newFractal != null) {
 					setNewFractal(newFractal);
-				} else {
-					DialogHelper.error(this, "No fractal in clipboard");
+					// otherwise a message was already shown
 				}
 			} return true;
 

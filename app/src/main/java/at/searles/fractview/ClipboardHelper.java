@@ -22,7 +22,12 @@ public class ClipboardHelper {
         CharSequence pasteText = ClipboardHelper.paste(context);
 
         if(pasteText != null) {
-            return Serializers.serializer().fromJson(pasteText.toString(), Fractal.class);
+            try {
+                return Serializers.serializer().fromJson(pasteText.toString(), Fractal.class);
+            } catch(Throwable th) {
+                DialogHelper.error(context, th.getLocalizedMessage());
+                return null;
+            }
         } else {
             DialogHelper.error(context, "Clipboard is empty");
             return null;

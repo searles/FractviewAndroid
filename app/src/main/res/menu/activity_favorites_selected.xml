@@ -16,6 +16,6 @@
           android:title="@string/action_select_prefix"
         />
     <item android:id="@+id/action_rename_prefix"
-          android:title="@string/action_rename_prefix"
+          android:title="@string/action_edit_prefix"
         />
 </menu>

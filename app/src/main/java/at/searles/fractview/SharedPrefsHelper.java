@@ -6,6 +6,7 @@ import android.util.Log;
 
 import at.searles.fractal.gson.Serializers;
 import at.searles.fractview.ui.DialogHelper;
+import at.searles.utils.CharUtil;
 
 /**
  * Helper for Shared Preferences
@@ -34,14 +35,8 @@ public class SharedPrefsHelper {
      * @return the actual key under which this is stored
      */
     public static String storeInSharedPreferences(String name, String entryString, SharedPreferences preferences) {
-        if(preferences.contains(name)) {
-            for(int i = 1;; ++i) {
-                String indexedName = name + "(" + i + ")";
-                if(!preferences.contains(indexedName)) {
-                    name = indexedName;
-                    break;
-                }
-            }
+        while(preferences.contains(name)) {
+            name = CharUtil.nextIndex(name);
         }
 
         preferences.edit().putString(name, entryString).apply();

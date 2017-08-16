@@ -41,6 +41,7 @@ import at.searles.fractal.FavoriteEntry;
 import at.searles.fractal.android.BundleAdapter;
 import at.searles.fractal.gson.Serializers;
 import at.searles.fractview.ui.DialogHelper;
+import at.searles.utils.CharUtil;
 import at.searles.utils.IndexedKeyMap;
 
 /**
@@ -113,20 +114,21 @@ public class FavoritesListActivity extends Activity {
 			public void onItemCheckedStateChanged(ActionMode mode, int position, long id, boolean checked) {
 				final int RENAME_INDEX_IN_MENU = 2;
 				final int SELECT_PREFIX_INDEX_IN_MENU = 4;
-				final int RENAME_PREFIX_INDEX_IN_MENU = 5;
+				final int EDIT_PREFIX_INDEX_IN_MENU = 5;
 
-				int selectCount = getSelectedCount();
+                MenuItem renameItem = mode.getMenu().getItem(RENAME_INDEX_IN_MENU);
+                MenuItem selectPrefixItem = mode.getMenu().getItem(SELECT_PREFIX_INDEX_IN_MENU);
+                MenuItem editPrefixItem = mode.getMenu().getItem(EDIT_PREFIX_INDEX_IN_MENU);
+
+                int selectCount = getSelectedCount();
 				mode.setTitle(selectCount + " selected");
-                
-				mode.getMenu().getItem(RENAME_INDEX_IN_MENU).setEnabled(selectCount == 1);
 
-				if(selectCount > 1) {
-                    mode.getMenu().getItem(SELECT_PREFIX_INDEX_IN_MENU).setEnabled(haveCommonPrefix(extractKeys(selected())));
-                    mode.getMenu().getItem(RENAME_PREFIX_INDEX_IN_MENU).setEnabled(true);
-                } else {
-                    mode.getMenu().getItem(SELECT_PREFIX_INDEX_IN_MENU).setEnabled(false);
-                    mode.getMenu().getItem(RENAME_PREFIX_INDEX_IN_MENU).setEnabled(false);
-                }
+                renameItem.setEnabled(selectCount == 1);
+
+                boolean prefixOptionsEnabled = selectCount > 1;
+
+				editPrefixItem.setEnabled(prefixOptionsEnabled);
+				selectPrefixItem.setEnabled(prefixOptionsEnabled);
 			}
 
 			@Override
@@ -186,33 +188,27 @@ public class FavoritesListActivity extends Activity {
 						export(selected);
 					} return true;
                     case R.id.action_select_same_prefix: {
-						// FIXME put prefix stuff into Adapter.
-                        String prefix = prefix(extractKeys(selected()));
+                        String prefix = CharUtil.commonPrefix(extractKeys(selected()));
 
-						if(prefix.length() == 0) {
-							throw new IllegalArgumentException("menu should not be active");
-						}
+						selectPrefixRange(prefix);
 
-						// Fixme ugly.
-
-						int firstIndex = findFirstIndexWithPrefix(prefix);
-
-						// No need to unselect anything.
-
-						for(int i = firstIndex; i < adapter.getCount() && hasPrefix(prefix, adapter.getTitle(i)); ++i) {
-							listView.setItemChecked(i, true);
-						}
-
+                        if(prefix.length() == 0) {
+                            DialogHelper.info(FavoritesListActivity.this, "No common prefix - selecting all");
+                        } else {
+                            final int MAX_TITLE_LENGTH = 24;
+                            DialogHelper.info(FavoritesListActivity.this, "Selecting all entries starting with \"" + CharUtil.shorten(prefix, MAX_TITLE_LENGTH)+ "\"");
+                        }
                     } return true;
                     case R.id.action_rename_prefix: {
+						String oldPrefix = CharUtil.commonPrefix(extractKeys(selected()));
 
-						String oldPrefix = prefix(extractKeys(selected()));
+                        String title = oldPrefix.isEmpty() ? "Create common prefix" : "Change common prefix";
 
-						DialogHelper.inputText(FavoritesListActivity.this, "Rename prefix", oldPrefix,
+						DialogHelper.inputText(FavoritesListActivity.this, title, oldPrefix,
 								new Commons.KeyAction() {
 									@Override
 									public void apply(String newPrefix) {
-										List<String> newKeys = new LinkedList<String>();
+										List<String> newKeys = new LinkedList<>();
 
 										for(String oldKey : extractKeys(selected())) {
 											String newKey = newPrefix + oldKey.substring(oldPrefix.length());
@@ -225,6 +221,7 @@ public class FavoritesListActivity extends Activity {
 
 										adapter.initializeAdapter();
 
+                                        // and select new entries
 										for(String key : newKeys) {
 											listView.setItemChecked(adapter.getKeyIndex(key), true);
 										}
@@ -241,18 +238,6 @@ public class FavoritesListActivity extends Activity {
 
 			}
 		});
-	}
-
-	private int findFirstIndexWithPrefix(String prefix) {
-		// fixme replace with binary!!!
-
-		for(int i = 0; i < adapter.getCount(); ++i) {
-			if(hasPrefix(prefix, adapter.getTitle(i))) {
-				return i;
-			}
-		}
-
-		throw new IllegalArgumentException();
 	}
 
 	private int getSelectedCount() {
@@ -596,147 +581,16 @@ public class FavoritesListActivity extends Activity {
 			return getItem(position).description();
 		}
 	}
-	
-    static boolean charEq(char a, char b) {
-        return Character.toUpperCase(a) == Character.toUpperCase(b);
-    }
 
-	private boolean haveCommonPrefix(Iterable<String> strings) {
-		int ch = -1;
-
-		for(String string : strings) {
-			if(ch == -1) {
-				ch = string.charAt(0);
-			} else if(!charEq((char) ch, string.charAt(0))) {
-				return false;
-			}
-		}
-		return true;
-	}
-
-	static boolean hasPrefix(String prefix, String string) {
-        if(string.length() < prefix.length()) return false;
-        
-        for(int i = 0; i < prefix.length(); ++i) {
-            if(!charEq(prefix.charAt(i), string.charAt(i))) {
-                return false;
-            }
-        }
-               
-        return true;
-    }
-    
-	static String prefix(Iterable<String> strings) {
-		for(int index = 0;; ++index) {
-			String first = null;
-			
-			char current = '\0';
-
-			for(String string : strings) {
-				if(first == null) {
-					first = string;
-					
-					if(first.length() == index) {
-						// reached length of first element, this means that the first element was
-						// successfully tested as a prefix so far.
-						return first;
-					}
-					
-					current = Character.toUpperCase(first.charAt(index));
-				} else if(string.length() == index || !charEq(string.charAt(index), current)) {
-					// not a prefix. this is the first difference.
-					return first.substring(0, index);
-				}
-			}
-		}
-	}
-    
-    	/** 
-	 * Case insensitive char comparison
-	 * @param a
-	 * @param b
-	 * @return
-	 */
-	static int charCmp(char a, char b) {
-		return Character.compare(Character.toUpperCase(Character.toLowerCase(a)), Character.toUpperCase(Character.toLowerCase(b)));
-	}
-	
-	/**
-	 * Comparison
-	 * -1: str is before prefix, 0: prefix is a prefix of str, 1: str comes after elements with this prefix 
-	 * @param a
-	 * @param b
-	 * @return
-	 */
-	static int cmpPrefix(String str, String prefix) {
-		for(int i = 0; i < prefix.length(); ++i) {
-			if(str.length() == i) {
-				// str is actually a prefix of "prefix"
-				return -1;
-			} else {
-				int cmp = charCmp(str.charAt(i), prefix.charAt(i));
-				if(cmp != 0) {
-					// characters are not equal.
-					return cmp; 
-				}
-			}
-		}
-		
-		// "prefix" is a prefix
-		return 0;
-	}
-	
-	/**
-	 * Finds one index with the given prefix
-	 * @param strings
-	 * @param prefix
-	 * @return
-	 */
-	static int findPrefix(List<String> strings, String prefix, int startRange, int endRange, boolean findFirstIndex) {
-		// policy, first entry, last entry or any.
-		
-		int l = startRange; // l is inclusive
-		int r = endRange; // r is inclusive
-		
-		while(l <= r) {
-			// if we look for the last index, we round up.
-			int m = (l + r + (findFirstIndex ? 0 : 1)) / 2;
-			
-			int cmp = cmpPrefix(strings.get(m), prefix);
-			
-			if(cmp > 0) {
-				r = m - 1;
-			} else if(cmp < 0) {
-				l = m + 1;
-			} else {
-				// the first one is in the interval l .. m, the last one in m .. r
-				if(findFirstIndex) {
-					if(l == m) {
-						return l;
-					} else {
-						r = m;
-					}
-				} else {
-					if(m == r) {
-						return m;
-					} else {
-						l = m;
-					}
-				}
-			}
-		}
-		
-		return -1;
-	}
-	
-	static void selectPrefixRange(List<String> strings, String prefix) {
-		int l = findPrefix(strings, prefix, 0, strings.size() - 1, true);
-		
+	public void selectPrefixRange(String prefix) {
+        int size = adapter.jsonEntries.size();
+		int l = adapter.jsonEntries.findPrefix(prefix, 0, size - 1, true);
 		if(l == -1) return; // nothing to select
+		int r = adapter.jsonEntries.findPrefix(prefix, l, size - 1, false);
 
-		int r = findPrefix(strings, prefix, l, strings.size() - 1, false);
-
-		System.out.println(prefix + ": from " + strings.get(l) + " to " + strings.get(r));
+        for(int i = l; i < r; ++i) {
+            listView.setItemChecked(i, true);
+        }
 	}
 	
 }
