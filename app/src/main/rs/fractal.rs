@@ -141,9 +141,6 @@ static double __attribute__((overloadable)) atan2(double y, double x) {
     double x2 = ldexp(m1, e1);
     double y2 = ldexp(m2, e2);
 
-    if(x < 0) x2 = -x2;
-    if(y < 0) y2 = -y2;
-
     return atan2((float) y2, (float) x2);
 }
 
