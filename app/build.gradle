@@ -7,8 +7,8 @@ android {
         applicationId "at.searles.fractview"
         minSdkVersion 21
         targetSdkVersion 25
-        versionCode 61
-        versionName '3.2.2-beta'
+        versionCode 62
+        versionName '3.2.2'
         testInstrumentationRunner "android.support.test.runner.AndroidJUnitRunner"
         externalNativeBuild {
             cmake {
