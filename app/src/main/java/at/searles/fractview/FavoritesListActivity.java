@@ -588,7 +588,7 @@ public class FavoritesListActivity extends Activity {
 		if(l == -1) return; // nothing to select
 		int r = adapter.jsonEntries.findPrefix(prefix, l, size - 1, false);
 
-        for(int i = l; i < r; ++i) {
+        for(int i = l; i <= r; ++i) {
             listView.setItemChecked(i, true);
         }
 	}

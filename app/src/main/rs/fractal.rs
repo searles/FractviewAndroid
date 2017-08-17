@@ -16,38 +16,229 @@ static double4 __attribute__((overloadable)) convert_quat(int d) { return (doubl
 static double4 __attribute__((overloadable)) convert_quat(double d) { return (double4) {d, 0, 0, 0}; }
 static double4 __attribute__((overloadable)) convert_quat(double2 d) { return (double4) {d.x, d.y, 0, 0}; }
 
+/* --- New precision --- */
+
 union double_bits {
     long l;
     double d;
 };
 
-//static const long
+static double __attribute__((overloadable)) nanum(void) {
+    union double_bits bits;
+    bits.l = 0x7ff7ffffffffffffl;
+    return bits.d;
+}
 
-static double __attribute__((overloadable)) frexp(double d, int *exponent) {
+static double __attribute__((overloadable)) infty(int signum) {
+    union double_bits bits;
+    bits.l = 0x7ff0000000000000l;
+    return signum ? -bits.d : bits.d;
+}
+
+
+
+static double __attribute__((overloadable)) frexp(double d, long *exponent) {
     union double_bits bits;
     bits.d = d;
-    *exponent = (int) ((bits.l >> 52L) & 0x7fff) - 1024;
+    *exponent = (((bits.l >> 52) & 0x7ffl) - 1023l);
+
+    bits.l = (bits.l & 0x800fffffffffffffl) | 0x3ff0000000000000l;
+    return bits.d;
 }
 
-static double __attribute__((overloadable)) ldexp(double mantissa, int exponent) {
+static double __attribute__((overloadable)) ldexp(double mantissa, long exponent) {
+    exponent += 1023l;
 
-    // TODO creates a double where
-    return mantissa;
+    if(exponent < 0) {
+        return 0.;
+    } else if(exponent > 2047) {
+        return mantissa < 0 ? infty(1) : infty(0);
+    }
+
+    exponent <<= 52;
+
+    union double_bits bits;
+    bits.d = mantissa;
+
+    bits.l = (bits.l & 0x800fffffffffffffl) | exponent;
+
+    return bits.d;
 }
 
+
+
+static double __attribute__((overloadable)) sqrt(double d) {
+    if(d < 0) {
+        return nanum();
+    } else if(d == 0) {
+        return 0.;
+    } else {
+        long exponent;
+
+        double mantissa = frexp(d, &exponent);
+
+        if((exponent & 1l) != 0l) {
+            exponent--;
+            mantissa = mantissa * 0.5 + 1;
+        }
+
+        double x = ldexp(mantissa,  exponent >> 1l);
+
+        // start newton approximation
+        for(int i = 0; i < 4; ++i) {
+            x = (d / x + x) / 2.;
+        }
+
+        return x;
+    }
+}
+
+/*
+ * Based on the observation that you can pull out the exponent of sqrt(x^2 + y^2).
+ * Better performance for large values
+ * @param x
+ * @param y
+ * @return
+ */
+static double __attribute__((overloadable)) rad(double x, double y) {
+    if(x < 0) x = -x;
+    if(y < 0) y = -y;
+    if(x < y) { double t = x; x = y; y = t; }
+
+    // x and y are positive and x is larger.
+    double m1, m2;
+    long e1, e2;
+
+    m1 = frexp(x, &e1);
+    m2 = frexp(y, &e2);
+
+    double x2 = m1;
+    double y2 = ldexp(m2, e2 - e1);
+
+    double rad = sqrt(x2 * x2 + y2 * y2);
+
+    long e3;
+    double m3 = frexp(rad, &e3);
+
+    return ldexp(m3, e1 + e3);
+}
+
+static double __attribute__((overloadable)) atan2(double y, double x) {
+    double m1, m2;
+    long e1, e2;
+
+    m1 = frexp(x, &e1);
+    m2 = frexp(y, &e2);
+
+    if(e1 < e2) {
+        e1 -= e2;
+        e2 = 0;
+    } else {
+        e2 -= e1;
+        e1 = 0;
+    }
+
+    double x2 = ldexp(m1, e1);
+    double y2 = ldexp(m2, e2);
+
+    if(x < 0) x2 = -x2;
+    if(y < 0) y2 = -y2;
+
+    return atan2((float) y2, (float) x2);
+}
+
+/*
+ * log2 (m * 2^e) = log m + e
+ * @param d
+ * @return
+ */
+static double __attribute__((overloadable)) log2(double d) {
+    if(d < 0) {
+        return nanum();
+    } else {
+        long e;
+        double m = frexp(d, &e);
+
+        return log2((float) m) + e;
+    }
+}
+
+/*
+ * 2^d = m * 2^e [1 <= m < 2]
+ * d = log2(m) + e [0 <= log2(n) < 1]
+ * Thus, e = floor(d), m = exp2(fract(d)). Observe that floor(d) must be in the range [-1024, 1023].
+ * @param d
+ * @return
+ */
+static double __attribute__((overloadable)) exp2(double d) {
+    double exponent = floor((float) d);
+
+    if(d < -1024) {
+        return 0;
+    } else if(d > 1023) {
+        return infty(0);
+    } else {
+        double ld = d - exponent; // must be between 0 and 1.
+
+        double base = exp2((float) ld); // no exp2 in java...
+
+        // base is between 1 and 2.
+        long e;
+        double m = frexp(base, &e);
+
+        return ldexp(m, (long) (exponent) + e);
+    }
+}
+
+/*
+ * x ^ y = (m * 2^e) ^ y = m' * 2^e'
+ * (m * 2^e) ^ y = m' * 2^e' ==> / log2
+ * y * log2(m) + y * e = e' + log2(m')
+ * @param x
+ * @param y
+ * @return
+ */
+static double __attribute__((overloadable)) pow(double x, double y) {
+    //return pow((float) x, (float) y);
+    if(x < 0) {
+        return nanum();
+    } else if(x == 0) {
+        return y > 0 ? 0 : y == 0 ? 1 : infty(0);
+    } else {
+        long e;
+        double m = frexp(x, &e);
+
+        double ld = log2(m);
+
+        return exp2((ld + e) * y);
+    }
+}
+
+static const double ln2 = 0.693147180559945309417232121458;
+
+static double __attribute__((overloadable)) exp(double f) { return exp2(f / ln2); }
+static double __attribute__((overloadable)) log(double f) { return log2(f) * ln2; }
+
+static double __attribute__((overloadable)) sinh(double f) { double e = exp(f); return (e - 1. / e) / 2.; }
+static double __attribute__((overloadable)) cosh(double f) { double e = exp(f); return (e + 1. / e) / 2.; }
+static double __attribute__((overloadable)) tanh(double f) { double e = exp(f); return (e - 1. / e) / (e + 1. / e); }
+
+/*
 static double __attribute__((overloadable)) sqrt(double d) { return sqrt((float) d); }
 static double __attribute__((overloadable)) rad(double x, double y) { return sqrt(x * x + y * y); }
-static double __attribute__((overloadable)) atan2(double y, double x) { return atan2((float) y, (float) x); }
 static double __attribute__((overloadable)) log(double f) { return log((float) f); }
 static double __attribute__((overloadable)) exp(double f) { return exp((float) f); }
 static double __attribute__((overloadable)) pow(double y, double x) { return pow((float) y, (float) x); }
+static double __attribute__((overloadable)) sinh(double f) { return sinh((float) f); }
+static double __attribute__((overloadable)) cosh(double f) { return cosh((float) f); }
+static double __attribute__((overloadable)) tanh(double f) { return tanh((float) f); }
+static double __attribute__((overloadable)) atan2(double y, double x) { return atan2((float) y, (float) x); }
+*/
+
 static double __attribute__((overloadable)) sin(double f) { return sin((float) f); }
 static double __attribute__((overloadable)) cos(double f) { return cos((float) f); }
 static double __attribute__((overloadable)) tan(double f) { return tan((float) f); }
 static double __attribute__((overloadable)) atan(double f) { return atan((float) f); }
-static double __attribute__((overloadable)) sinh(double f) { return sinh((float) f); }
-static double __attribute__((overloadable)) cosh(double f) { return cosh((float) f); }
-static double __attribute__((overloadable)) tanh(double f) { return tanh((float) f); }
 static double __attribute__((overloadable)) atanh(double f) { return atanh((float) f); }
 static double __attribute__((overloadable)) cbrt(double f) { return cbrt((float) f); }
 static double __attribute__((overloadable)) floor(double f) { return floor((float) f); }
@@ -236,6 +427,9 @@ static double2 __attribute__((overloadable)) exp(double2 f) {
 }
 
 static double2 __attribute__((overloadable)) pow(double2 base, double power) {
+	if(base.x == 0 && base.y == 0) return (double2) {0, 0};
+
+    // FIXME
 	// base^power = exp(log base * power) =
 	// = exp ((log rad base + i arc base) * power)
 	// = exp (power * log rad base + i power arc base)
@@ -250,6 +444,7 @@ static double2 __attribute__((overloadable)) pow(double2 base, double power) {
 }
 
 static double2 __attribute__((overloadable)) pow(double2 base, double2 power) {
+    // FIXME
 	// base^power = exp(log base * power) =
 	// = exp ((log rad base + i ab) * power)
 	// = exp ((log rb + i arc base) * power)
