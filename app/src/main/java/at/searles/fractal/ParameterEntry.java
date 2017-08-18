@@ -295,7 +295,7 @@ public class ParameterEntry {
                             .add("foldfn2", Fractal.Type.Expr, "max(dist(znext, floor(znext + 0.5:0.5)), foldvalue2)")
             ));
 
-            _ENTRIES.add(createEntry(am, "Distance Estimation (Mandelbrot)", "distance_esimation.png", "Distance estimation for the mandelbrot set (fold)",
+            _ENTRIES.add(createEntry(am, "Distance Estimation (Mandelbrot)", "distance_estimation.png", "Distance estimation for the mandelbrot set (fold)",
                     Fractal.parameterBuilder()
                             .add("foldfn", Fractal.Type.Expr, "2 znext foldvalue + 1")
                             .add("bailoutvalue", Fractal.Type.Expr, "rad znext / rad foldvalue / 2 * log rad znext")

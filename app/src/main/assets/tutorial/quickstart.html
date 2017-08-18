@@ -17,56 +17,58 @@
 <p>The app supports portrait and landscape mode. The image is eventually rotated by 90 degrees to fill out as much space as possible while keeping the aspect ratio. If the image is rotated, a small triangle will appear to mark the top left corner of the image.</p>
 <p>Fractview is very feature rich. In the following an overview of some features is given.</p>
 <h2 id="parameters">Parameters</h2>
-<p>Fractview allows you to freely modify parameters of the image that is drawn. You can manipulate these parameter by selecting &quot;Parameters&quot; in the menu or by tapping the icon <img src="icons/edit_icon.png" style="height: 1em" />. In this view you can edit all parameters and thereby enter custom formulas, change the color palettes or add a 3D effects. When zooming into the fractal, the most important parameter is &quot;maxdepth&quot; because the larger it is the more details become visible at deeper zooms.</p>
+<p>Fractview allows you to freely modify parameters of the image that is drawn. You can manipulate these parameter by selecting &quot;Parameters&quot; in the menu or by tapping the icon <img src="icons/edit_icon.png" style="height: 1em" />. In this view you can enter custom formulas, change the color palettes or add a 3D effects. When zooming into the fractal, the most important parameter is &quot;maxdepth&quot; because the larger it is the more details become visible at deeper zooms.</p>
 <div class="figure">
 <img src="screens/changing_depth.png" alt="Changing maximum depth" />
 <p class="caption">Changing maximum depth</p>
 </div>
-<p>Notice that the parameters that were modified appear now in bold letters, meaning that these parameters contain custom values (as opposed to default values). Using a long tap, a menu appears in which you can revert all parameters to their default value (some arguments also contain further options).</p>
-<p>If you merge the current fractal with a parameter set in the Preset view, these parameters will be used unless they are overruled by the new parameter set.</p>
+<p>Notice that the parameters that were modified appear now in bold letters, meaning that these parameters contain custom values (as opposed to default values). Using a long tap, a menu appears in which you can revert parameters to their default value (some arguments also contain further options).</p>
 <p>Another interesting parameter is &quot;light&quot;. You can toggle its state with a single tap. If it is checked, you obtain a nice 3D effect.</p>
 <div class="figure">
 <img src="screens/changing_light.png" alt="Adding a 3D effect" />
 <p class="caption">Adding a 3D effect</p>
 </div>
 <p>Fractview allows you to create custom (two dimensional) color palettes using an intuitive palette editor and color picker. The <em>bailoutpalette</em> contains the colors used of the outside of the fractal (in the Default program it uses only one dimension), the <em>lakepalette</em> is used for the inside (this one uses two dimensions).</p>
-<p>You find more information on parameters in this article: <a href="custom.html">Creating Custom Fractals</a>.</p>
+<p>You find more information on parameters in this part of the tutorial: <a href="custom.html">Creating Custom Fractals</a>.</p>
 <h2 id="presetsdemos">Presets/Demos</h2>
-<p>Fractview contains some demos/presets, accessible via <img src="icons/demos_icon.png" style="height: 1em" />. The demos-view consists of two screens. In the first screen you pick a program that will render the image. There are many different programs to draw basic fractals, newton fractals, lyapunov fractals, magnetic pendulum simulations or simply complex functions. You can select a program using a single tap. The first entry (&quot;Current&quot;) will keep the current program.</p>
-<p>The second view lets you select a parameter set: Each program contains some extern parameters that can be freely manipulated, for instance the current scale, the color palettes used to draw the fractal or even the function of the fractal.</p>
-<p>Most parameter sets can be used for more than one program, for instance a parameter set like &quot;Phoenix Set&quot; provides a fractal function that can be used in the Default program, the Fold program and others. If a program cannot interpret a parameter set (for instance if the parameter set requires values that do not exist in a program), you might encounter an error message though.</p>
+<p>Fractview contains some demos/presets, accessible via <img src="icons/demos_icon.png" style="height: 1em" />. The demos-view consists of two screens. In the first screen you pick a program that will render the image. There are many different programs to draw basic fractals like the mandelbrot set, newton fractals, <a href="https://en.wikipedia.org/wiki/Lyapunov_fractal">lyapunov fractals</a>, <a href="https://nylander.wordpress.com/2007/10/27/magnetic-pendulum-strange-attractor/">magnetic pendulum simulations</a> or simply <a href="https://en.wikipedia.org/wiki/Domain_coloring#Visual_encoding_of_complex_numbers">complex functions</a>. You can select a program using a single tap. The first entry (&quot;Current&quot;) will keep the current program.</p>
+<p>In the second view you can select a set of parameters, for instance a new formular to generate the fractal or a special colorization method. Every program contains different parameters but some can be used in multiple programs.</p>
 <div class="figure">
-<img src="screens/demos_screens.png" alt="Screenshots of the Demos-menu" />
+<img src="screens/two_fold_newton_mb.png" alt="Example selecting parameter" />
+<p class="caption">Example selecting parameter</p>
+</div>
+<p>Using a long tap you can also merge a parameter set with the current parameters. If you merge the current fractal with a parameter set in the Preset view, the current parameters will be used unless they are overridden by the new parameter set. If a program cannot interpret a parameter set (for instance if the parameter set requires values that do not exist in the selected program), you might encounter an error message though.</p>
+<div class="figure">
+<img src="screens/fold_geometry_newton_mb.png" alt="Screenshots of the Demos-menu" />
 <p class="caption">Screenshots of the Demos-menu</p>
 </div>
-<p>You can mix parameter sets with your current settings using a long tab and selecting &quot;Merge&quot;.</p>
-<div class="figure">
-<img src="screens/merge_example.png" alt="Example of merge" />
-<p class="caption">Example of merge</p>
-</div>
 <h2 id="favorites">Favorites</h2>
-<p>Fractview allows you to store the current program and parameter set. From the main view, you can add your favorites using &quot;Add to Favorites&quot;. You can also directly add a favorite when you save the image.</p>
-<p>To access your favorites and to share your collection, pick &quot;Favorites&quot; from menu. It will open a new view in which you can pick a favorite using a single tap.</p>
-<p>You can select multiple entries using a long tap. This way you can delete the selected entries or rename a favorite.</p>
+<p>Fractview allows you to save the current fractal. From the main view, you can add your favorites using &quot;Add to Favorites&quot;.</p>
 <div class="figure">
-<img src="screens/select_favorites.png" alt="Selecting multiple entries in favorites" />
-<p class="caption">Selecting multiple entries in favorites</p>
+<img src="screens/add_favorite.png" alt="Add favorite" />
+<p class="caption">Add favorite</p>
 </div>
-<p>Furthermore it is possible to export the selected favorites. This creates a text file (the format used is called &quot;json&quot;) that you can share with others. If you download such a text file, you can import it via the import menu.</p>
+<p>You can also directly add a favorite when you save the image.</p>
 <div class="figure">
-<img src="screens/import_favorites.png" alt="Importing a collection of fractals" />
-<p class="caption">Importing a collection of fractals</p>
+<img src="screens/add_favorite_from_saving.png" alt="Add favorite when saving an image" />
+<p class="caption">Add favorite when saving an image</p>
+</div>
+<p>To access your favorites, pick &quot;Favorites&quot; from menu. It will open a new view in which you can pick a favorite using a single tap. Using a long tap you can select multiple entries that you can delete or export to share with others. The collection itself is one text file containing the fractal data as a Json, hence if you are experienced in Json you can even edit this file in a text editor. The icon is stored in PNG-Format, encoded as Base64.</p>
+<div class="figure">
+<img src="screens/export_favorites.png" alt="Exporting favorites" />
+<p class="caption">Exporting favorites</p>
+</div>
+<p>You can also import collections from others. <a href="https://fractview.wordpress.com">In my blog</a> you will find some links to collections. After downloading a file, select &quot;import&quot; and select the downloaded collection. After importing a collection all new entries are selected. In order to group the new entries you can set a common prefix so that they will appear next to each other.</p>
+<div class="figure">
+<img src="screens/import_favorites.png" alt="Importing favorites" />
+<p class="caption">Importing favorites</p>
 </div>
 <h2 id="other-menus">Other menus</h2>
-<p>There are further menus to save/share a fractal, accessible via share. In this menu you can select to share the current picture, save it to the gallery or to use it as your wallpaper. If the rendering is not yet finished, saving will be stalled.</p>
+<p>There are further menus to save/share a fractal, accessible via &quot;Share&quot; <img src="icons/share_icon.png" style="height: 1em" />. In this menu you can select to share the current picture, save it to the gallery or to use it as a wallpaper. If the rendering is not yet finished, saving will be stalled.</p>
 <p>You can also copy a fractal into the clipboard and paste it somewhere else (this way I share fractals with my daughter via Google Hangouts).</p>
-<div class="figure">
-<img src="screens/copy_paste.png" alt="Using copy/paste to share fractals" />
-<p class="caption">Using copy/paste to share fractals</p>
-</div>
-<p>Finally, there is a menu &quot;UI Settings&quot; that lets you display a grid, activate rotation lock or deactivate the zoom controls.</p>
-<h2 id="for-technically-interested-users">For technically interested users</h2>
-<p>Fractview uses a framework called Renderscript to generate images. A compiler creates some bytecode out of the program and its parameters that are executed in a virtual machine in Renderscript. It is possible to write your own programs in the backing programming language Meelan (that is heavily inspired from Python and C). Careful because similar to OpenGL, Meelan does not support recursion.</p>
-<p>Color palettes use the <a href="https://en.wikipedia.org/wiki/Lab_color_space">Lab color space</a> and two dimensional hermite spline interpolation of the color components. When creating the first version I spent some time to compare various color spaces and nothing beats Lab in my opinion. Fractview is currently the only app known to me that actually supports two dimensional color palettes.</p>
+<p>You can set a custom image size. There is no limit apart from your memory. Image sizes around 4000x3000 should be no problem.</p>
+<p>There is a menu &quot;UI Settings&quot; that lets you display a grid, activate rotation lock, confirm zooms using a single tap or deactivate the zoom controls at all.</p>
+<h1 id="finally">Finally</h1>
+<p>Fractview is open source and (ad-)free and always will be, there will never be a non-free premium version or a non-free feature. If you want to show your appreciation you will find a &quot;Donate&quot;-button in my blog. If will be put to good use (theme park entries with my kids and a nice dinner with my lovely wife :) ).</p>
 <p>Thanks for your interest in my little app.</p>
 <p>-- Karl</p>
