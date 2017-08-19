@@ -59,7 +59,7 @@ public class CharUtil {
         int end = suffixIndex(string);
 
         if(end == -1) {
-            return string + "(1)";
+            return string + " 1";
         } else {
             // there is an index
             int start = end;
@@ -99,43 +99,6 @@ public class CharUtil {
 
     public static boolean charEq(char a, char b) {
         return charCmp(a, b) == 0;
-    }
-
-    /**
-     * Returns true if all strings have a non-empty common prefix
-     * @param strings
-     * @return true if strings is empty
-     */
-    public static boolean haveCommonPrefix(Iterable<String> strings) {
-        int ch = -1;
-
-        for(String string : strings) {
-            if(ch == -1) {
-                ch = string.charAt(0);
-            } else if(!charEq((char) ch, string.charAt(0))) {
-                return false;
-            }
-        }
-
-        return true;
-    }
-
-    /**
-     * Quick check whether the first argument is a prefix of the second one
-     * @param prefix
-     * @param string
-     * @return
-     */
-    public static boolean isPrefixOf(String prefix, String string) {
-        if(string.length() < prefix.length()) return false;
-
-        for(int i = 0; i < prefix.length(); ++i) {
-            if(!charEq(prefix.charAt(i), string.charAt(i))) {
-                return false;
-            }
-        }
-
-        return true;
     }
 
     /**
@@ -181,6 +144,22 @@ public class CharUtil {
      */
     public static int charCmp(char a, char b) {
         return Character.compare(Character.toUpperCase(Character.toLowerCase(a)), Character.toUpperCase(Character.toLowerCase(b)));
+    }
+
+    /**
+     * Case insensitive string comparison (uses charCmp)
+     * @param a
+     * @param b
+     * @return
+     */
+    public static int stringCmp(String a, String b) {
+        for(int i = 0;;++i) {
+            if(i < a.length() && i < b.length()) {
+
+            } else {
+
+            }
+        }
     }
 
     /**

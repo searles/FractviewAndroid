@@ -64,7 +64,7 @@ You can also import collections from others. [In my blog](https://fractview.word
 
 ## Other menus
 
-There are further menus to save/share a fractal, accessible via "Share" <img src="icons/share_icon.png" style="height: 1em" />. In this menu you can select to share the current picture, save it to the gallery or to use it as a wallpaper. If the rendering is not yet finished, saving will be stalled. 
+"Share" <img src="icons/share_icon.png" style="height: 1em" /> opens a menu where you can select to either share the current picture, save it to the gallery or use it as a wallpaper. If the rendering is not yet finished, saving will be stalled. 
 
 You can also copy a fractal into the clipboard and paste it somewhere else (this way I share fractals with my daughter via Google Hangouts).
 
@@ -74,7 +74,7 @@ There is a menu "UI Settings" that lets you display a grid, activate rotation lo
 
 # Finally
 
-Fractview is open source and (ad-)free and always will be, there will never be a non-free premium version or a non-free feature. If you want to show your appreciation you will find a "Donate"-button in my blog. It will be put to good use (theme park entries with my kids and a nice dinner with my lovely wife :) ).
+Fractview is open source and (ad-)free and always will be, there will never be a non-free premium version or a non-free feature. If you want to show your appreciation you will find a "Donate"-button in my blog.
 
 Thanks for your interest in my little app. 
 

@@ -2,7 +2,7 @@
 <resources>
     <string name="app_name">Fractview</string>
     <string name="action_parameters">Parameters</string>
-    <string name="action_add_bookmark">Add Favorite</string>
+    <string name="action_add_bookmark">Add to Favorites</string>
     <string name="action_share">Share Image</string>
     <string name="action_save">Save Image</string>
     <string name="action_bookmarks">Favorites</string>
