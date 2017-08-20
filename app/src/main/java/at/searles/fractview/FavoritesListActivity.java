@@ -398,7 +398,7 @@ public class FavoritesListActivity extends Activity {
 						// Ask what to do with duplicates
 						DialogHelper.showOptionsDialog(this, "Pick an option for new entries with already existing keys", new CharSequence[]{
 								"Do not add items with existing keys",
-								"Append suffix \"(count)\" to new entries",
+								"Append index to new entries",
 								"Overwrite existing entries"
 						}, false, new DialogInterface.OnClickListener() {
 							@Override
@@ -407,19 +407,14 @@ public class FavoritesListActivity extends Activity {
 									case 0: break; // this is easy.
 									case 1: {
 										for(Map.Entry<String, FavoriteEntry> entry : duplicates.entrySet()) {
-											String key = entry.getKey();
+											String newKey = entry.getKey();
 
-											String newKey;
+											do {
+												newKey = CharUtil.nextIndex(newKey);
+											} while(adapter.prefs.contains(newKey));
 
-											for(int i = 1;; ++i) {
-												newKey = key + "(" + i + ")";
-												if(!adapter.prefs.contains(newKey)) {
-													break;
-												}
-											}
-
-                                            addedKeys.add(key);
 											adapter.prefs.edit().putString(newKey, Serializers.serializer().toJson(entry.getValue())).apply();
+                                            addedKeys.add(newKey);
 										}
 
 										adapter.initializeAdapter();

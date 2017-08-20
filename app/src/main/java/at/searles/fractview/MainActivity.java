@@ -42,6 +42,7 @@ import at.searles.fractview.ui.BitmapFragmentView;
 import at.searles.fractview.ui.DialogHelper;
 import at.searles.meelan.CompileException;
 import at.searles.tutorial.TutorialActivity;
+import at.searles.utils.CharUtil;
 
 
 // Activity is the glue between BitmapFragment and Views.
@@ -614,12 +615,9 @@ public class MainActivity extends Activity
 
 						File imageFile = new File(directory, filename + ".png");
 
-                        // loop up index
-						if(imageFile.exists()) {
-							for (int i = 1; ; ++i) {
-								imageFile = new File(directory, filename + " (" + i + ").png");
-								if(!imageFile.exists()) break;
-							}
+						while(imageFile.exists()) {
+							filename = CharUtil.nextIndex(filename);
+							imageFile = new File(directory, filename + ".png");
 						}
 
 						// Saving is done in the following plugin
