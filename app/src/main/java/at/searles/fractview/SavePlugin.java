@@ -139,8 +139,9 @@ public class SavePlugin implements BitmapFragmentPlugin, BitmapFragment.BitmapFr
         switch(stage) {
             case WAITING_FOR_RENDER: {
                 // Can cancel and skip
-                builder.setTitle("Rendering not finished");
-                builder.setMessage("Image will be saved after rendering is finished.");
+                builder.setTitle("Please wait...");
+                builder.setMessage("Image will be saved after rendering is finished. " +
+                        "To save immediately, select \"Save Now\".");
                 builder.setNeutralButton("Save Now", new DialogInterface.OnClickListener() {
                     @Override
                     public void onClick(DialogInterface dialog, int which) {
@@ -155,8 +156,8 @@ public class SavePlugin implements BitmapFragmentPlugin, BitmapFragment.BitmapFr
                 });
             } break;
             case SAVING: {
-                builder.setTitle("Saving image");
-                builder.setMessage("Please wait...");
+                builder.setTitle("Please wait...");
+                builder.setMessage("Saving image");
                 builder.setCancelable(false);
             } break;
         }

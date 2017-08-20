@@ -74,7 +74,7 @@ There is a menu "UI Settings" that lets you display a grid, activate rotation lo
 
 # Finally
 
-Fractview is open source and (ad-)free and always will be, there will never be a non-free premium version or a non-free feature. If you want to show your appreciation you will find a "Donate"-button in my blog.
+Fractview is open source and (ad-)free and always will be, there will never be a non-free premium version or a non-free feature. If you want to show your appreciation [you will find a link for donations in my blog](https://fractview.wordpress.com/about/).
 
 Thanks for your interest in my little app. 
 

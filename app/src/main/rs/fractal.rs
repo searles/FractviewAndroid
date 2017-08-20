@@ -196,7 +196,6 @@ static double __attribute__((overloadable)) exp2(double d) {
  * @return
  */
 static double __attribute__((overloadable)) pow(double x, double y) {
-    //return pow((float) x, (float) y);
     if(x < 0) {
         return nanum();
     } else if(x == 0) {
@@ -232,12 +231,17 @@ static double __attribute__((overloadable)) tanh(double f) { return tanh((float)
 static double __attribute__((overloadable)) atan2(double y, double x) { return atan2((float) y, (float) x); }
 */
 
+// TODO Increase precision of the following
+
 static double __attribute__((overloadable)) sin(double f) { return sin((float) f); }
 static double __attribute__((overloadable)) cos(double f) { return cos((float) f); }
 static double __attribute__((overloadable)) tan(double f) { return tan((float) f); }
 static double __attribute__((overloadable)) atan(double f) { return atan((float) f); }
 static double __attribute__((overloadable)) atanh(double f) { return atanh((float) f); }
 static double __attribute__((overloadable)) cbrt(double f) { return cbrt((float) f); }
+
+// The next ones are out of scope for increased precision
+
 static double __attribute__((overloadable)) floor(double f) { return floor((float) f); }
 static double __attribute__((overloadable)) ceil(double d) { return ceil((float) d); }
 static double __attribute__((overloadable)) fract(double d) { return fract((float) d); }
