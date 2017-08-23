@@ -24,7 +24,6 @@ public abstract class BackgroundTaskFragment<Result> extends Fragment {
 
     private void launch() {
         createTask().execute();
-        this.
     }
 
     public abstract AsyncTask<Void, Void, Result> createTask();

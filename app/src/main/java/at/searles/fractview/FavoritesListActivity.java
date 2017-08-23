@@ -7,9 +7,7 @@ import android.content.Intent;
 import android.content.SharedPreferences;
 import android.graphics.Bitmap;
 import android.net.Uri;
-import android.os.AsyncTask;
 import android.os.Bundle;
-import android.os.ParcelFileDescriptor;
 import android.util.Log;
 import android.util.SparseBooleanArray;
 import android.view.ActionMode;
@@ -24,12 +22,14 @@ import android.widget.ListView;
 
 import com.google.gson.stream.JsonWriter;
 
+import java.io.BufferedReader;
 import java.io.BufferedWriter;
 import java.io.File;
 import java.io.FileNotFoundException;
-import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.LinkedList;
@@ -349,53 +349,31 @@ public class FavoritesListActivity extends Activity {
                 // Fetch elements
                 Uri uri = data.getData();
 
-                new AsyncTask<Void, Void, FavoriteEntry.Collection>() {
-
-                    Throwable error = null;
-
-                    @Override
-                    protected FavoriteEntry.Collection doInBackground(Void... params) {
-                        try {
-                            return importFromUri(uri);
-                        } catch (Throwable e) {
-                            e.printStackTrace();
-                            this.error = e;
-                            return null;
-                        }
-                    }
-
-                    @Override
-                    public void onPostExecute(FavoriteEntry.Collection collection) {
-                        if(error != null) {
-                            DialogHelper.error(FavoritesListActivity.this, error.getLocalizedMessage());
-                        } else if(collection != null) {
-                            importEntries(collection);
-                        }
-                    }
-                }.execute();
+                try {
+                    FavoriteEntry.Collection collection = importFromUri(uri);
+                    importEntries(collection);
+                } catch(Throwable th) {
+                    th.printStackTrace();
+                    DialogHelper.error(this, th.getLocalizedMessage());
+                }
             }
         }
     }
 
     private FavoriteEntry.Collection importFromUri(Uri uri) throws FileNotFoundException {
         // FIXME: Put into own fragment
-        // Put dialog into bg fragment
-        FileReader fileReader = null;
+        BufferedReader reader = null;
 
         try {
             Log.d(getClass().getName(), "Importing from " + uri);
 
-            ParcelFileDescriptor pfd = getContentResolver().
-                    openFileDescriptor(uri, "r");
+            InputStream inputStream = getContentResolver().openInputStream(uri);
+            reader = new BufferedReader(new InputStreamReader(inputStream));
 
-            fileReader = new FileReader(pfd.getFileDescriptor());
-
-            FavoriteEntry.Collection newEntries;
-
-            return Serializers.serializer().fromJson(fileReader, FavoriteEntry.Collection.class);
+            return Serializers.serializer().fromJson(reader, FavoriteEntry.Collection.class);
         } finally {
             try {
-                if(fileReader != null) fileReader.close();
+                if(reader != null) reader.close();
             } catch (IOException e) {
                 e.printStackTrace();
             }
@@ -409,7 +387,7 @@ public class FavoritesListActivity extends Activity {
         }
 
         // Find duplicates
-        Set<String> addedKeys = new TreeSet<String>();
+        Set<String> addedKeys = new TreeSet<>();
 
         Map<String, FavoriteEntry> duplicates = new HashMap<>();
 
@@ -475,9 +453,9 @@ public class FavoritesListActivity extends Activity {
     }
 
     /**
-     * Select entries in adapter with given keys
+     * Select entries in adapter
      *
-     * @param keys
+     * @param keys keys of the entries that should be selected
      */
     private void selectKeys(Set<String> keys) {
         // find indices and set checked-status.
@@ -531,91 +509,6 @@ public class FavoritesListActivity extends Activity {
         }
     }
 
-private static class FavoritesListAdapter extends FractalListAdapter<FavoriteEntry> {
-
-    final SharedPreferences prefs;
-
-    private IndexedKeyMap<String> jsonEntries;
-    private Map<String, FavoriteEntry> entries;
-
-    public FavoritesListAdapter(Activity context) {
-        super(context);
-
-        // Fetch shared preferences
-        this.prefs = context.getSharedPreferences(
-                FAVORITES_SHARED_PREF,
-                Context.MODE_PRIVATE);
-
-        this.jsonEntries = new IndexedKeyMap<>();
-        this.entries = new HashMap<>();
-
-        initializeAdapter();
-    }
-
-    protected void initializeAdapter() {
-        this.entries.clear();
-        this.jsonEntries.clear();
-
-        for (String key : this.prefs.getAll().keySet()) {
-            String value = this.prefs.getString(key, null);
-
-            if (value != null) {
-                this.jsonEntries.add(key, value);
-            } else {
-                Log.e(getClass().getName(), "Value for key " + key + " was null!");
-            }
-        }
-
-        this.jsonEntries.sort();
-        notifyDataSetChanged();
-    }
-
-    @Override
-    public int getCount() {
-        return jsonEntries.size();
-    }
-
-    public int getKeyIndex(String key) {
-        return jsonEntries.indexAt(key);
-    }
-
-    @Override
-    public FavoriteEntry getItem(int position) {
-        String key = jsonEntries.keyAt(position);
-
-        FavoriteEntry entry = this.entries.get(key);
-
-        if (entry == null) {
-            String json = jsonEntries.valueAt(position);
-
-            try {
-                entry = Serializers.serializer().fromJson(json, FavoriteEntry.class);
-                entry.setKey(key);
-                this.entries.put(key, entry);
-            } catch (Throwable th) {
-                entry = null;
-            }
-        }
-
-        return entry;
-    }
-
-    @Override
-    public Bitmap getIcon(int position) {
-        return getItem(position).icon();
-    }
-
-    @Override
-    public String getTitle(int position) {
-        return getItem(position).key();
-    }
-
-    @Override
-    public String getDescription(int position) {
-        return getItem(position).description();
-    }
-
-}
 
     public void selectPrefixRange(String prefix) {
         int size = adapter.jsonEntries.size();
@@ -627,5 +520,92 @@ private static class FavoritesListAdapter extends FractalListAdapter<FavoriteEnt
             listView.setItemChecked(i, true);
         }
     }
+
+    private static class FavoritesListAdapter extends FractalListAdapter<FavoriteEntry> {
+
+        final SharedPreferences prefs;
+
+        private IndexedKeyMap<String> jsonEntries;
+        private Map<String, FavoriteEntry> entries;
+
+        public FavoritesListAdapter(Activity context) {
+            super(context);
+
+            // Fetch shared preferences
+            this.prefs = context.getSharedPreferences(
+                    FAVORITES_SHARED_PREF,
+                    Context.MODE_PRIVATE);
+
+            this.jsonEntries = new IndexedKeyMap<>();
+            this.entries = new HashMap<>();
+
+            initializeAdapter();
+        }
+
+        protected void initializeAdapter() {
+            this.entries.clear();
+            this.jsonEntries.clear();
+
+            for (String key : this.prefs.getAll().keySet()) {
+                String value = this.prefs.getString(key, null);
+
+                if (value != null) {
+                    this.jsonEntries.add(key, value);
+                } else {
+                    Log.e(getClass().getName(), "Value for key " + key + " was null!");
+                }
+            }
+
+            this.jsonEntries.sort();
+            notifyDataSetChanged();
+        }
+
+        @Override
+        public int getCount() {
+            return jsonEntries.size();
+        }
+
+        public int getKeyIndex(String key) {
+            return jsonEntries.indexAt(key);
+        }
+
+        @Override
+        public FavoriteEntry getItem(int position) {
+            String key = jsonEntries.keyAt(position);
+
+            FavoriteEntry entry = this.entries.get(key);
+
+            if (entry == null) {
+                String json = jsonEntries.valueAt(position);
+
+                try {
+                    entry = Serializers.serializer().fromJson(json, FavoriteEntry.class);
+                    entry.setKey(key);
+                    this.entries.put(key, entry);
+                } catch (Throwable th) {
+                    entry = null;
+                }
+            }
+
+            return entry;
+        }
+
+        @Override
+        public Bitmap getIcon(int position) {
+            return getItem(position).icon();
+        }
+
+        @Override
+        public String getTitle(int position) {
+            return getItem(position).key();
+        }
+
+        @Override
+        public String getDescription(int position) {
+            return getItem(position).description();
+        }
+
+    }
+
 
 }
