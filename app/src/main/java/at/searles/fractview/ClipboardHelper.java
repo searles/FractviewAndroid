@@ -14,6 +14,7 @@ import at.searles.fractview.ui.DialogHelper;
  */
 public class ClipboardHelper {
     public static void copyFractal(Context context, Fractal fractal) {
+        // TODO Indentation!
         String export = Serializers.serializer().toJson(fractal);
         copy(context, export);
     }
