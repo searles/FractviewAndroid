@@ -17,10 +17,6 @@ import java.util.List;
 
 import at.searles.fractal.Drawer;
 import at.searles.fractal.Fractal;
-import at.searles.fractview.ScriptC_fillimage;
-import at.searles.fractview.ScriptC_fractal;
-import at.searles.fractview.ScriptField_lab_surface;
-import at.searles.fractview.ScriptField_palette;
 import at.searles.math.Scale;
 import at.searles.math.color.Palette;
 
@@ -33,6 +29,7 @@ public class RenderScriptDrawer implements Drawer {
 
 	private Scale scale;
 	private Bitmap bitmap;
+
 	private int width;
 	private int height;
 
@@ -74,7 +71,7 @@ public class RenderScriptDrawer implements Drawer {
 		this.listener = listener;
 	}
 
-	public void init(Bitmap bitmap, Fractal fractal) throws RSRuntimeException {
+	public void init() throws RSRuntimeException {
 		// the following might take some time
 		// because it invokes the renderscript
 		// compiler
@@ -84,10 +81,6 @@ public class RenderScriptDrawer implements Drawer {
 		fillScript.set_gScript(fillScript);
 		rsTile = Allocation.createSized(rs, Element.U8_4(rs), parallelPixs);
 		script.set_gTileOut(rsTile);
-
-		// first set fractal (otherwise we do not have a scale)
-		setFractal(fractal);
-		updateBitmap(bitmap);
 	}
 
 	@Override
@@ -117,6 +110,7 @@ public class RenderScriptDrawer implements Drawer {
         this.editRequested = false;
     }
 
+    @Override
 	public void updateBitmap(Bitmap bm) {
 		Log.d("RS_D", "updating bitmap");
 		Allocation newRSBitmap = Allocation.createFromBitmap(rs, bm);
@@ -140,6 +134,7 @@ public class RenderScriptDrawer implements Drawer {
 
 		// scale in script depends on image size
 		this.bitmap = bm;
+
 		this.width = bm.getWidth();
 		this.height = bm.getHeight();
 

@@ -3,7 +3,6 @@ package at.searles.fractview;
 import android.Manifest;
 import android.annotation.SuppressLint;
 import android.app.Activity;
-import android.app.ActivityManager;
 import android.app.AlertDialog;
 import android.app.FragmentManager;
 import android.app.FragmentTransaction;
@@ -159,60 +158,34 @@ public class MainActivity extends Activity
 		bitmapFragment = (BitmapFragment) fm.findFragmentByTag("bitmap_fragment");
 
 		if(bitmapFragment == null) {
-			Log.d("MA", "bitmap fragment is null");
-
-			// fetch dimensions from preferences or display size.
-
-			int w = prefs.getInt(WIDTH_LABEL, -1);
-			int h = prefs.getInt(HEIGHT_LABEL, -1);
-
-			boolean useDisplaySizeForImage = w == -1 || h == -1;
-
-			if(useDisplaySizeForImage) {
-				Log.i("BMF", "No dimensions in shared preferences, using display size");
-
-				Point dim = screenDimensions(this);
-
-				w = dim.x;
-				h = dim.y;
-			}
-
-			// create bitmap fragment
-			Log.d("MA", "Creating new BitmapFragment");
-
 			String sourceCode = AssetsHelper.readSourcecode(getAssets(), "Default.fv");
 
 			Fractal initFractal = new Fractal(sourceCode, new HashMap<>());
 
-			boolean reducedImageSizeDueToMemory = false;
+			// fetch dimensions from preferences or display size.
+
+			int defaultWidth = prefs.getInt(WIDTH_LABEL, -1);
+			int defaultHeight = prefs.getInt(HEIGHT_LABEL, -1);
+
+			Point dim = screenDimensions(this);
+
+			int displayWidth = dim.x;
+			int displayHeight = dim.y;
 
 			// one pixel requires two argb fields, ie 8 bytes.
+			if(defaultWidth > 2048 || defaultHeight > 2048) {
+				defaultWidth = displayWidth;
+				defaultHeight = displayHeight;
 
-			while(availMem() * 16 < w * h) {
-				// image consumption must be at most half of available memory!
-				w /= 2; h /= 2;
-				reducedImageSizeDueToMemory = true;
-				Log.d(getClass().getName(), "Reducing size of image to " + w + " x " + h);
+				DialogHelper.error(this, "Using screen size for image size.");
 			}
 
-			bitmapFragment = BitmapFragment.newInstance(w, h, initFractal);
-
-			if(!useDisplaySizeForImage && reducedImageSizeDueToMemory) {
-				// If the image size was used, no need to tell that you have a superb display :)
-				DialogHelper.error(this, "Reduced image size due to low memory");
-			}
+			bitmapFragment = BitmapFragment.newInstance(defaultWidth, defaultHeight, displayWidth, displayHeight, initFractal);
 
 			FragmentTransaction transaction = getFragmentManager().beginTransaction();
 			transaction.add(bitmapFragment, "bitmap_fragment");
 			transaction.commitAllowingStateLoss(); // Question: Why should there be a stateloss?
 		}
-	}
-
-	protected long availMem() {
-		ActivityManager.MemoryInfo mi = new ActivityManager.MemoryInfo();
-		ActivityManager activityManager = (ActivityManager) getSystemService(ACTIVITY_SERVICE);
-		activityManager.getMemoryInfo(mi);
-		return mi.availMem;
 	}
 
 	@Override
@@ -538,26 +511,20 @@ public class MainActivity extends Activity
 
                         // Image size is set in a runnable because there might be an additional
                         // check that allows cancellation on low memory.
-                        Runnable setSizeRunnable = new Runnable() {
-                            public void run() {
-                                if(setAsDefault) storeDefaultSize(w, h);
+						if(setAsDefault) {
+							if(w <= 2048 && h <= 2048) {
+								// this hard limit is due to OpenGL's limit
+								storeDefaultSize(w, h);
+							} else {
+								DialogHelper.error(MainActivity.this, "Did not change default size: Custom default size must be at most 2048x2048.");
+							}
+						}
 
-                                if(w == bitmapFragment.width() && h == bitmapFragment.height()) {
-                                    DialogHelper.info(((AlertDialog) d).getContext(), "size not changed");
-                                } else {
-                                    bitmapFragment.setSize(w, h);
-                                }
-                            }
-                        };
-
-                        if(8 * w * h > availMem()) {
-                            double availMB = availMem() / (1024. * 1024.);
-
-                            DialogHelper.confirm(MainActivity.this,
-                                    "Low on memory", "There is only " + String.format("%.2f", availMB) + "mb available. Resize still?", setSizeRunnable);
-                        } else {
-                            setSizeRunnable.run();
-                        }
+						if(w == bitmapFragment.width() && h == bitmapFragment.height()) {
+							DialogHelper.info(((AlertDialog) d).getContext(), "size not changed");
+						} else {
+							bitmapFragment.setSize(w, h);
+						}
                     }
                 });
 	}
