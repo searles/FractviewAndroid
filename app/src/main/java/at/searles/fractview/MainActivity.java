@@ -545,8 +545,6 @@ public class MainActivity extends Activity
                                 if(w == bitmapFragment.width() && h == bitmapFragment.height()) {
                                     DialogHelper.info(((AlertDialog) d).getContext(), "size not changed");
                                 } else {
-									// FIXME reset selection in imageView
-									// imageView.
                                     bitmapFragment.setSize(w, h);
                                 }
                             }
@@ -556,7 +554,7 @@ public class MainActivity extends Activity
                             double availMB = availMem() / (1024. * 1024.);
 
                             DialogHelper.confirm(MainActivity.this,
-                                    "Low on memory", "There is only " + String.format("%.2", availMB) + "mb available. Resize still?", setSizeRunnable);
+                                    "Low on memory", "There is only " + String.format("%.2f", availMB) + "mb available. Resize still?", setSizeRunnable);
                         } else {
                             setSizeRunnable.run();
                         }
