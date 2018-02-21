@@ -8,6 +8,7 @@ import android.content.SharedPreferences;
 import android.graphics.Bitmap;
 import android.net.Uri;
 import android.os.Bundle;
+import android.support.v4.content.FileProvider;
 import android.util.Log;
 import android.util.SparseBooleanArray;
 import android.view.ActionMode;
@@ -487,27 +488,25 @@ public class FavoritesListActivity extends Activity {
         // Fetch map from adapter
         JsonWriter writer = null;
 
+        // Create a map
+        FavoriteEntry.Collection collection = new FavoriteEntry.Collection();
+
+        for (FavoriteEntry entry : entries) {
+            collection.add(entry.key(), entry);
+        }
+
         try {
-            // Create a map
-            FavoriteEntry.Collection collection = new FavoriteEntry.Collection();
-
-            for (FavoriteEntry entry : entries) {
-                collection.add(entry.key(), entry);
-            }
-
+            // Write json to temp file.
             File textFile = File.createTempFile("fractview_collection-" + Commons.timestamp(),
                     ".txt", this.getExternalCacheDir()); // extension fv for fractview
-
             BufferedWriter bw = new BufferedWriter(new FileWriter(textFile));
-
             writer = new JsonWriter(bw);
-
             writer.setIndent("  ");
-
             Serializers.serializer().toJson(collection, FavoriteEntry.Collection.class, writer);
 
             // Share text file
-            Uri contentUri = Uri.fromFile(textFile);
+            Uri contentUri = FileProvider.getUriForFile(this, "at.searles.fractview.fileprovider", textFile);
+
             // after it was successfully saved, share it.
             Intent share = new Intent(Intent.ACTION_SEND);
             share.setType("text/plain");
