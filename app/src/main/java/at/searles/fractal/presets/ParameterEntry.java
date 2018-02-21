@@ -13,7 +13,7 @@ import at.searles.math.Scale;
 import at.searles.math.color.Palette;
 
 /**
- * Created by searles on 28.07.17.
+ * Contains preset parameters
  */ // And now for the presets.
 public class ParameterEntry {
 
