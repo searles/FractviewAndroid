@@ -53,15 +53,29 @@ import at.searles.meelan.CompileException;
  */
 public class BitmapFragment extends Fragment {
 
-	public static BitmapFragment newInstance(int width, int height, Fractal fractal) {
+	private static final String WIDTH_LABEL = "width";
+	private static final String HEIGHT_LABEL = "height";
+
+	private static final String SCREEN_WIDTH_LABEL = "screenWidth";
+	private static final String SCREEN_HEIGHT_LABEL = "screenHeight";
+
+	// conservative defaults if there are no valid values available...
+	private static final int DEFAULT_WIDTH = 1024;
+	private static final int DEFAULT_HEIGHT = 600;
+
+	public static BitmapFragment newInstance(int width, int height,
+											 int screenWidth, int screenHeight, Fractal fractal) {
 		// set initial size
 		Bundle bundle = new Bundle();
 
-		bundle.putInt("width", width);
-		bundle.putInt("height", height);
+		bundle.putInt(WIDTH_LABEL, width);
+		bundle.putInt(HEIGHT_LABEL, height);
+
+		bundle.putInt(SCREEN_WIDTH_LABEL, screenWidth);
+		bundle.putInt(SCREEN_HEIGHT_LABEL, screenHeight);
 
 		Bundle fractalBundle = BundleAdapter.fractalToBundle(fractal);
-		bundle.putBundle("fractal", fractalBundle);
+		bundle.putBundle(SourcesListActivity.FRACTAL_INDENT_LABEL, fractalBundle);
 
 		BitmapFragment ft = new BitmapFragment();
 		ft.setArguments(bundle);
@@ -70,11 +84,12 @@ public class BitmapFragment extends Fragment {
 	}
 
     // Allocations and various data
-    private int height, width;
+	private int height, width;
+	private int screenHeight, screenWidth;
+
 	private Fractal fractal;
 	private Bitmap bitmap;
-    
-    
+
 	/**
 	 * List of past fractals that were drawn using this bitmap fragment.
 	 */
@@ -133,51 +148,7 @@ public class BitmapFragment extends Fragment {
 		// the RS-Object because it needs the activity and we are
 		// in the UI-thread, so no race-conditions.
 		if(this.drawer == null) {
-			Log.d("BMF", "First time, onAttach was called...");
-			this.drawer = new RenderScriptDrawer(context);
-
-            this.drawer.setListener(
-                new Drawer.DrawerListener() {
-				@Override
-				public void bitmapUpdated(boolean firstUpdate) {
-                    new Handler(Looper.getMainLooper()).post(new Runnable() {
-						@Override
-						public void run() {
-                            for(BitmapFragmentListener listener : listeners) {
-								if(firstUpdate) {
-									listener.previewGenerated(BitmapFragment.this);
-								} else {
-									listener.bitmapUpdated(BitmapFragment.this);
-								}
-                            }
-						}
-					});
-				}
-
-				@Override
-				public void finished() {
-					Log.d(getClass().getName(), "drawer is finished");
-					new Handler(Looper.getMainLooper()).post(new Runnable() {
-						@Override
-						public void run() {
-							if(!editors.isEmpty()) {
-								for(Runnable editor : editors) {
-									editor.run();
-								}
-								editors.clear();
-								drawer.clearRequestEdit();
-								startBackgroundTask();
-							} else {
-								isRunning = false;
-
-								for(BitmapFragmentListener listener : listeners) {
-									listener.drawerFinished(-1, BitmapFragment.this);
-								}
-							}
-						}
-					});
-				}
-			});
+			initDrawer(context);
 		}
 
 		if(this.bitmap != null) {
@@ -185,6 +156,54 @@ public class BitmapFragment extends Fragment {
                 listener.newBitmapCreated(bitmap, this); // in case of rotation, this fragment is preserved
             }
 		}
+	}
+
+	private void initDrawer(Activity context) {
+		Log.d("BMF", "First time, onAttach was called...");
+		this.drawer = new RenderScriptDrawer(context);
+
+		this.drawer.setListener(
+            new Drawer.DrawerListener() {
+            @Override
+            public void bitmapUpdated(boolean firstUpdate) {
+                new Handler(Looper.getMainLooper()).post(new Runnable() {
+                    @Override
+                    public void run() {
+                        for(BitmapFragmentListener listener : listeners) {
+                            if(firstUpdate) {
+                                listener.previewGenerated(BitmapFragment.this);
+                            } else {
+                                listener.bitmapUpdated(BitmapFragment.this);
+                            }
+                        }
+                    }
+                });
+            }
+
+            @Override
+            public void finished() {
+                Log.d(getClass().getName(), "drawer is finished");
+                new Handler(Looper.getMainLooper()).post(new Runnable() {
+                    @Override
+                    public void run() {
+                        if(!editors.isEmpty()) {
+                            for(Runnable editor : editors) {
+                                editor.run();
+                            }
+                            editors.clear();
+                            drawer.clearRequestEdit();
+                            startBackgroundTask();
+                        } else {
+                            isRunning = false;
+
+                            for(BitmapFragmentListener listener : listeners) {
+                                listener.drawerFinished(-1, BitmapFragment.this);
+                            }
+                        }
+                    }
+                });
+            }
+        });
 	}
 
 	@Override
@@ -205,18 +224,21 @@ public class BitmapFragment extends Fragment {
 		setRetainInstance(true); // preserve this one on rotation
 
 		// Read initial width/height
-		this.width = getArguments().getInt("width");
-		this.height = getArguments().getInt("height");
+		this.screenWidth = getArguments().getInt(SCREEN_WIDTH_LABEL);
+		this.screenHeight = getArguments().getInt(SCREEN_HEIGHT_LABEL);
 
-		if(this.width <= 0 || this.height <= 0) {
-			throw new IllegalArgumentException("width was " + width + ", height was " + height);
+		if(screenWidth < 0 || screenHeight < 0) {
+			Log.e(getClass().getName(), "invalid screen size: " + screenWidth + "x" + screenHeight);
+			screenWidth = DEFAULT_WIDTH;
+			screenHeight = DEFAULT_HEIGHT;
 		}
 
-		// create bitmap
-		this.bitmap = Bitmap.createBitmap(width, height, Bitmap.Config.ARGB_8888);
+		this.width = getArguments().getInt(WIDTH_LABEL);
+		this.height = getArguments().getInt(HEIGHT_LABEL);
 
-		for(BitmapFragmentListener listener : listeners) {
-			listener.newBitmapCreated(bitmap, this); // tell others about it.
+		if(width < 0 || height < 0) {
+			this.width = screenWidth;
+			this.height = screenHeight;
 		}
 
 		// and also the fractal.
@@ -262,12 +284,31 @@ public class BitmapFragment extends Fragment {
 					protected Void doInBackground(Void...ignore) {
 						Log.d(getClass().getName(), "init drawer");
 
-						drawer.init(bitmap, fractal);
+						drawer.init();
+
 						return null;
 					}
 
 					@Override
 					protected void onPostExecute(Void ignore) {
+						Log.d(getClass().getName(), "setting data");
+
+						setFractal(fractal());
+
+						if(!setSizeUnsafe(width, height)) {
+							if(!setSizeUnsafe(screenWidth, screenHeight)) {
+
+								width = DEFAULT_WIDTH;
+								height = DEFAULT_HEIGHT;
+
+								while(!setSizeUnsafe(width, height)) {
+									// + 3 so that the result is at least 1.
+									width = (width + 3) / 4;
+									height = (height + 3) / 4;
+								}
+							}
+						}
+
 						Log.d(getClass().getName(), "init is done");
 
 						if(dialog != null) {
@@ -328,11 +369,16 @@ public class BitmapFragment extends Fragment {
 
 	private boolean setSizeUnsafe(int width, int height) {
 		// this might not be run from UI-thread
-		assert bitmap != null;
-
 		try {
+			Log.d(getClass().getName(), "Trying to set image size to " + width + "x" + height);
+
 			Bitmap newBitmap = Bitmap.createBitmap(width, height, Bitmap.Config.ARGB_8888);
+
+			Log.d(getClass().getName(), "Bitmap successfully created");
+
 			drawer.updateBitmap(newBitmap);
+
+			Log.d(getClass().getName(), "Bitmap updated in drawer");
 
 			// so far, everything worked, hence update fields
 			this.bitmap = newBitmap;
@@ -450,7 +496,8 @@ public class BitmapFragment extends Fragment {
 	}
 
 	/**
-	 * @return bitmap of this bitmap fragment. Might be null if no bitmap has been generated yet.
+	 * @return bitmap of this bitmap fragment. Might be null if no
+	 * bitmap has been generated yet.
 	 */
     public Bitmap getBitmap() {
         return bitmap;

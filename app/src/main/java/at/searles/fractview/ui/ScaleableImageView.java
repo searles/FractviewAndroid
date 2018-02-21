@@ -378,7 +378,6 @@ public class ScaleableImageView extends View {
 
 		Log.d("SIV", "dimensions are " + width + " x " + height + ", matrices are " + bitmap2view + ", " + view2bitmap);
 
-		//MUST CALL THIS
 		setMeasuredDimension(width, height);
 	}
 
