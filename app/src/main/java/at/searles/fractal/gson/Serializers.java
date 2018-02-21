@@ -218,10 +218,8 @@ public class Serializers {
             JsonObject obj = new JsonObject();
 
             // encode icon byte stream as Base64
-            if(entry.icon() != null) {
-                byte[] icon = Commons.toPNG(entry.icon());
-                obj.addProperty(ICON_LABEL, Base64.encodeToString(icon, Base64.DEFAULT));
-            }
+            byte[] icon = Commons.toPNG(entry.icon());
+            obj.addProperty(ICON_LABEL, Base64.encodeToString(icon, Base64.DEFAULT));
 
             obj.add(FRACTAL_LABEL, context.serialize(entry.fractal(), Fractal.class));
 

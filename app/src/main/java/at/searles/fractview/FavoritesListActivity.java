@@ -389,7 +389,6 @@ public class FavoritesListActivity extends Activity {
         // Find duplicates
         Set<String> addedKeys = new TreeSet<>();
 
-        Map<String, FavoriteEntry> nonDuplicates = new HashMap<>();
         Map<String, FavoriteEntry> duplicates = new HashMap<>();
 
         for (Map.Entry<?, ?> entry : newEntries.getAll()) {
@@ -400,21 +399,13 @@ public class FavoritesListActivity extends Activity {
             if (adapter.prefs.contains(key)) {
                 duplicates.put(key, favEntry);
             } else {
-                nonDuplicates.put(key, favEntry);
-            }
-        }
-
-        if (duplicates.isEmpty()) {
-            // Add non-duplicates
-            for (Map.Entry<String, FavoriteEntry> entry : nonDuplicates.entrySet()) {
-                String key = entry.getKey();
-                FavoriteEntry favEntry = entry.getValue();
-
                 // add it
                 addedKeys.add(key);
                 adapter.prefs.edit().putString(key, Serializers.serializer().toJson(favEntry)).apply();
             }
+        }
 
+        if (duplicates.isEmpty()) {
             adapter.initializeAdapter();
             selectKeys(addedKeys);
         } else {
@@ -426,16 +417,6 @@ public class FavoritesListActivity extends Activity {
             }, false, new DialogInterface.OnClickListener() {
                 @Override
                 public void onClick(DialogInterface dialog, int which) {
-                    // Add non-duplicates
-                    for (Map.Entry<String, FavoriteEntry> entry : nonDuplicates.entrySet()) {
-                        String key = entry.getKey();
-                        FavoriteEntry favEntry = entry.getValue();
-
-                        // add it
-                        addedKeys.add(key);
-                        adapter.prefs.edit().putString(key, Serializers.serializer().toJson(favEntry)).apply();
-                    }
-
                     switch (which) {
                         case 0:
                             break; // this is easy.
@@ -450,6 +431,9 @@ public class FavoritesListActivity extends Activity {
                                 adapter.prefs.edit().putString(newKey, Serializers.serializer().toJson(entry.getValue())).apply();
                                 addedKeys.add(newKey);
                             }
+
+                            adapter.initializeAdapter();
+                            selectKeys(addedKeys);
                         }
                         break;
                         case 2: {
@@ -457,12 +441,12 @@ public class FavoritesListActivity extends Activity {
                                 addedKeys.add(entry.getKey());
                                 adapter.prefs.edit().putString(entry.getKey(), Serializers.serializer().toJson(entry.getValue())).apply();
                             }
+
+                            adapter.initializeAdapter();
+                            selectKeys(addedKeys);
                         }
                         break;
                     }
-
-                    adapter.initializeAdapter();
-                    selectKeys(addedKeys);
                 }
             });
         }

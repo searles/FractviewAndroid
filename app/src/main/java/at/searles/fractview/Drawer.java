@@ -25,10 +25,7 @@ public interface Drawer extends Runnable {
 
 	public void setListener(DrawerListener listener);
 
-	/**
-	 * Initializes this drawer.
-	 */
-	public void init();
+	public void init(Bitmap bitmap, Fractal fractal);
 
 	public void updateBitmap(Bitmap bm);
 
