@@ -9,6 +9,7 @@ import android.content.Intent;
 import android.graphics.Bitmap;
 import android.net.Uri;
 import android.os.AsyncTask;
+import android.support.v4.content.FileProvider;
 import android.util.Log;
 
 import java.io.File;
@@ -37,8 +38,8 @@ public class SavePlugin implements BitmapFragmentPlugin, BitmapFragment.BitmapFr
                 SavePlugin.saveImage(imageFile, fragment);
 
                 Commons.uiRun(() -> {
-                    // Share image
-                    Uri contentUri = Uri.fromFile(imageFile);
+                    // Share text file
+                    Uri contentUri = FileProvider.getUriForFile(fragment.getActivity(), "at.searles.fractview.fileprovider", imageFile);
                     // after it was successfully saved, share it.
                     Intent share = new Intent(Intent.ACTION_SEND);
                     share.setType("image/png");
