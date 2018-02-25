@@ -63,4 +63,7 @@
     <string name="action_import_collection">Import Collection</string>
     <string name="action_edit_prefix">Edit common prefix</string>
     <string name="action_select_prefix">Select all with common prefix</string>
+
+    <!-- TODO: Remove or change this placeholder text -->
+    <string name="hello_blank_fragment">Hello blank fragment</string>
 </resources>

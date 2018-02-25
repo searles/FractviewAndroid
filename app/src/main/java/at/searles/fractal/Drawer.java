@@ -6,23 +6,6 @@ import at.searles.math.Scale;
 
 public interface Drawer extends Runnable {
 
-	/**
-	 * Controller interface for notification callbacks
-	 */
-	public interface DrawerListener {
-		/**
-		 * Called when some new part of the image was drawn
-		 *
-		 * @param firstUpdate true if this is the first update
-		 */
-		void bitmapUpdated(boolean firstUpdate);
-
-		/**
-		 * Called when the calculation is done.
-		 */
-		void finished();
-	}
-
 	public void setListener(DrawerListener listener);
 
 	/**
@@ -30,6 +13,23 @@ public interface Drawer extends Runnable {
 	 */
 	public void init();
 
+	/**
+	 * Creates all necessary data structures
+	 * for the given bitmap but keeps the old ones
+	 * in place because a calculation might be
+	 * still running.
+	 * @param newBitmap The bitmap that will replace the current one.
+	 * @return true if the datastructures could be allocated successfully.
+	 */
+	boolean prepareSetSize(Bitmap newBitmap);
+
+	/**
+	 * After a previous call to prepareSetSize, this method actually
+	 * replaces the old datastructures by the new ones.
+	 */
+	void applyNewSize();
+
+	@Deprecated
 	public void updateBitmap(Bitmap bm);
 
 	public void setScale(Scale sc);
