@@ -37,6 +37,8 @@ import java.util.HashMap;
 import at.searles.fractal.FavoriteEntry;
 import at.searles.fractal.Fractal;
 import at.searles.fractal.android.BundleAdapter;
+import at.searles.fractview.bitmap.BitmapFragment;
+import at.searles.fractview.renderscript.RenderScriptFragment;
 import at.searles.fractview.ui.BitmapFragmentView;
 import at.searles.fractview.ui.DialogHelper;
 import at.searles.meelan.CompileException;
@@ -59,6 +61,9 @@ public class MainActivity extends Activity
 
 	private static final String WIDTH_LABEL = "width";
 	private static final String HEIGHT_LABEL = "height";
+
+	public static final String RENDERSCRIPT_FRAGMENT_TAG = "92349831";
+	public static final String BITMAP_FRAGMENT_TAG = "234917643";
 
 	private BitmapFragmentView imageView;
 
@@ -108,9 +113,10 @@ public class MainActivity extends Activity
 
 		fm = getFragmentManager();
 
+		initRenderScriptFragment();
+
 		initBitmapFragment();
 		initBitmapFragmentListener();
-
 
 		// now we have a valid bitmap fragment, but careful! it is not yet initialized.
 		imageView.setBitmapFragment(bitmapFragment);
@@ -154,8 +160,20 @@ public class MainActivity extends Activity
 		};
 	}
 
+	private void initRenderScriptFragment() {
+		RenderScriptFragment renderScriptFragment = (RenderScriptFragment) fm.findFragmentByTag(RENDERSCRIPT_FRAGMENT_TAG);
+
+		if(renderScriptFragment == null) {
+			renderScriptFragment = RenderScriptFragment.newInstance();
+
+			FragmentTransaction transaction = getFragmentManager().beginTransaction();
+			transaction.add(renderScriptFragment, RENDERSCRIPT_FRAGMENT_TAG);
+			transaction.commitAllowingStateLoss(); // Question: Why should there be a stateloss?
+		}
+	}
+
 	private void initBitmapFragment() {
-		bitmapFragment = (BitmapFragment) fm.findFragmentByTag("bitmap_fragment");
+		bitmapFragment = (BitmapFragment) fm.findFragmentByTag(BITMAP_FRAGMENT_TAG);
 
 		if(bitmapFragment == null) {
 			String sourceCode = AssetsHelper.readSourcecode(getAssets(), "Default.fv");
@@ -172,18 +190,10 @@ public class MainActivity extends Activity
 			int displayWidth = dim.x;
 			int displayHeight = dim.y;
 
-			// one pixel requires two argb fields, ie 8 bytes.
-			if(defaultWidth > 2048 || defaultHeight > 2048) {
-				defaultWidth = displayWidth;
-				defaultHeight = displayHeight;
-
-				DialogHelper.error(this, "Using screen size for image size.");
-			}
-
 			bitmapFragment = BitmapFragment.newInstance(defaultWidth, defaultHeight, displayWidth, displayHeight, initFractal);
 
 			FragmentTransaction transaction = getFragmentManager().beginTransaction();
-			transaction.add(bitmapFragment, "bitmap_fragment");
+			transaction.add(bitmapFragment, BITMAP_FRAGMENT_TAG);
 			transaction.commitAllowingStateLoss(); // Question: Why should there be a stateloss?
 		}
 	}
@@ -471,7 +481,6 @@ public class MainActivity extends Activity
                                 heightView.setText(Integer.toString(dim.y));
                             }
                         });
-
                     }
                 },
                 new DialogHelper.DialogFunction() {
@@ -509,21 +518,21 @@ public class MainActivity extends Activity
                             return;
                         }
 
-                        // Image size is set in a runnable because there might be an additional
-                        // check that allows cancellation on low memory.
-						if(setAsDefault) {
-							if(w <= 2048 && h <= 2048) {
-								// this hard limit is due to OpenGL's limit
-								storeDefaultSize(w, h);
-							} else {
-								DialogHelper.error(MainActivity.this, "Did not change default size: Custom default size must be at most 2048x2048.");
-							}
-						}
+                        boolean success = true;
 
 						if(w == bitmapFragment.width() && h == bitmapFragment.height()) {
 							DialogHelper.info(((AlertDialog) d).getContext(), "size not changed");
 						} else {
-							bitmapFragment.setSize(w, h);
+							if(!bitmapFragment.prepareSetSize(w, h)) {
+								DialogHelper.error(MainActivity.this, "Could not change size due to an error.");
+								success = false;
+							}
+						}
+
+						if(success) {
+							if(setAsDefault) {
+								storeDefaultSize(w, h);
+							}
 						}
                     }
                 });
@@ -648,38 +657,39 @@ public class MainActivity extends Activity
 		}
 	}
 
-	// =======================================================================
-	// ============= Some History ... ========================================
-	// =======================================================================
+//	// =======================================================================
+//	// ============= Some History ... ========================================
+//	// =======================================================================
+//
+//	boolean warnedAboutHistoryEmpty = false;
+//
+//	boolean historyBack() {
+//		// we give one warning if back was already hit.
+//		if(bitmapFragment.historyIsEmpty()) {
+//			if(warnedAboutHistoryEmpty) return false;
+//			else {
+//				Toast.makeText(this, "No elements left in history.", Toast.LENGTH_SHORT).show();
+//				warnedAboutHistoryEmpty = true;
+//				return true;
+//			}
+//		} else {
+//			warnedAboutHistoryEmpty = false; // reset here.
+//
+//			if(!bitmapFragment.historyIsEmpty()) {
+//				bitmapFragment.historyBack();
+//				return true;
+//			} else {
+//				return false;
+//			}
+//		}
+//	}
 
-	boolean warnedAboutHistoryEmpty = false;
+//	@Override
+//	public void onBackPressed() {
+//		// first, send it to image view
+//		if(imageView.backButtonAction()) return;
+//		if(historyBack()) return;
+//		super.onBackPressed();
+//	}
 
-	boolean historyBack() {
-		// we give one warning if back was already hit.
-		if(bitmapFragment.historyIsEmpty()) {
-			if(warnedAboutHistoryEmpty) return false;
-			else {
-				Toast.makeText(this, "No elements left in history.", Toast.LENGTH_SHORT).show();
-				warnedAboutHistoryEmpty = true;
-				return true;
-			}
-		} else {
-			warnedAboutHistoryEmpty = false; // reset here.
-
-			if(!bitmapFragment.historyIsEmpty()) {
-				bitmapFragment.historyBack();
-				return true;
-			} else {
-				return false;
-			}
-		}
-	}
-
-	@Override
-	public void onBackPressed() {
-		// first, send it to image view
-		if(imageView.backButtonAction()) return;
-		if(historyBack()) return;
-		super.onBackPressed();
-	}
 }
