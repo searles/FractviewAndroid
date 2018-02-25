@@ -837,7 +837,7 @@ static uchar4 calc(int x, int y) {
     // program counter + current instruction
     int * is = program;
 
-	int data[1024];
+	int data[192];
 	data[0] = x; data[1] = y;
 	// int* color = &data[2];
 	data[3] = width; data[4] = height;

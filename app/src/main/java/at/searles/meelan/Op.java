@@ -612,7 +612,6 @@ public enum Op implements Operation {
 		@NonNull
 		@Override
 		public Tree eval(List<Tree> args) {
-			System.out.println("eval in for");
 			if(args.size() == 3 && args.get(0) instanceof Tree.Id) {
 				// for v in range do body
 				// is converted
@@ -2144,7 +2143,6 @@ public enum Op implements Operation {
 	}*/
 
 	Tree eval(Tree...args) {
-		System.out.println("OP: Called eval for " + this);
 		return eval(Arrays.asList(args));
 	}
 

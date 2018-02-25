@@ -1,9 +1,13 @@
 package at.searles.meelan;
 
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.Iterator;
+import java.util.List;
+
 import at.searles.math.Cplx;
 import at.searles.math.Quat;
-
-import java.util.*;
 
 /**
  * This class represents (possibly read-only-) values that can be encoded as an integer.
@@ -113,7 +117,7 @@ public abstract class Value extends Tree {
 		return argIndices;
 	}
 
-	public abstract Value addConversion(Sort sort, DataScope currentScope, Program program);
+	public abstract Value addConversion(Sort sort, DataScope currentScope, Program program) throws CompileException;
 
 
 	@Override
@@ -270,7 +274,7 @@ public abstract class Value extends Tree {
 		}
 
 		@Override
-		public Value addConversion(Sort sort, DataScope scope, Program program) {
+		public Value addConversion(Sort sort, DataScope scope, Program program) throws CompileException {
 			if(sort.type == type) return this; // no need to convert.
 
 			// target scope must not be null here!
@@ -278,7 +282,7 @@ public abstract class Value extends Tree {
 			target.initType(sort.type);
 
 			try {
-				Op.mov.addToProgram(Arrays.asList((Value) this, target), null, program);
+				Op.mov.addToProgram(Arrays.asList(this, target), null, program);
 			} catch (CompileException e) {
 				throw new IllegalArgumentException("this should not happen");
 			}
@@ -322,13 +326,15 @@ public abstract class Value extends Tree {
 			}
 		}
 
+		static int MAX_MEM = 0;
+
 		/**
 		 * Sets the type of the register. This must happen before any other scope is entered, so right
 		 * after the variable declaration has been taken care of. If this does not happen then, then two
 		 * variables might share the same register leading to undetermined behaviour!
 		 * @param type Type with which the variable should be initialized. Must not be null.
 		 */
-		public boolean initType(Type type) {
+		public boolean initType(Type type) throws CompileException {
 			if(type == null) return false;
 
 			if (this.type != null) {
