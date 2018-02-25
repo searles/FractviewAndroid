@@ -119,9 +119,14 @@ public class BitmapFragment extends Fragment implements DrawerListener, RenderSc
 	private boolean triggerStart = false;
 
 	/**
+	 * The state of the BitmapFragment
+	 */
+	private Status status;
+
+	/**
 	 * The job-dequeue.
 	 */
-	private LinkedList<AsyncTask<Void, Void, Void>> jobQueue;
+	private LinkedList<IdleJob> jobQueue;
 
 	/**
 	 * Listeners
@@ -168,14 +173,14 @@ public class BitmapFragment extends Fragment implements DrawerListener, RenderSc
 	void scheduleIdleJob(IdleJob job, boolean highPriority) {
 		// in ui thread
 		if(highPriority) {
-			jobs.addFirst(job);
+			jobQueue.addFirst(job);
 		} else {
-			jobs.addLast(job);
+			jobQueue.addLast(job);
 		}
 
-		if(status == IDLE) {
+		if(status == Status.IDLE) {
 			executeJobQueue();
-		} else if(status == RUNNING && job.cancelRunning()) {
+		} else if(status == Status.RUNNING && job.cancelRunning()) {
 			drawer.cancel();
 		}
 
