@@ -1493,8 +1493,8 @@ static int index_aligned(int index) {
 
 uchar4 *tile;
 
-void root(uchar4 *v_out, uint32_t x) {
-	if(x >= tilelength) return;
+uchar4 __attribute__((kernel)) root(uint32_t x) {
+	if(x >= tilelength) return 0;
 
     int index = index_aligned(x + offset);
 
@@ -1505,8 +1505,9 @@ void root(uchar4 *v_out, uint32_t x) {
 
 	uchar4 color = calc(x0, y0);
 
-	*v_out = color; // write into tile
-
-	// and set pixel
+	// todo: move into own script
+	// set pixel in bitmap
 	rsSetElementAt_uchar4(gOut, color, x0, y0);
+
+	return color;
 } // function

@@ -43,13 +43,6 @@ public class RenderScriptDrawer implements Drawer {
 
 	private Allocation rsTile;
 
-	/**
-	 * the next field is needed to force sync of drawings. It has no other
-	 * practical use than to force a copy-operation that waits until the
-	 * rs-kernel is done.
-	 */
-	final byte[] dummy = new byte[4 * parallelPixs]; // one byte per pix
-
 	// allocation for program code
 	private Allocation program_alloc = null;
 
@@ -196,11 +189,8 @@ public class RenderScriptDrawer implements Drawer {
 				// calculate tile (this call cannot be intercepted)
 				script.forEach_root(rsTile); // call root
 
-				// fixme synchronization uses some hack here:
-				// I access rsTile. Since therefore, the previous forEach-call must
-				// have terminated, it waits here.
-
-				rsTile.copyTo(dummy);
+				// wait for kernel
+				rs.finish();
 
 				progress += tilelength;
 				if (editRequested) break;
