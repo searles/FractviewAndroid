@@ -293,7 +293,7 @@ public class BitmapFragment extends Fragment {
 					protected void onPostExecute(Void ignore) {
 						Log.d(getClass().getName(), "setting data");
 
-						setFractal(fractal());
+						setFractalUnsafe(fractal());
 
 						if(!setSizeUnsafe(width, height)) {
 							if(!setSizeUnsafe(screenWidth, screenHeight)) {
