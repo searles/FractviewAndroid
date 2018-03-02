@@ -173,6 +173,7 @@ public class BitmapFragment extends Fragment implements DrawerListener, RenderSc
 	void scheduleIdleJob(IdleJob job, boolean highPriority) {
 		// in ui thread
 		if(highPriority) {
+<<<<<<< HEAD:app/src/main/java/at/searles/fractview/bitmap/BitmapFragment.java
 			jobQueue.addFirst(job);
 		} else {
 			jobQueue.addLast(job);
