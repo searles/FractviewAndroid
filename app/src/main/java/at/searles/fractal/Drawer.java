@@ -38,7 +38,5 @@ public interface Drawer extends Runnable {
 
 	public float progress(); // value between 0 and 1
 
-	public void requestEdit();
-
-	public void clearRequestEdit();
+	public void cancel();
 }

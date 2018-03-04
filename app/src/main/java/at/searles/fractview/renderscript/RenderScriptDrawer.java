@@ -56,7 +56,7 @@ public class RenderScriptDrawer implements Drawer {
 	// for the task-part
 	private volatile int maxProgress;
 	private volatile int progress;
-	private boolean editRequested;
+	private boolean isCancelled;
 
 	RenderScriptDrawer(RenderScript rs, ScriptC_fractal script, ScriptC_fillimage fillScript) {
 		this.rs = rs;
@@ -90,14 +90,10 @@ public class RenderScriptDrawer implements Drawer {
 	}
 
 	@Override
-	public void requestEdit() {
-		this.editRequested = true;
+	public void cancel() {
+		this.isCancelled = true;
 	}
 
-	@Override
-	public void clearRequestEdit() {
-        this.editRequested = false;
-    }
 
     @Override
 	@Deprecated
@@ -213,7 +209,7 @@ public class RenderScriptDrawer implements Drawer {
 		maxProgress = size;
 
 		while (stepsize > 0) {
-			if (editRequested) break;
+			if (isCancelled) break;
 
 			script.set_stepsize(stepsize);
 
@@ -237,7 +233,7 @@ public class RenderScriptDrawer implements Drawer {
 				rs.finish();
 
 				progress += tilelength;
-				if (editRequested) break;
+				if (isCancelled) break;
 			}
 
 			// fill gaps
