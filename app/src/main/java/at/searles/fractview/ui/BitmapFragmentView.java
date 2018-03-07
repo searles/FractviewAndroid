@@ -10,8 +10,9 @@ import android.view.View;
 import android.widget.FrameLayout;
 import android.widget.ProgressBar;
 
-import at.searles.fractview.BitmapFragment;
 import at.searles.fractview.R;
+import at.searles.fractview.bitmap.BitmapFragment;
+import at.searles.fractview.bitmap.BitmapFragmentListener;
 import at.searles.math.Scale;
 
 /**
@@ -31,7 +32,7 @@ public class BitmapFragmentView extends FrameLayout {
 
     // Bitmap fragment is needed for many tasks
     private BitmapFragment bitmapFragment;
-    private BitmapFragment.BitmapFragmentListener bitmapFragmentListener;
+    private BitmapFragmentListener bitmapFragmentListener;
 
     private ProgressBar drawerProgressBar;
 
@@ -79,7 +80,7 @@ public class BitmapFragmentView extends FrameLayout {
     /**
      * Class used for updating the view on a regular basis
      */
-    class DrawerProgressTask implements Runnable {
+    private class DrawerProgressTask implements Runnable {
         Handler updateHandler;
         boolean updateActionRunning;
 
@@ -139,11 +140,7 @@ public class BitmapFragmentView extends FrameLayout {
             this.imageView.setBitmap(bitmapFragment.getBitmap());
         }
 
-        this.bitmapFragmentListener = new BitmapFragment.BitmapFragmentListener() {
-            @Override
-            public void initializationFinished() {
-            }
-
+        this.bitmapFragmentListener = new BitmapFragmentListener() {
             @Override
             public void bitmapUpdated(BitmapFragment src) {
                 invalidate();

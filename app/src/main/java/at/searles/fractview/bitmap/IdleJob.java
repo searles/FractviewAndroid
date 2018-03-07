@@ -7,6 +7,10 @@ import android.os.AsyncTask;
  * BitmapFragment is idle.
  */
 public interface IdleJob {
+    /**
+     * If true,
+     * @return
+     */
     boolean imageIsModified();
 
     AsyncTask<Void, Void, Void> task();
