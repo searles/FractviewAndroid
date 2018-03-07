@@ -38,6 +38,7 @@ import at.searles.fractal.FavoriteEntry;
 import at.searles.fractal.Fractal;
 import at.searles.fractal.android.BundleAdapter;
 import at.searles.fractview.bitmap.BitmapFragment;
+import at.searles.fractview.bitmap.BitmapFragmentListener;
 import at.searles.fractview.renderscript.RenderScriptFragment;
 import at.searles.fractview.ui.BitmapFragmentView;
 import at.searles.fractview.ui.DialogHelper;
@@ -75,7 +76,7 @@ public class MainActivity extends Activity
 	/**
 	 * Listener for bitmap fragment
 	 */
-	private BitmapFragment.BitmapFragmentListener bitmapFragmentListener;
+	private BitmapFragmentListener bitmapFragmentListener;
 
 	private SharedPreferences prefs;
 
@@ -124,7 +125,7 @@ public class MainActivity extends Activity
 
 	private void initBitmapFragmentListener() {
 		// set up listeners for bitmap fragment
-		bitmapFragmentListener = new BitmapFragment.BitmapFragmentListener() {
+		bitmapFragmentListener = new BitmapFragmentListener() {
 
 			@Override
 			public void drawerStarted(BitmapFragment source) {
@@ -136,11 +137,6 @@ public class MainActivity extends Activity
 			@Override
 			public void drawerFinished(long ms, BitmapFragment source) {
 				DialogHelper.info(MainActivity.this, "Finished after " + Commons.duration(ms));
-			}
-
-			@Override
-			public void initializationFinished() {
-				// not needed here.
 			}
 
 			@Override
@@ -523,7 +519,7 @@ public class MainActivity extends Activity
 						if(w == bitmapFragment.width() && h == bitmapFragment.height()) {
 							DialogHelper.info(((AlertDialog) d).getContext(), "size not changed");
 						} else {
-							if(!bitmapFragment.prepareSetSize(w, h)) {
+							if(!bitmapFragment.setSize(w, h)) {
 								DialogHelper.error(MainActivity.this, "Could not change size due to an error.");
 								success = false;
 							}

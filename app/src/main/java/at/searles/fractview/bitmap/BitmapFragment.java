@@ -158,6 +158,15 @@ public class BitmapFragment extends Fragment implements DrawerListener, RenderSc
 	}
 
 
+	private void scheduleNextJobQueueStep() {
+		new Handler(Looper.getMainLooper()).post(new Runnable() {
+			@Override
+			public void run() {
+				handleJobQueueStep();
+			}
+		});
+	}
+
 	/**
 	 * fetches a job from the job queue
 	 */
@@ -179,13 +188,12 @@ public class BitmapFragment extends Fragment implements DrawerListener, RenderSc
 				status = Status.IDLE;
 			}
 		} else {
-			IdleJob job = jobQueue.removeFirst();
-			createJobTask(job).execute();
+			executeNextJob();
 		}
 	}
 
 
-	private AsyncTask<Void, Void, Void> createJobTask(IdleJob job) {
+	private AsyncTask<Void, Void, Void> executeNextJob() {
 		// this is insensitive if the job was already executed before.
 		// in that case, this task will simply wait for its result.
 		return new AsyncTask<Void, Void, Void>() {
@@ -221,10 +229,13 @@ public class BitmapFragment extends Fragment implements DrawerListener, RenderSc
 
 			@Override
 			protected void onPostExecute(Void aVoid) {
-				job = null; // clean up.
-				handleJobQueueStep();
+				if(exception != null) {
+					exception.printStackTrace();
+				}
+
+				scheduleNextJobQueueStep();
 			}
-		};
+		}.execute();
 	}
 
 	/**
@@ -252,6 +263,13 @@ public class BitmapFragment extends Fragment implements DrawerListener, RenderSc
 	@Override
 	public void rsInitializationFinished(RenderScriptFragment fragment) {
 		// in ui-thread
+		initializeDrawer(fragment);
+	}
+
+	private void initializeDrawer(RenderScriptFragment fragment) {
+		if(this.status != Status.INITIALIZING) {
+			throw new IllegalArgumentException("bitmap fragment status is not 'initializing'");
+		}
 
 		if(fragment.isInitializing()) {
 			throw new IllegalArgumentException("drawer fragment is still initializing");
@@ -264,7 +282,18 @@ public class BitmapFragment extends Fragment implements DrawerListener, RenderSc
 		this.drawer = fragment.createDrawer();
 		this.drawer.setListener(this);
 
-		// todo set data in drawer
+		// set data.
+		this.drawer.setFractal(this.fractal);
+
+		// create bitmap
+		if(!prepareSetSize(this.width, this.height)) {
+			if(!prepareSetSize(DEFAULT_WIDTH, DEFAULT_HEIGHT)) {
+				// crash on purpose
+				throw new IllegalArgumentException("Cannot set minimum image size");
+			}
+		}
+
+		applyNewSize();
 
 		startBackgroundTask();
 	}
@@ -333,14 +362,28 @@ public class BitmapFragment extends Fragment implements DrawerListener, RenderSc
 		super.onCreate(savedInstanceState);
 		setRetainInstance(true); // preserve this one on rotation
 
+		readArguments();
+
+		// set up logic
+		RenderScriptFragment renderScriptFragment =
+				(RenderScriptFragment) getFragmentManager().findFragmentByTag(MainActivity.RENDERSCRIPT_FRAGMENT_TAG);
+
+		if(!renderScriptFragment.isInitializing()) {
+			// initialization done, we can already create the drawer
+			initializeDrawer(renderScriptFragment);
+		} else {
+			// keep us informed when initialization is finished
+			renderScriptFragment.addListener(this);
+		}
+	}
+
+	private void readArguments() {
 		// Read initial width/height
 		int screenWidth = getArguments().getInt(SCREEN_WIDTH_LABEL);
 		int screenHeight = getArguments().getInt(SCREEN_HEIGHT_LABEL);
 
 		if(screenWidth < 0 || screenHeight < 0) {
-			Log.e(getClass().getName(), "invalid screen size: " + screenWidth + "x" + screenHeight);
-			screenWidth = DEFAULT_WIDTH;
-			screenHeight = DEFAULT_HEIGHT;
+			throw new IllegalArgumentException("invalid screen size: " + screenWidth + "x" + screenHeight);
 		}
 
 		this.width = getArguments().getInt(WIDTH_LABEL);
@@ -356,9 +399,6 @@ public class BitmapFragment extends Fragment implements DrawerListener, RenderSc
 
 		if(this.fractal == null) throw new IllegalArgumentException("no fractal in arguments!");
 
-		// The fractal must be compilable! If it is a user-defined one
-		// it was checked before it was put into the parcel.
-
 		// the initial fractal must always be compilable, otherwise it is no fun.
 		try {
 			// Fractal is guaranteed to compile
@@ -367,37 +407,6 @@ public class BitmapFragment extends Fragment implements DrawerListener, RenderSc
 		} catch(CompileException e) {
 			e.printStackTrace();
 			throw new IllegalArgumentException("initial fractal is not compilable: " + e.getMessage());
-		}
-
-		setFractal(fractal());
-
-		if(!setSizeUnsafe(width, height)) {
-			if(!setSizeUnsafe(screenWidth, screenHeight)) {
-
-				width = DEFAULT_WIDTH;
-				height = DEFAULT_HEIGHT;
-
-				while(!setSizeUnsafe(width, height)) {
-					// + 3 so that the result is at least 1.
-					width = (width + 3) / 4;
-					height = (height + 3) / 4;
-				}
-			}
-		}
-
-		Log.d(getClass().getName(), "init is done");
-
-		drawer.setFractal(fractal);
-
-		// set up logic
-		RenderScriptFragment renderScriptFragment =
-				(RenderScriptFragment) getFragmentManager().findFragmentByTag(MainActivity.RENDERSCRIPT_FRAGMENT_TAG);
-
-		renderScriptFragment.addListener(this);
-
-		if(!renderScriptFragment.isInitializing()) {
-			// initialization done, we can already create the drawer
-			rsInitializationFinished(renderScriptFragment);
 		}
 	}
 
@@ -414,14 +423,51 @@ public class BitmapFragment extends Fragment implements DrawerListener, RenderSc
 	// ------------------------
 
 	/**
+	 * Tries to create data structures for a new bitmap of the given size and
+	 * schedules a task for it. BitmapFragment status must not be 'initializing'
+	 * @param width the new width of the image
+	 * @param height the new height of the image
+	 * @return false if the image could not be created (eg because there wasn't
+	 * enough memory)
+	 */
+	public boolean setSize(int width, int height) {
+		if(!prepareSetSize(width, height)) {
+			return false;
+		}
+
+		scheduleIdleJob(new IdleJob() {
+			@Override
+			public boolean imageIsModified() {
+				return false;
+			}
+
+			@Override
+			public AsyncTask<Void, Void, Void> task() {
+				return new AsyncTask<Void, Void, Void>() {
+					@Override
+					protected void onPreExecute() {
+						BitmapFragment.this.applyNewSize();
+					}
+
+					@Override
+					protected Void doInBackground(Void... params) {
+						return null;
+					}
+				};
+			}
+		}, true, true);
+
+		return true;
+	}
+
+	/**
 	 * Creates a new bitmap in newBitmap that is later used as new bitmap before
 	 * the next calculation is started.
 	 * @param width The new width
 	 * @param height The new height
 	 * @return true if creating the new bitmap was successful.
 	 */
-	public boolean prepareSetSize(int width, int height) {
-		// FIXME assertInUIThread
+	private boolean prepareSetSize(int width, int height) {
 		try {
 			newBitmap = Bitmap.createBitmap(width, height, Bitmap.Config.ARGB_8888);
 
@@ -431,23 +477,6 @@ public class BitmapFragment extends Fragment implements DrawerListener, RenderSc
 				return false;
 			}
 
-			scheduleIdleJob(new IdleJob() {
-				@Override
-				public boolean imageIsModified() {
-					return false;
-				}
-
-				@Override
-				public AsyncTask<Void, Void, Void> task() {
-					return null;
-				}
-			}, true, true);
-			edit(new Runnable() {
-				@Override
-				public void run() {
-				}
-			});
-
 			return true;
 		} catch(OutOfMemoryError e) {
 			e.printStackTrace();
@@ -455,10 +484,7 @@ public class BitmapFragment extends Fragment implements DrawerListener, RenderSc
 		}
 	}
 
-	public void applyNewSize() {
-		// FIXME assertInUIThread();
-		// FIXME assertNotRunning();
-
+	private void applyNewSize() {
 		if(newBitmap != null) {
 			// there might very theoretically be multiple
 			// calls before the calculation stops,
@@ -468,37 +494,36 @@ public class BitmapFragment extends Fragment implements DrawerListener, RenderSc
 
 			drawer.applyNewSize();
 
-			fireNewBitmapCreated();
+			for(BitmapFragmentListener l : listeners) {
+				l.newBitmapCreated(BitmapFragment.this.bitmap, BitmapFragment.this);
+			}
 		}
 	}
 
 	public void setScale(Scale sc) {
-		edit(new Runnable() {
-			public void run() {
-				setScaleUnsafe(sc);
-			}
-		});
+		scheduleIdleJob(IdleJob.editor(
+				new Runnable() {
+					public void run() {
+						fractal = fractal.copyNewScale(sc);
+						drawer.setScale(sc); // not necessary to update the whole fractal.
+					}
+				}
+		), false, true);
 	}
 
 	public void setScaleRelative(Scale sc) {
-		edit(new Runnable() {
-			public void run() {
-				setScaleUnsafe(fractal.scale().relative(sc));
-			}
-		});
-	}
-
-	private void setScaleUnsafe(Scale sc) {
-		fractal = fractal.copyNewScale(sc);
-		drawer.setScale(sc); // not necessary to update the whole fractal.
+		setScale(fractal.scale().relative(sc));
 	}
 
 	public void setFractal(Fractal f) {
-		edit(new Runnable() {
-			public void run() {
-				setFractalUnsafe(f);
-			}
-		});
+		scheduleIdleJob(IdleJob.editor(
+				new Runnable() {
+					public void run() {
+						fractal = f;
+						drawer.setFractal(f);
+					}
+				}
+		), false, true);
 	}
 
 
