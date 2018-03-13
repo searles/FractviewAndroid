@@ -1,140 +1,101 @@
-package at.searles.fractview;
+package at.searles.fractview.saving;
 
-import android.app.Activity;
 import android.app.AlertDialog;
+import android.app.Fragment;
 import android.app.WallpaperManager;
-import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.graphics.Bitmap;
 import android.net.Uri;
 import android.os.AsyncTask;
+import android.os.Bundle;
+import android.support.annotation.Nullable;
 import android.support.v4.content.FileProvider;
-import android.util.Log;
+import android.view.LayoutInflater;
+import android.view.View;
+import android.view.ViewGroup;
 
 import java.io.File;
+import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
 
+import at.searles.fractview.Commons;
+import at.searles.fractview.bitmap.BitmapFragment;
+import at.searles.fractview.bitmap.IdleJob;
 import at.searles.fractview.ui.DialogHelper;
 
 /**
- * Created by searles on 18.06.17.
+ * This fragment saves bitmaps. It waits until the corresponding
+ * bitmap fragment has finished.
  */
 
-public class SavePlugin implements BitmapFragmentPlugin, BitmapFragment.BitmapFragmentListener {
+public class SaveFragment extends Fragment {
 
-    private static final int WAITING_FOR_RENDER = 0;
-    private static final int SAVING = 1;
+    // once the fragment is created there is
+    // * After the selection create idle-job
+    // * schedule non-interrupting idle-job that performs save-op.
+    // * if bitmap fragment is running show skip/cancel
+    //   + skip: start asynctask in idle-job.
+    //   + cancel: set cancel flag in idle-job, then run it (actually doing nothing).
+    // * once, idle-job starts, hide skip/cancel dialog and show '... saving' dialog
+    // done.
 
-    private interface Action {
-        void apply(BitmapFragment fragment);
+    public static SaveFragment newInstance() {
+        SaveFragment fragment = new SaveFragment();
+
+        Bundle args = new Bundle();
+        fragment.setArguments(args);
+
+        return fragment;
     }
 
-    public static SavePlugin createShare() {
-        return new SavePlugin((fragment) -> {
-            try {
-                File imageFile = File.createTempFile("fractview", ".png", fragment.getActivity().getExternalCacheDir());
-                SavePlugin.saveImage(imageFile, fragment);
-
-                Commons.uiRun(() -> {
-                    // Share text file
-                    Uri contentUri = FileProvider.getUriForFile(fragment.getActivity(), "at.searles.fractview.fileprovider", imageFile);
-                    // after it was successfully saved, share it.
-                    Intent share = new Intent(Intent.ACTION_SEND);
-                    share.setType("image/png");
-                    share.putExtra(Intent.EXTRA_STREAM, contentUri);
-                    fragment.startActivity(Intent.createChooser(share, "Share Image"));
-                });
-            } catch (IOException e) {
-                e.printStackTrace();
-            }
-        });
+    public SaveFragment() {
     }
 
-    public static SavePlugin createSave(File file) {
-        return new SavePlugin(new Action() {
-            @Override
-            public void apply(BitmapFragment fragment) {
-                SavePlugin.saveImage(file, fragment);
-                // this is executed after saving was successful
-                // Add it to the gallery
-                Commons.uiRun(new Runnable() {
-                    @Override
-                    public void run() {
-                        Intent mediaScanIntent = new Intent(Intent.ACTION_MEDIA_SCANNER_SCAN_FILE);
-                        Uri contentUri = Uri.fromFile(file);
-                        mediaScanIntent.setData(contentUri);
-                        fragment.getActivity().sendBroadcast(mediaScanIntent);
-                    }
-                });
-            }
-        });
+    private BitmapFragment getBitmapFragment() {
+        // TODO
     }
 
-    public static SavePlugin createSetWallpaper() {
-        return new SavePlugin((fragment) -> {
-            // set bitmap
-            WallpaperManager wallpaperManager = WallpaperManager.getInstance(fragment.getActivity());
-            try {
-                wallpaperManager.setBitmap(fragment.getBitmap());
-            } catch (IOException e) {
-                e.printStackTrace();
-            }
-        });
-    }
-
-    private BitmapFragment fragment;
-    private final Action action;
-
-    private SavePlugin(Action action) {
-        Log.d(getClass().getName(), "constructor");
-
-        this.action = action;
+    private Bitmap getBitmap() {
+        return getBitmapFragment().getBitmap();
     }
 
     @Override
-    public void init(BitmapFragment fragment) {
-        Log.d(getClass().getName(), "init");
+    public void onCreate(@Nullable Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        this.setRetainInstance(true);
 
-        if(this.fragment != null) {
-            Log.e(getClass().getName(), "fragment is not null!");
+        IdleJob job = new IdleJob() {
+            @Override
+            public boolean imageIsModified() {
+                // no need to redraw the image if it is saved.
+                return false;
+            }
+
+            @Override
+            public AsyncTask<Void, Void, Void> task() {
+                return new SaveTask();
+            }
+        };
+
+        // get bitmap fragment
+        BitmapFragment bitmapFragment = getBitmapFragment();
+
+        if(bitmapFragment.isRunning()) {
+            // FIXME Create dialog fragment for skip/cancel
+
+            // If cancel, set cancel flag in job.
         }
 
-        this.fragment = fragment;
+        // add job to bitmap fragment, executed before all
+        // others, but do not interrupt the execution.
+        bitmapFragment.scheduleIdleJob(job, true, false);
+    }
 
-        fragment.addBitmapFragmentPlugin(this);
-
-        if(fragment.isRunning()) {
-            stage = WAITING_FOR_RENDER;
-        } else {
-            stage = SAVING;
-        }
-
-        if(fragment.getActivity() != null) {
-            attachContext(fragment.getActivity());
-        }
-
-        if(fragment.isRunning()) {
-            // Saving will be called from 'finished'
-            fragment.addBitmapFragmentListener(this);
-        } else {
-            performSaveOperation();
-        }
-
-        /*View waitView = view.setBusyView();
-
-        Button cancelButton = (Button) waitView.findViewById(R.id.cancelButton);
-        Button skipButton = (Button) waitView.findViewById(R.id.skipButton);
-
-        cancelButton.setOnClickListener((l) -> dispose());
-        skipButton.setOnClickListener((l) -> performSaveOperation(fragment.getBitmap()));
-    */}
-
-    private AlertDialog simpleDialog = null;
-    private int stage = -1;
-
-    private void createDialog(Context context) {
+    @Nullable
+    @Override
+    public View onCreateView(LayoutInflater inflater, @Nullable ViewGroup container, Bundle savedInstanceState) {
         AlertDialog.Builder builder = new AlertDialog.Builder(context);
 
         switch(stage) {
@@ -164,72 +125,69 @@ public class SavePlugin implements BitmapFragmentPlugin, BitmapFragment.BitmapFr
         }
 
         simpleDialog = builder.show();
+
+
+        // create dialog that is currently appropriate
+        return super.onCreateView(inflater, container, savedInstanceState);
     }
 
-    @Override
-    public void attachContext(Activity context) {
-        Log.d(getClass().getName(), "attachContext");
-        createDialog(context);
-    }
+    private class SaveTask extends AsyncTask<Void, Void, Void> {
 
-    @Override
-    public void detach() {
-        simpleDialog = null;
-    }
+        private File imageFile;
+        private IOException exception;
 
-        // for task logic
-    private void dispose() {
-        Log.d(getClass().getName(), "dispose");
-
-        // the following might fail because rendering
-        // has already finished
-        fragment.removeBitmapFragmentListener(this);
-
-        fragment.removeBitmapFragmentPlugin(this);
-
-        if(simpleDialog != null) {
-            Log.d(getClass().getName(), "dismissing dialog");
-            simpleDialog.dismiss();
-        }
-    }
-
-    private void performSaveOperation() {
-        Log.d(getClass().getName(), "performSaveOperation");
-
-        if(stage == WAITING_FOR_RENDER) {
-            Log.d(getClass().getName(), "switching stages");
-
-            stage = SAVING;
-
-            // there was a waiting stage and thus an old dialog.
-            // maybe unless we are in a funny moment
-            // where the activity is just recreated...
-            if(simpleDialog != null) {
-                Context context = simpleDialog.getContext();
-                simpleDialog.dismiss();
-                createDialog(context);
+        @Override
+        protected void onPreExecute() {
+            if(isCancelled()) {
+                return;
             }
-        } else {
-            Log.d(getClass().getName(), "not switching stages");
+
+            // TODO hide skip/cancel dialog if it exists.
+
+            // TODO show progress dialog
+
+            try {
+                imageFile = File.createTempFile("fractview", ".png", getActivity().getExternalCacheDir());
+            } catch (IOException e) {
+                DialogHelper.error(getContext(), e.getLocalizedMessage());
+            }
         }
 
-        new AsyncTask<Void, Void, Void>() {
-            @Override
-            protected Void doInBackground(Void... params) {
-                action.apply(fragment);
-                return null;
+        @Override
+        protected void onPostExecute(Void aVoid) {
+            if(isCancelled()) {
+                return;
             }
 
-            @Override
-            protected void onPostExecute(Void result) {
-                dispose(); // remove all listeners
+            // TODO hide dialog fragment
+
+            if(exception == null) {
+                try {
+                    shareImageFile(imageFile);
+                } catch (IOException e) {
+                    exception = e;
+                }
             }
-        }.execute();
+
+            if(exception != null) {
+                DialogHelper.error(getContext(), exception.getLocalizedMessage());
+            }
+        }
+
+        @Override
+        protected Void doInBackground(Void... params) {
+            if(!isCancelled()) {
+                try {
+                    saveImage(imageFile);
+                } catch (IOException e) {
+                    e.printStackTrace();
+                    this.exception = e;
+                }
+            }
+
+            return null;
+        }
     }
-
-    // ==================================================================
-    // ================= Save/Share/Set as Wallpaper ====================
-    // ==================================================================
 
     /**
      * Saves the image in the background. As a special tweak, it displays a dialog to
@@ -237,54 +195,36 @@ public class SavePlugin implements BitmapFragmentPlugin, BitmapFragment.BitmapFr
      * saves the image instantly, Cancel cancels the whole thing.
      * @param imageFile File object in which the image should be saved.
      */
-    private static void saveImage(final File imageFile, BitmapFragment fragment) {
+    private void saveImage(File imageFile) throws IOException {
         // Not in UI thread!
-        Bitmap bitmap = fragment.getBitmap();
-
-        String errorMsg;
-        try {
-            FileOutputStream fos = new FileOutputStream(imageFile);
-
-            if (bitmap.compress(Bitmap.CompressFormat.PNG, 100, fos)) {
-                // Successfully written picture
-                fos.close();
-                return;
-            } else {
-                errorMsg = "Error calling \"compress\".";
-                fos.close();
+        try (FileOutputStream fos = new FileOutputStream(imageFile)) {
+            if (!getBitmap().compress(Bitmap.CompressFormat.PNG, 100, fos)) {
+                throw new UnsupportedOperationException("compress not supported!");
             }
-        } catch(IOException e) {
-            errorMsg = e.getLocalizedMessage();
         }
-
-        String finalErrorMsg = errorMsg;
-        Commons.uiRun(() -> DialogHelper.error(fragment.getActivity(), finalErrorMsg));
     }
 
-
-
-    // from BitmapFragmentListener
-    @Override
-    public void drawerFinished(long ms, BitmapFragment src) {
-        if(fragment != src) {
-            Log.e(getClass().getName(), "fragment is not src in drawerFinished!");
-        }
-
-        performSaveOperation();
+    private void shareImageFile(File file) throws IOException {
+        // FIXME better create file in a public place.
+        // Share text file
+        Uri contentUri = FileProvider.getUriForFile(getActivity(), "at.searles.fractview.fileprovider", file);
+        // after it was successfully saved, share it.
+        Intent share = new Intent(Intent.ACTION_SEND);
+        share.setType("image/png");
+        share.putExtra(Intent.EXTRA_STREAM, contentUri);
+        startActivity(Intent.createChooser(share, "Share Image"));
     }
 
-    @Override
-    public void initializationFinished() {}
+    private void saveImageFileToMedia(File file) {
+        Intent mediaScanIntent = new Intent(Intent.ACTION_MEDIA_SCANNER_SCAN_FILE);
+        Uri contentUri = Uri.fromFile(file);
+        mediaScanIntent.setData(contentUri);
+        getActivity().sendBroadcast(mediaScanIntent);
+    }
 
-    @Override
-    public void bitmapUpdated(BitmapFragment src) {}
-
-    @Override
-    public void previewGenerated(BitmapFragment src) {}
-
-    @Override
-    public void drawerStarted(BitmapFragment src) {}
-
-    @Override
-    public void newBitmapCreated(Bitmap bitmap, BitmapFragment src) {}
+    private void setBitmapAsWallpaper(Bitmap bitmap) throws IOException {
+        // set bitmap
+        WallpaperManager wallpaperManager = WallpaperManager.getInstance(getActivity());
+        wallpaperManager.setBitmap(bitmap);
+    }
 }

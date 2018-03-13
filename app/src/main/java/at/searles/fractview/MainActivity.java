@@ -40,6 +40,7 @@ import at.searles.fractal.android.BundleAdapter;
 import at.searles.fractview.bitmap.BitmapFragment;
 import at.searles.fractview.bitmap.BitmapFragmentListener;
 import at.searles.fractview.renderscript.RenderScriptFragment;
+import at.searles.fractview.saving.SaveFragment;
 import at.searles.fractview.ui.BitmapFragmentView;
 import at.searles.fractview.ui.DialogHelper;
 import at.searles.meelan.CompileException;
@@ -244,7 +245,7 @@ public class MainActivity extends Activity
 					if(requestCode == IMAGE_PERMISSIONS_SAVE) {
 						saveImage();
 					} else {
-						SavePlugin.createShare().init(bitmapFragment);
+						SaveFragment.createShare().init(bitmapFragment);
 					}
 				} else {
 					Toast.makeText(this, "ERROR: Cannot share/save images without " +
@@ -254,7 +255,7 @@ public class MainActivity extends Activity
 
 			case WALLPAPER_PERMISSIONS: {
 				if(grantResults[0] == PackageManager.PERMISSION_GRANTED) {
-					SavePlugin.createSetWallpaper().init(bitmapFragment);
+					SaveFragment.createSetWallpaper().init(bitmapFragment);
 				} else {
 					Toast.makeText(this, "Cannot set image as wallpaper without " +
 							"permissions.", Toast.LENGTH_LONG).show();
@@ -358,7 +359,7 @@ public class MainActivity extends Activity
                                                     Manifest.permission.WRITE_EXTERNAL_STORAGE
                                             }, IMAGE_PERMISSIONS_SHARE);
                                 } else {
-                                    SavePlugin.createShare().init(bitmapFragment);
+                                    SaveFragment.createShare().init(bitmapFragment);
                                 }
                             }
                             break;
@@ -387,7 +388,7 @@ public class MainActivity extends Activity
                                                     Manifest.permission.SET_WALLPAPER
                                             }, WALLPAPER_PERMISSIONS);
                                 } else {
-                                    SavePlugin.createSetWallpaper().init(bitmapFragment);
+                                    SaveFragment.createSetWallpaper().init(bitmapFragment);
                                 }
                             }
                             break;
@@ -591,7 +592,7 @@ public class MainActivity extends Activity
 						}
 
 						// Saving is done in the following plugin
-						SavePlugin.createSave(imageFile).init(bitmapFragment);
+						SaveFragment.createSave(imageFile).init(bitmapFragment);
                     }
                 });
 	}

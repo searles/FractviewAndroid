@@ -547,6 +547,18 @@ public class BitmapFragment extends Fragment implements DrawerListener, RenderSc
         return height;
     }
 
+	/**
+	 * Deprecated because this should be of no interest of anybody.
+	 * Currently only used in MainActivity to store current data on
+	 * rotation.
+	 * Should actually be replaced by FractalProviderFragment.
+	 * @return the fractal that is currently drawn
+	 */
+	@Deprecated
+	public Fractal fractal() {
+		return fractal;
+	}
+
 	// =============================================================
 	// ====== Manage listener    ===================================
 	// =============================================================
