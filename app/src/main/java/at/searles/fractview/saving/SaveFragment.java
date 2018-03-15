@@ -55,7 +55,7 @@ public class SaveFragment extends Fragment {
         return fragment;
     }
 
-    private IdleJob job;
+    private SaveJob job;
 
     public SaveFragment() {
     }
@@ -65,18 +65,7 @@ public class SaveFragment extends Fragment {
         super.onCreate(savedInstanceState);
         this.setRetainInstance(true);
 
-        job = new IdleJob() {
-            @Override
-            public boolean imageIsModified() {
-                // no need to redraw the image if it is saved.
-                return false;
-            }
-
-            @Override
-            public AsyncTask<Void, Void, Void> task() {
-                return new SaveTask();
-            }
-        };
+        job = new SaveJob();
 
         // get bitmap fragment
         BitmapFragment bitmapFragment = (BitmapFragment) getParentFragment();
@@ -114,15 +103,54 @@ public class SaveFragment extends Fragment {
     }
 
     public void onCancel() {
-        job.task().cancel(true);
+        job.cancel();
     }
 
     public void onSkip() {
-        job.task().execute();
+        job.startJob();
     }
 
     private Bitmap getBitmap() {
         return ((BitmapFragment) getParentFragment()).getBitmap();
+    }
+
+    /**
+     * Saves the image in the background. As a special tweak, it displays a dialog to
+     * save the file only once the calculation is done. This dialog allows skip or cancel. Skip
+     * saves the image instantly, Cancel cancels the whole thing.
+     * @param imageFile File object in which the image should be saved.
+     */
+    private void saveImage(File imageFile) throws IOException {
+        // Not in UI thread!
+        try (FileOutputStream fos = new FileOutputStream(imageFile)) {
+            if (!getBitmap().compress(Bitmap.CompressFormat.PNG, 100, fos)) {
+                throw new UnsupportedOperationException("compress not supported!");
+            }
+        }
+    }
+
+    private void shareImageFile(File file) throws IOException {
+        // FIXME better create file in a public place.
+        // Share text file
+        Uri contentUri = FileProvider.getUriForFile(getActivity(), "at.searles.fractview.fileprovider", file);
+        // after it was successfully saved, share it.
+        Intent share = new Intent(Intent.ACTION_SEND);
+        share.setType("image/png");
+        share.putExtra(Intent.EXTRA_STREAM, contentUri);
+        startActivity(Intent.createChooser(share, "Share Image"));
+    }
+
+    private void saveImageFileToMedia(File file) {
+        Intent mediaScanIntent = new Intent(Intent.ACTION_MEDIA_SCANNER_SCAN_FILE);
+        Uri contentUri = Uri.fromFile(file);
+        mediaScanIntent.setData(contentUri);
+        getActivity().sendBroadcast(mediaScanIntent);
+    }
+
+    private void setBitmapAsWallpaper(Bitmap bitmap) throws IOException {
+        // set bitmap
+        WallpaperManager wallpaperManager = WallpaperManager.getInstance(getActivity());
+        wallpaperManager.setBitmap(bitmap);
     }
 
     private class SaveTask extends AsyncTask<Void, Void, Void> {
@@ -183,42 +211,26 @@ public class SaveFragment extends Fragment {
         }
     }
 
-    /**
-     * Saves the image in the background. As a special tweak, it displays a dialog to
-     * save the file only once the calculation is done. This dialog allows skip or cancel. Skip
-     * saves the image instantly, Cancel cancels the whole thing.
-     * @param imageFile File object in which the image should be saved.
-     */
-    private void saveImage(File imageFile) throws IOException {
-        // Not in UI thread!
-        try (FileOutputStream fos = new FileOutputStream(imageFile)) {
-            if (!getBitmap().compress(Bitmap.CompressFormat.PNG, 100, fos)) {
-                throw new UnsupportedOperationException("compress not supported!");
+    public class SaveJob extends IdleJob {
+
+        private boolean isCancelled = false;
+        private SaveTask task;
+
+        private SaveJob() {
+            super(false);
+        }
+
+        public void cancel() {
+            this.isCancelled = true;
+        }
+
+        protected void onStart() {
+            if (!isCancelled) {
+                task = new SaveTask();
+                task.execute();
+            } else {
+                onFinished();
             }
         }
-    }
-
-    private void shareImageFile(File file) throws IOException {
-        // FIXME better create file in a public place.
-        // Share text file
-        Uri contentUri = FileProvider.getUriForFile(getActivity(), "at.searles.fractview.fileprovider", file);
-        // after it was successfully saved, share it.
-        Intent share = new Intent(Intent.ACTION_SEND);
-        share.setType("image/png");
-        share.putExtra(Intent.EXTRA_STREAM, contentUri);
-        startActivity(Intent.createChooser(share, "Share Image"));
-    }
-
-    private void saveImageFileToMedia(File file) {
-        Intent mediaScanIntent = new Intent(Intent.ACTION_MEDIA_SCANNER_SCAN_FILE);
-        Uri contentUri = Uri.fromFile(file);
-        mediaScanIntent.setData(contentUri);
-        getActivity().sendBroadcast(mediaScanIntent);
-    }
-
-    private void setBitmapAsWallpaper(Bitmap bitmap) throws IOException {
-        // set bitmap
-        WallpaperManager wallpaperManager = WallpaperManager.getInstance(getActivity());
-        wallpaperManager.setBitmap(bitmap);
     }
 }

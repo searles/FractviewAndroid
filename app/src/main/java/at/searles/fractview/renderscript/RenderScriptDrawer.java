@@ -187,8 +187,23 @@ public class RenderScriptDrawer implements Drawer {
 		}
 	};
 
-	public void run() {
-		Log.d(getClass().getName(), "run()");
+	public void start() {
+		// in ui-thread.
+		isCancelled = false;
+
+		new Thread(
+				new Runnable() {
+					@Override
+					public void run() {
+						backgroundRenderer();
+					}
+				}
+		).start();
+	}
+
+
+	private void backgroundRenderer() {
+		Log.d(getClass().getName(), "backgroundRenderer()");
 
 		script.set_factor(0); // factor is 0 in beginning.
 
