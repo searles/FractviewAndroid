@@ -1,9 +1,7 @@
 package at.searles.fractview.bitmap;
 
-import android.app.Activity;
 import android.app.Fragment;
 import android.graphics.Bitmap;
-import android.os.AsyncTask;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
@@ -104,6 +102,13 @@ public class BitmapFragment extends Fragment implements DrawerListener, RenderSc
 	 */
 	private List<BitmapFragmentListener> listeners = new LinkedList<>();
 
+	private final IdleJob.Callback callback = new IdleJob.Callback() {
+		@Override
+		public void jobIsFinished(IdleJob job) {
+			executeNextJob();
+		}
+	};
+
 	// if true, the drawing is currently running and the drawer should
 	// not be modified. Only modified in UI thread
 	private enum Status {
@@ -137,6 +142,8 @@ public class BitmapFragment extends Fragment implements DrawerListener, RenderSc
 	// =============================================================
 
 	public void scheduleIdleJob(IdleJob job, boolean highPriority, boolean cancelRunning) {
+		Log.d(getClass().getName(), "scheduleIdleJob, cancel=" + cancelRunning);
+
 		// in ui thread
 		if(highPriority) {
 			jobQueue.addFirst(job);
@@ -145,7 +152,7 @@ public class BitmapFragment extends Fragment implements DrawerListener, RenderSc
 		}
 
 		if(status == Status.IDLE) {
-			handleJobQueueStep();
+			executeNextJob();
 		} else if(status == Status.RUNNING && cancelRunning) {
 			drawer.cancel();
 			// drawerFinished will execute the job queue.
@@ -157,19 +164,12 @@ public class BitmapFragment extends Fragment implements DrawerListener, RenderSc
 	}
 
 
-	private void scheduleNextJobQueueStep() {
-		new Handler(Looper.getMainLooper()).post(new Runnable() {
-			@Override
-			public void run() {
-				handleJobQueueStep();
-			}
-		});
-	}
-
 	/**
 	 * fetches a job from the job queue
 	 */
-	private void handleJobQueueStep() {
+	private void executeNextJob() {
+		Log.d(getClass().getName(), "executeNextJob");
+
 		// in ui thread.
 		if(status == Status.IDLE) {
 			status = Status.PROCESSING;
@@ -184,58 +184,29 @@ public class BitmapFragment extends Fragment implements DrawerListener, RenderSc
 				triggerStart = false;
 				startBackgroundTask();
 			} else {
+				Log.d(getClass().getName(), "no jobs, switching to idle");
 				status = Status.IDLE;
 			}
 		} else {
-			executeNextJob();
+			IdleJob job = jobQueue.removeFirst();
+
+			triggerStart |= job.restartDrawing();
+
+			Log.d(getClass().getName(), "executing job. triggerStart=" + triggerStart);
+
+			if(!job.isFinished()) {
+				// ignore job if it has already finished.
+				job.setCallback(callback);
+
+				if(job.isPending()) {
+					job.startJob(); // might immediately recursively call handleJobs.
+				}
+			} else {
+				executeNextJob();
+			}
 		}
 	}
 
-
-	private AsyncTask<Void, Void, Void> executeNextJob() {
-		// this is insensitive if the job was already executed before.
-		// in that case, this task will simply wait for its result.
-		return new AsyncTask<Void, Void, Void>() {
-
-			IdleJob job = null;
-			Exception exception = null;
-
-			@Override
-			protected void onPreExecute() {
-				// in ui thread
-				job = jobQueue.removeFirst();
-
-				if(job.imageIsModified()) {
-					triggerStart = true;
-				}
-
-				if(job.task().getStatus() == AsyncTask.Status.PENDING) {
-					job.task().execute();
-				}
-			}
-
-			@Override
-			protected Void doInBackground(Void... params) {
-				// wait for the idlejob to terminate.
-				try {
-					job.task().get();
-				} catch (Exception e) {
-					exception = e;
-				}
-
-				return null;
-			}
-
-			@Override
-			protected void onPostExecute(Void aVoid) {
-				if(exception != null) {
-					exception.printStackTrace();
-				}
-
-				scheduleNextJobQueueStep();
-			}
-		}.execute();
-	}
 
 	/**
 	 * This method starts the drawing thread in the background.
@@ -243,7 +214,7 @@ public class BitmapFragment extends Fragment implements DrawerListener, RenderSc
 	private void startBackgroundTask() {
 		// this is always started from UI-thread
 		// start calculation in background
-		Log.d(getClass().getName(), "start drawing");
+		Log.d(getClass().getName(), "startBackgroundTask");
 
 		status = Status.RUNNING;
 
@@ -251,7 +222,7 @@ public class BitmapFragment extends Fragment implements DrawerListener, RenderSc
 			listener.drawerStarted(this);
 		}
 
-		new Thread(drawer).start();
+		drawer.start();
 	}
 
 
@@ -319,43 +290,22 @@ public class BitmapFragment extends Fragment implements DrawerListener, RenderSc
 	@Override
 	public void drawingFinished() {
 		// Not in the UI Thread.
-		Log.d(getClass().getName(), "drawer is finished");
+		Log.d(getClass().getName(), "drawingFinished");
 
 		new Handler(Looper.getMainLooper()).post(new Runnable() {
 			@Override
 			public void run() {
+				Log.d(getClass().getName(), "status to idle");
+
 				status = Status.IDLE;
 
 				for(BitmapFragmentListener listener : listeners) {
 					listener.drawerFinished(-1, BitmapFragment.this);
 				}
 
-				handleJobQueueStep();
+				executeNextJob();
 			}
 		});
-	}
-
-	@Override
-	public void onAttach(Activity context) {
-		// Deprecated but Android SDK is buggy here!
-		Log.d("BMF", "onAttach");
-		super.onAttach(context);
-
-		// we are in the UI-thread and if this was the first start,
-		// onCreate was not yet called. Good point to initialize
-		// the RS-Object because it needs the activity and we are
-		// in the UI-thread, so no race-conditions.
-//		if(this.bitmap != null) {
-//			for(BitmapFragmentListener listener : listeners) {
-//				listener.newBitmapCreated(bitmap, this); // in case of rotation, this fragment is preserved
-//			}
-//		}
-	}
-
-	@Override
-	public void onDetach() {
-		Log.d(getClass().getName(), "onDetach");
-		super.onDetach();
 	}
 
 	@Override
@@ -436,27 +386,13 @@ public class BitmapFragment extends Fragment implements DrawerListener, RenderSc
 			return false;
 		}
 
-		scheduleIdleJob(new IdleJob() {
-			@Override
-			public boolean imageIsModified() {
-				return false;
-			}
-
-			@Override
-			public AsyncTask<Void, Void, Void> task() {
-				return new AsyncTask<Void, Void, Void>() {
+		scheduleIdleJob(IdleJob.editor(
+				new Runnable() {
 					@Override
-					protected void onPreExecute() {
+					public void run() {
 						BitmapFragment.this.applyNewSize();
 					}
-
-					@Override
-					protected Void doInBackground(Void... params) {
-						return null;
-					}
-				};
-			}
-		}, true, true);
+				}), true, true);
 
 		return true;
 	}
@@ -501,35 +437,8 @@ public class BitmapFragment extends Fragment implements DrawerListener, RenderSc
 		}
 	}
 
-	private static IdleJob editor(Runnable editor) {
-		return new IdleJob() {
-			@Override
-			public boolean imageIsModified() {
-				return true;
-			}
-
-			@Override
-			public AsyncTask<Void, Void, Void> task() {
-				return new AsyncTask<Void, Void, Void>() {
-
-					@Override
-					protected void onPreExecute() {
-						editor.run();
-					}
-
-					@Override
-					protected Void doInBackground(Void... params) {
-						// do nothing.
-						return null;
-					}
-				};
-			}
-		};
-	}
-
-
 	public void setScale(Scale sc) {
-		scheduleIdleJob(editor(
+		scheduleIdleJob(IdleJob.editor(
 				new Runnable() {
 					public void run() {
 						fractal = fractal.copyNewScale(sc);
@@ -544,7 +453,7 @@ public class BitmapFragment extends Fragment implements DrawerListener, RenderSc
 	}
 
 	public void setFractal(Fractal f) {
-		scheduleIdleJob(editor(
+		scheduleIdleJob(IdleJob.editor(
 				new Runnable() {
 					public void run() {
 						fractal = f;

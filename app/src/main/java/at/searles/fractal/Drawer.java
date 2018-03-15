@@ -4,7 +4,7 @@ import android.graphics.Bitmap;
 
 import at.searles.math.Scale;
 
-public interface Drawer extends Runnable {
+public interface Drawer {
 
 	public void setListener(DrawerListener listener);
 
@@ -39,4 +39,6 @@ public interface Drawer extends Runnable {
 	public float progress(); // value between 0 and 1
 
 	public void cancel();
+
+	public void start();
 }
