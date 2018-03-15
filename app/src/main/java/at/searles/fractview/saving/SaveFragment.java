@@ -87,7 +87,11 @@ public class SaveFragment extends Fragment {
 
     private void dismissSkipCancelDialogFragment() {
         DialogFragment dialogFragment = (DialogFragment) getChildFragmentManager().findFragmentByTag(SKIP_CANCEL_FRAGMENT_TAG);
-        dialogFragment.dismiss();
+
+        if(dialogFragment != null) {
+            dialogFragment.dismiss();
+        }
+
         // TODO: also remove from fragmentManager?
     }
 
@@ -194,6 +198,8 @@ public class SaveFragment extends Fragment {
             if(exception != null) {
                 DialogHelper.error(getContext(), exception.getLocalizedMessage());
             }
+
+            job.onFinished();
         }
 
         @Override
