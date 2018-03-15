@@ -52,7 +52,7 @@ public abstract class IdleJob {
 
     protected abstract void onStart();
 
-    protected final void onFinished() {
+    public final void onFinished() {
         // must be called from ui thread
 
         this.status = Status.FINISHED;

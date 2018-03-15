@@ -105,6 +105,7 @@ public class BitmapFragment extends Fragment implements DrawerListener, RenderSc
 	private final IdleJob.Callback callback = new IdleJob.Callback() {
 		@Override
 		public void jobIsFinished(IdleJob job) {
+			Log.d(BitmapFragment.this.getClass().getName(), "callback jobIsFinished");
 			executeNextJob();
 		}
 	};
