@@ -107,7 +107,6 @@ public class BitmapFragment extends Fragment implements DrawerListener, RenderSc
 	// if true, the drawing is currently running and the drawer should
 	// not be modified. Only modified in UI thread
 	private enum Status {
-		INITIALIZING, // in invalid state
 		RUNNING,      // drawer is running
 		IDLE,         // waiting for IdleJobs
 		PROCESSING    // in working loop
@@ -204,7 +203,7 @@ public class BitmapFragment extends Fragment implements DrawerListener, RenderSc
 			@Override
 			protected void onPreExecute() {
 				// in ui thread
-				IdleJob job = jobQueue.removeFirst();
+				job = jobQueue.removeFirst();
 
 				if(job.imageIsModified()) {
 					triggerStart = true;
@@ -267,8 +266,8 @@ public class BitmapFragment extends Fragment implements DrawerListener, RenderSc
 	}
 
 	private void initializeDrawer(RenderScriptFragment fragment) {
-		if(this.status != Status.INITIALIZING) {
-			throw new IllegalArgumentException("bitmap fragment status is not 'initializing'");
+		if(this.status != null) {
+			throw new IllegalArgumentException("bitmap fragment status already set to " + this.status);
 		}
 
 		if(fragment.isInitializing()) {
@@ -280,6 +279,8 @@ public class BitmapFragment extends Fragment implements DrawerListener, RenderSc
 		}
 
 		this.drawer = fragment.createDrawer();
+		this.drawer.init();
+
 		this.drawer.setListener(this);
 
 		// set data.
@@ -500,8 +501,35 @@ public class BitmapFragment extends Fragment implements DrawerListener, RenderSc
 		}
 	}
 
+	private static IdleJob editor(Runnable editor) {
+		return new IdleJob() {
+			@Override
+			public boolean imageIsModified() {
+				return true;
+			}
+
+			@Override
+			public AsyncTask<Void, Void, Void> task() {
+				return new AsyncTask<Void, Void, Void>() {
+
+					@Override
+					protected void onPreExecute() {
+						editor.run();
+					}
+
+					@Override
+					protected Void doInBackground(Void... params) {
+						// do nothing.
+						return null;
+					}
+				};
+			}
+		};
+	}
+
+
 	public void setScale(Scale sc) {
-		scheduleIdleJob(IdleJob.editor(
+		scheduleIdleJob(editor(
 				new Runnable() {
 					public void run() {
 						fractal = fractal.copyNewScale(sc);
@@ -516,7 +544,7 @@ public class BitmapFragment extends Fragment implements DrawerListener, RenderSc
 	}
 
 	public void setFractal(Fractal f) {
-		scheduleIdleJob(IdleJob.editor(
+		scheduleIdleJob(editor(
 				new Runnable() {
 					public void run() {
 						fractal = f;

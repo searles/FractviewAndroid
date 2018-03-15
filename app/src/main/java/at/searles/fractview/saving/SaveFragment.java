@@ -1,9 +1,10 @@
 package at.searles.fractview.saving;
 
-import android.app.AlertDialog;
+import android.app.DialogFragment;
 import android.app.Fragment;
+import android.app.FragmentManager;
+import android.app.FragmentTransaction;
 import android.app.WallpaperManager;
-import android.content.DialogInterface;
 import android.content.Intent;
 import android.graphics.Bitmap;
 import android.net.Uri;
@@ -11,16 +12,11 @@ import android.os.AsyncTask;
 import android.os.Bundle;
 import android.support.annotation.Nullable;
 import android.support.v4.content.FileProvider;
-import android.view.LayoutInflater;
-import android.view.View;
-import android.view.ViewGroup;
 
 import java.io.File;
-import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
 
-import at.searles.fractview.Commons;
 import at.searles.fractview.bitmap.BitmapFragment;
 import at.searles.fractview.bitmap.IdleJob;
 import at.searles.fractview.ui.DialogHelper;
@@ -32,16 +28,25 @@ import at.searles.fractview.ui.DialogHelper;
 
 public class SaveFragment extends Fragment {
 
-    // once the fragment is created there is
-    // * After the selection create idle-job
-    // * schedule non-interrupting idle-job that performs save-op.
-    // * if bitmap fragment is running show skip/cancel
-    //   + skip: start asynctask in idle-job.
-    //   + cancel: set cancel flag in idle-job, then run it (actually doing nothing).
-    // * once, idle-job starts, hide skip/cancel dialog and show '... saving' dialog
-    // done.
+    private static final String SAVE_FRAGMENT_TAG = "saveFragment";
 
-    public static SaveFragment newInstance() {
+    private static final String SKIP_CANCEL_FRAGMENT_TAG = "skipCancelTag";
+    private static final String WAIT_FRAGMENT_TAG = "waiting";
+
+    public static SaveFragment registerNewInstanceForParent(BitmapFragment bitmapFragment) {
+        FragmentManager fm = bitmapFragment.getChildFragmentManager();
+
+        FragmentTransaction fragmentTransaction = fm.beginTransaction();
+
+        SaveFragment saveFragment = newInstance();
+        fragmentTransaction.add(saveFragment, SAVE_FRAGMENT_TAG);
+
+        fragmentTransaction.commit();
+
+        return saveFragment;
+    }
+
+    private static SaveFragment newInstance() {
         SaveFragment fragment = new SaveFragment();
 
         Bundle args = new Bundle();
@@ -50,15 +55,9 @@ public class SaveFragment extends Fragment {
         return fragment;
     }
 
+    private IdleJob job;
+
     public SaveFragment() {
-    }
-
-    private BitmapFragment getBitmapFragment() {
-        // TODO
-    }
-
-    private Bitmap getBitmap() {
-        return getBitmapFragment().getBitmap();
     }
 
     @Override
@@ -66,7 +65,7 @@ public class SaveFragment extends Fragment {
         super.onCreate(savedInstanceState);
         this.setRetainInstance(true);
 
-        IdleJob job = new IdleJob() {
+        job = new IdleJob() {
             @Override
             public boolean imageIsModified() {
                 // no need to redraw the image if it is saved.
@@ -80,12 +79,10 @@ public class SaveFragment extends Fragment {
         };
 
         // get bitmap fragment
-        BitmapFragment bitmapFragment = getBitmapFragment();
+        BitmapFragment bitmapFragment = (BitmapFragment) getParentFragment();
 
         if(bitmapFragment.isRunning()) {
-            // FIXME Create dialog fragment for skip/cancel
-
-            // If cancel, set cancel flag in job.
+            createSkipCancelDialogFragment();
         }
 
         // add job to bitmap fragment, executed before all
@@ -93,42 +90,39 @@ public class SaveFragment extends Fragment {
         bitmapFragment.scheduleIdleJob(job, true, false);
     }
 
-    @Nullable
-    @Override
-    public View onCreateView(LayoutInflater inflater, @Nullable ViewGroup container, Bundle savedInstanceState) {
-        AlertDialog.Builder builder = new AlertDialog.Builder(context);
 
-        switch(stage) {
-            case WAITING_FOR_RENDER: {
-                // Can cancel and skip
-                builder.setTitle("Please wait...");
-                builder.setMessage("Image will be saved after rendering is finished. " +
-                        "To save immediately, select \"Save Now\".");
-                builder.setNeutralButton("Save Now", new DialogInterface.OnClickListener() {
-                    @Override
-                    public void onClick(DialogInterface dialog, int which) {
-                        performSaveOperation();
-                    }
-                });
-                builder.setNegativeButton("Cancel", new DialogInterface.OnClickListener() {
-                    @Override
-                    public void onClick(DialogInterface dialog, int which) {
-                        dispose();
-                    }
-                });
-            } break;
-            case SAVING: {
-                builder.setTitle("Please wait...");
-                builder.setMessage("Saving image");
-                builder.setCancelable(false);
-            } break;
-        }
+    private void createSkipCancelDialogFragment() {
+        DialogFragment dialogFragment = new SkipCancelDialogFragment();
+        dialogFragment.show(getChildFragmentManager(), SKIP_CANCEL_FRAGMENT_TAG);
+    }
 
-        simpleDialog = builder.show();
+    private void dismissSkipCancelDialogFragment() {
+        DialogFragment dialogFragment = (DialogFragment) getChildFragmentManager().findFragmentByTag(SKIP_CANCEL_FRAGMENT_TAG);
+        dialogFragment.dismiss();
+        // TODO: also remove from fragmentManager?
+    }
 
+    private void createProgressDialogFragment() {
+        DialogFragment dialogFragment = new WaitDialogFragment();
+        dialogFragment.show(getChildFragmentManager(), WAIT_FRAGMENT_TAG);
+    }
 
-        // create dialog that is currently appropriate
-        return super.onCreateView(inflater, container, savedInstanceState);
+    private void dismissProgressDialogFragment() {
+        DialogFragment dialogFragment = (DialogFragment) getChildFragmentManager().findFragmentByTag(WAIT_FRAGMENT_TAG);
+        dialogFragment.dismiss();
+        // TODO: also remove?
+    }
+
+    public void onCancel() {
+        job.task().cancel(true);
+    }
+
+    public void onSkip() {
+        job.task().execute();
+    }
+
+    private Bitmap getBitmap() {
+        return ((BitmapFragment) getParentFragment()).getBitmap();
     }
 
     private class SaveTask extends AsyncTask<Void, Void, Void> {
@@ -142,9 +136,9 @@ public class SaveFragment extends Fragment {
                 return;
             }
 
-            // TODO hide skip/cancel dialog if it exists.
+            dismissSkipCancelDialogFragment();
 
-            // TODO show progress dialog
+            createProgressDialogFragment();
 
             try {
                 imageFile = File.createTempFile("fractview", ".png", getActivity().getExternalCacheDir());
@@ -159,7 +153,7 @@ public class SaveFragment extends Fragment {
                 return;
             }
 
-            // TODO hide dialog fragment
+            dismissProgressDialogFragment();
 
             if(exception == null) {
                 try {

@@ -1,23 +1,23 @@
 package at.searles.fractview.fractal;
 
-import android.app.Fragment;
+import at.searles.fractal.Fractal;
 
 /**
  * Created by searles on 27.02.18.
  */
 
-public class FractalFragment extends Fragment {
-    Fractal get(i) returns the i-th fractal.
+public interface FractalFragment {
+    Fractal get(int i);// returns the i-th fractal.
 
-    Iterable<String> getParameters()
+    Iterable<String> getParameters();
 
-    getType(String label)
+    Object getType(String label);
 
-    getValue(String label)
+    <T> T getValue(String label);
 
-    setValue(String label, Object value)
+    <T> void setValue(String label, T value);
 
-    isDefault(String label)
+    boolean isDefault(String label);
 
-    resetToDefault(String label) // throw if it is default.
+    void resetToDefault(String label); // throw if it is default.
 }

@@ -1,6 +1,5 @@
 package at.searles.fractview;
 
-import android.Manifest;
 import android.annotation.SuppressLint;
 import android.app.Activity;
 import android.app.AlertDialog;
@@ -17,7 +16,6 @@ import android.os.Bundle;
 import android.os.Environment;
 import android.preference.PreferenceManager;
 import android.support.v4.app.ActivityCompat;
-import android.support.v4.content.ContextCompat;
 import android.util.Log;
 import android.view.Menu;
 import android.view.MenuInflater;
@@ -245,7 +243,7 @@ public class MainActivity extends Activity
 					if(requestCode == IMAGE_PERMISSIONS_SAVE) {
 						saveImage();
 					} else {
-						SaveFragment.createShare().init(bitmapFragment);
+						// FIXME SaveFragment.createShare().init(bitmapFragment);
 					}
 				} else {
 					Toast.makeText(this, "ERROR: Cannot share/save images without " +
@@ -255,7 +253,7 @@ public class MainActivity extends Activity
 
 			case WALLPAPER_PERMISSIONS: {
 				if(grantResults[0] == PackageManager.PERMISSION_GRANTED) {
-					SaveFragment.createSetWallpaper().init(bitmapFragment);
+					// FIXME SaveFragment.createSetWallpaper().init(bitmapFragment);
 				} else {
 					Toast.makeText(this, "Cannot set image as wallpaper without " +
 							"permissions.", Toast.LENGTH_LONG).show();
@@ -337,69 +335,70 @@ public class MainActivity extends Activity
     }
 
 	private void openShareDialog() {
-		AlertDialog.Builder builder = new AlertDialog.Builder(this);
-
-		String[] items = {"Share Image", "Save Image", "Set Image as Wallpaper"};
-
-		builder.setItems(items,
-                new DialogInterface.OnClickListener() {
-                    @Override
-                    public void onClick(DialogInterface dialog, int which) {
-                        switch (which) {
-                            case 0: { // Share
-                                // save/share image
-                                int readPermission = ContextCompat.checkSelfPermission(MainActivity.this, Manifest.permission.READ_EXTERNAL_STORAGE);
-                                int writePermission = ContextCompat.checkSelfPermission(MainActivity.this, Manifest.permission.WRITE_EXTERNAL_STORAGE);
-
-                                if(readPermission != PackageManager.PERMISSION_GRANTED || writePermission != PackageManager.PERMISSION_GRANTED) {
-                                    // I am anyways showing a Toast that I can't write if I can't write.
-                                    ActivityCompat.requestPermissions(MainActivity.this,
-                                            new String[]{
-                                                    Manifest.permission.READ_EXTERNAL_STORAGE,
-                                                    Manifest.permission.WRITE_EXTERNAL_STORAGE
-                                            }, IMAGE_PERMISSIONS_SHARE);
-                                } else {
-                                    SaveFragment.createShare().init(bitmapFragment);
-                                }
-                            }
-                            break;
-                            case 1: { // save
-                                int readPermission = ContextCompat.checkSelfPermission(MainActivity.this, Manifest.permission.READ_EXTERNAL_STORAGE);
-                                int writePermission = ContextCompat.checkSelfPermission(MainActivity.this, Manifest.permission.WRITE_EXTERNAL_STORAGE);
-
-                                if(readPermission != PackageManager.PERMISSION_GRANTED || writePermission != PackageManager.PERMISSION_GRANTED) {
-                                    // I am anyways showing a Toast that I can't write if I can't write.
-                                    ActivityCompat.requestPermissions(MainActivity.this,
-                                            new String[]{
-                                                    Manifest.permission.READ_EXTERNAL_STORAGE,
-                                                    Manifest.permission.WRITE_EXTERNAL_STORAGE
-                                            }, IMAGE_PERMISSIONS_SAVE);
-                                } else {
-                                    saveImage();
-                                }
-                            }
-                            break;
-                            case 2: { // set as wallpaper
-                                int wallpaperPermission = ContextCompat.checkSelfPermission(MainActivity.this, Manifest.permission.SET_WALLPAPER);
-
-                                if(wallpaperPermission != PackageManager.PERMISSION_GRANTED) {
-                                    ActivityCompat.requestPermissions(MainActivity.this,
-                                            new String[]{
-                                                    Manifest.permission.SET_WALLPAPER
-                                            }, WALLPAPER_PERMISSIONS);
-                                } else {
-                                    SaveFragment.createSetWallpaper().init(bitmapFragment);
-                                }
-                            }
-                            break;
-                            default:
-                                throw new IllegalArgumentException("no such selection: " + which);
-                        }
-                    }
-                });
-		builder.setCancelable(true);
-
-		builder.show();
+		SaveFragment.registerNewInstanceForParent(bitmapFragment);
+//		AlertDialog.Builder builder = new AlertDialog.Builder(this);
+//
+//		String[] items = {"Share Image", "Save Image", "Set Image as Wallpaper"};
+//
+//		builder.setItems(items,
+//                new DialogInterface.OnClickListener() {
+//                    @Override
+//                    public void onClick(DialogInterface dialog, int which) {
+//                        switch (which) {
+//                            case 0: { // Share
+//                                // save/share image
+//                                int readPermission = ContextCompat.checkSelfPermission(MainActivity.this, Manifest.permission.READ_EXTERNAL_STORAGE);
+//                                int writePermission = ContextCompat.checkSelfPermission(MainActivity.this, Manifest.permission.WRITE_EXTERNAL_STORAGE);
+//
+//                                if(readPermission != PackageManager.PERMISSION_GRANTED || writePermission != PackageManager.PERMISSION_GRANTED) {
+//                                    // I am anyways showing a Toast that I can't write if I can't write.
+//                                    ActivityCompat.requestPermissions(MainActivity.this,
+//                                            new String[]{
+//                                                    Manifest.permission.READ_EXTERNAL_STORAGE,
+//                                                    Manifest.permission.WRITE_EXTERNAL_STORAGE
+//                                            }, IMAGE_PERMISSIONS_SHARE);
+//                                } else {
+//                                    SaveFragment.createShare().init(bitmapFragment);
+//                                }
+//                            }
+//                            break;
+//                            case 1: { // save
+//                                int readPermission = ContextCompat.checkSelfPermission(MainActivity.this, Manifest.permission.READ_EXTERNAL_STORAGE);
+//                                int writePermission = ContextCompat.checkSelfPermission(MainActivity.this, Manifest.permission.WRITE_EXTERNAL_STORAGE);
+//
+//                                if(readPermission != PackageManager.PERMISSION_GRANTED || writePermission != PackageManager.PERMISSION_GRANTED) {
+//                                    // I am anyways showing a Toast that I can't write if I can't write.
+//                                    ActivityCompat.requestPermissions(MainActivity.this,
+//                                            new String[]{
+//                                                    Manifest.permission.READ_EXTERNAL_STORAGE,
+//                                                    Manifest.permission.WRITE_EXTERNAL_STORAGE
+//                                            }, IMAGE_PERMISSIONS_SAVE);
+//                                } else {
+//                                    saveImage();
+//                                }
+//                            }
+//                            break;
+//                            case 2: { // set as wallpaper
+//                                int wallpaperPermission = ContextCompat.checkSelfPermission(MainActivity.this, Manifest.permission.SET_WALLPAPER);
+//
+//                                if(wallpaperPermission != PackageManager.PERMISSION_GRANTED) {
+//                                    ActivityCompat.requestPermissions(MainActivity.this,
+//                                            new String[]{
+//                                                    Manifest.permission.SET_WALLPAPER
+//                                            }, WALLPAPER_PERMISSIONS);
+//                                } else {
+//                                    SaveFragment.createSetWallpaper().init(bitmapFragment);
+//                                }
+//                            }
+//                            break;
+//                            default:
+//                                throw new IllegalArgumentException("no such selection: " + which);
+//                        }
+//                    }
+//                });
+//		builder.setCancelable(true);
+//
+//		builder.show();
 	}
 
 	private void openUiSettingsDialog() {
@@ -592,7 +591,7 @@ public class MainActivity extends Activity
 						}
 
 						// Saving is done in the following plugin
-						SaveFragment.createSave(imageFile).init(bitmapFragment);
+						// FIXME SaveFragment.createSave(imageFile).init(bitmapFragment);
                     }
                 });
 	}
