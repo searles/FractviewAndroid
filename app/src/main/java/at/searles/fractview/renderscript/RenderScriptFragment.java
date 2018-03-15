@@ -1,10 +1,7 @@
 package at.searles.fractview.renderscript;
 
 
-import android.app.Dialog;
-import android.app.DialogFragment;
 import android.app.Fragment;
-import android.app.ProgressDialog;
 import android.content.Context;
 import android.os.AsyncTask;
 import android.os.Bundle;
@@ -57,6 +54,8 @@ public class RenderScriptFragment extends Fragment {
 
     @Override
     public void onAttach(Context context) {
+        Log.d(getClass().getName(), "onAttach");
+
         super.onAttach(context);
 
         if(this.rs != null) {
@@ -77,7 +76,7 @@ public class RenderScriptFragment extends Fragment {
             @Override
             protected void onPreExecute() {
                 InitProgressDialogFragment dialogFragment = new InitProgressDialogFragment();
-                dialogFragment.show(getActivity().getFragmentManager(), DIALOG_FRAGMENT_TAG);            }
+                dialogFragment.show(getChildFragmentManager(), DIALOG_FRAGMENT_TAG);            }
 
             @Override
             protected Void doInBackground(Void...ignored) {
@@ -90,11 +89,16 @@ public class RenderScriptFragment extends Fragment {
                 isInitializing = false;
 
                 InitProgressDialogFragment dialogFragment =
-                        (InitProgressDialogFragment) getFragmentManager()
+                        (InitProgressDialogFragment) getChildFragmentManager()
                                 .findFragmentByTag(DIALOG_FRAGMENT_TAG);
 
                 // Dismiss DialogFragment
                 dialogFragment.dismissAllowingStateLoss();
+
+                // Tell others
+                for(RenderScriptListener listener : listeners) {
+                    listener.rsInitializationFinished(RenderScriptFragment.this);
+                }
             }
         }.execute();
     }
@@ -123,30 +127,5 @@ public class RenderScriptFragment extends Fragment {
 
     public void addListener(RenderScriptListener listener) {
         this.listeners.add(listener);
-    }
-
-    public void removeListener(RenderScriptListener listener) {
-        if(!this.listeners.remove(listener)) {
-            Log.e(getClass().getName(), "listener did not exist: " + listener);
-        }
-    }
-
-    public static class InitProgressDialogFragment extends DialogFragment {
-        @Override
-        public void onCreate(Bundle savedInstanceState) {
-            super.onCreate(savedInstanceState);
-            setRetainInstance(true);
-            setCancelable(false);
-        }
-
-        @Override
-        public Dialog onCreateDialog(Bundle savedInstanceState) {
-            ProgressDialog dialog = new ProgressDialog(getActivity(), getTheme());
-            dialog.setTitle("Please wait");
-            dialog.setMessage("Initializing");
-            dialog.setIndeterminate(true);
-            dialog.setProgressStyle(ProgressDialog.STYLE_SPINNER);
-            return dialog;
-        }
     }
 }
