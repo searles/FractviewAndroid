@@ -37,11 +37,11 @@ public class ShareModeDialogFragment extends DialogFragment {
                         dialog.dismiss();
                         break;
                     case 1: // Save
-                        ((Callback) getActivity()).onShareModeResult(Result.Share);
+                        ((Callback) getActivity()).onShareModeResult(Result.Save);
                         dialog.dismiss();
                         break;
                     case 2: // Set as Wallpaper
-                        ((Callback) getActivity()).onShareModeResult(Result.Share);
+                        ((Callback) getActivity()).onShareModeResult(Result.Wallpaper);
                         dialog.dismiss();
                         break;
                     default:
