@@ -12,7 +12,6 @@ public class InitProgressDialogFragment extends DialogFragment {
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setRetainInstance(true);
         setCancelable(false);
     }
 
