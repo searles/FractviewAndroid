@@ -14,7 +14,6 @@ import android.content.pm.PackageManager;
 import android.graphics.Bitmap;
 import android.graphics.Point;
 import android.os.Bundle;
-import android.os.Environment;
 import android.preference.PreferenceManager;
 import android.support.v4.app.ActivityCompat;
 import android.support.v4.content.ContextCompat;
@@ -31,7 +30,6 @@ import android.widget.Toast;
 
 import org.jetbrains.annotations.NotNull;
 
-import java.io.File;
 import java.util.HashMap;
 
 import at.searles.fractal.FavoriteEntry;
@@ -40,13 +38,13 @@ import at.searles.fractal.android.BundleAdapter;
 import at.searles.fractview.bitmap.BitmapFragment;
 import at.searles.fractview.bitmap.BitmapFragmentListener;
 import at.searles.fractview.renderscript.RenderScriptFragment;
+import at.searles.fractview.saving.SaveAsDialogFragment;
 import at.searles.fractview.saving.SaveFragment;
 import at.searles.fractview.saving.ShareModeDialogFragment;
 import at.searles.fractview.ui.BitmapFragmentView;
 import at.searles.fractview.ui.DialogHelper;
 import at.searles.meelan.CompileException;
 import at.searles.tutorial.TutorialActivity;
-import at.searles.utils.CharUtil;
 
 
 // Activity is the glue between BitmapFragment and Views.
@@ -68,6 +66,7 @@ public class MainActivity extends Activity
 	public static final String RENDERSCRIPT_FRAGMENT_TAG = "92349831";
 	public static final String BITMAP_FRAGMENT_TAG = "234917643";
 	private static final String SHARE_MODE_DIALOG_TAG = "593034kf";
+	private static final String SAVE_TO_MEDIA_TAG = "458hnof";
 
 	private BitmapFragmentView imageView;
 
@@ -317,7 +316,7 @@ public class MainActivity extends Activity
 		switch (result) {
 			case Share:
 				SaveFragment.registerNewInstanceForParent(bitmapFragment);
-				break;
+				return;
 			case Save:
 				int readPermission = ContextCompat.checkSelfPermission(this, Manifest.permission.READ_EXTERNAL_STORAGE);
 				int writePermission = ContextCompat.checkSelfPermission(this, Manifest.permission.WRITE_EXTERNAL_STORAGE);
@@ -328,11 +327,13 @@ public class MainActivity extends Activity
 									Manifest.permission.READ_EXTERNAL_STORAGE,
 									Manifest.permission.WRITE_EXTERNAL_STORAGE
 							}, SAVE_TO_MEDIA_PERMISSIONS);
-				} else {
-					saveImage();
+					return;
 				}
 
-				break;
+				SaveAsDialogFragment fragment = SaveAsDialogFragment.newInstance();
+				fragment.show(getFragmentManager(), SAVE_TO_MEDIA_TAG);
+
+				return;
 			case Wallpaper:
 				int wallpaperPermission = ContextCompat.checkSelfPermission(MainActivity.this, Manifest.permission.SET_WALLPAPER);
 
@@ -341,10 +342,14 @@ public class MainActivity extends Activity
 							new String[]{
 									Manifest.permission.SET_WALLPAPER
 							}, WALLPAPER_PERMISSIONS);
-				} else {
-					// FIXME SaveFragment.createSetWallpaper().init(bitmapFragment);
+					return;
 				}
-				break;
+
+				// FIXME SaveFragment.createSetWallpaper().init(bitmapFragment);
+
+				return;
+			default:
+				throw new UnsupportedOperationException();
 		}
 	}
 
@@ -512,72 +517,10 @@ public class MainActivity extends Activity
                 });
 	}
 
-	private void saveImage() {
-		// fixme put into dialog fragment
-        DialogHelper.inputCustom(this, "Enter filename", R.layout.save_image_layout,
-                new DialogHelper.DialogFunction() {
-                    @Override
-                    public void apply(DialogInterface d) {
-						// Initialize editText with mask from timestamp
-						EditText editText = (EditText) ((AlertDialog) d).findViewById(R.id.filenameEditText);
-
-						// create timestamp
-						editText.setText("fractview_" + Commons.timestamp());
-                    }
-                },
-                new DialogHelper.DialogFunction() {
-                    @Override
-                    public void apply(DialogInterface d) {
-                        // check "bookmark"-checkbox.
-                        EditText editText = (EditText) ((AlertDialog) d).findViewById(R.id.filenameEditText);
-                        CheckBox checkBox = (CheckBox) ((AlertDialog) d).findViewById(R.id.addToFavoritesCheckBox);
-
-                        String filename = editText.getText().toString();
-                        boolean addToFavorites = checkBox.isChecked();
-
-						// Strip .png extension if it is entered (it will be added later either way)
-						if(filename.endsWith(".png")) {
-							filename = filename.substring(0, filename.length() - ".png".length());
-						}
-
-                        if(filename.isEmpty()) {
-                            DialogHelper.error(MainActivity.this, "Filename must not be empty");
-                            return;
-                        }
-
-                        if(addToFavorites) {
-                            saveFavorite(filename);
-                        }
-
-                        File directory = new File(
-                                Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_PICTURES),
-                                "Fractview");
-
-                        Log.d("MA", "Saving file: Path is " + directory);
-
-                        if(!directory.exists()) {
-                            Log.d("MA", "Creating directory");
-                            if(!directory.mkdir()) {
-                                DialogHelper.error(MainActivity.this, "Could not create directory");
-                            }
-                        }
-
-						File imageFile = new File(directory, filename + ".png");
-
-						while(imageFile.exists()) {
-							filename = CharUtil.nextIndex(filename);
-							imageFile = new File(directory, filename + ".png");
-						}
-
-						// Saving is done in the following plugin
-						// FIXME SaveFragment.createSave(imageFile).init(bitmapFragment);
-                    }
-                });
-	}
 
 	private static final int ICON_SIZE = 64;
 
-	private void saveFavorite(String name) {
+	public void saveFavorite(String name) {
 		if(name.isEmpty()) {
 			Toast.makeText(MainActivity.this, "ERROR: Name must not be empty", Toast.LENGTH_LONG).show();
 			return;

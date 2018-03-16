@@ -11,11 +11,18 @@
         android:ems="10"
         android:hint="filename (must not be empty)"
         android:inputType="text"
-        android:text="Name"/>
+        android:text=""/>
 
     <CheckBox
         android:id="@+id/addToFavoritesCheckBox"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:text="Add to favorites"/>
+
+    <TextView
+        android:id="@+id/messageTextView"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text=""/>
+
 </LinearLayout>
