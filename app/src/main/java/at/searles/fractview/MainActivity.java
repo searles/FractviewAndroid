@@ -1,5 +1,6 @@
 package at.searles.fractview;
 
+import android.Manifest;
 import android.annotation.SuppressLint;
 import android.app.Activity;
 import android.app.AlertDialog;
@@ -16,6 +17,7 @@ import android.os.Bundle;
 import android.os.Environment;
 import android.preference.PreferenceManager;
 import android.support.v4.app.ActivityCompat;
+import android.support.v4.content.ContextCompat;
 import android.util.Log;
 import android.view.Menu;
 import android.view.MenuInflater;
@@ -39,6 +41,7 @@ import at.searles.fractview.bitmap.BitmapFragment;
 import at.searles.fractview.bitmap.BitmapFragmentListener;
 import at.searles.fractview.renderscript.RenderScriptFragment;
 import at.searles.fractview.saving.SaveFragment;
+import at.searles.fractview.saving.ShareModeDialogFragment;
 import at.searles.fractview.ui.BitmapFragmentView;
 import at.searles.fractview.ui.DialogHelper;
 import at.searles.meelan.CompileException;
@@ -48,8 +51,8 @@ import at.searles.utils.CharUtil;
 
 // Activity is the glue between BitmapFragment and Views.
 public class MainActivity extends Activity
-		implements ActivityCompat.OnRequestPermissionsResultCallback/*,
-		/*EditableDialogFragment.Callback*/ {
+		implements ActivityCompat.OnRequestPermissionsResultCallback,
+		ShareModeDialogFragment.Callback {
 
     //public static final int ALPHA_PREFERENCES = 0xaa000000;
 
@@ -64,6 +67,7 @@ public class MainActivity extends Activity
 
 	public static final String RENDERSCRIPT_FRAGMENT_TAG = "92349831";
 	public static final String BITMAP_FRAGMENT_TAG = "234917643";
+	private static final String SHARE_MODE_DIALOG_TAG = "593034kf";
 
 	private BitmapFragmentView imageView;
 
@@ -161,9 +165,9 @@ public class MainActivity extends Activity
 		if(renderScriptFragment == null) {
 			renderScriptFragment = RenderScriptFragment.newInstance();
 
-			FragmentTransaction transaction = getFragmentManager().beginTransaction();
+			FragmentTransaction transaction = fm.beginTransaction();
 			transaction.add(renderScriptFragment, RENDERSCRIPT_FRAGMENT_TAG);
-			transaction.commitAllowingStateLoss(); // Question: Why should there be a stateloss?
+			transaction.commit();
 		}
 	}
 
@@ -335,73 +339,48 @@ public class MainActivity extends Activity
     }
 
 	private void openShareDialog() {
-		SaveFragment.registerNewInstanceForParent(bitmapFragment);
-//		AlertDialog.Builder builder = new AlertDialog.Builder(this);
-//
-//		String[] items = {"Share Image", "Save Image", "Set Image as Wallpaper"};
-//
-//		builder.setItems(items,
-//                new DialogInterface.OnClickListener() {
-//                    @Override
-//                    public void onClick(DialogInterface dialog, int which) {
-//                        switch (which) {
-//                            case 0: { // Share
-//                                // save/share image
-//                                int readPermission = ContextCompat.checkSelfPermission(MainActivity.this, Manifest.permission.READ_EXTERNAL_STORAGE);
-//                                int writePermission = ContextCompat.checkSelfPermission(MainActivity.this, Manifest.permission.WRITE_EXTERNAL_STORAGE);
-//
-//                                if(readPermission != PackageManager.PERMISSION_GRANTED || writePermission != PackageManager.PERMISSION_GRANTED) {
-//                                    // I am anyways showing a Toast that I can't write if I can't write.
-//                                    ActivityCompat.requestPermissions(MainActivity.this,
-//                                            new String[]{
-//                                                    Manifest.permission.READ_EXTERNAL_STORAGE,
-//                                                    Manifest.permission.WRITE_EXTERNAL_STORAGE
-//                                            }, IMAGE_PERMISSIONS_SHARE);
-//                                } else {
-//                                    SaveFragment.createShare().init(bitmapFragment);
-//                                }
-//                            }
-//                            break;
-//                            case 1: { // save
-//                                int readPermission = ContextCompat.checkSelfPermission(MainActivity.this, Manifest.permission.READ_EXTERNAL_STORAGE);
-//                                int writePermission = ContextCompat.checkSelfPermission(MainActivity.this, Manifest.permission.WRITE_EXTERNAL_STORAGE);
-//
-//                                if(readPermission != PackageManager.PERMISSION_GRANTED || writePermission != PackageManager.PERMISSION_GRANTED) {
-//                                    // I am anyways showing a Toast that I can't write if I can't write.
-//                                    ActivityCompat.requestPermissions(MainActivity.this,
-//                                            new String[]{
-//                                                    Manifest.permission.READ_EXTERNAL_STORAGE,
-//                                                    Manifest.permission.WRITE_EXTERNAL_STORAGE
-//                                            }, IMAGE_PERMISSIONS_SAVE);
-//                                } else {
-//                                    saveImage();
-//                                }
-//                            }
-//                            break;
-//                            case 2: { // set as wallpaper
-//                                int wallpaperPermission = ContextCompat.checkSelfPermission(MainActivity.this, Manifest.permission.SET_WALLPAPER);
-//
-//                                if(wallpaperPermission != PackageManager.PERMISSION_GRANTED) {
-//                                    ActivityCompat.requestPermissions(MainActivity.this,
-//                                            new String[]{
-//                                                    Manifest.permission.SET_WALLPAPER
-//                                            }, WALLPAPER_PERMISSIONS);
-//                                } else {
-//                                    SaveFragment.createSetWallpaper().init(bitmapFragment);
-//                                }
-//                            }
-//                            break;
-//                            default:
-//                                throw new IllegalArgumentException("no such selection: " + which);
-//                        }
-//                    }
-//                });
-//		builder.setCancelable(true);
-//
-//		builder.show();
+		ShareModeDialogFragment shareModeDialogFragment = ShareModeDialogFragment.newInstance();
+		shareModeDialogFragment.show(getFragmentManager(), SHARE_MODE_DIALOG_TAG);
+	}
+
+	@Override
+	public void onShareModeResult(ShareModeDialogFragment.Result result) {
+		switch (result) {
+			case Share:
+				SaveFragment.registerNewInstanceForParent(bitmapFragment);
+				break;
+			case Save:
+				int readPermission = ContextCompat.checkSelfPermission(this, Manifest.permission.READ_EXTERNAL_STORAGE);
+				int writePermission = ContextCompat.checkSelfPermission(this, Manifest.permission.WRITE_EXTERNAL_STORAGE);
+
+				if(readPermission != PackageManager.PERMISSION_GRANTED || writePermission != PackageManager.PERMISSION_GRANTED) {
+					ActivityCompat.requestPermissions(MainActivity.this,
+							new String[]{
+									Manifest.permission.READ_EXTERNAL_STORAGE,
+									Manifest.permission.WRITE_EXTERNAL_STORAGE
+							}, IMAGE_PERMISSIONS_SAVE);
+				} else {
+					// FIXME!!! saveImage();
+				}
+
+				break;
+			case Wallpaper:
+				int wallpaperPermission = ContextCompat.checkSelfPermission(MainActivity.this, Manifest.permission.SET_WALLPAPER);
+
+				if(wallpaperPermission != PackageManager.PERMISSION_GRANTED) {
+					ActivityCompat.requestPermissions(MainActivity.this,
+							new String[]{
+									Manifest.permission.SET_WALLPAPER
+							}, WALLPAPER_PERMISSIONS);
+				} else {
+					// FIXME SaveFragment.createSetWallpaper().init(bitmapFragment);
+				}
+				break;
+		}
 	}
 
 	private void openUiSettingsDialog() {
+		// FIXME put into swipe in list.
 		// show alert dialog with two checkboxes
 		final CharSequence[] items = {"Show Grid","Rotation Lock", "Confirm Zoom with Tab", "Deactivate Zoom"};
 
@@ -444,6 +423,7 @@ public class MainActivity extends Activity
 	}
 
 	private void openChangeImageSizeDialog() {
+		// FIXME put into fragment!
 		// change size of the image
 		DialogHelper.inputCustom(this, "Resize Image", R.layout.image_size_editor,
                 new DialogHelper.DialogFunction() {
@@ -535,6 +515,7 @@ public class MainActivity extends Activity
 	}
 
 	private void saveImage() {
+		// fixme put into dialog fragment
         DialogHelper.inputCustom(this, "Enter filename", R.layout.save_image_layout,
                 new DialogHelper.DialogFunction() {
                     @Override

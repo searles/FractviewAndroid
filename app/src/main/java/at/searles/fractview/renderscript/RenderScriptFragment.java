@@ -2,7 +2,6 @@ package at.searles.fractview.renderscript;
 
 
 import android.app.Fragment;
-import android.content.Context;
 import android.os.AsyncTask;
 import android.os.Bundle;
 import android.renderscript.RenderScript;
@@ -50,13 +49,6 @@ public class RenderScriptFragment extends Fragment {
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         this.setRetainInstance(true);
-    }
-
-    @Override
-    public void onAttach(Context context) {
-        Log.d(getClass().getName(), "onAttach");
-
-        super.onAttach(context);
 
         if(this.rs != null) {
             // nothing to do anymore.
@@ -64,20 +56,31 @@ public class RenderScriptFragment extends Fragment {
         }
 
         // initialize renderscript
-        this.rs = RenderScript.create(context);
+        this.rs = RenderScript.create(getActivity());
 
+        showInitDialog();
         launchAsyncInitialize();
+    }
+
+    public void showInitDialog() {
+        Log.d(getClass().getName(), "show init dialog");
+        InitProgressDialogFragment dialogFragment = new InitProgressDialogFragment();
+        dialogFragment.show(getActivity().getFragmentManager(), DIALOG_FRAGMENT_TAG);
+    }
+
+    private void dismissInitDialog() {
+        Log.d(getClass().getName(), "dismiss init dialog");
+        InitProgressDialogFragment dialogFragment =
+                (InitProgressDialogFragment) getActivity().getFragmentManager()
+                        .findFragmentByTag(DIALOG_FRAGMENT_TAG);
+
+        // Dismiss DialogFragment
+        dialogFragment.dismissAllowingStateLoss();
     }
 
     private void launchAsyncInitialize() {
         // async run initScripts
-        new AsyncTask<Void, Void, Void>(
-        ){
-            @Override
-            protected void onPreExecute() {
-                InitProgressDialogFragment dialogFragment = new InitProgressDialogFragment();
-                dialogFragment.show(getChildFragmentManager(), DIALOG_FRAGMENT_TAG);            }
-
+        new AsyncTask<Void, Void, Void>(){
             @Override
             protected Void doInBackground(Void...ignored) {
                 initScripts();
@@ -87,13 +90,7 @@ public class RenderScriptFragment extends Fragment {
             @Override
             protected void onPostExecute(Void ignored) {
                 isInitializing = false;
-
-                InitProgressDialogFragment dialogFragment =
-                        (InitProgressDialogFragment) getChildFragmentManager()
-                                .findFragmentByTag(DIALOG_FRAGMENT_TAG);
-
-                // Dismiss DialogFragment
-                dialogFragment.dismissAllowingStateLoss();
+                dismissInitDialog();
 
                 // Tell others
                 for(RenderScriptListener listener : listeners) {
