@@ -231,41 +231,8 @@ public class MainActivity extends Activity
 		return super.onCreateOptionsMenu(menu);
 	}
 
-	public static final int IMAGE_PERMISSIONS_SHARE = 104;
-	public static final int IMAGE_PERMISSIONS_SAVE = 105;
+	public static final int SAVE_TO_MEDIA_PERMISSIONS = 105;
 	public static final int WALLPAPER_PERMISSIONS = 106;
-
-
-	//FIXME Override in API 23
-	@SuppressLint("Override")
-	public void onRequestPermissionsResult(int requestCode,
-										   @NotNull String permissions[], @NotNull int[] grantResults) {
-		switch (requestCode) {
-			case IMAGE_PERMISSIONS_SAVE:
-			case IMAGE_PERMISSIONS_SHARE: {
-				if(grantResults[0] == PackageManager.PERMISSION_GRANTED && grantResults[1] == PackageManager.PERMISSION_GRANTED) {
-					if(requestCode == IMAGE_PERMISSIONS_SAVE) {
-						saveImage();
-					} else {
-						// FIXME SaveFragment.createShare().init(bitmapFragment);
-					}
-				} else {
-					Toast.makeText(this, "ERROR: Cannot share/save images without " +
-							"read or write permissions.", Toast.LENGTH_LONG).show();
-				}
-			} break;
-
-			case WALLPAPER_PERMISSIONS: {
-				if(grantResults[0] == PackageManager.PERMISSION_GRANTED) {
-					// FIXME SaveFragment.createSetWallpaper().init(bitmapFragment);
-				} else {
-					Toast.makeText(this, "Cannot set image as wallpaper without " +
-							"permissions.", Toast.LENGTH_LONG).show();
-				}
-			} break;
-		}
-	}
-
 
 	@Override
     public boolean onOptionsItemSelected(MenuItem item) {
@@ -338,6 +305,8 @@ public class MainActivity extends Activity
         }
     }
 
+	// ===================================================================
+
 	private void openShareDialog() {
 		ShareModeDialogFragment shareModeDialogFragment = ShareModeDialogFragment.newInstance();
 		shareModeDialogFragment.show(getFragmentManager(), SHARE_MODE_DIALOG_TAG);
@@ -358,9 +327,9 @@ public class MainActivity extends Activity
 							new String[]{
 									Manifest.permission.READ_EXTERNAL_STORAGE,
 									Manifest.permission.WRITE_EXTERNAL_STORAGE
-							}, IMAGE_PERMISSIONS_SAVE);
+							}, SAVE_TO_MEDIA_PERMISSIONS);
 				} else {
-					// FIXME!!! saveImage();
+					saveImage();
 				}
 
 				break;
@@ -378,6 +347,35 @@ public class MainActivity extends Activity
 				break;
 		}
 	}
+
+	//FIXME Override in API 23
+	@SuppressLint("Override")
+	public void onRequestPermissionsResult(int requestCode,
+										   @NotNull String permissions[], @NotNull int[] grantResults) {
+		switch (requestCode) {
+			case SAVE_TO_MEDIA_PERMISSIONS:
+				if(grantResults[0] != PackageManager.PERMISSION_GRANTED || grantResults[1] != PackageManager.PERMISSION_GRANTED) {
+					DialogHelper.error(this, "No permission to write to external storage");
+					return;
+				}
+
+				// try again...
+				onShareModeResult(ShareModeDialogFragment.Result.Save);
+				return;
+			case WALLPAPER_PERMISSIONS:
+				if(grantResults[0] != PackageManager.PERMISSION_GRANTED) {
+					DialogHelper.error(this, "No permission to set wallpaper");
+					return;
+				}
+
+				onShareModeResult(ShareModeDialogFragment.Result.Wallpaper);
+				return;
+			default:
+				throw new UnsupportedOperationException();
+		}
+	}
+
+	// ===================================================================
 
 	private void openUiSettingsDialog() {
 		// FIXME put into swipe in list.
