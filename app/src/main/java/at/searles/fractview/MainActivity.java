@@ -21,11 +21,7 @@ import android.util.Log;
 import android.view.Menu;
 import android.view.MenuInflater;
 import android.view.MenuItem;
-import android.view.View;
 import android.view.WindowManager;
-import android.widget.Button;
-import android.widget.CheckBox;
-import android.widget.EditText;
 import android.widget.Toast;
 
 import org.jetbrains.annotations.NotNull;
@@ -37,6 +33,7 @@ import at.searles.fractal.Fractal;
 import at.searles.fractal.android.BundleAdapter;
 import at.searles.fractview.bitmap.BitmapFragment;
 import at.searles.fractview.bitmap.BitmapFragmentListener;
+import at.searles.fractview.editors.ImageSizeDialogFragment;
 import at.searles.fractview.renderscript.RenderScriptFragment;
 import at.searles.fractview.saving.SaveAsDialogFragment;
 import at.searles.fractview.saving.SaveFragment;
@@ -60,13 +57,16 @@ public class MainActivity extends Activity
 	public static final int PRESETS_ACTIVITY_RETURN = 102;
 	public static final int BOOKMARK_ACTIVITY_RETURN = 103;
 
-	private static final String WIDTH_LABEL = "width";
-	private static final String HEIGHT_LABEL = "height";
+	public static final String WIDTH_LABEL = "width";
+	public static final String HEIGHT_LABEL = "height";
 
 	public static final String RENDERSCRIPT_FRAGMENT_TAG = "92349831";
 	public static final String BITMAP_FRAGMENT_TAG = "234917643";
 	private static final String SHARE_MODE_DIALOG_TAG = "593034kf";
 	private static final String SAVE_TO_MEDIA_TAG = "458hnof";
+	private static final String IMAGE_SIZE_DIALOG_TAG = "km9434f";
+
+	private static final int FAVORITES_ICON_SIZE = 64;
 
 	private BitmapFragmentView imageView;
 
@@ -85,6 +85,7 @@ public class MainActivity extends Activity
 	private FragmentManager fm;
 
 	public static Point screenDimensions(Context context) {
+		// FIXME put into commons.
 		Point dim = new Point();
 		WindowManager wm = (WindowManager) context.getSystemService(Context.WINDOW_SERVICE);
 		wm.getDefaultDisplay().getSize(dim);
@@ -427,98 +428,16 @@ public class MainActivity extends Activity
 
 	private void openChangeImageSizeDialog() {
 		// FIXME put into fragment!
-		// change size of the image
-		DialogHelper.inputCustom(this, "Resize Image", R.layout.image_size_editor,
-                new DialogHelper.DialogFunction() {
-                    @Override
-                    public void apply(DialogInterface d) {
-                        // insert current size
-                        EditText widthView = (EditText) ((AlertDialog) d).findViewById(R.id.widthEditText);
-                        EditText heightView = (EditText) ((AlertDialog) d).findViewById(R.id.heightEditText);
+		ImageSizeDialogFragment fragment = ImageSizeDialogFragment.newInstance(bitmapFragment.width(), bitmapFragment.height());
+		fragment.show(getFragmentManager(), IMAGE_SIZE_DIALOG_TAG);
+	}
 
-                        widthView.setText(Integer.toString(bitmapFragment.width()));
-                        heightView.setText(Integer.toString(bitmapFragment.height()));
-
-                        // listener to button
-                        Button resetButton = (Button) ((AlertDialog) d).findViewById(R.id.resetSizeButton);
-
-                        resetButton.setOnClickListener(new View.OnClickListener() {
-                            @Override
-                            public void onClick(View view) {
-                                SharedPreferences prefs =
-                                        PreferenceManager.getDefaultSharedPreferences(view.getContext());
-
-                                Point dim = new Point();
-
-                                dim.set(prefs.getInt(WIDTH_LABEL, -1), prefs.getInt(HEIGHT_LABEL, -1));
-
-                                if (dim.x <= 0 || dim.y <= 0) {
-                                    dim = MainActivity.screenDimensions(view.getContext());
-                                }
-
-                                widthView.setText(Integer.toString(dim.x));
-                                heightView.setText(Integer.toString(dim.y));
-                            }
-                        });
-                    }
-                },
-                new DialogHelper.DialogFunction() {
-                    @Override
-                    public void apply(DialogInterface d) {
-                        // insert current size
-                        EditText widthView = (EditText) ((AlertDialog) d).findViewById(R.id.widthEditText);
-                        EditText heightView = (EditText) ((AlertDialog) d).findViewById(R.id.heightEditText);
-
-                        boolean setAsDefault = ((CheckBox) ((AlertDialog) d).findViewById(R.id.defaultCheckBox)).isChecked();
-
-                        int w, h;
-
-                        try {
-                            w = Integer.parseInt(widthView.getText().toString());
-                        } catch(NumberFormatException e) {
-                            DialogHelper.error(((AlertDialog) d).getContext(), "invalid width");
-                            return;
-                        }
-
-                        try {
-                            h = Integer.parseInt(heightView.getText().toString());
-                        } catch(NumberFormatException e) {
-                            DialogHelper.error(((AlertDialog) d).getContext(), "invalid height");
-                            return;
-                        }
-
-                        if(w < 1) {
-                            DialogHelper.error(((AlertDialog) d).getContext(), "width must be >= 1");
-                            return;
-                        }
-
-                        if(h < 1) {
-                            DialogHelper.error(((AlertDialog) d).getContext(), "height must be >= 1");
-                            return;
-                        }
-
-                        boolean success = true;
-
-						if(w == bitmapFragment.width() && h == bitmapFragment.height()) {
-							DialogHelper.info(((AlertDialog) d).getContext(), "size not changed");
-						} else {
-							if(!bitmapFragment.setSize(w, h)) {
-								DialogHelper.error(MainActivity.this, "Could not change size due to an error.");
-								success = false;
-							}
-						}
-
-						if(success) {
-							if(setAsDefault) {
-								storeDefaultSize(w, h);
-							}
-						}
-                    }
-                });
+	public boolean setImageSize(int width, int height) {
+		// callback from ImageSizeDialogFragment
+		return bitmapFragment.setSize(width, height);
 	}
 
 
-	private static final int ICON_SIZE = 64;
 
 	public void saveFavorite(String name) {
 		if(name.isEmpty()) {
@@ -530,7 +449,7 @@ public class MainActivity extends Activity
 		Fractal fractal = bitmapFragment.fractal();
 
 		// create icon out of bitmap
-		Bitmap icon = Commons.createIcon(bitmapFragment.getBitmap(), ICON_SIZE);
+		Bitmap icon = Commons.createIcon(bitmapFragment.getBitmap(), FAVORITES_ICON_SIZE);
 
 		FavoriteEntry fav = new FavoriteEntry(icon, fractal, Commons.fancyTimestamp());
 
@@ -574,6 +493,7 @@ public class MainActivity extends Activity
 			}
 		}
 	}
+
 
 //	// =======================================================================
 //	// ============= Some History ... ========================================

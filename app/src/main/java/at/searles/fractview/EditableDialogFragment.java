@@ -6,15 +6,11 @@ import android.app.DialogFragment;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.SharedPreferences;
-import android.graphics.Point;
 import android.os.Bundle;
-import android.preference.PreferenceManager;
 import android.util.Log;
 import android.view.View;
 import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
-import android.widget.Button;
-import android.widget.CheckBox;
 import android.widget.EditText;
 import android.widget.ListView;
 import android.widget.Toast;
@@ -436,92 +432,6 @@ public class EditableDialogFragment extends DialogFragment {
                         // something was selected. Therefore, dismiss dialog.
                         String selected = (String) lv.getAdapter().getItem(position);
                         saveEdit.setText(selected);
-                    }
-                });
-
-                return view;
-            }
-        },
-        ImageSize {
-            @Override
-            void setValueInView(Object o, View view) {
-                // insert current size
-                EditText widthView = (EditText) view.findViewById(R.id.widthEditText);
-                EditText heightView = (EditText) view.findViewById(R.id.heightEditText);
-
-                // This one reads a parcel
-                int[] size = ((int[]) o);
-
-                widthView.setText(Integer.toString(size[0]));
-                heightView.setText(Integer.toString(size[1]));
-            }
-
-            @Override
-            Object getValueInView(Dialog view) {
-                // insert current size
-                EditText widthView = (EditText) view.findViewById(R.id.widthEditText);
-                EditText heightView = (EditText) view.findViewById(R.id.heightEditText);
-
-
-                boolean setAsDefault = ((CheckBox) view.findViewById(R.id.defaultCheckBox)).isChecked();
-
-                int w, h;
-
-                try {
-                    w = Integer.parseInt(widthView.getText().toString());
-                } catch(NumberFormatException e) {
-                    Toast.makeText(view.getContext(), "invalid width", Toast.LENGTH_LONG).show();
-                    return null;
-                }
-
-                try {
-                    h = Integer.parseInt(heightView.getText().toString());
-                } catch(NumberFormatException e) {
-                    Toast.makeText(view.getContext(), "invalid height", Toast.LENGTH_LONG).show();
-                    return null;
-                }
-
-                if(w < 1) {
-                    Toast.makeText(view.getContext(), "width must be >= 1", Toast.LENGTH_LONG).show();
-                    return null;
-                }
-
-                if(h < 1) {
-                    Toast.makeText(view.getContext(), "height must be >= 1", Toast.LENGTH_LONG).show();
-                    return null;
-                }
-
-                return new int[]{w, h, setAsDefault ? 1 : 0};
-            }
-
-            @Override
-            View createView(EditableDialogFragment ft) {
-                View view =
-                        ft.getActivity().getLayoutInflater().inflate(R.layout.image_size_editor, null);
-
-                // insert current size
-                EditText widthView = (EditText) view.findViewById(R.id.widthEditText);
-                EditText heightView = (EditText) view.findViewById(R.id.heightEditText);
-
-                // listener to button
-                Button resetButton = (Button) view.findViewById(R.id.resetSizeButton);
-
-                resetButton.setOnClickListener(new View.OnClickListener() {
-                    @Override
-                    public void onClick(View view) {
-                        SharedPreferences prefs =
-                                PreferenceManager.getDefaultSharedPreferences(view.getContext());
-
-                        Point dim = new Point();
-
-                        dim.set(prefs.getInt("width", -1), prefs.getInt("height", -1));
-
-                        if (dim.x <= 0 || dim.y <= 0) {
-                            dim = MainActivity.screenDimensions(view.getContext());
-                        }
-
-                        widthView.setText(Integer.toString(dim.x));
-                        heightView.setText(Integer.toString(dim.y));
                     }
                 });
 
