@@ -1,0 +1,122 @@
+<?xml version="1.0" encoding="utf-8"?>
+<android.support.constraint.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+                                             xmlns:app="http://schemas.android.com/apk/res-auto"
+                                             xmlns:tools="http://schemas.android.com/tools"
+                                             android:layout_width="match_parent"
+                                             android:layout_height="match_parent"
+                                             android:orientation="vertical">
+
+    <TextView
+        android:id="@+id/sizeModeLabel"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="8dp"
+        android:text="Size: "
+        app:layout_constraintBaseline_toBaselineOf="@+id/sizeModeSpinner"
+        app:layout_constraintStart_toStartOf="parent"/>
+
+    <TextView
+        android:id="@+id/widthLabel"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="8dp"
+        android:text="Width: "
+        app:layout_constraintBaseline_toBaselineOf="@+id/widthEditText"
+        app:layout_constraintStart_toStartOf="parent"/>
+
+    <TextView
+        android:id="@+id/heightLabel"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="8dp"
+        android:text="Height: "
+        app:layout_constraintBaseline_toBaselineOf="@+id/heightEditText"
+        app:layout_constraintStart_toStartOf="parent"/>
+
+    <android.support.constraint.Barrier
+        android:id="@+id/labelBarrier"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        app:barrierDirection="right"
+        app:constraint_referenced_ids="widthLabel,heightLabel,sizeModeLabel"/>
+
+    <Spinner
+        android:id="@+id/sizeModeSpinner"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_marginEnd="8dp"
+        android:layout_marginStart="8dp"
+        android:layout_marginTop="8dp"
+        android:entries="@array/size_modes"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toEndOf="@+id/labelBarrier"
+        app:layout_constraintTop_toTopOf="parent"/>
+
+    <EditText
+        android:id="@+id/widthEditText"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="8dp"
+        android:layout_marginTop="8dp"
+        android:ems="6"
+        android:inputType="number"
+        app:layout_constraintStart_toEndOf="@+id/labelBarrier"
+        app:layout_constraintTop_toBottomOf="@+id/sizeModeSpinner"/>
+
+    <EditText
+        android:id="@+id/heightEditText"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="8dp"
+        android:layout_marginTop="8dp"
+        android:ems="6"
+        android:inputType="number"
+        app:layout_constraintStart_toEndOf="@+id/labelBarrier"
+        app:layout_constraintTop_toBottomOf="@+id/widthEditText"/>
+
+    <android.support.constraint.Barrier
+        android:id="@+id/dimensionBarrier"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        app:barrierDirection="right"
+        app:constraint_referenced_ids="heightEditText,widthEditText"/>
+
+    <CheckBox
+        android:id="@+id/saveAsDefaultCheckBox"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_marginEnd="8dp"
+        android:layout_marginStart="8dp"
+        android:layout_marginTop="8dp"
+        android:text="Save as Default Size"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/heightEditText"/>
+
+    <ToggleButton
+        android:id="@+id/ratioToggleButton"
+        android:layout_width="20dp"
+        android:layout_height="0dp"
+        android:layout_marginBottom="8dp"
+        android:layout_marginStart="8dp"
+        android:layout_marginTop="8dp"
+        android:layout_weight="1"
+        app:layout_constraintBottom_toTopOf="@+id/saveAsDefaultCheckBox"
+        app:layout_constraintStart_toEndOf="@+id/dimensionBarrier"
+        app:layout_constraintTop_toBottomOf="@+id/sizeModeSpinner"/>
+
+    <Button
+        android:id="@+id/swapButton"
+        android:layout_width="20dp"
+        android:layout_height="0dp"
+        android:layout_marginBottom="8dp"
+        android:layout_marginEnd="8dp"
+        android:layout_marginStart="8dp"
+        android:layout_marginTop="8dp"
+        android:layout_weight="1"
+        app:layout_constraintBottom_toTopOf="@+id/saveAsDefaultCheckBox"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toEndOf="@+id/ratioToggleButton"
+        app:layout_constraintTop_toBottomOf="@+id/sizeModeSpinner"/>
+
+</android.support.constraint.ConstraintLayout>

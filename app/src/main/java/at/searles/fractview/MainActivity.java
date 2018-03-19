@@ -57,8 +57,8 @@ public class MainActivity extends Activity
 	public static final int PRESETS_ACTIVITY_RETURN = 102;
 	public static final int BOOKMARK_ACTIVITY_RETURN = 103;
 
-	public static final String WIDTH_LABEL = "width";
-	public static final String HEIGHT_LABEL = "height";
+	public static final String WIDTH_LABEL = "width"; // FIXME Also used in ImageSizeDialog, put into res
+	public static final String HEIGHT_LABEL = "height"; // FIXME put into res.
 
 	public static final String RENDERSCRIPT_FRAGMENT_TAG = "92349831";
 	public static final String BITMAP_FRAGMENT_TAG = "234917643";
