@@ -9,13 +9,13 @@ import android.content.SharedPreferences;
 import android.graphics.Point;
 import android.os.Bundle;
 import android.preference.PreferenceManager;
-import android.support.annotation.IdRes;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.WindowManager;
+import android.widget.AdapterView;
 import android.widget.CheckBox;
 import android.widget.EditText;
-import android.widget.RadioGroup;
+import android.widget.Spinner;
 
 import at.searles.fractview.MainActivity;
 import at.searles.fractview.R;
@@ -49,6 +49,19 @@ public class ImageSizeDialogFragment extends DialogFragment {
         View dialogView = inflater.inflate(R.layout.image_size_editor, null);
         builder.setView(dialogView);
 
+        // Some layout fixes (same size for labels eg)
+
+        // FIXME does not work, most likely because not yet visible
+//        TextView widthLabel = (TextView) dialogView.findViewById(R.id.widthTextView);
+//        TextView heightLabel = (TextView) dialogView.findViewById(R.id.heightTextView);
+//        TextView sizeLabel = (TextView) dialogView.findViewById(R.id.sizeModeTextView);
+//
+//        int maxWidth = Math.max(widthLabel.getWidth(), Math.max(heightLabel.getWidth(), sizeLabel.getWidth()));
+//
+//        widthLabel.setWidth(maxWidth);
+//        heightLabel.setWidth(maxWidth);
+//        sizeLabel.setWidth(maxWidth);
+
         // show initial size in editor
         int width = getArguments().getInt(WIDTH_KEY);
         int height = getArguments().getInt(HEIGHT_KEY);
@@ -56,28 +69,41 @@ public class ImageSizeDialogFragment extends DialogFragment {
         initSize(dialogView, width, height);
 
         // set up buttons
-        RadioGroup radioGroup = (RadioGroup) dialogView.findViewById(R.id.size_mode);
+        Spinner sizeModeSpinner = (Spinner) dialogView.findViewById(R.id.sizeModeSpinner);
 
-        radioGroup.setOnCheckedChangeListener(
-                new RadioGroup.OnCheckedChangeListener() {
-                    @Override
-                    public void onCheckedChanged(RadioGroup group, @IdRes int checkedId) {
-                        switch (checkedId) {
-                            case R.id.default_size:
-                                initDefaultSize(dialogView);
-                                break;
-                            case R.id.screen_size:
-                                initScreenSize(dialogView);
-                                break;
-                            case R.id.custom_size:
-                                initCustomSize(dialogView);
-                                break;
-                            default:
-                                throw new UnsupportedOperationException("unknown id: " + checkedId);
-                        }
-                    }
+        sizeModeSpinner.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
+            @Override
+            public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
+                switch (position) {
+                    case 0:
+                        initScreenSize(dialogView);
+                        break;
+                    case 1:
+                        initDefaultSize(dialogView);
+                        break;
+                    case 2:
+                        initCustomSize(dialogView);
+                        break;
+                    default:
+                        throw new UnsupportedOperationException("unknown position: " + position);
                 }
-        );
+            }
+
+            @Override
+            public void onNothingSelected(AdapterView<?> parent) {
+                // do nothing.
+            }
+        });
+
+        sizeModeSpinner.setSelection(2);
+
+        //ToggleButton keepRatioToggleButton = (ToggleButton) dialogView.findViewById(R.id.keepRatioToggle);
+
+        // FIXME add logic for button
+
+        //Button swapButton = (Button) dialogView.findViewById(R.id.swapButton);
+
+        // FIXME add logic for button
 
         builder.setNegativeButton("Cancel", new DialogInterface.OnClickListener() {
             @Override
@@ -159,7 +185,7 @@ public class ImageSizeDialogFragment extends DialogFragment {
             w = Integer.parseInt(widthView.getText().toString());
             h = Integer.parseInt(heightView.getText().toString());
         } catch(NumberFormatException e) {
-            DialogHelper.error(((AlertDialog) d).getContext(), "Invalid Size");
+            DialogHelper.error(((AlertDialog) d).getContext(), "Size contains invalid values");
             return;
         }
 
