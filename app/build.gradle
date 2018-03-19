@@ -2,7 +2,7 @@ apply plugin: 'com.android.application'
 
 android {
     compileSdkVersion 25
-    buildToolsVersion "25.0.1"
+    buildToolsVersion "25.0.2"
     defaultConfig {
         applicationId "at.searles.fractview"
         minSdkVersion 21
@@ -45,10 +45,10 @@ dependencies {
     })
 
     //compile 'commons-codec:commons-codec:1.10'
-    compile 'com.android.support:appcompat-v7:25.1.0'
+    compile 'com.android.support:appcompat-v7:25.4.0'
     compile 'org.jetbrains:annotations-java5:15.0'
-    compile 'com.google.code.gson:gson:2.6.2'
-    compile 'com.android.support:support-v4:25.3.1'
+    compile 'com.google.code.gson:gson:2.8.0'
+    compile 'com.android.support:support-v4:25.4.0'
     testCompile 'junit:junit:4.12'
-    compile 'com.android.support.constraint:constraint-layout:1.0.2'
+    compile 'com.android.support.constraint:constraint-layout:1.1.0-beta5'
 }

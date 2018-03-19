@@ -1,5 +1,6 @@
 package at.searles.fractview.editors;
 
+import android.annotation.SuppressLint;
 import android.app.AlertDialog;
 import android.app.Dialog;
 import android.app.DialogFragment;
@@ -16,6 +17,8 @@ import android.widget.AdapterView;
 import android.widget.CheckBox;
 import android.widget.EditText;
 import android.widget.Spinner;
+
+import java.util.Locale;
 
 import at.searles.fractview.MainActivity;
 import at.searles.fractview.R;
@@ -46,21 +49,11 @@ public class ImageSizeDialogFragment extends DialogFragment {
         LayoutInflater inflater = getActivity().getLayoutInflater();
 
         // null is ok here because there is no parent yet (ie the dialog)
-        View dialogView = inflater.inflate(R.layout.image_size_editor, null);
+        @SuppressLint("InflateParams")
+        View dialogView = inflater.inflate(R.layout.image_size_layout, null);
         builder.setView(dialogView);
 
         // Some layout fixes (same size for labels eg)
-
-        // FIXME does not work, most likely because not yet visible
-//        TextView widthLabel = (TextView) dialogView.findViewById(R.id.widthTextView);
-//        TextView heightLabel = (TextView) dialogView.findViewById(R.id.heightTextView);
-//        TextView sizeLabel = (TextView) dialogView.findViewById(R.id.sizeModeTextView);
-//
-//        int maxWidth = Math.max(widthLabel.getWidth(), Math.max(heightLabel.getWidth(), sizeLabel.getWidth()));
-//
-//        widthLabel.setWidth(maxWidth);
-//        heightLabel.setWidth(maxWidth);
-//        sizeLabel.setWidth(maxWidth);
 
         // show initial size in editor
         int width = getArguments().getInt(WIDTH_KEY);
@@ -127,15 +120,15 @@ public class ImageSizeDialogFragment extends DialogFragment {
         EditText widthEditText = (EditText) dialogView.findViewById(R.id.widthEditText);
         EditText heightEditText = (EditText) dialogView.findViewById(R.id.heightEditText);
 
-        widthEditText.setText(Integer.toString(width));
-        heightEditText.setText(Integer.toString(height));
+        widthEditText.setText(String.format(Locale.getDefault(), "%d", width));
+        heightEditText.setText(String.format(Locale.getDefault(), "%d", height));
     }
 
     private void initDefaultSize(View dialogView) {
         SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(getActivity());
 
-        int width = prefs.getInt(MainActivity.WIDTH_LABEL, -1); // FIXME put into res
-        int height = prefs.getInt(MainActivity.HEIGHT_LABEL, -1); // FIXME put into res
+        int width = prefs.getInt(MainActivity.WIDTH_LABEL, -1);
+        int height = prefs.getInt(MainActivity.HEIGHT_LABEL, -1);
 
         if(width == -1 || height == -1) {
             initScreenSize(dialogView);
@@ -148,6 +141,12 @@ public class ImageSizeDialogFragment extends DialogFragment {
     private void initScreenSize(View dialogView) {
         Point dim = new Point();
         WindowManager wm = (WindowManager) getActivity().getSystemService(Context.WINDOW_SERVICE);
+
+        if(wm == null) {
+            DialogHelper.error(getActivity(), "Cannot determine screen size");
+            return;
+        }
+
         wm.getDefaultDisplay().getSize(dim);
 
         initSize(dialogView, dim.x, dim.y);
@@ -177,7 +176,7 @@ public class ImageSizeDialogFragment extends DialogFragment {
         EditText widthView = (EditText) ((AlertDialog) d).findViewById(R.id.widthEditText);
         EditText heightView = (EditText) ((AlertDialog) d).findViewById(R.id.heightEditText);
 
-        boolean storeAsDefault = ((CheckBox) ((AlertDialog) d).findViewById(R.id.defaultCheckBox)).isChecked();
+        boolean storeAsDefault = ((CheckBox) ((AlertDialog) d).findViewById(R.id.saveAsDefaultCheckBox)).isChecked();
 
         int w, h;
 

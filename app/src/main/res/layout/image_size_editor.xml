@@ -71,7 +71,7 @@
                     android:text="Height: "/>
 
                 <EditText
-                    android:id="@+id/heightEditText"
+                    android:id="@+id/widthEditText"
                     android:ems="6"
                     android:layout_height="wrap_content"
                     android:inputType="number"
