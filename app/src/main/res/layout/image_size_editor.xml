@@ -1,55 +1,108 @@
 <?xml version="1.0" encoding="utf-8"?>
-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android" android:layout_width="match_parent"
-              android:layout_height="match_parent"
-              android:orientation="vertical">
-
-    <RadioGroup android:id="@+id/size_mode"
-                android:layout_width="fill_parent"
-                android:layout_height="wrap_content"
-                android:orientation="vertical">
-        <RadioButton android:id="@+id/screen_size"
-                     android:layout_width="wrap_content"
-                     android:layout_height="wrap_content"
-                     android:text="Screen Size"
-                     android:checked="false"/>
-        <RadioButton android:id="@+id/default_size"
-                     android:layout_width="wrap_content"
-                     android:layout_height="wrap_content"
-                     android:text="Default"
-                     android:checked="false"/>
-        <RadioButton android:id="@+id/custom_size"
-                     android:layout_width="wrap_content"
-                     android:layout_height="wrap_content"
-                     android:text="Custom"
-                     android:checked="true"/>
-    </RadioGroup>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+                                             xmlns:app="http://schemas.android.com/apk/res-auto"
+                                             xmlns:tools="http://schemas.android.com/tools"
+                android:orientation="vertical"
+            android:layout_height="wrap_content"
+            android:layout_width="wrap_content">
 
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:layout_gravity="center">
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Size: "
+            android:id="@+id/sizeModeTextView"/>
+
+        <Spinner
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:id="@+id/sizeModeSpinner"
+            android:entries="@array/size_modes">
+        </Spinner>
+    </LinearLayout>
+
+    <LinearLayout
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
         android:orientation="horizontal">
 
-        <EditText
-            android:id="@+id/widthEditText"
-            android:layout_width="0dp"
-            android:layout_weight="1"
+        <LinearLayout
+            android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:inputType="number"
-            android:hint="Height"
-            />
+            android:orientation="vertical">
 
-        <EditText
-            android:id="@+id/heightEditText"
-            android:layout_width="0dp"
-            android:layout_weight="1"
-            android:layout_height="wrap_content"
-            android:inputType="number"
-            android:hint="Width"/>
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:layout_gravity="center">
+
+                <TextView
+                    android:id="@+id/widthTextView"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_gravity="right|center_vertical"
+                    android:text="Width: "/>
+
+                <EditText
+                    android:id="@+id/widthEditText"
+                    android:ems="6"
+                    android:layout_height="wrap_content"
+                    android:inputType="number"
+                    android:layout_width="wrap_content">
+                </EditText>
+            </LinearLayout>
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:layout_gravity="center">
+
+                <TextView
+                    android:id="@+id/heightTextView"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_gravity="right|center_vertical"
+                    android:text="Height: "/>
+
+                <EditText
+                    android:id="@+id/heightEditText"
+                    android:ems="6"
+                    android:layout_height="wrap_content"
+                    android:inputType="number"
+                    android:layout_width="wrap_content"/>
+            </LinearLayout>
+        </LinearLayout>
+
+        <LinearLayout
+            android:layout_width="wrap_content"
+            android:layout_height="match_parent"
+            android:orientation="horizontal">
+
+            <!--<ToggleButton
+                android:id="@+id/keepRatioToggle"
+                android:layout_width="wrap_content"
+                android:layout_height="match_parent"
+                android:text="Keep Ratio"/>
+
+            <Button
+                android:id="@+id/swapButton"
+                android:layout_width="wrap_content"
+                android:layout_height="match_parent"
+                android:layout_gravity="center"
+                android:text="Swap"/>-->
+        </LinearLayout>
     </LinearLayout>
 
     <CheckBox
-        android:layout_width="fill_parent"
+        android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:text="@string/label_keep_as_default"
         android:id="@+id/defaultCheckBox"/>
+
 </LinearLayout>

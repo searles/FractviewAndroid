@@ -432,6 +432,9 @@ public class BitmapFragment extends Fragment implements DrawerListener, RenderSc
 
 			drawer.applyNewSize();
 
+			this.width = bitmap.getWidth();
+			this.height = bitmap.getHeight();
+
 			for(BitmapFragmentListener l : listeners) {
 				l.newBitmapCreated(BitmapFragment.this.bitmap, BitmapFragment.this);
 			}
