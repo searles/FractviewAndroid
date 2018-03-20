@@ -66,6 +66,7 @@ public class ImageSizeDialogFragment extends DialogFragment {
 
         initSizeView(dialogView, width, height);
         initSizeModeSpinnerView(dialogView);
+        initRatioToggleButton(dialogView);
 
         builder.setNegativeButton("Cancel", new DialogInterface.OnClickListener() {
             @Override
@@ -129,15 +130,6 @@ public class ImageSizeDialogFragment extends DialogFragment {
         //ToggleButton keepRatioToggleButton = (ToggleButton) dialogView.findViewById(R.id.keepRatioToggle);
 
         // FIXME add logic for button
-    }
-
-    private void initSwapButton(View dialogView) {
-        // FIXME
-
-        //Button swapButton = (Button) dialogView.findViewById(R.id.swapButton);
-
-        // FIXME add logic for button
-
     }
 
     private void initDefaultSize(View dialogView) {
