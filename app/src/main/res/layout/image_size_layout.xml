@@ -38,7 +38,8 @@
         android:layout_width="0dp"
         android:layout_height="0dp"
         app:barrierDirection="end"
-        app:constraint_referenced_ids="widthLabel,heightLabel,sizeModeLabel"/>
+        app:constraint_referenced_ids="widthLabel,heightLabel,sizeModeLabel"
+        tools:layout_editor_absoluteX="56dp"/>
 
     <Spinner
         android:id="@+id/sizeModeSpinner"
@@ -79,11 +80,12 @@
         android:layout_width="0dp"
         android:layout_height="0dp"
         app:barrierDirection="end"
-        app:constraint_referenced_ids="heightEditText,widthEditText"/>
+        app:constraint_referenced_ids="heightEditText,widthEditText"
+        tools:layout_editor_absoluteX="193dp"/>
 
     <CheckBox
         android:id="@+id/saveAsDefaultCheckBox"
-        android:layout_width="wrap_content"
+        android:layout_width="0dp"
         android:layout_height="wrap_content"
         android:layout_marginEnd="8dp"
         android:layout_marginStart="8dp"
@@ -95,28 +97,17 @@
 
     <ToggleButton
         android:id="@+id/ratioToggleButton"
-        android:layout_width="20dp"
-        android:layout_height="0dp"
-        android:layout_marginBottom="8dp"
-        android:layout_marginStart="8dp"
-        android:layout_marginTop="8dp"
-        android:layout_weight="1"
-        app:layout_constraintBottom_toTopOf="@+id/saveAsDefaultCheckBox"
-        app:layout_constraintStart_toEndOf="@+id/dimensionBarrier"
-        app:layout_constraintTop_toBottomOf="@+id/sizeModeSpinner"/>
-
-    <Button
-        android:id="@+id/swapButton"
-        android:layout_width="20dp"
-        android:layout_height="0dp"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
         android:layout_marginBottom="8dp"
         android:layout_marginEnd="8dp"
         android:layout_marginStart="8dp"
         android:layout_marginTop="8dp"
         android:layout_weight="1"
+        android:drawableTop="@drawable/ic_aspect_ratio_black_24dp"
         app:layout_constraintBottom_toTopOf="@+id/saveAsDefaultCheckBox"
         app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toEndOf="@+id/ratioToggleButton"
+        app:layout_constraintStart_toEndOf="@+id/dimensionBarrier"
         app:layout_constraintTop_toBottomOf="@+id/sizeModeSpinner"/>
 
 </android.support.constraint.ConstraintLayout>
