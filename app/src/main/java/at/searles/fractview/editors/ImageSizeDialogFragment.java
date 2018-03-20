@@ -22,20 +22,25 @@ import java.util.Locale;
 
 import at.searles.fractview.MainActivity;
 import at.searles.fractview.R;
+import at.searles.fractview.bitmap.BitmapFragment;
 import at.searles.fractview.ui.DialogHelper;
 
 public class ImageSizeDialogFragment extends DialogFragment {
 
+    private static final String BITMAP_FRAGMENT_KEY = "bitmapfragment";
+    private static final String RATIO_KEY = "ratio";
     private static final String WIDTH_KEY = "width";
     private static final String HEIGHT_KEY = "height";
 
-    public static ImageSizeDialogFragment newInstance(int width, int height) {
+    public static ImageSizeDialogFragment newInstance(String bitmapFragmentTag, int width, int height) {
         ImageSizeDialogFragment fragment = new ImageSizeDialogFragment();
 
         Bundle arguments = new Bundle();
 
+        arguments.putString(BITMAP_FRAGMENT_KEY, bitmapFragmentTag);
         arguments.putInt(WIDTH_KEY, width);
         arguments.putInt(HEIGHT_KEY, height);
+        arguments.putDouble(RATIO_KEY, ((double) width) / (double) height);
 
         fragment.setArguments(arguments);
 
@@ -59,8 +64,28 @@ public class ImageSizeDialogFragment extends DialogFragment {
         int width = getArguments().getInt(WIDTH_KEY);
         int height = getArguments().getInt(HEIGHT_KEY);
 
-        initSize(dialogView, width, height);
+        initSizeView(dialogView, width, height);
+        initSizeModeSpinnerView(dialogView);
 
+        builder.setNegativeButton("Cancel", new DialogInterface.OnClickListener() {
+            @Override
+            public void onClick(DialogInterface dialog, int which) {
+                dialog.dismiss();
+            }
+        });
+
+        builder.setPositiveButton("Resize", new DialogInterface.OnClickListener() {
+            @Override
+            public void onClick(DialogInterface dialog, int which) {
+                setImageSize(dialog);
+                dismiss();
+            }
+        });
+
+        return builder.create();
+    }
+
+    private void initSizeModeSpinnerView(View dialogView) {
         // set up buttons
         Spinner sizeModeSpinner = (Spinner) dialogView.findViewById(R.id.sizeModeSpinner);
 
@@ -89,39 +114,30 @@ public class ImageSizeDialogFragment extends DialogFragment {
         });
 
         sizeModeSpinner.setSelection(2);
-
-        //ToggleButton keepRatioToggleButton = (ToggleButton) dialogView.findViewById(R.id.keepRatioToggle);
-
-        // FIXME add logic for button
-
-        //Button swapButton = (Button) dialogView.findViewById(R.id.swapButton);
-
-        // FIXME add logic for button
-
-        builder.setNegativeButton("Cancel", new DialogInterface.OnClickListener() {
-            @Override
-            public void onClick(DialogInterface dialog, int which) {
-                dialog.dismiss();
-            }
-        });
-
-        builder.setPositiveButton("Resize", new DialogInterface.OnClickListener() {
-            @Override
-            public void onClick(DialogInterface dialog, int which) {
-                setImageSize(dialog);
-                dismiss();
-            }
-        });
-
-        return builder.create();
     }
 
-    private void initSize(View dialogView, int width, int height) {
+    private void initSizeView(View dialogView, int width, int height) {
         EditText widthEditText = (EditText) dialogView.findViewById(R.id.widthEditText);
         EditText heightEditText = (EditText) dialogView.findViewById(R.id.heightEditText);
 
         widthEditText.setText(String.format(Locale.getDefault(), "%d", width));
         heightEditText.setText(String.format(Locale.getDefault(), "%d", height));
+    }
+
+    private void initRatioToggleButton(View dialogView) {
+        // FIXME
+        //ToggleButton keepRatioToggleButton = (ToggleButton) dialogView.findViewById(R.id.keepRatioToggle);
+
+        // FIXME add logic for button
+    }
+
+    private void initSwapButton(View dialogView) {
+        // FIXME
+
+        //Button swapButton = (Button) dialogView.findViewById(R.id.swapButton);
+
+        // FIXME add logic for button
+
     }
 
     private void initDefaultSize(View dialogView) {
@@ -133,7 +149,7 @@ public class ImageSizeDialogFragment extends DialogFragment {
         if(width == -1 || height == -1) {
             initScreenSize(dialogView);
         } else {
-            initSize(dialogView, width, height);
+            initSizeView(dialogView, width, height);
             enableInput(dialogView, false);
         }
     }
@@ -149,7 +165,7 @@ public class ImageSizeDialogFragment extends DialogFragment {
 
         wm.getDefaultDisplay().getSize(dim);
 
-        initSize(dialogView, dim.x, dim.y);
+        initSizeView(dialogView, dim.x, dim.y);
         enableInput(dialogView, false);
     }
 
@@ -195,10 +211,16 @@ public class ImageSizeDialogFragment extends DialogFragment {
 
         if(w == getArguments().getInt(WIDTH_KEY) || h == getArguments().getInt(HEIGHT_KEY)) {
             DialogHelper.info(((AlertDialog) d).getContext(), "Size not changed.");
-        } else if(!((MainActivity) getActivity()).setImageSize(w, h)) {
-            DialogHelper.error(((AlertDialog) d).getContext(), "Image is too large.");
-            return;
+        } else {
+            // fetch fragment and change size
+            BitmapFragment fragment = (BitmapFragment) getFragmentManager().findFragmentByTag(getArguments().getString(BITMAP_FRAGMENT_KEY));
+
+            if(!fragment.setSize(w, h)) {
+                DialogHelper.error(((AlertDialog) d).getContext(), "Image is too large.");
+                return;
+            }
         }
+
         if(storeAsDefault) {
             storeDefaultSize(w, h);
         }

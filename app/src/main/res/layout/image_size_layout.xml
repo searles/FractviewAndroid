@@ -35,9 +35,9 @@
 
     <android.support.constraint.Barrier
         android:id="@+id/labelBarrier"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        app:barrierDirection="right"
+        android:layout_width="0dp"
+        android:layout_height="0dp"
+        app:barrierDirection="end"
         app:constraint_referenced_ids="widthLabel,heightLabel,sizeModeLabel"/>
 
     <Spinner
@@ -76,14 +76,14 @@
 
     <android.support.constraint.Barrier
         android:id="@+id/dimensionBarrier"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        app:barrierDirection="right"
+        android:layout_width="0dp"
+        android:layout_height="0dp"
+        app:barrierDirection="end"
         app:constraint_referenced_ids="heightEditText,widthEditText"/>
 
     <CheckBox
         android:id="@+id/saveAsDefaultCheckBox"
-        android:layout_width="0dp"
+        android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_marginEnd="8dp"
         android:layout_marginStart="8dp"

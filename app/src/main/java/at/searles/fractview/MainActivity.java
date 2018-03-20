@@ -427,17 +427,9 @@ public class MainActivity extends Activity
 	}
 
 	private void openChangeImageSizeDialog() {
-		// FIXME put into fragment!
-		ImageSizeDialogFragment fragment = ImageSizeDialogFragment.newInstance(bitmapFragment.width(), bitmapFragment.height());
+		ImageSizeDialogFragment fragment = ImageSizeDialogFragment.newInstance(BITMAP_FRAGMENT_TAG, bitmapFragment.width(), bitmapFragment.height());
 		fragment.show(getFragmentManager(), IMAGE_SIZE_DIALOG_TAG);
 	}
-
-	public boolean setImageSize(int width, int height) {
-		// callback from ImageSizeDialogFragment
-		return bitmapFragment.setSize(width, height);
-	}
-
-
 
 	public void saveFavorite(String name) {
 		if(name.isEmpty()) {
