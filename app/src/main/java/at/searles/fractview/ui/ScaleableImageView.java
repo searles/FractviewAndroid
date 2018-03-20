@@ -169,7 +169,6 @@ public class ScaleableImageView extends View {
 
 	private void setImageMatrix(Matrix matrix) {
 		this.imageMatrix = matrix;
-
 	}
 
 	public void setListener(Listener listener) {
@@ -384,7 +383,13 @@ public class ScaleableImageView extends View {
 	@Override
 	public void onDraw(@NotNull Canvas canvas) {
 		// avoid crash if the image was not created yet.
-		if(bitmap == null) return;
+		if(bitmap == null) {
+			return;
+		}
+
+		if(imageMatrix == null) {
+			Log.e(getClass().getName(), "image matrix is null in onDraw");
+		}
 
 		// draw image
 		canvas.drawBitmap(bitmap, imageMatrix, null);
@@ -729,7 +734,8 @@ public class ScaleableImageView extends View {
 			}
 
 			if(!controller.isDone()) {
-				throw new IllegalStateException("action up but not done...");
+				Log.e(getClass().getName(), "Controller not done: " + controller);
+				// still continue.
 			}
 
 			// next for the preferences
