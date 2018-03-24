@@ -17,6 +17,7 @@ import android.widget.AdapterView;
 import android.widget.CheckBox;
 import android.widget.EditText;
 import android.widget.Spinner;
+import android.widget.TextView;
 
 import java.util.Locale;
 
@@ -27,8 +28,10 @@ import at.searles.fractview.ui.DialogHelper;
 
 public class ImageSizeDialogFragment extends DialogFragment {
 
+    private static final int MIN_VALUE = 1;
+    private static final int MAX_VALUE = 999999;
+
     private static final String BITMAP_FRAGMENT_KEY = "bitmapfragment";
-    private static final String RATIO_KEY = "ratio";
     private static final String WIDTH_KEY = "width";
     private static final String HEIGHT_KEY = "height";
 
@@ -40,7 +43,6 @@ public class ImageSizeDialogFragment extends DialogFragment {
         arguments.putString(BITMAP_FRAGMENT_KEY, bitmapFragmentTag);
         arguments.putInt(WIDTH_KEY, width);
         arguments.putInt(HEIGHT_KEY, height);
-        arguments.putDouble(RATIO_KEY, ((double) width) / (double) height);
 
         fragment.setArguments(arguments);
 
@@ -58,53 +60,153 @@ public class ImageSizeDialogFragment extends DialogFragment {
         View dialogView = inflater.inflate(R.layout.image_size_layout, null);
         builder.setView(dialogView);
 
-        // Some layout fixes (same size for labels eg)
-
-        // show initial size in editor
-        int width = getArguments().getInt(WIDTH_KEY);
-        int height = getArguments().getInt(HEIGHT_KEY);
-
-        initSizeView(dialogView, width, height);
-        initSizeModeSpinnerView(dialogView);
-        initRatioToggleButton(dialogView);
-
         builder.setNegativeButton("Cancel", new DialogInterface.OnClickListener() {
             @Override
-            public void onClick(DialogInterface dialog, int which) {
-                dialog.dismiss();
-            }
+            public void onClick(DialogInterface dialog, int which) {}
         });
 
         builder.setPositiveButton("Resize", new DialogInterface.OnClickListener() {
             @Override
             public void onClick(DialogInterface dialog, int which) {
-                setImageSize(dialog);
-                dismiss();
+                throw new IllegalArgumentException(""); // will not be called.
             }
         });
 
-        return builder.create();
+        AlertDialog dialog = builder.create();
+
+        dialog.show();
+
+        dialog.getButton(DialogInterface.BUTTON_POSITIVE).setOnClickListener(
+                new View.OnClickListener() {
+                    @Override
+                    public void onClick(View v) {
+                        if(onOkClick(dialog)) {
+                            dismiss();
+                        }
+                    }
+                }
+        );
+
+        initializeViews(dialog);
+
+        return dialog;
     }
 
-    private void initSizeModeSpinnerView(View dialogView) {
+    private void initializeViews(AlertDialog dialog) {
+        // initialize logic of view
+        // show initial size in editor
+        int width = getArguments().getInt(WIDTH_KEY);
+        int height = getArguments().getInt(HEIGHT_KEY);
+
+        initSizeView(dialog, width, height);
+        initSizeModeSpinnerView(dialog);
+    }
+
+    private int[] dimensions(AlertDialog dialog) {
+        // fetch values
+        EditText widthEditText = (EditText) dialog.findViewById(R.id.widthEditText);
+        EditText heightEditText = (EditText) dialog.findViewById(R.id.heightEditText);
+
+        int width = numericValue(widthEditText);
+        int height = numericValue(heightEditText);
+
+        if(width <= 0) {
+            setErrorMessage(dialog, String.format("%s must be an integer from %d to %d", "Width", MIN_VALUE, MAX_VALUE));
+            widthEditText.requestFocus();
+            return null;
+        }
+
+        if(height <= 0) {
+            setErrorMessage(dialog, String.format("%s must be an integer from %d to %d", "Height", MIN_VALUE, MAX_VALUE));
+            heightEditText.requestFocus();
+            return null;
+        }
+
+        return new int[]{ width, height };
+    }
+
+    private boolean onOkClick(AlertDialog dialog) {
+
+        int dimensions[] = dimensions(dialog);
+
+        if(dimensions == null) {
+            return false;
+        }
+
+        int width = dimensions[0];
+        int height = dimensions[1];
+
+        boolean storeAsDefault = ((CheckBox) dialog.findViewById(R.id.saveAsDefaultCheckBox)).isChecked();
+
+        if(width == getArguments().getInt(WIDTH_KEY) && height == getArguments().getInt(HEIGHT_KEY)) {
+            if(storeAsDefault) {
+                setErrorMessage(dialog, String.format("Size unchanged (stored size as default)"));
+                storeDefaultSize(width, height);
+                ((CheckBox) dialog.findViewById(R.id.saveAsDefaultCheckBox)).setChecked(false);
+                return false;
+            } else {
+                setErrorMessage(dialog, String.format("Size unchanged"));
+                return false;
+            }
+        }
+
+        // fetch fragment and change size
+        BitmapFragment fragment = (BitmapFragment) getFragmentManager().findFragmentByTag(getArguments().getString(BITMAP_FRAGMENT_KEY));
+
+        if(!fragment.setSize(width, height)) {
+            setErrorMessage(dialog, String.format("Could not change size (size too large)."));
+            return false;
+        }
+
+        if(storeAsDefault) {
+            storeDefaultSize(width, height);
+        }
+
+        return true;
+    }
+
+    private void setErrorMessage(AlertDialog dialog, String msg) {
+        TextView errorMessageTextView = (TextView) dialog.findViewById(R.id.errorMessageTextView);
+        errorMessageTextView.setVisibility(View.VISIBLE);
+        errorMessageTextView.setText(msg);
+        errorMessageTextView.setCompoundDrawablesWithIntrinsicBounds(0, 0, android.R.drawable.stat_notify_error, 0);
+    }
+
+    private static int numericValue(EditText editText) {
+        String s = editText.getText().toString().trim();
+
+        int value = 0;
+
+        for(int i = 0; i < s.length() && '0' <= s.charAt(i) && s.charAt(i) <= '9'; ++i) {
+            if(value > MAX_VALUE) {
+                return 0;
+            }
+
+            value = value * 10 + s.charAt(i) - '0';
+        }
+
+        return value;
+    }
+
+    private void initSizeModeSpinnerView(AlertDialog dialog) {
         // set up buttons
-        Spinner sizeModeSpinner = (Spinner) dialogView.findViewById(R.id.sizeModeSpinner);
+        Spinner sizeModeSpinner = (Spinner) dialog.findViewById(R.id.sizeModeSpinner);
 
         sizeModeSpinner.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
             @Override
             public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
                 switch (position) {
                     case 0:
-                        initScreenSize(dialogView);
+                        switchToScreenSize(dialog);
                         break;
                     case 1:
-                        initDefaultSize(dialogView);
+                        switchToDefaultSize(dialog);
                         break;
                     case 2:
-                        initCustomSize(dialogView);
+                        switchToCustomSize(dialog);
                         break;
                     default:
-                        throw new UnsupportedOperationException("unknown position: " + position);
+                        throw new IllegalArgumentException("unknown position: " + position);
                 }
             }
 
@@ -117,36 +219,29 @@ public class ImageSizeDialogFragment extends DialogFragment {
         sizeModeSpinner.setSelection(2);
     }
 
-    private void initSizeView(View dialogView, int width, int height) {
-        EditText widthEditText = (EditText) dialogView.findViewById(R.id.widthEditText);
-        EditText heightEditText = (EditText) dialogView.findViewById(R.id.heightEditText);
+    private void initSizeView(AlertDialog dialog, int width, int height) {
+        EditText widthEditText = (EditText) dialog.findViewById(R.id.widthEditText);
+        EditText heightEditText = (EditText) dialog.findViewById(R.id.heightEditText);
 
         widthEditText.setText(String.format(Locale.getDefault(), "%d", width));
         heightEditText.setText(String.format(Locale.getDefault(), "%d", height));
     }
 
-    private void initRatioToggleButton(View dialogView) {
-        // FIXME
-        //ToggleButton keepRatioToggleButton = (ToggleButton) dialogView.findViewById(R.id.keepRatioToggle);
-
-        // FIXME add logic for button
-    }
-
-    private void initDefaultSize(View dialogView) {
+    private void switchToDefaultSize(AlertDialog dialog) {
         SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(getActivity());
 
         int width = prefs.getInt(MainActivity.WIDTH_LABEL, -1);
         int height = prefs.getInt(MainActivity.HEIGHT_LABEL, -1);
 
         if(width == -1 || height == -1) {
-            initScreenSize(dialogView);
+            switchToScreenSize(dialog);
         } else {
-            initSizeView(dialogView, width, height);
-            enableInput(dialogView, false);
+            initSizeView(dialog, width, height);
+            enableInput(dialog, false);
         }
     }
 
-    private void initScreenSize(View dialogView) {
+    private void switchToScreenSize(AlertDialog dialog) {
         Point dim = new Point();
         WindowManager wm = (WindowManager) getActivity().getSystemService(Context.WINDOW_SERVICE);
 
@@ -157,17 +252,17 @@ public class ImageSizeDialogFragment extends DialogFragment {
 
         wm.getDefaultDisplay().getSize(dim);
 
-        initSizeView(dialogView, dim.x, dim.y);
-        enableInput(dialogView, false);
+        initSizeView(dialog, dim.x, dim.y);
+        enableInput(dialog, false);
     }
 
-    private void initCustomSize(View dialogView) {
+    private void switchToCustomSize(AlertDialog dialogView) {
         enableInput(dialogView, true);
     }
 
-    private void enableInput(View dialogView, boolean enabled) {
-        EditText widthView = (EditText) dialogView.findViewById(R.id.widthEditText);
-        EditText heightView = (EditText) dialogView.findViewById(R.id.heightEditText);
+    private void enableInput(AlertDialog dialog, boolean enabled) {
+        EditText widthView = (EditText) dialog.findViewById(R.id.widthEditText);
+        EditText heightView = (EditText) dialog.findViewById(R.id.heightEditText);
 
         widthView.setEnabled(enabled);
         heightView.setEnabled(enabled);
@@ -178,43 +273,5 @@ public class ImageSizeDialogFragment extends DialogFragment {
         editor.putInt(MainActivity.WIDTH_LABEL, width);
         editor.putInt(MainActivity.HEIGHT_LABEL, height);
         editor.apply();
-    }
-
-    private void setImageSize(DialogInterface d) {
-        EditText widthView = (EditText) ((AlertDialog) d).findViewById(R.id.widthEditText);
-        EditText heightView = (EditText) ((AlertDialog) d).findViewById(R.id.heightEditText);
-
-        boolean storeAsDefault = ((CheckBox) ((AlertDialog) d).findViewById(R.id.saveAsDefaultCheckBox)).isChecked();
-
-        int w, h;
-
-        try {
-            w = Integer.parseInt(widthView.getText().toString());
-            h = Integer.parseInt(heightView.getText().toString());
-        } catch(NumberFormatException e) {
-            DialogHelper.error(((AlertDialog) d).getContext(), "Size contains invalid values");
-            return;
-        }
-
-        if(w < 1 || h < 1) {
-            DialogHelper.error(((AlertDialog) d).getContext(), "Width and height must be at least 1");
-            return;
-        }
-
-        if(w == getArguments().getInt(WIDTH_KEY) || h == getArguments().getInt(HEIGHT_KEY)) {
-            DialogHelper.info(((AlertDialog) d).getContext(), "Size not changed.");
-        } else {
-            // fetch fragment and change size
-            BitmapFragment fragment = (BitmapFragment) getFragmentManager().findFragmentByTag(getArguments().getString(BITMAP_FRAGMENT_KEY));
-
-            if(!fragment.setSize(w, h)) {
-                DialogHelper.error(((AlertDialog) d).getContext(), "Image is too large.");
-                return;
-            }
-        }
-
-        if(storeAsDefault) {
-            storeDefaultSize(w, h);
-        }
     }
 }
