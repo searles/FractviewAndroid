@@ -95,19 +95,17 @@
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toBottomOf="@+id/heightEditText"/>
 
-    <ToggleButton
-        android:id="@+id/ratioToggleButton"
-        android:layout_width="wrap_content"
+    <TextView
+        android:id="@+id/errorMessageTextView"
+        android:layout_width="0dp"
         android:layout_height="wrap_content"
-        android:layout_marginBottom="8dp"
         android:layout_marginEnd="8dp"
         android:layout_marginStart="8dp"
         android:layout_marginTop="8dp"
-        android:layout_weight="1"
-        android:drawableTop="@drawable/ic_aspect_ratio_black_24dp"
-        app:layout_constraintBottom_toTopOf="@+id/saveAsDefaultCheckBox"
+        android:text=""
+        android:visibility="invisible"
         app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toEndOf="@+id/dimensionBarrier"
-        app:layout_constraintTop_toBottomOf="@+id/sizeModeSpinner"/>
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/saveAsDefaultCheckBox"/>
 
 </android.support.constraint.ConstraintLayout>
