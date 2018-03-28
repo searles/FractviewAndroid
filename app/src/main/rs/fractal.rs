@@ -270,14 +270,34 @@ double2 xx;
 double2 yy;
 double2 tt;
 
+// image
+int width;
+int height;
+
+// program
+
 int *program;
 int len;
+
+// colors
 
 struct palette * palettes;
 struct lab_surface * palette_data;
 
 static double2 __attribute__((overloadable)) map(double x, double y) {
-    return (double2) { xx.x * x + yy.x * y + tt.x, xx.y * x + yy.y * y  + tt.y }; // apply affine tranformation
+    double centerX = (width - 1.) / 2.;
+    double centerY = (height - 1.) / 2.;
+    double factor = 1. / (centerX < centerY ? centerX : centerY);
+
+    double a = xx.x * factor;
+    double b = yy.x * factor;
+    double c = xx.y * factor;
+    double d = yy.y * factor;
+
+    double e = tt.x - (a * centerX + b * centerY);
+    double f = tt.y - (c * centerX + d * centerY);
+
+    return (double2) { a * x + b * y + e, c * x + d * y + f };
 }
 
 static double2 __attribute__((overloadable)) map(double2 xy) {
@@ -822,8 +842,6 @@ static int palette_int(int i, double2 xy) {
 
 // ------------------- Data --------------------
 
-int width;
-int height;
 
 static uchar4 calc(int x, int y) {
     // temp vars

@@ -84,9 +84,10 @@ public class RenderScriptDrawer implements Drawer {
 	public void setFractal(Fractal fractal) {
 		updatePalettes(fractal.palettes());
 		updateProgram(fractal.code());
-		setScale(fractal.scale());
+		updateScale(fractal.scale());
 	}
 
+	@Deprecated
 	public void setScale(Scale sc) {
 		updateScale(sc);
 	}
@@ -122,15 +123,11 @@ public class RenderScriptDrawer implements Drawer {
 		fillScript.set_height(bm.getHeight());
 		fillScript.set_gOut(rsBitmap);
 
-		Log.d("RS_D", "successful allocation");
-
 		// scale in script depends on image size
 		this.bitmap = bm;
 
 		this.width = bm.getWidth();
 		this.height = bm.getHeight();
-
-		updateScale(null); // if scale was not initialized yet
 	}
 
 	@Override
@@ -147,8 +144,8 @@ public class RenderScriptDrawer implements Drawer {
 
 	@Override
 	public void applyNewSize() {
-		// TODO
-		// assertInUiThread();
+		// in ui thread
+
 		if(newRSBitmap == null) {
 			Log.w(getClass().getName(), "applyNewSize should not run here because of check in BF");
 			return;
@@ -176,8 +173,6 @@ public class RenderScriptDrawer implements Drawer {
 		fillScript.set_width(this.width);
 		fillScript.set_height(this.height);
 		fillScript.set_gOut(rsBitmap);
-
-		// fixme update scale
 	}
 
 	// Draw
@@ -395,17 +390,10 @@ public class RenderScriptDrawer implements Drawer {
 	}
 
 	private void updateScale(Scale scale) {
-		double centerX = (width - 1.) / 2.;
-		double centerY = (height - 1.) / 2.;
-		double factor = 1. / Math.min(centerX, centerY);
+		Double2 x = new Double2(scale.xx(), scale.xy());
+		Double2 y = new Double2(scale.yx(), scale.yy());
 
-		Double2 x = new Double2(scale.xx() * factor, scale.xy() * factor);
-		Double2 y = new Double2(scale.yx() * factor, scale.yy() * factor);
-
-		Double2 c = new Double2(
-				scale.cx() - factor * (scale.xx() * centerX + scale.yx() * centerY),
-				scale.cy() - factor * (scale.xy() * centerX + scale.yy() * centerY)
-		);
+		Double2 c = new Double2(scale.cx(), scale.cy());
 
 		script.set_xx(x);
 		script.set_yy(y);
