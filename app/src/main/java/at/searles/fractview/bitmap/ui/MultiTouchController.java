@@ -1,4 +1,4 @@
-package at.searles.fractview.ui;
+package at.searles.fractview.bitmap.ui;
 
 import android.graphics.Matrix;
 import android.graphics.PointF;

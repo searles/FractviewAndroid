@@ -1,6 +1,7 @@
 package at.searles.fractview.fractal;
 
 import at.searles.fractal.Fractal;
+import at.searles.math.Scale;
 
 /**
  * Created by searles on 27.02.18.
@@ -8,6 +9,12 @@ import at.searles.fractal.Fractal;
 
 public interface FractalProvider {
     Fractal get(int i);// returns the i-th fractal.
+
+    /**
+     *
+     * @return The number of fractals that are provided by this fractalprovider
+     */
+    int size();
 
     Iterable<String> getParameters();
 
@@ -20,4 +27,9 @@ public interface FractalProvider {
     boolean isDefault(String label);
 
     void resetToDefault(String label); // throw if it is default.
+    
+    interface CallBack {
+
+        void setScaleRelative(Scale sc);
+    }
 }

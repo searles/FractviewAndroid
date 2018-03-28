@@ -13,13 +13,11 @@ import java.util.List;
 import at.searles.fractal.Drawer;
 import at.searles.fractal.DrawerListener;
 import at.searles.fractal.Fractal;
-import at.searles.fractal.android.BundleAdapter;
 import at.searles.fractview.MainActivity;
-import at.searles.fractview.SourcesListActivity;
+import at.searles.fractview.bitmap.ui.BitmapFragmentAccessor;
+import at.searles.fractview.fractal.FractalProviderListener;
 import at.searles.fractview.renderscript.RenderScriptFragment;
 import at.searles.fractview.renderscript.RenderScriptListener;
-import at.searles.math.Scale;
-import at.searles.meelan.CompileException;
 
 /**
  * This class is the glue maintaining all parameters for drawing the fractal
@@ -51,7 +49,7 @@ import at.searles.meelan.CompileException;
  *
  * An Editor
  */
-public class BitmapFragment extends Fragment implements DrawerListener, RenderScriptListener {
+public class BitmapFragment extends Fragment implements DrawerListener, RenderScriptListener, BitmapFragmentAccessor, FractalProviderListener {
 
 	private static final String WIDTH_LABEL = "width";
 	private static final String HEIGHT_LABEL = "height";
@@ -112,14 +110,14 @@ public class BitmapFragment extends Fragment implements DrawerListener, RenderSc
 
 	// if true, the drawing is currently running and the drawer should
 	// not be modified. Only modified in UI thread
-	private enum Status {
+	public enum Status {
 		RUNNING,      // drawer is running
 		IDLE,         // waiting for IdleJobs
 		PROCESSING    // in working loop
 	}
 
 	public static BitmapFragment newInstance(int width, int height,
-											 int screenWidth, int screenHeight, Fractal fractal) {
+                                             int screenWidth, int screenHeight) {
 		// set initial size
 		Bundle bundle = new Bundle();
 
@@ -129,13 +127,57 @@ public class BitmapFragment extends Fragment implements DrawerListener, RenderSc
 		bundle.putInt(SCREEN_WIDTH_LABEL, screenWidth);
 		bundle.putInt(SCREEN_HEIGHT_LABEL, screenHeight);
 
-		Bundle fractalBundle = BundleAdapter.fractalToBundle(fractal);
-		bundle.putBundle(SourcesListActivity.FRACTAL_INDENT_LABEL, fractalBundle);
-
 		BitmapFragment ft = new BitmapFragment();
 		ft.setArguments(bundle);
 
 		return ft;
+	}
+
+
+	@Override
+	public void onCreate(Bundle savedInstanceState) {
+		super.onCreate(savedInstanceState);
+		setRetainInstance(true); // preserve this one on rotation
+
+		readArguments();
+
+		// set up logic
+		RenderScriptFragment renderScriptFragment =
+				(RenderScriptFragment) getFragmentManager().findFragmentByTag(MainActivity.RENDERSCRIPT_FRAGMENT_TAG);
+
+		if(!renderScriptFragment.isInitializing()) {
+			// initialization done, we can already create the drawer
+			initializeDrawer(renderScriptFragment);
+		} else {
+			// keep us informed when initialization is finished
+			renderScriptFragment.addListener(this);
+		}
+	}
+
+	private void readArguments() {
+		// Read initial width/height
+		int screenWidth = getArguments().getInt(SCREEN_WIDTH_LABEL);
+		int screenHeight = getArguments().getInt(SCREEN_HEIGHT_LABEL);
+
+		if(screenWidth < 0 || screenHeight < 0) {
+			throw new IllegalArgumentException("invalid screen size: " + screenWidth + "x" + screenHeight);
+		}
+
+		this.width = getArguments().getInt(WIDTH_LABEL);
+		this.height = getArguments().getInt(HEIGHT_LABEL);
+
+		if(width < 0 || height < 0) {
+			this.width = screenWidth;
+			this.height = screenHeight;
+		}
+	}
+
+	public float progress() {
+		return drawer.progress();
+	}
+
+	public boolean isRunning() {
+		return status == Status.RUNNING;
 	}
 
 	// =============================================================
@@ -255,9 +297,6 @@ public class BitmapFragment extends Fragment implements DrawerListener, RenderSc
 
 		this.drawer.setListener(this);
 
-		// set data.
-		this.drawer.setFractal(this.fractal);
-
 		// create bitmap
 		if(!prepareSetSize(this.width, this.height)) {
 			if(!prepareSetSize(DEFAULT_WIDTH, DEFAULT_HEIGHT)) {
@@ -268,7 +307,10 @@ public class BitmapFragment extends Fragment implements DrawerListener, RenderSc
 
 		applyNewSize();
 
-		startBackgroundTask();
+		// There should be a job that sets the fractal
+		status = Status.IDLE;
+
+		executeNextJob();
 	}
 
 	@Override
@@ -309,69 +351,25 @@ public class BitmapFragment extends Fragment implements DrawerListener, RenderSc
 		});
 	}
 
+	// ========================================
+	// === Callback from fractalfragment ======
+	// ========================================
+
 	@Override
-	public void onCreate(Bundle savedInstanceState) {
-		super.onCreate(savedInstanceState);
-		setRetainInstance(true); // preserve this one on rotation
-
-		readArguments();
-
-		// set up logic
-		RenderScriptFragment renderScriptFragment =
-				(RenderScriptFragment) getFragmentManager().findFragmentByTag(MainActivity.RENDERSCRIPT_FRAGMENT_TAG);
-
-		if(!renderScriptFragment.isInitializing()) {
-			// initialization done, we can already create the drawer
-			initializeDrawer(renderScriptFragment);
-		} else {
-			// keep us informed when initialization is finished
-			renderScriptFragment.addListener(this);
-		}
+	public void fractalModified(Fractal fractal) {
+		scheduleIdleJob(IdleJob.editor(
+				new Runnable() {
+					public void run() {
+						BitmapFragment.this.fractal = fractal;
+						drawer.setFractal(fractal);
+					}
+				}
+		), false, true);
 	}
 
-	private void readArguments() {
-		// Read initial width/height
-		int screenWidth = getArguments().getInt(SCREEN_WIDTH_LABEL);
-		int screenHeight = getArguments().getInt(SCREEN_HEIGHT_LABEL);
-
-		if(screenWidth < 0 || screenHeight < 0) {
-			throw new IllegalArgumentException("invalid screen size: " + screenWidth + "x" + screenHeight);
-		}
-
-		this.width = getArguments().getInt(WIDTH_LABEL);
-		this.height = getArguments().getInt(HEIGHT_LABEL);
-
-		if(width < 0 || height < 0) {
-			this.width = screenWidth;
-			this.height = screenHeight;
-		}
-
-		// and also the fractal.
-		this.fractal = BundleAdapter.bundleToFractal(getArguments().getBundle(SourcesListActivity.FRACTAL_INDENT_LABEL));
-
-		if(this.fractal == null) throw new IllegalArgumentException("no fractal in arguments!");
-
-		// the initial fractal must always be compilable, otherwise it is no fun.
-		try {
-			// Fractal is guaranteed to compile
-			this.fractal.parse();
-			this.fractal.compile();
-		} catch(CompileException e) {
-			e.printStackTrace();
-			throw new IllegalArgumentException("initial fractal is not compilable: " + e.getMessage());
-		}
-	}
-
-	public float progress() {
-		return drawer.progress();
-	}
-
-	public boolean isRunning() {
-		return status == Status.RUNNING;
-	}
 
 	// ------------------------
-	// Now for the editing part
+	// Edit image size
 	// ------------------------
 
 	/**
@@ -436,36 +434,11 @@ public class BitmapFragment extends Fragment implements DrawerListener, RenderSc
 			this.height = bitmap.getHeight();
 
 			for(BitmapFragmentListener l : listeners) {
-				l.newBitmapCreated(BitmapFragment.this.bitmap, BitmapFragment.this);
+				l.newBitmapCreated(BitmapFragment.this);
 			}
 		}
 	}
 
-	public void setScale(Scale sc) {
-		scheduleIdleJob(IdleJob.editor(
-				new Runnable() {
-					public void run() {
-						fractal = fractal.copyNewScale(sc);
-						drawer.setScale(sc); // not necessary to update the whole fractal.
-					}
-				}
-		), false, true);
-	}
-
-	public void setScaleRelative(Scale sc) {
-		setScale(fractal.scale().relative(sc));
-	}
-
-	public void setFractal(Fractal f) {
-		scheduleIdleJob(IdleJob.editor(
-				new Runnable() {
-					public void run() {
-						fractal = f;
-						drawer.setFractal(f);
-					}
-				}
-		), false, true);
-	}
 
 
 	// =============================================================
@@ -476,7 +449,7 @@ public class BitmapFragment extends Fragment implements DrawerListener, RenderSc
 	 * @return bitmap of this bitmap fragment. Might be null if no
 	 * bitmap has been generated yet.
 	 */
-    public Bitmap getBitmap() {
+    public Bitmap bitmap() {
         return bitmap;
     }
 
@@ -487,18 +460,6 @@ public class BitmapFragment extends Fragment implements DrawerListener, RenderSc
     public int height() {
         return height;
     }
-
-	/**
-	 * Deprecated because this should be of no interest of anybody.
-	 * Currently only used in MainActivity to store current data on
-	 * rotation.
-	 * Should actually be replaced by FractalProviderFragment.
-	 * @return the fractal that is currently drawn
-	 */
-	@Deprecated
-	public Fractal fractal() {
-		return fractal;
-	}
 
 	// =============================================================
 	// ====== Manage listener    ===================================

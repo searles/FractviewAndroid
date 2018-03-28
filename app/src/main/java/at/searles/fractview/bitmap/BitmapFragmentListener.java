@@ -1,6 +1,6 @@
 package at.searles.fractview.bitmap;
 
-import android.graphics.Bitmap;
+import at.searles.fractview.bitmap.ui.BitmapFragmentAccessor;
 
 /**
  * BitmapFragment does some callbacks to the activity that
@@ -12,29 +12,28 @@ public interface BitmapFragmentListener {
      * The view and progress bars should be updated because
      * the bitmap changed
      */
-    void bitmapUpdated(BitmapFragment src);
+    void bitmapUpdated(BitmapFragmentAccessor src);
 
     /**
      * The view should be updated and the view matrices reset
      * because a first preview was generated in the bitmap.
      * TODO: Maybe merge this one with drawingUpdated?
      */
-    void previewGenerated(BitmapFragment src);
+    void previewGenerated(BitmapFragmentAccessor src);
 
     /**
      * We will now start a new calc. This one is called from the UI-thread.
      */
-    void drawerStarted(BitmapFragment src);
+    void drawerStarted(BitmapFragmentAccessor src);
 
     /**
      * Called when the calculation is finished (and it was not cancelled)
      * @param ms milliseconds
      */
-    void drawerFinished(long ms, BitmapFragment src);
+    void drawerFinished(long ms, BitmapFragmentAccessor src);
 
     /**
      * Called after a new bitmap was created.
-     * @param bitmap The new bitmap
      */
-    void newBitmapCreated(Bitmap bitmap, BitmapFragment src);
+    void newBitmapCreated(BitmapFragmentAccessor src);
 }

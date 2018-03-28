@@ -31,7 +31,6 @@ public class RenderScriptDrawer implements Drawer {
 
 	private DrawerListener listener;
 
-	private Scale scale;
 	private Bitmap bitmap;
 
 	private int width;
@@ -170,7 +169,7 @@ public class RenderScriptDrawer implements Drawer {
 		fillScript.set_height(this.height);
 		fillScript.set_gOut(rsBitmap);
 
-		updateScale(null); // if scale was not initialized yet
+		// fixme update scale
 	}
 
 	// Draw
@@ -385,12 +384,6 @@ public class RenderScriptDrawer implements Drawer {
 	}
 
 	private void updateScale(Scale scale) {
-		if(scale == null) {
-			scale = this.scale;
-		} else {
-			this.scale = scale;
-		}
-
 		double centerX = (width - 1.) / 2.;
 		double centerY = (height - 1.) / 2.;
 		double factor = 1. / Math.min(centerX, centerY);
