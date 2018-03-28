@@ -18,6 +18,7 @@ import android.preference.PreferenceManager;
 import android.support.v4.app.ActivityCompat;
 import android.support.v4.content.ContextCompat;
 import android.util.Log;
+import android.view.Display;
 import android.view.Menu;
 import android.view.MenuInflater;
 import android.view.MenuItem;
@@ -27,18 +28,19 @@ import android.widget.Toast;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.HashMap;
+import java.util.LinkedList;
 
-import at.searles.fractal.FavoriteEntry;
 import at.searles.fractal.Fractal;
 import at.searles.fractal.android.BundleAdapter;
 import at.searles.fractview.bitmap.BitmapFragment;
 import at.searles.fractview.bitmap.BitmapFragmentListener;
+import at.searles.fractview.bitmap.ui.BitmapFragmentView;
 import at.searles.fractview.editors.ImageSizeDialogFragment;
+import at.searles.fractview.fractal.SingleFractalFragment;
 import at.searles.fractview.renderscript.RenderScriptFragment;
 import at.searles.fractview.saving.SaveAsDialogFragment;
 import at.searles.fractview.saving.SaveFragment;
 import at.searles.fractview.saving.ShareModeDialogFragment;
-import at.searles.fractview.ui.BitmapFragmentView;
 import at.searles.fractview.ui.DialogHelper;
 import at.searles.meelan.CompileException;
 import at.searles.tutorial.TutorialActivity;
@@ -62,42 +64,23 @@ public class MainActivity extends Activity
 
 	public static final String RENDERSCRIPT_FRAGMENT_TAG = "92349831";
 	public static final String BITMAP_FRAGMENT_TAG = "234917643";
+	public static final String FRACTAL_FRAGMENT_TAG = "2asdfsdf";
 	private static final String SHARE_MODE_DIALOG_TAG = "593034kf";
 	private static final String SAVE_TO_MEDIA_TAG = "458hnof";
 	private static final String IMAGE_SIZE_DIALOG_TAG = "km9434f";
 
 	private static final int FAVORITES_ICON_SIZE = 64;
-
-	private BitmapFragmentView imageView;
+	private static final int FALLBACK_DEFAULT_WIDTH = 640;
+	private static final int FALLBACK_DEFAULT_HEIGHT = 480;
 
 	/**
-	 * Bitmap fragment contains the only image
+	 * The following fragments and views need to cooperate.
 	 */
     private BitmapFragment bitmapFragment;
+	private SingleFractalFragment fractalFragment;
+	private BitmapFragmentView imageView;
 
-	/**
-	 * Listener for bitmap fragment
-	 */
-	private BitmapFragmentListener bitmapFragmentListener;
-
-	private SharedPreferences prefs;
-
-	private FragmentManager fm;
-
-	public static Point screenDimensions(Context context) {
-		// FIXME put into commons.
-		Point dim = new Point();
-		WindowManager wm = (WindowManager) context.getSystemService(Context.WINDOW_SERVICE);
-		wm.getDefaultDisplay().getSize(dim);
-
-		// if width < height swap.
-		if(dim.x < dim.y) {
-			//noinspection SuspiciousNameCombination
-			dim.set(dim.y, dim.x);
-		}
-
-		return dim;
-	}
+	LinkedList<Runnable> destroyTasks = new LinkedList<>();
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
@@ -108,58 +91,31 @@ public class MainActivity extends Activity
 
 		getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON); // make sure that screen stays awake
 
-		imageView = (BitmapFragmentView) findViewById(R.id.mainBitmapFragmentView);
-
 		super.onCreate(savedInstanceState); // this one (re-)creates the bitmap fragment on rotation.
 
-		// Get settings from shared preferences
-		prefs = PreferenceManager.getDefaultSharedPreferences(this);
-
-		fm = getFragmentManager();
+		imageView = (BitmapFragmentView) findViewById(R.id.mainBitmapFragmentView);
 
 		initRenderScriptFragment();
+		initFractalFragment();
+		initBitmapFragment(); // this adds a newly created bitmap fragment to the listener list in fractalfragment.
 
-		initBitmapFragment();
-		initBitmapFragmentListener();
+		// initialize the view
+		BitmapFragmentListener viewListener = imageView.createListener();
 
-		// now we have a valid bitmap fragment, but careful! it is not yet initialized.
-		imageView.setBitmapFragment(bitmapFragment);
+		bitmapFragment.addBitmapFragmentListener(viewListener);
+		destroyTasks.add(new Runnable() {
+			@Override
+			public void run() {
+				bitmapFragment.removeBitmapFragmentListener(viewListener);
+			}
+		});
+
+		// call fractalfragment for zoom events
+		imageView.setCallBack(fractalFragment.createCallback());
 	}
-
-	private void initBitmapFragmentListener() {
-		// set up listeners for bitmap fragment
-		bitmapFragmentListener = new BitmapFragmentListener() {
-
-			@Override
-			public void drawerStarted(BitmapFragment source) {
-				// this is already called from the ui-thread.
-				// we now start a handler that will update the progress every 25 ms and show it
-				// in the progress bar.
-			}
-
-			@Override
-			public void drawerFinished(long ms, BitmapFragment source) {
-				DialogHelper.info(MainActivity.this, "Finished after " + Commons.duration(ms));
-			}
-
-			@Override
-			public void bitmapUpdated(BitmapFragment src) {
-				// not needed here
-			}
-
-			@Override
-			public void previewGenerated(BitmapFragment src) {
-				// not needed here
-			}
-
-			@Override
-			public void newBitmapCreated(Bitmap bitmap, BitmapFragment src) {
-				// ignore
-			}
-		};
-	}
-
+	
 	private void initRenderScriptFragment() {
+		FragmentManager fm = getFragmentManager();
 		RenderScriptFragment renderScriptFragment = (RenderScriptFragment) fm.findFragmentByTag(RENDERSCRIPT_FRAGMENT_TAG);
 
 		if(renderScriptFragment == null) {
@@ -171,7 +127,27 @@ public class MainActivity extends Activity
 		}
 	}
 
+	private void initFractalFragment() {
+		FragmentManager fm = getFragmentManager();
+
+		fractalFragment = (SingleFractalFragment) fm.findFragmentByTag(FRACTAL_FRAGMENT_TAG);
+
+		if(fractalFragment == null) {
+			String sourceCode = AssetsHelper.readSourcecode(getAssets(), "Default.fv");
+
+			Fractal initFractal = new Fractal(sourceCode, new HashMap<>());
+
+			fractalFragment = SingleFractalFragment.newInstance(initFractal);
+
+			FragmentTransaction transaction = getFragmentManager().beginTransaction();
+			transaction.add(fractalFragment, FRACTAL_FRAGMENT_TAG);
+			transaction.commitAllowingStateLoss(); // Question: Why should there be a stateloss?
+		}
+	}
+
 	private void initBitmapFragment() {
+		FragmentManager fm = getFragmentManager();
+
 		bitmapFragment = (BitmapFragment) fm.findFragmentByTag(BITMAP_FRAGMENT_TAG);
 
 		if(bitmapFragment == null) {
@@ -180,7 +156,9 @@ public class MainActivity extends Activity
 			Fractal initFractal = new Fractal(sourceCode, new HashMap<>());
 
 			// fetch dimensions from preferences or display size.
-
+			// Get settings from shared preferences
+			SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(this);
+			
 			int defaultWidth = prefs.getInt(WIDTH_LABEL, -1);
 			int defaultHeight = prefs.getInt(HEIGHT_LABEL, -1);
 
@@ -189,19 +167,24 @@ public class MainActivity extends Activity
 			int displayWidth = dim.x;
 			int displayHeight = dim.y;
 
-			bitmapFragment = BitmapFragment.newInstance(defaultWidth, defaultHeight, displayWidth, displayHeight, initFractal);
+			bitmapFragment = BitmapFragment.newInstance(defaultWidth, defaultHeight, displayWidth, displayHeight);
 
 			FragmentTransaction transaction = getFragmentManager().beginTransaction();
 			transaction.add(bitmapFragment, BITMAP_FRAGMENT_TAG);
 			transaction.commitAllowingStateLoss(); // Question: Why should there be a stateloss?
+
+			fractalFragment.addListener(bitmapFragment);
 		}
 	}
 
 	@Override
 	public void onDestroy() {
 		imageView.dispose();
-		bitmapFragment.removeBitmapFragmentListener(bitmapFragmentListener);
-		bitmapFragment = null; // all action that was not done till now is gone.
+
+		while (!destroyTasks.isEmpty()) {
+			destroyTasks.remove().run();
+		}
+
 		super.onDestroy();
 	}
 
@@ -209,17 +192,11 @@ public class MainActivity extends Activity
 	public void onSaveInstanceState(@NotNull Bundle savedInstanceState) {
 		Log.d("MA", "on save instance called in MA");
 
-		bitmapFragment.getArguments().putBundle(SourcesListActivity.FRACTAL_INDENT_LABEL, BundleAdapter.fractalToBundle(bitmapFragment.fractal()));
+
+		// FIXME is this needed? bitmapFragment.getArguments().putBundle(SourcesListActivity.FRACTAL_INDENT_LABEL, BundleAdapter.fractalToBundle(bitmapFragment.fractal()));
 
 		// Always call the superclass so it can save the view hierarchy state
 		super.onSaveInstanceState(savedInstanceState);
-	}
-
-	void storeDefaultSize(int width, int height) {
-		SharedPreferences.Editor editor = PreferenceManager.getDefaultSharedPreferences(this).edit();
-		editor.putInt(WIDTH_LABEL, width);
-		editor.putInt(HEIGHT_LABEL, height);
-		editor.apply();
 	}
 
 	@Override
@@ -253,8 +230,9 @@ public class MainActivity extends Activity
 			} return true;
 
 			case R.id.action_parameters: {
+				// FIXME The activities should directly access fractalFragment.
 				Intent i = new Intent(MainActivity.this, ParameterEditorActivity.class);
-				i.putExtra(SourcesListActivity.FRACTAL_INDENT_LABEL, BundleAdapter.fractalToBundle(bitmapFragment.fractal()));
+				//i.putExtra(SourcesListActivity.FRACTAL_INDENT_LABEL, BundleAdapter.fractalToBundle(bitmapFragment.fractal()));
 				startActivityForResult(i, PARAMETER_ACTIVITY_RETURN);
 			} return true;
 
@@ -267,7 +245,7 @@ public class MainActivity extends Activity
 			case R.id.action_demos: {
 				// show new activity
 				Intent i = new Intent(MainActivity.this, SourcesListActivity.class);
-				i.putExtra(SourcesListActivity.FRACTAL_INDENT_LABEL, BundleAdapter.fractalToBundle(bitmapFragment.fractal()));
+				//i.putExtra(SourcesListActivity.FRACTAL_INDENT_LABEL, BundleAdapter.fractalToBundle(bitmapFragment.fractal()));
 				startActivityForResult(i, PRESETS_ACTIVITY_RETURN);
 			} return true;
 
@@ -283,7 +261,7 @@ public class MainActivity extends Activity
 
 			case R.id.action_copy_to_clipboard: {
 				// copy to clipboard
-				ClipboardHelper.copyFractal(this, bitmapFragment.fractal());
+				// FIXME ClipboardHelper.copyFractal(this, bitmapFragment.fractal());
 			} return true;
 
 			case R.id.action_gui_settings: {
@@ -438,14 +416,14 @@ public class MainActivity extends Activity
 		}
 
 		// Fetch icon from bitmap fragment
-		Fractal fractal = bitmapFragment.fractal();
+		// FIXME Fractal fractal = bitmapFragment.fractal();
 
 		// create icon out of bitmap
-		Bitmap icon = Commons.createIcon(bitmapFragment.getBitmap(), FAVORITES_ICON_SIZE);
+		Bitmap icon = Commons.createIcon(bitmapFragment.bitmap(), FAVORITES_ICON_SIZE);
 
-		FavoriteEntry fav = new FavoriteEntry(icon, fractal, Commons.fancyTimestamp());
+		// FIXME FavoriteEntry fav = new FavoriteEntry(icon, fractal, Commons.fancyTimestamp());
 
-		SharedPrefsHelper.storeInSharedPreferences(this, name, fav, FavoritesListActivity.FAVORITES_SHARED_PREF);
+		// FIXME SharedPrefsHelper.storeInSharedPreferences(this, name, fav, FavoritesListActivity.FAVORITES_SHARED_PREF);
 	}
 
 	void setNewFractal(final Fractal newFractal) {
@@ -455,7 +433,7 @@ public class MainActivity extends Activity
 			newFractal.compile();
 
 			// yay, success
-			bitmapFragment.setFractal(newFractal);
+			// FIXME bitmapFragment.setFractal(newFractal);
 		} catch(CompileException e) {
 			e.printStackTrace();
 			Toast.makeText(this, "ERROR: " + e.getMessage(), Toast.LENGTH_LONG).show();
@@ -522,4 +500,27 @@ public class MainActivity extends Activity
 //		super.onBackPressed();
 //	}
 
+
+	public static Point screenDimensions(Context context) {
+		// FIXME put into commons.
+		Point dim = new Point();
+		WindowManager wm = (WindowManager) context.getSystemService(Context.WINDOW_SERVICE);
+
+		Display display = wm.getDefaultDisplay();
+
+		if(display == null) {
+			Log.e(MainActivity.class.getName(), "default display was null");
+			dim.set(FALLBACK_DEFAULT_WIDTH, FALLBACK_DEFAULT_HEIGHT);
+		} else {
+			wm.getDefaultDisplay().getSize(dim);
+		}
+
+		// if width < height swap.
+		if(dim.x < dim.y) {
+			//noinspection SuspiciousNameCombination
+			dim.set(dim.y, dim.x);
+		}
+
+		return dim;
+	}
 }

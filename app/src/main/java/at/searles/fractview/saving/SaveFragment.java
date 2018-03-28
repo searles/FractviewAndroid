@@ -115,7 +115,7 @@ public class SaveFragment extends Fragment {
     }
 
     private Bitmap getBitmap() {
-        return ((BitmapFragment) getParentFragment()).getBitmap();
+        return ((BitmapFragment) getParentFragment()).bitmap();
     }
 
     /**

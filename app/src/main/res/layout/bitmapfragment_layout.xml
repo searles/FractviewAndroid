@@ -8,7 +8,7 @@
              android:rowCount="3"
              android:columnCount="3">
 
-    <at.searles.fractview.ui.ScaleableImageView
+    <at.searles.fractview.bitmap.ui.ScaleableImageView
         android:id="@+id/scaleableImageView"
         android:layout_width="fill_parent"
         android:layout_height="fill_parent"
