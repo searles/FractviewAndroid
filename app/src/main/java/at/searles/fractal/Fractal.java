@@ -439,6 +439,10 @@ public class Fractal implements ExternalData {
 		return data;
 	}
 
+	public Fractal copy() {
+		return new Fractal(this.sourceCode, this.data);
+	}
+
 	public static class ParameterMapBuilder {
 		private final Map<String, Parameter> map;
 
