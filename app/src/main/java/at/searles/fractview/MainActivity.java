@@ -30,6 +30,7 @@ import org.jetbrains.annotations.NotNull;
 import java.util.HashMap;
 import java.util.LinkedList;
 
+import at.searles.fractal.FavoriteEntry;
 import at.searles.fractal.Fractal;
 import at.searles.fractal.android.BundleAdapter;
 import at.searles.fractview.bitmap.BitmapFragment;
@@ -42,7 +43,6 @@ import at.searles.fractview.saving.SaveAsDialogFragment;
 import at.searles.fractview.saving.SaveFragment;
 import at.searles.fractview.saving.ShareModeDialogFragment;
 import at.searles.fractview.ui.DialogHelper;
-import at.searles.meelan.CompileException;
 import at.searles.tutorial.TutorialActivity;
 
 
@@ -153,8 +153,6 @@ public class MainActivity extends Activity
 		if(bitmapFragment == null) {
 			String sourceCode = AssetsHelper.readSourcecode(getAssets(), "Default.fv");
 
-			Fractal initFractal = new Fractal(sourceCode, new HashMap<>());
-
 			// fetch dimensions from preferences or display size.
 			// Get settings from shared preferences
 			SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(this);
@@ -189,17 +187,6 @@ public class MainActivity extends Activity
 	}
 
 	@Override
-	public void onSaveInstanceState(@NotNull Bundle savedInstanceState) {
-		Log.d("MA", "on save instance called in MA");
-
-
-		// FIXME is this needed? bitmapFragment.getArguments().putBundle(SourcesListActivity.FRACTAL_INDENT_LABEL, BundleAdapter.fractalToBundle(bitmapFragment.fractal()));
-
-		// Always call the superclass so it can save the view hierarchy state
-		super.onSaveInstanceState(savedInstanceState);
-	}
-
-	@Override
 	public boolean onCreateOptionsMenu(Menu menu) {
 		// Inflate the menu items for use in the action bar
 		MenuInflater inflater = getMenuInflater();
@@ -230,9 +217,9 @@ public class MainActivity extends Activity
 			} return true;
 
 			case R.id.action_parameters: {
-				// FIXME The activities should directly access fractalFragment.
+				// FIXME Replace this activity
 				Intent i = new Intent(MainActivity.this, ParameterEditorActivity.class);
-				//i.putExtra(SourcesListActivity.FRACTAL_INDENT_LABEL, BundleAdapter.fractalToBundle(bitmapFragment.fractal()));
+				i.putExtra(SourcesListActivity.FRACTAL_INDENT_LABEL, BundleAdapter.fractalToBundle(fractalFragment.fractal()));
 				startActivityForResult(i, PARAMETER_ACTIVITY_RETURN);
 			} return true;
 
@@ -245,7 +232,7 @@ public class MainActivity extends Activity
 			case R.id.action_demos: {
 				// show new activity
 				Intent i = new Intent(MainActivity.this, SourcesListActivity.class);
-				//i.putExtra(SourcesListActivity.FRACTAL_INDENT_LABEL, BundleAdapter.fractalToBundle(bitmapFragment.fractal()));
+				i.putExtra(SourcesListActivity.FRACTAL_INDENT_LABEL, BundleAdapter.fractalToBundle(fractalFragment.fractal()));
 				startActivityForResult(i, PRESETS_ACTIVITY_RETURN);
 			} return true;
 
@@ -254,14 +241,14 @@ public class MainActivity extends Activity
 				Fractal newFractal = ClipboardHelper.pasteFractal(this);
 
 				if(newFractal != null) {
-					setNewFractal(newFractal);
+					fractalFragment.setFractal(newFractal);
 					// otherwise a message was already shown
 				}
 			} return true;
 
 			case R.id.action_copy_to_clipboard: {
 				// copy to clipboard
-				// FIXME ClipboardHelper.copyFractal(this, bitmapFragment.fractal());
+				ClipboardHelper.copyFractal(this, fractalFragment.fractal());
 			} return true;
 
 			case R.id.action_gui_settings: {
@@ -415,29 +402,14 @@ public class MainActivity extends Activity
 			return;
 		}
 
-		// Fetch icon from bitmap fragment
-		// FIXME Fractal fractal = bitmapFragment.fractal();
+		Fractal fractal = fractalFragment.fractal();
 
 		// create icon out of bitmap
 		Bitmap icon = Commons.createIcon(bitmapFragment.bitmap(), FAVORITES_ICON_SIZE);
 
-		// FIXME FavoriteEntry fav = new FavoriteEntry(icon, fractal, Commons.fancyTimestamp());
+		FavoriteEntry fav = new FavoriteEntry(icon, fractal, Commons.fancyTimestamp());
 
-		// FIXME SharedPrefsHelper.storeInSharedPreferences(this, name, fav, FavoritesListActivity.FAVORITES_SHARED_PREF);
-	}
-
-	void setNewFractal(final Fractal newFractal) {
-		// set new but not yet compiled fractal
-		try {
-			newFractal.parse();
-			newFractal.compile();
-
-			// yay, success
-			// FIXME bitmapFragment.setFractal(newFractal);
-		} catch(CompileException e) {
-			e.printStackTrace();
-			Toast.makeText(this, "ERROR: " + e.getMessage(), Toast.LENGTH_LONG).show();
-		}
+		SharedPrefsHelper.storeInSharedPreferences(this, name, fav, FavoritesListActivity.FAVORITES_SHARED_PREF);
 	}
 
 	@Override
@@ -448,17 +420,17 @@ public class MainActivity extends Activity
 			if (requestCode == PARAMETER_ACTIVITY_RETURN) {
 				if (resultCode == 1) { // = "Ok"
 					Fractal newFractal = BundleAdapter.bundleToFractal(data.getBundleExtra(SourcesListActivity.FRACTAL_INDENT_LABEL));
-					setNewFractal(newFractal);
+					fractalFragment.setFractal(newFractal);
 				}
 			} else if (requestCode == BOOKMARK_ACTIVITY_RETURN) {
 				if (resultCode == 1) { // = "a fractal was selected"
 					Fractal newFractal = BundleAdapter.bundleToFractal(data.getBundleExtra(SourcesListActivity.FRACTAL_INDENT_LABEL));
-					setNewFractal(newFractal);
+					fractalFragment.setFractal(newFractal);
 				}
 			} else if (requestCode == PRESETS_ACTIVITY_RETURN) {
 				if (resultCode == 1) {
 					Fractal newFractal = BundleAdapter.bundleToFractal(data.getBundleExtra(SourcesListActivity.FRACTAL_INDENT_LABEL));
-					setNewFractal(newFractal);
+					fractalFragment.setFractal(newFractal);
 				}
 			}
 		}
@@ -468,37 +440,14 @@ public class MainActivity extends Activity
 //	// =======================================================================
 //	// ============= Some History ... ========================================
 //	// =======================================================================
-//
-//	boolean warnedAboutHistoryEmpty = false;
-//
-//	boolean historyBack() {
-//		// we give one warning if back was already hit.
-//		if(bitmapFragment.historyIsEmpty()) {
-//			if(warnedAboutHistoryEmpty) return false;
-//			else {
-//				Toast.makeText(this, "No elements left in history.", Toast.LENGTH_SHORT).show();
-//				warnedAboutHistoryEmpty = true;
-//				return true;
-//			}
-//		} else {
-//			warnedAboutHistoryEmpty = false; // reset here.
-//
-//			if(!bitmapFragment.historyIsEmpty()) {
-//				bitmapFragment.historyBack();
-//				return true;
-//			} else {
-//				return false;
-//			}
-//		}
-//	}
 
-//	@Override
-//	public void onBackPressed() {
-//		// first, send it to image view
-//		if(imageView.backButtonAction()) return;
-//		if(historyBack()) return;
-//		super.onBackPressed();
-//	}
+	@Override
+	public void onBackPressed() {
+		// first, send it to image view
+		if(imageView.backButtonAction()) return;
+		if(fractalFragment.historyBack()) return;
+		super.onBackPressed();
+	}
 
 
 	public static Point screenDimensions(Context context) {

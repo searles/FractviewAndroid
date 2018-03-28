@@ -22,6 +22,9 @@ public class SingleFractalFragment extends Fragment implements FractalProvider {
 
     private List<FractalProviderListener> listeners = new LinkedList<>();
 
+    private LinkedList<Fractal> history = new LinkedList<>();
+    private boolean mustIssueWarningOnEmptyHistory = true;
+
     public static SingleFractalFragment newInstance(Fractal fractal) {
         SingleFractalFragment fragment = new SingleFractalFragment();
 
@@ -50,6 +53,12 @@ public class SingleFractalFragment extends Fragment implements FractalProvider {
         } catch (CompileException e) {
             e.printStackTrace();
         }
+    }
+
+    @Override
+    public void onSaveInstanceState(Bundle outState) {
+        outState.putBundle(FRACTAL_KEY, BundleAdapter.fractalToBundle(fractal));
+        super.onSaveInstanceState(outState);
     }
 
     public void addListener(FractalProviderListener listener) {
@@ -90,43 +99,17 @@ public class SingleFractalFragment extends Fragment implements FractalProvider {
         return fractal.get(label).type();
     }
 
-    @Override
-    public <T> T getValue(String label) {
-        //noinspection unchecked
-        return (T) fractal.get(label).value();
+    public void setFractal(Fractal newFractal) {
+        setFractal(newFractal, true);
     }
 
-    @Override
-    public <T> void setValue(String label, T value) {
-        // FIXME shouldn't this be immutable? Think of history.
-        switch (getType(label)) {
-            case Int:
-                fractal.setInt(label, (Integer) value);
-                break;
-            case Real:
-                fractal.setReal(label, ((Number) value).doubleValue());
-                break;
-            case Cplx:
-                fractal.setCplx(label, (Cplx) value);
-                break;
-            case Bool:
-                fractal.setBool(label, (Boolean) value);
-                break;
-            case Expr:
-                fractal.setExpr(label, (String) value);
-                break;
-            case Color:
-                fractal.setColor(label, (Integer) value);
-                break;
-            case Palette:
-                fractal.setPalette(label, (Palette) value);
-                break;
-            case Scale:
-                fractal.setScale(label, (Scale) value);
-                break;
-            default:
-                throw new IllegalArgumentException();
+    public void setFractal(Fractal newFractal, boolean addOldFractalToHistory) {
+
+        if(fractal != null && addOldFractalToHistory) {
+            history.add(fractal);
         }
+
+        this.fractal = newFractal;
 
         try {
             fractal.parse();
@@ -135,9 +118,55 @@ public class SingleFractalFragment extends Fragment implements FractalProvider {
             e.printStackTrace();
         }
 
+        fireFractalChangedEvent();
+    }
+
+    private void fireFractalChangedEvent() {
         for(FractalProviderListener listener : listeners) {
             listener.fractalModified(fractal);
         }
+    }
+
+    @Override
+    public <T> T getValue(String label) {
+        //noinspection unchecked
+        return (T) fractal.get(label).value();
+    }
+
+    @Override
+    public <T> void setValue(String label, T value) {
+        Fractal newFractal = this.fractal.copy();
+
+        switch (getType(label)) {
+            case Int:
+                newFractal.setInt(label, (Integer) value);
+                break;
+            case Real:
+                newFractal.setReal(label, ((Number) value).doubleValue());
+                break;
+            case Cplx:
+                newFractal.setCplx(label, (Cplx) value);
+                break;
+            case Bool:
+                newFractal.setBool(label, (Boolean) value);
+                break;
+            case Expr:
+                newFractal.setExpr(label, (String) value);
+                break;
+            case Color:
+                newFractal.setColor(label, (Integer) value);
+                break;
+            case Palette:
+                newFractal.setPalette(label, (Palette) value);
+                break;
+            case Scale:
+                newFractal.setScale(label, (Scale) value);
+                break;
+            default:
+                throw new IllegalArgumentException();
+        }
+
+        setFractal(newFractal);
     }
 
     @Override
@@ -150,4 +179,24 @@ public class SingleFractalFragment extends Fragment implements FractalProvider {
         fractal.setToDefault(label);
     }
 
+    public Fractal fractal() {
+        return fractal;
+    }
+
+    public boolean historyBack() {
+        if(history.isEmpty()) {
+            if(mustIssueWarningOnEmptyHistory) {
+                mustIssueWarningOnEmptyHistory = false;
+                return true;
+            }
+
+            return false;
+        }
+
+        Fractal lastEntry = history.removeLast();
+
+        setFractal(lastEntry, false);
+
+        return true;
+    }
 }
