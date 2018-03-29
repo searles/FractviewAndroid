@@ -507,7 +507,7 @@ public class ScaleableImageView extends View {
 		// gesture detector handles scroll
 		// no action without bitmap fragment.
 		// or if deactivateZoom is set.
-		if(deactivateZoom) {
+		if(deactivateZoom || bitmap == null) {
 			return false;
 		}
 
