@@ -98,20 +98,6 @@ public class MainActivity extends Activity
 		initRenderScriptFragment();
 		initFractalFragment();
 		initBitmapFragment(); // this adds a newly created bitmap fragment to the listener list in fractalfragment.
-
-		// initialize the view
-		BitmapFragmentListener viewListener = imageView.createListener();
-
-		bitmapFragment.addBitmapFragmentListener(viewListener);
-		destroyTasks.add(new Runnable() {
-			@Override
-			public void run() {
-				bitmapFragment.removeBitmapFragmentListener(viewListener);
-			}
-		});
-
-		// call fractalfragment for zoom events
-		imageView.setCallBack(fractalFragment.createCallback());
 	}
 	
 	private void initRenderScriptFragment() {
@@ -143,6 +129,9 @@ public class MainActivity extends Activity
 			transaction.add(fractalFragment, FRACTAL_FRAGMENT_TAG);
 			transaction.commitAllowingStateLoss(); // Question: Why should there be a stateloss?
 		}
+
+		// call fractalfragment for zoom events
+		imageView.setCallBack(fractalFragment.createCallback());
 	}
 
 	private void initBitmapFragment() {
@@ -151,12 +140,10 @@ public class MainActivity extends Activity
 		bitmapFragment = (BitmapFragment) fm.findFragmentByTag(BITMAP_FRAGMENT_TAG);
 
 		if(bitmapFragment == null) {
-			String sourceCode = AssetsHelper.readSourcecode(getAssets(), "Default.fv");
-
 			// fetch dimensions from preferences or display size.
 			// Get settings from shared preferences
 			SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(this);
-			
+
 			int defaultWidth = prefs.getInt(WIDTH_LABEL, -1);
 			int defaultHeight = prefs.getInt(HEIGHT_LABEL, -1);
 
@@ -172,6 +159,23 @@ public class MainActivity extends Activity
 			transaction.commitAllowingStateLoss(); // Question: Why should there be a stateloss?
 
 			fractalFragment.addListener(bitmapFragment);
+		}
+
+		// initialize the view
+		BitmapFragmentListener viewListener = imageView.createListener();
+
+		bitmapFragment.addBitmapFragmentListener(viewListener);
+		destroyTasks.add(new Runnable() {
+			@Override
+			public void run() {
+				bitmapFragment.removeBitmapFragmentListener(viewListener);
+			}
+		});
+
+		if(bitmapFragment.bitmap() != null) {
+			imageView.scaleableImageView().setBitmap(bitmapFragment.bitmap());
+			// otherwise, we added the listener. It will inform the view
+			// when a bitmap is available.
 		}
 	}
 

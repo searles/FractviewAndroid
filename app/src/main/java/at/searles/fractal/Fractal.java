@@ -440,7 +440,9 @@ public class Fractal implements ExternalData {
 	}
 
 	public Fractal copy() {
-		return new Fractal(this.sourceCode, this.data);
+		Map<String, Fractal.Parameter> dataCopy = new LinkedHashMap<>();
+		dataCopy.putAll(this.data);
+		return new Fractal(this.sourceCode, dataCopy);
 	}
 
 	public static class ParameterMapBuilder {

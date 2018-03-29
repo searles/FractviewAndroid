@@ -166,6 +166,6 @@ public class SaveAsDialogFragment extends DialogFragment {
         }
 
         // Saving is done in the following plugin
-        // FIXME SaveFragment.createSave(imageFile).init(bitmapFragment);
+        SaveFragment.createSave(imageFile).init(bitmapFragment);
     }
 }

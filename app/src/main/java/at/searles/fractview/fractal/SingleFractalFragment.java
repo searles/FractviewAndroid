@@ -9,6 +9,7 @@ import java.util.List;
 
 import at.searles.fractal.Fractal;
 import at.searles.fractal.android.BundleAdapter;
+import at.searles.fractview.ui.DialogHelper;
 import at.searles.math.Cplx;
 import at.searles.math.Scale;
 import at.searles.math.color.Palette;
@@ -187,6 +188,7 @@ public class SingleFractalFragment extends Fragment implements FractalProvider {
         if(history.isEmpty()) {
             if(mustIssueWarningOnEmptyHistory) {
                 mustIssueWarningOnEmptyHistory = false;
+                DialogHelper.info(getActivity(), "Last element in history. \nPush \'back\' to exit fractview.");
                 return true;
             }
 
