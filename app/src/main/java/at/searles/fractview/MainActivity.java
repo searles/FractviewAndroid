@@ -39,8 +39,10 @@ import at.searles.fractview.bitmap.ui.BitmapFragmentView;
 import at.searles.fractview.editors.ImageSizeDialogFragment;
 import at.searles.fractview.fractal.SingleFractalFragment;
 import at.searles.fractview.renderscript.RenderScriptFragment;
-import at.searles.fractview.saving.SaveAsDialogFragment;
-import at.searles.fractview.saving.SaveFragment;
+import at.searles.fractview.saving.EnterFilenameDialogFragment;
+import at.searles.fractview.saving.SaveInBackgroundFragment;
+import at.searles.fractview.saving.SetWallpaperFragment;
+import at.searles.fractview.saving.ShareBitmapFragment;
 import at.searles.fractview.saving.ShareModeDialogFragment;
 import at.searles.fractview.ui.DialogHelper;
 import at.searles.tutorial.TutorialActivity;
@@ -285,7 +287,7 @@ public class MainActivity extends Activity
 	public void onShareModeResult(ShareModeDialogFragment.Result result) {
 		switch (result) {
 			case Share:
-				SaveFragment.registerNewInstanceForParent(bitmapFragment);
+				bitmapFragment.registerFragmentAsChild(ShareBitmapFragment.newInstance(), SaveInBackgroundFragment.SAVE_FRAGMENT_TAG);
 				return;
 			case Save:
 				int readPermission = ContextCompat.checkSelfPermission(this, Manifest.permission.READ_EXTERNAL_STORAGE);
@@ -300,7 +302,8 @@ public class MainActivity extends Activity
 					return;
 				}
 
-				SaveAsDialogFragment fragment = SaveAsDialogFragment.newInstance();
+				// TODO When there are multiple bitmap fragments, fix this.
+				EnterFilenameDialogFragment fragment = EnterFilenameDialogFragment.newInstance(BITMAP_FRAGMENT_TAG);
 				fragment.show(getFragmentManager(), SAVE_TO_MEDIA_TAG);
 
 				return;
@@ -315,7 +318,7 @@ public class MainActivity extends Activity
 					return;
 				}
 
-				// FIXME SaveFragment.createSetWallpaper().init(bitmapFragment);
+				bitmapFragment.registerFragmentAsChild(SetWallpaperFragment.newInstance(), SaveInBackgroundFragment.SAVE_FRAGMENT_TAG);
 
 				return;
 			default:

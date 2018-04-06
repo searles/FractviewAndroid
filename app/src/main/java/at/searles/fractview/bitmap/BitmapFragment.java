@@ -1,6 +1,8 @@
 package at.searles.fractview.bitmap;
 
 import android.app.Fragment;
+import android.app.FragmentManager;
+import android.app.FragmentTransaction;
 import android.graphics.Bitmap;
 import android.os.Bundle;
 import android.os.Handler;
@@ -66,8 +68,6 @@ public class BitmapFragment extends Fragment implements DrawerListener, RenderSc
 	// Allocations and various data
 	private int height, width;
 
-	private Fractal fractal;
-
 	private Bitmap bitmap;
 	/**
 	 * If a new bitmap is created, it is first stored here.
@@ -115,6 +115,19 @@ public class BitmapFragment extends Fragment implements DrawerListener, RenderSc
 		IDLE,         // waiting for IdleJobs
 		PROCESSING    // in working loop
 	}
+
+	public Fragment registerFragmentAsChild(Fragment childFragment, String tag) {
+		FragmentManager fm = getChildFragmentManager();
+
+		FragmentTransaction fragmentTransaction = fm.beginTransaction();
+
+		fragmentTransaction.add(childFragment, tag);
+
+		fragmentTransaction.commit();
+
+		return childFragment;
+	}
+
 
 	public static BitmapFragment newInstance(int width, int height,
                                              int screenWidth, int screenHeight) {
@@ -360,7 +373,7 @@ public class BitmapFragment extends Fragment implements DrawerListener, RenderSc
 		scheduleIdleJob(IdleJob.editor(
 				new Runnable() {
 					public void run() {
-						BitmapFragment.this.fractal = fractal;
+						// drawer needs to know
 						drawer.setFractal(fractal);
 					}
 				}
