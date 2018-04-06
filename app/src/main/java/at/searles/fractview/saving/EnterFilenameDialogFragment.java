@@ -1,5 +1,6 @@
 package at.searles.fractview.saving;
 
+import android.annotation.SuppressLint;
 import android.app.AlertDialog;
 import android.app.Dialog;
 import android.app.DialogFragment;
@@ -8,7 +9,6 @@ import android.os.Bundle;
 import android.os.Environment;
 import android.text.Editable;
 import android.text.TextWatcher;
-import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.widget.CheckBox;
@@ -19,17 +19,25 @@ import java.io.File;
 
 import at.searles.fractview.MainActivity;
 import at.searles.fractview.R;
+import at.searles.fractview.bitmap.BitmapFragment;
 import at.searles.fractview.ui.DialogHelper;
 import at.searles.utils.CharUtil;
 
-public class SaveAsDialogFragment extends DialogFragment {
+public class EnterFilenameDialogFragment extends DialogFragment {
 
+    // TODO: Create fragment that handles dialog itself
+
+    private static final String BITMAP_FRAGMENT_TAG_KEY = "asdon";
+    public static final String FILE_EXTENSION = ".png";
+    
     private static final String RESERVED_CHARS = "|\\?*<\":>+[]/'";
 
-    public static SaveAsDialogFragment newInstance() {
-        SaveAsDialogFragment fragment = new SaveAsDialogFragment();
+    public static EnterFilenameDialogFragment newInstance(String bitmapFragmentTag) {
+        EnterFilenameDialogFragment fragment = new EnterFilenameDialogFragment();
 
         Bundle bundle = new Bundle();
+
+        bundle.putString(BITMAP_FRAGMENT_TAG_KEY, bitmapFragmentTag);
 
         fragment.setArguments(bundle);
 
@@ -43,7 +51,7 @@ public class SaveAsDialogFragment extends DialogFragment {
         LayoutInflater inflater = getActivity().getLayoutInflater();
 
         // null is ok here because there is no parent yet (ie the dialog)
-        View dialogView = inflater.inflate(R.layout.save_image_layout, null);
+        @SuppressLint("InflateParams") View dialogView = inflater.inflate(R.layout.save_image_layout, null);
         builder.setView(dialogView);
 
         builder.setNegativeButton("Cancel", new DialogInterface.OnClickListener() {
@@ -97,7 +105,7 @@ public class SaveAsDialogFragment extends DialogFragment {
     }
 
     private String filenameWithoutExtension(String filename) {
-        if (filename.endsWith(".png") || filename.endsWith(".PNG")) {
+        if (filename.endsWith(FILE_EXTENSION) || filename.endsWith(FILE_EXTENSION)) {
             return filename.substring(0, filename.length() - 4);
         }
 
@@ -132,40 +140,47 @@ public class SaveAsDialogFragment extends DialogFragment {
         messageTextView.setText(message);
     }
 
+    public static File getMediaDirectory() {
+        return new File(
+                Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_PICTURES),
+                "Fractview");
+    }
+
     private void saveToMedia(DialogInterface d) {
         // check "bookmark"-checkbox.
         EditText editText = (EditText) ((AlertDialog) d).findViewById(R.id.filenameEditText);
-        CheckBox checkBox = (CheckBox) ((AlertDialog) d).findViewById(R.id.addToFavoritesCheckBox);
+        CheckBox addToFavoritesCheckBox = (CheckBox) ((AlertDialog) d).findViewById(R.id.addToFavoritesCheckBox);
 
-        String filename = filenameWithoutExtension(editText.getText().toString()) + ".png";
+        String filenamePrefix = filenameWithoutExtension(editText.getText().toString()) + FILE_EXTENSION;
 
-        boolean addToFavorites = checkBox.isChecked();
+        boolean addToFavorites = addToFavoritesCheckBox.isChecked();
 
         if (addToFavorites) {
-            ((MainActivity) getActivity()).saveFavorite(filename);
+            ((MainActivity) getActivity()).saveFavorite(filenamePrefix);
         }
 
-        File directory = new File(
-                Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_PICTURES),
-                "Fractview");
-
-        Log.d("MA", "Saving file: Path is " + directory);
+        File directory = getMediaDirectory();
 
         if (!directory.exists()) {
-            Log.d("MA", "Creating directory");
             if (!directory.mkdir()) {
                 DialogHelper.error(getActivity(), "Could not create directory");
+                return;
             }
         }
 
-        File imageFile = new File(directory, filename + ".png");
+        File imageFile = new File(directory, filenamePrefix + FILE_EXTENSION);
+
+        // fixme warn if file already exists.
 
         while (imageFile.exists()) {
-            filename = CharUtil.nextIndex(filename);
-            imageFile = new File(directory, filename + ".png");
+            filenamePrefix = CharUtil.nextIndex(filenamePrefix);
+            imageFile = new File(directory, filenamePrefix + FILE_EXTENSION);
         }
 
-        // Saving is done in the following plugin
-        SaveFragment.createSave(imageFile).init(bitmapFragment);
+        String bitmapFragmentTag = getArguments().getString(BITMAP_FRAGMENT_TAG_KEY);
+
+        BitmapFragment bitmapFragment = (BitmapFragment) getFragmentManager().findFragmentByTag(bitmapFragmentTag);
+
+        bitmapFragment.registerFragmentAsChild(SaveBitmapToMediaFragment.newInstance(filenamePrefix), SaveInBackgroundFragment.SAVE_FRAGMENT_TAG);
     }
 }

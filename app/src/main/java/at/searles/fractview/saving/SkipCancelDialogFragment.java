@@ -18,14 +18,14 @@ public class SkipCancelDialogFragment extends DialogFragment {
         builder.setNeutralButton("Skip", new DialogInterface.OnClickListener() {
             @Override
             public void onClick(DialogInterface dialog, int which) {
-                ((SaveFragment) getParentFragment()).onSkip();
+                ((SaveInBackgroundFragment) getParentFragment()).onSkip();
             }
         });
 
         builder.setNegativeButton("Cancel", new DialogInterface.OnClickListener() {
             @Override
             public void onClick(DialogInterface dialog, int which) {
-                ((SaveFragment) getParentFragment()).onCancel();
+                ((SaveInBackgroundFragment) getParentFragment()).onCancel();
             }
         });
 
