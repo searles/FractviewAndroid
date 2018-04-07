@@ -3,6 +3,7 @@ package at.searles.fractview.fractal;
 import android.app.Fragment;
 import android.os.Bundle;
 import android.support.annotation.Nullable;
+import android.util.Log;
 
 import java.util.LinkedList;
 import java.util.List;
@@ -41,6 +42,9 @@ public class SingleFractalFragment extends Fragment implements FractalProvider {
     @Override
     public void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+
+        Log.d(getClass().getName(), "onCreate");
+
         setRetainInstance(true);
         fractal = BundleAdapter.bundleToFractal(getArguments().getBundle(FRACTAL_KEY));
 

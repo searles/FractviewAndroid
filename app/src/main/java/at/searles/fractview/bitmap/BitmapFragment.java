@@ -152,6 +152,8 @@ public class BitmapFragment extends Fragment implements DrawerListener, RenderSc
 		super.onCreate(savedInstanceState);
 		setRetainInstance(true); // preserve this one on rotation
 
+		Log.d(getClass().getName(), "onCreate");
+
 		readArguments();
 
 		// set up logic
