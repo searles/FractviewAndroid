@@ -151,7 +151,7 @@ public class EnterFilenameDialogFragment extends DialogFragment {
         EditText editText = (EditText) ((AlertDialog) d).findViewById(R.id.filenameEditText);
         CheckBox addToFavoritesCheckBox = (CheckBox) ((AlertDialog) d).findViewById(R.id.addToFavoritesCheckBox);
 
-        String filenamePrefix = filenameWithoutExtension(editText.getText().toString()) + FILE_EXTENSION;
+        String filenamePrefix = filenameWithoutExtension(editText.getText().toString());
 
         boolean addToFavorites = addToFavoritesCheckBox.isChecked();
 
@@ -169,8 +169,6 @@ public class EnterFilenameDialogFragment extends DialogFragment {
         }
 
         File imageFile = new File(directory, filenamePrefix + FILE_EXTENSION);
-
-        // fixme warn if file already exists.
 
         while (imageFile.exists()) {
             filenamePrefix = CharUtil.nextIndex(filenamePrefix);

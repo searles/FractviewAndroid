@@ -86,7 +86,7 @@ public class MainActivity extends Activity
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
-		Log.d("MA", "onCreate");
+		Log.d(getClass().getName(), "onCreate");
 
 		// First, take care of the view.
 		setContentView(R.layout.main);
@@ -107,11 +107,15 @@ public class MainActivity extends Activity
 		RenderScriptFragment renderScriptFragment = (RenderScriptFragment) fm.findFragmentByTag(RENDERSCRIPT_FRAGMENT_TAG);
 
 		if(renderScriptFragment == null) {
+			Log.d(getClass().getName(), "creating RenderScriptFragment");
+
 			renderScriptFragment = RenderScriptFragment.newInstance();
 
 			FragmentTransaction transaction = fm.beginTransaction();
 			transaction.add(renderScriptFragment, RENDERSCRIPT_FRAGMENT_TAG);
 			transaction.commit();
+		} else {
+			Log.d(getClass().getName(), "RenderScriptFragment already exists");
 		}
 	}
 
@@ -130,6 +134,10 @@ public class MainActivity extends Activity
 			FragmentTransaction transaction = getFragmentManager().beginTransaction();
 			transaction.add(fractalFragment, FRACTAL_FRAGMENT_TAG);
 			transaction.commitAllowingStateLoss(); // Question: Why should there be a stateloss?
+
+			Log.d(getClass().getName(), "creating FractalFragment");
+		} else {
+			Log.d(getClass().getName(), "FractalFragment already exists");
 		}
 
 		// call fractalfragment for zoom events
@@ -142,6 +150,8 @@ public class MainActivity extends Activity
 		bitmapFragment = (BitmapFragment) fm.findFragmentByTag(BITMAP_FRAGMENT_TAG);
 
 		if(bitmapFragment == null) {
+			Log.d(getClass().getName(), "creating BitmapFragment");
+
 			// fetch dimensions from preferences or display size.
 			// Get settings from shared preferences
 			SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(this);
@@ -160,7 +170,10 @@ public class MainActivity extends Activity
 			transaction.add(bitmapFragment, BITMAP_FRAGMENT_TAG);
 			transaction.commitAllowingStateLoss(); // Question: Why should there be a stateloss?
 
+			// FIXME This should be done in fractalFragment?
 			fractalFragment.addListener(bitmapFragment);
+		} else {
+			Log.d(getClass().getName(), "BitmapFragment already exists");
 		}
 
 		// initialize the view

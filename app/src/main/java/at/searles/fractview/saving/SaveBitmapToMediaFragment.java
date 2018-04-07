@@ -56,7 +56,7 @@ public class SaveBitmapToMediaFragment extends SaveInBackgroundFragment {
 
     @Override
     protected void postSaveInUIThread() {
-        if(exception != null) {
+        if(exception == null) {
             saveImageFileToMedia();
         } else {
             DialogHelper.error(getActivity(), exception.getMessage());
