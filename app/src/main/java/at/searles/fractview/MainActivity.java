@@ -180,6 +180,12 @@ public class MainActivity extends Activity
 		BitmapFragmentListener viewListener = imageView.createListener();
 
 		bitmapFragment.addBitmapFragmentListener(viewListener);
+
+		if(bitmapFragment.isRunning()) {
+			// show progress bar
+			viewListener.drawerStarted(bitmapFragment);
+		}
+
 		destroyTasks.add(new Runnable() {
 			@Override
 			public void run() {
