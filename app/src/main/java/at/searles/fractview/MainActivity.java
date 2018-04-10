@@ -100,6 +100,8 @@ public class MainActivity extends Activity
 		initRenderScriptFragment();
 		initFractalFragment();
 		initBitmapFragment(); // this adds a newly created bitmap fragment to the listener list in fractalfragment.
+
+		initListeners();
 	}
 	
 	private void initRenderScriptFragment() {
@@ -139,9 +141,6 @@ public class MainActivity extends Activity
 		} else {
 			Log.d(getClass().getName(), "FractalFragment already exists");
 		}
-
-		// call fractalfragment for zoom events
-		imageView.setCallBack(fractalFragment.createCallback());
 	}
 
 	private void initBitmapFragment() {
@@ -169,11 +168,16 @@ public class MainActivity extends Activity
 			FragmentTransaction transaction = getFragmentManager().beginTransaction();
 			transaction.add(bitmapFragment, BITMAP_FRAGMENT_TAG);
 			transaction.commitAllowingStateLoss(); // Question: Why should there be a stateloss?
+		}
+	}
 
+	private void initListeners() {
+		// call fractalfragment for zoom events
+		imageView.setCallBack(fractalFragment.createCallback());
+
+		if(bitmapFragment.isInitializing()) {
 			// FIXME This should be done in fractalFragment?
 			fractalFragment.addListener(bitmapFragment);
-		} else {
-			Log.d(getClass().getName(), "BitmapFragment already exists");
 		}
 
 		// initialize the view

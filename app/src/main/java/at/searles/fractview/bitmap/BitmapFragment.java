@@ -20,6 +20,7 @@ import at.searles.fractview.bitmap.ui.BitmapFragmentAccessor;
 import at.searles.fractview.fractal.FractalProviderListener;
 import at.searles.fractview.renderscript.RenderScriptFragment;
 import at.searles.fractview.renderscript.RenderScriptListener;
+import at.searles.fractview.saving.SaveInBackgroundFragment;
 
 /**
  * This class is the glue maintaining all parameters for drawing the fractal
@@ -111,23 +112,11 @@ public class BitmapFragment extends Fragment implements DrawerListener, RenderSc
 	// if true, the drawing is currently running and the drawer should
 	// not be modified. Only modified in UI thread
 	public enum Status {
+		INITIALIZING,
 		RUNNING,      // drawer is running
 		IDLE,         // waiting for IdleJobs
 		PROCESSING    // in working loop
 	}
-
-	public Fragment registerFragmentAsChild(Fragment childFragment, String tag) {
-		FragmentManager fm = getChildFragmentManager();
-
-		FragmentTransaction fragmentTransaction = fm.beginTransaction();
-
-		fragmentTransaction.add(childFragment, tag);
-
-		fragmentTransaction.commit();
-
-		return childFragment;
-	}
-
 
 	public static BitmapFragment newInstance(int width, int height,
                                              int screenWidth, int screenHeight) {
@@ -146,6 +135,25 @@ public class BitmapFragment extends Fragment implements DrawerListener, RenderSc
 		return ft;
 	}
 
+	public BitmapFragment() {
+		this.status = Status.INITIALIZING;
+	}
+
+	public boolean isInitializing() {
+		return status == Status.INITIALIZING;
+	}
+
+	public Fragment registerFragmentAsChild(Fragment childFragment, String tag) {
+		FragmentManager fm = getChildFragmentManager();
+
+		FragmentTransaction fragmentTransaction = fm.beginTransaction();
+
+		fragmentTransaction.add(childFragment, tag);
+
+		fragmentTransaction.commit();
+
+		return childFragment;
+	}
 
 	@Override
 	public void onCreate(Bundle savedInstanceState) {
@@ -192,12 +200,17 @@ public class BitmapFragment extends Fragment implements DrawerListener, RenderSc
 	}
 
 	public boolean isRunning() {
-		return status == Status.RUNNING;
+		return status != Status.IDLE;
 	}
 
 	// =============================================================
 	// ====== Managing the job queue ===============================
 	// =============================================================
+	public void removeIdleJob(SaveInBackgroundFragment.SaveJob job) {
+		if(!jobQueue.remove(job)) {
+			Log.i(getClass().getName(), "tried to remove job " + job + " but it was not in the queue...");
+		}
+	}
 
 	public void scheduleIdleJob(IdleJob job, boolean highPriority, boolean cancelRunning) {
 		Log.d(getClass().getName(), "scheduleIdleJob, cancel=" + cancelRunning);
@@ -295,7 +308,7 @@ public class BitmapFragment extends Fragment implements DrawerListener, RenderSc
 	}
 
 	private void initializeDrawer(RenderScriptFragment fragment) {
-		if(this.status != null) {
+		if(this.status != Status.INITIALIZING) {
 			throw new IllegalArgumentException("bitmap fragment status already set to " + this.status);
 		}
 
