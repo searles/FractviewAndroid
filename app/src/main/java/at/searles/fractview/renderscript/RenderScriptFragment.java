@@ -2,11 +2,17 @@ package at.searles.fractview.renderscript;
 
 
 import android.app.Fragment;
+import android.app.ProgressDialog;
 import android.os.AsyncTask;
 import android.os.Bundle;
 import android.renderscript.RenderScript;
+import android.support.annotation.Nullable;
 import android.util.Log;
+import android.view.LayoutInflater;
+import android.view.View;
+import android.view.ViewGroup;
 
+import java.lang.ref.WeakReference;
 import java.util.LinkedList;
 
 import at.searles.fractview.ScriptC_fillimage;
@@ -16,8 +22,6 @@ import at.searles.fractview.ScriptC_fractal;
  * Initializes renderscript and provides a method to create RenderscriptDrawers
  */
 public class RenderScriptFragment extends Fragment {
-
-    private static final String DIALOG_FRAGMENT_TAG = "RenderScriptFragmentDialog";
 
     private RenderScript rs;
 
@@ -29,6 +33,7 @@ public class RenderScriptFragment extends Fragment {
      */
     private boolean isInitializing;
     private LinkedList<RenderScriptListener> listeners;
+    private ProgressDialog progressDialog;
 
     public RenderScriptFragment() {
         this.isInitializing = true;
@@ -58,46 +63,86 @@ public class RenderScriptFragment extends Fragment {
         // initialize renderscript
         this.rs = RenderScript.create(getActivity());
 
-        showInitDialog();
         launchAsyncInitialize();
+    }
+
+    @Nullable
+    @Override
+    public View onCreateView(LayoutInflater inflater, @Nullable ViewGroup container, Bundle savedInstanceState) {
+        if(isInitializing) {
+            showInitDialog();
+        }
+
+        return null;
+    }
+
+    @Override
+    public void onDestroyView() {
+        super.onDestroyView();
+        if (this.progressDialog != null) {
+            dismissInitDialog();
+        }
     }
 
     public void showInitDialog() {
         Log.d(getClass().getName(), "show init dialog");
-        InitProgressDialogFragment dialogFragment = new InitProgressDialogFragment();
-        dialogFragment.show(getActivity().getFragmentManager(), DIALOG_FRAGMENT_TAG);
+
+        this.progressDialog = new ProgressDialog(getActivity());
+
+        // TODO: Layout
+
+        this.progressDialog.show();
     }
 
     private void dismissInitDialog() {
-        Log.d(getClass().getName(), "dismiss init dialog");
-        InitProgressDialogFragment dialogFragment =
-                (InitProgressDialogFragment) getActivity().getFragmentManager()
-                        .findFragmentByTag(DIALOG_FRAGMENT_TAG);
+        if(this.progressDialog != null) {
+            this.progressDialog.dismiss();
+        }
 
-        // Dismiss DialogFragment
-        dialogFragment.dismissAllowingStateLoss();
+        this.progressDialog = null;
     }
 
     private void launchAsyncInitialize() {
         // async run initScripts
-        new AsyncTask<Void, Void, Void>(){
-            @Override
-            protected Void doInBackground(Void...ignored) {
-                initScripts();
-                return null;
+        new InitializeTask(this).execute();
+    }
+
+    private static class InitializeTask extends AsyncTask<Void, Void, Void> {
+
+        private WeakReference<RenderScriptFragment> parent;
+
+        InitializeTask(RenderScriptFragment parent) {
+            this.parent = new WeakReference<>(parent);
+        }
+
+        @Override
+        protected Void doInBackground(Void...ignored) {
+            RenderScriptFragment renderScriptFragment = parent.get();
+
+            if(renderScriptFragment != null) {
+                renderScriptFragment.initScripts();
             }
 
-            @Override
-            protected void onPostExecute(Void ignored) {
-                isInitializing = false;
-                dismissInitDialog();
+            return null;
+        }
 
-                // Tell others
-                for(RenderScriptListener listener : listeners) {
-                    listener.rsInitializationFinished(RenderScriptFragment.this);
-                }
+        @Override
+        protected void onPostExecute(Void ignored) {
+            RenderScriptFragment renderScriptFragment = parent.get();
+
+            if(renderScriptFragment != null) {
+                renderScriptFragment.isInitializing = false;
+                renderScriptFragment.dismissInitDialog();
+                renderScriptFragment.fireInitializationFinishedEvent();
             }
-        }.execute();
+        }
+    }
+
+    private void fireInitializationFinishedEvent() {
+        // Tell others
+        for(RenderScriptListener listener : listeners) {
+            listener.rsInitializationFinished(RenderScriptFragment.this);
+        }
     }
 
     private void initScripts() {

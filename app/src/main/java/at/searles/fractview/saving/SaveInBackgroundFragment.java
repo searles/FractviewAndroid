@@ -26,8 +26,8 @@ public abstract class SaveInBackgroundFragment extends Fragment {
     protected static final String SKIP_CANCEL_FRAGMENT_TAG = "skipCancelTag";
     protected static final String WAIT_FRAGMENT_TAG = "waiting";
 
-
     private SaveJob job;
+    private boolean fragmentIsDone = false;
 
     public SaveInBackgroundFragment() {
     }
@@ -56,6 +56,17 @@ public abstract class SaveInBackgroundFragment extends Fragment {
         bitmapFragment.scheduleIdleJob(job, true, false);
     }
 
+
+    @Override
+    public void onDestroy() {
+        if(!fragmentIsDone) {
+            // remove so that it would not be restarted.
+            deleteFragmentFromParent();
+        }
+
+        super.onDestroy();
+    }
+
     private void createSkipCancelDialogFragment() {
         DialogFragment dialogFragment = new SkipCancelDialogFragment();
         dialogFragment.show(getChildFragmentManager(), SKIP_CANCEL_FRAGMENT_TAG);
@@ -67,8 +78,6 @@ public abstract class SaveInBackgroundFragment extends Fragment {
         if(dialogFragment != null) {
             dialogFragment.dismiss();
         }
-
-        // TODO: also remove from fragmentManager?
     }
 
     private void createProgressDialogFragment() {
@@ -79,22 +88,26 @@ public abstract class SaveInBackgroundFragment extends Fragment {
     private void dismissProgressDialogFragment() {
         DialogFragment dialogFragment = (DialogFragment) getChildFragmentManager().findFragmentByTag(WAIT_FRAGMENT_TAG);
         dialogFragment.dismiss();
-        // TODO: also remove?
+    }
+
+    private void deleteFragmentFromParent() {
+        bitmapFragment().getChildFragmentManager().beginTransaction().remove(this).commit();
+        fragmentIsDone = true;
     }
 
     public void onCancel() {
-        job.cancel();
+        bitmapFragment().removeIdleJob(job);
+        deleteFragmentFromParent();
     }
 
     public void onSkip() {
         job.startJob();
+        bitmapFragment().removeIdleJob(job);
     }
 
     protected Bitmap getBitmap() {
         return ((BitmapFragment) getParentFragment()).bitmap();
     }
-
-
 
     protected abstract void prepareSaveInUIThread();
 
@@ -104,15 +117,8 @@ public abstract class SaveInBackgroundFragment extends Fragment {
 
     private class SaveTask extends AsyncTask<Void, Void, Void> {
 
-        private File imageFile;
-        private IOException exception;
-
         @Override
         protected void onPreExecute() {
-            if(isCancelled()) {
-                return;
-            }
-
             dismissSkipCancelDialogFragment();
 
             createProgressDialogFragment();
@@ -122,47 +128,33 @@ public abstract class SaveInBackgroundFragment extends Fragment {
 
         @Override
         protected void onPostExecute(Void aVoid) {
-            if(isCancelled()) {
-                return;
-            }
-
             dismissProgressDialogFragment();
 
             postSaveInUIThread();
+
+            deleteFragmentFromParent();
 
             job.onFinished();
         }
 
         @Override
         protected Void doInBackground(Void... params) {
-            if(!isCancelled()) {
-                asyncSaveInBackground();
-            }
-
+            asyncSaveInBackground();
             return null;
         }
     }
 
     public class SaveJob extends IdleJob {
 
-        private boolean isCancelled = false;
         private SaveTask task;
 
         private SaveJob() {
             super(false);
         }
 
-        public void cancel() {
-            this.isCancelled = true;
-        }
-
         protected void onStart() {
-            if (!isCancelled) {
-                task = new SaveTask();
-                task.execute();
-            } else {
-                onFinished();
-            }
+            task = new SaveTask();
+            task.execute();
         }
     }
 

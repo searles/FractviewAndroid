@@ -66,6 +66,11 @@ public class SingleFractalFragment extends Fragment implements FractalProvider {
         super.onSaveInstanceState(outState);
     }
 
+    /**
+     * Adds a listener. If the fractal is already set in this
+     * fragment, the fractalModified method is immediately called.
+     * @param listener
+     */
     public void addListener(FractalProviderListener listener) {
         listeners.add(listener);
 
