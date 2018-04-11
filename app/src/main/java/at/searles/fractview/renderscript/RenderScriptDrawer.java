@@ -195,7 +195,6 @@ public class RenderScriptDrawer implements Drawer {
 		).start();
 	}
 
-
 	private void backgroundRenderer() {
 		Log.d(getClass().getName(), "backgroundRenderer()");
 
@@ -289,6 +288,7 @@ public class RenderScriptDrawer implements Drawer {
 			lasttotalpix = totalpix;
 		}
 
+		Log.d(getClass().getName(), "drawing finished, cancel=" + isCancelled + ", size=" + size);
 		listener.drawingFinished();
 	}
 

@@ -62,14 +62,14 @@ public class SingleFractalFragment extends Fragment implements FractalProvider {
 
     @Override
     public void onSaveInstanceState(Bundle outState) {
-        outState.putBundle(FRACTAL_KEY, BundleAdapter.fractalToBundle(fractal));
         super.onSaveInstanceState(outState);
+        outState.putBundle(FRACTAL_KEY, BundleAdapter.fractalToBundle(fractal));
     }
 
     /**
      * Adds a listener. If the fractal is already set in this
      * fragment, the fractalModified method is immediately called.
-     * @param listener
+     * @param listener The listener to be added
      */
     public void addListener(FractalProviderListener listener) {
         listeners.add(listener);

@@ -1,15 +1,22 @@
 package at.searles.fractview.saving;
 
-import android.app.DialogFragment;
+import android.app.AlertDialog;
+import android.app.Dialog;
 import android.app.Fragment;
+import android.app.ProgressDialog;
+import android.content.DialogInterface;
 import android.graphics.Bitmap;
 import android.os.AsyncTask;
 import android.os.Bundle;
 import android.support.annotation.Nullable;
+import android.view.LayoutInflater;
+import android.view.View;
+import android.view.ViewGroup;
 
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.lang.ref.WeakReference;
 
 import at.searles.fractview.bitmap.BitmapFragment;
 import at.searles.fractview.bitmap.IdleJob;
@@ -21,15 +28,17 @@ import at.searles.fractview.bitmap.IdleJob;
 
 public abstract class SaveInBackgroundFragment extends Fragment {
 
+    private enum Status { Waiting, Saving, Done }
+
     public static final String SAVE_FRAGMENT_TAG = "saveFragment";
 
-    protected static final String SKIP_CANCEL_FRAGMENT_TAG = "skipCancelTag";
-    protected static final String WAIT_FRAGMENT_TAG = "waiting";
-
     private SaveJob job;
-    private boolean fragmentIsDone = false;
+    private Dialog dialog;
+    private Status status;
 
     public SaveInBackgroundFragment() {
+        this.dialog = null;
+        this.status = Status.Waiting;
     }
 
     protected BitmapFragment bitmapFragment() {
@@ -42,67 +51,92 @@ public abstract class SaveInBackgroundFragment extends Fragment {
         super.onCreate(savedInstanceState);
         this.setRetainInstance(true);
 
+        // We do not save the state because if the app is terminated
+        // then there is no bitmap left. The rendering will restart
+        // and the Skip/Cancel-dialog will show.
+
         job = new SaveJob();
 
         // get bitmap fragment
         BitmapFragment bitmapFragment = (BitmapFragment) getParentFragment();
-
-        if(bitmapFragment.isRunning()) {
-            createSkipCancelDialogFragment();
-        }
 
         // add job to bitmap fragment, executed before all
         // others, but do not interrupt the execution.
         bitmapFragment.scheduleIdleJob(job, true, false);
     }
 
+    @Nullable
+    @Override
+    public View onCreateView(LayoutInflater inflater, @Nullable ViewGroup container, Bundle savedInstanceState) {
+        // show dialog if necessary
+        switch(this.status) {
+            case Waiting:
+                this.dialog = createSkipCancelDialog();
+                break;
+            case Saving:
+                this.dialog = createProgressDialog();
+                break;
+            default:
+                this.dialog = null;
+        }
+
+        if(this.dialog != null) {
+            this.dialog.show();
+        }
+
+        return null;
+    }
+
+    @Override
+    public void onDestroyView() {
+        // remove dialog if it exists
+        super.onDestroyView();
+        if (dialog != null) {
+            this.dialog.dismiss();
+            this.dialog = null;
+        }
+    }
 
     @Override
     public void onDestroy() {
-        if(!fragmentIsDone) {
-            // remove so that it would not be restarted.
+        super.onDestroy();
+
+        if(this.status == Status.Saving) {
+            // special case: The async saving task might already save the image.
+            // Therefore, do not recreate the fragment.
+            this.status = Status.Done;
             deleteFragmentFromParent();
         }
-
-        super.onDestroy();
-    }
-
-    private void createSkipCancelDialogFragment() {
-        DialogFragment dialogFragment = new SkipCancelDialogFragment();
-        dialogFragment.show(getChildFragmentManager(), SKIP_CANCEL_FRAGMENT_TAG);
-    }
-
-    private void dismissSkipCancelDialogFragment() {
-        DialogFragment dialogFragment = (DialogFragment) getChildFragmentManager().findFragmentByTag(SKIP_CANCEL_FRAGMENT_TAG);
-
-        if(dialogFragment != null) {
-            dialogFragment.dismiss();
-        }
-    }
-
-    private void createProgressDialogFragment() {
-        DialogFragment dialogFragment = new WaitDialogFragment();
-        dialogFragment.show(getChildFragmentManager(), WAIT_FRAGMENT_TAG);
-    }
-
-    private void dismissProgressDialogFragment() {
-        DialogFragment dialogFragment = (DialogFragment) getChildFragmentManager().findFragmentByTag(WAIT_FRAGMENT_TAG);
-        dialogFragment.dismiss();
     }
 
     private void deleteFragmentFromParent() {
         bitmapFragment().getChildFragmentManager().beginTransaction().remove(this).commit();
-        fragmentIsDone = true;
     }
 
-    public void onCancel() {
-        bitmapFragment().removeIdleJob(job);
+    private void terminate() {
+        this.status = Status.Done;
         deleteFragmentFromParent();
+
+        if(dialog != null) {
+            dialog.dismiss();
+            dialog = null;
+        }
     }
 
-    public void onSkip() {
-        job.startJob();
-        bitmapFragment().removeIdleJob(job);
+    private void switchWaitingToSaving() {
+        if(this.status != Status.Waiting) {
+            throw new IllegalArgumentException("status is " + status + " but it should be 'Waiting'");
+        }
+
+        this.status = Status.Saving;
+
+        if(this.dialog != null) {
+            this.dialog.dismiss();
+            this.dialog = null;
+
+            this.dialog = createProgressDialog();
+            this.dialog.show();
+        }
     }
 
     protected Bitmap getBitmap() {
@@ -115,31 +149,43 @@ public abstract class SaveInBackgroundFragment extends Fragment {
 
     protected abstract void postSaveInUIThread();
 
-    private class SaveTask extends AsyncTask<Void, Void, Void> {
+    private static class SaveTask extends AsyncTask<Void, Void, Void> {
+
+        private WeakReference<SaveInBackgroundFragment> parent;
+
+        SaveTask(SaveInBackgroundFragment parent) {
+            this.parent = new WeakReference<>(parent);
+        }
 
         @Override
         protected void onPreExecute() {
-            dismissSkipCancelDialogFragment();
+            SaveInBackgroundFragment saveInBackgroundFragment = parent.get();
 
-            createProgressDialogFragment();
-
-            prepareSaveInUIThread();
+            if(saveInBackgroundFragment != null) {
+                saveInBackgroundFragment.switchWaitingToSaving();
+                saveInBackgroundFragment.prepareSaveInUIThread();
+            }
         }
 
         @Override
         protected void onPostExecute(Void aVoid) {
-            dismissProgressDialogFragment();
+            SaveInBackgroundFragment saveInBackgroundFragment = parent.get();
 
-            postSaveInUIThread();
-
-            deleteFragmentFromParent();
-
-            job.onFinished();
+            if(saveInBackgroundFragment != null) {
+                saveInBackgroundFragment.postSaveInUIThread();
+                saveInBackgroundFragment.deleteFragmentFromParent();
+                saveInBackgroundFragment.job.onFinished();
+            }
         }
 
         @Override
         protected Void doInBackground(Void... params) {
-            asyncSaveInBackground();
+            SaveInBackgroundFragment saveInBackgroundFragment = parent.get();
+
+            if(saveInBackgroundFragment != null) {
+                parent.get().asyncSaveInBackground();
+            }
+
             return null;
         }
     }
@@ -153,7 +199,7 @@ public abstract class SaveInBackgroundFragment extends Fragment {
         }
 
         protected void onStart() {
-            task = new SaveTask();
+            task = new SaveTask(SaveInBackgroundFragment.this);
             task.execute();
         }
     }
@@ -170,5 +216,48 @@ public abstract class SaveInBackgroundFragment extends Fragment {
                 throw new UnsupportedOperationException("compress not supported!");
             }
         }
+    }
+
+    private void onCancel() {
+        bitmapFragment().removeIdleJob(job);
+        terminate();
+    }
+
+    private void onSkip() {
+        bitmapFragment().removeIdleJob(job);
+        job.startJob();
+    }
+
+    private AlertDialog createSkipCancelDialog() {
+        android.app.AlertDialog.Builder builder = new AlertDialog.Builder(getActivity());
+
+        builder.setTitle("Rendering not finished...");
+        builder.setMessage("The image will be saved when the rendering is finished.");
+
+        builder.setNeutralButton("Skip", new DialogInterface.OnClickListener() {
+            @Override
+            public void onClick(DialogInterface dialog, int which) {
+                onSkip();
+            }
+        });
+
+        builder.setNegativeButton("Cancel", new DialogInterface.OnClickListener() {
+            @Override
+            public void onClick(DialogInterface dialog, int which) {
+                onCancel();
+            }
+        });
+
+        return builder.create();
+    }
+
+    public ProgressDialog createProgressDialog() {
+        ProgressDialog dialog = new ProgressDialog(getActivity());
+
+        dialog.setTitle("Please wait...");
+        dialog.setMessage("Saving image...");
+        dialog.setIndeterminate(true);
+
+        return dialog;
     }
 }
