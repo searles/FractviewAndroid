@@ -88,6 +88,12 @@ public abstract class SaveInBackgroundFragment extends Fragment {
     }
 
     @Override
+    public void onDestroy() {
+        bitmapFragment().removeIdleJob(job);
+        super.onDestroy();
+    }
+
+    @Override
     public void onDestroyView() {
         // remove dialog if it exists
         super.onDestroyView();
@@ -95,14 +101,6 @@ public abstract class SaveInBackgroundFragment extends Fragment {
             this.dialog.dismiss();
             this.dialog = null;
         }
-    }
-
-    @Override
-    public void onDestroy() {
-        super.onDestroy();
-
-        this.status = Status.Done;
-        deleteFragmentFromParent();
     }
 
     private void deleteFragmentFromParent() {
