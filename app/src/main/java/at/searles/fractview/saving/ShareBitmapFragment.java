@@ -30,7 +30,7 @@ public class ShareBitmapFragment extends SaveInBackgroundFragment {
         try {
             imageFile = File.createTempFile("fractview", ".png", getActivity().getExternalCacheDir());
         } catch (IOException e) {
-            DialogHelper.error(getContext(), e.getLocalizedMessage());
+            DialogHelper.error(getActivity(), e.getLocalizedMessage());
         }
     }
 

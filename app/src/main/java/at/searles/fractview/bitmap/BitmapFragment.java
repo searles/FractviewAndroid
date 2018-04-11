@@ -57,14 +57,9 @@ public class BitmapFragment extends Fragment implements DrawerListener, RenderSc
 	private static final String WIDTH_LABEL = "width";
 	private static final String HEIGHT_LABEL = "height";
 
-	private static final String SCREEN_WIDTH_LABEL = "screenWidth";
-	private static final String SCREEN_HEIGHT_LABEL = "screenHeight";
-
 	// conservative defaults if there are no valid values available...
-	private static final int DEFAULT_WIDTH = 1024;
-	private static final int DEFAULT_HEIGHT = 600;
-
-
+	private static final int DEFAULT_WIDTH = 800;
+	private static final int DEFAULT_HEIGHT = 480;
 
 	// Allocations and various data
 	private int height, width;
@@ -81,12 +76,6 @@ public class BitmapFragment extends Fragment implements DrawerListener, RenderSc
 	private Drawer drawer;
 
 	/**
-	 * Set by IdleJob. If true, then the drawer will restart after
-	 * finishing the job queue.
-	 */
-	private boolean triggerStart = false;
-
-	/**
 	 * The state of the BitmapFragment
 	 */
 	private Status status;
@@ -97,37 +86,43 @@ public class BitmapFragment extends Fragment implements DrawerListener, RenderSc
 	private LinkedList<IdleJob> jobQueue = new LinkedList<>();
 
 	/**
+	 * Set by IdleJob. If true, then the drawer will restart after
+	 * finishing the job queue.
+	 */
+	private boolean triggerStart = false;
+
+	/**
+	 * Initial fractal. It is only used during initialization.
+	 */
+	private Fractal initialFractal;
+
+	/**
 	 * Listeners
 	 */
 	private List<BitmapFragmentListener> listeners = new LinkedList<>();
-
-	private final IdleJob.Callback callback = new IdleJob.Callback() {
-		@Override
-		public void jobIsFinished(IdleJob job) {
-			Log.d(BitmapFragment.this.getClass().getName(), "callback jobIsFinished");
-			executeNextJob();
-		}
-	};
 
 	// if true, the drawing is currently running and the drawer should
 	// not be modified. Only modified in UI thread
 	public enum Status {
 		INITIALIZING,
 		RUNNING,      // drawer is running
-		IDLE,         // waiting for IdleJobs
-		PROCESSING    // in working loop
+		IDLE          // waiting for IdleJobs
 	}
 
-	public static BitmapFragment newInstance(int width, int height,
-                                             int screenWidth, int screenHeight) {
+	/*
+	 * Life cycle:
+	 * Initializing, until an initial fractal is provided and a drawer is set.
+	 * Running: The drawer is calculating the bitmap. Ready to accept edit-jobs.
+	 * Idle: Ready to accept edit-jobs.
+	 * Processing: Ready to accept edit-jobs.
+	 */
+
+	public static BitmapFragment newInstance(int width, int height) {
 		// set initial size
 		Bundle bundle = new Bundle();
 
 		bundle.putInt(WIDTH_LABEL, width);
 		bundle.putInt(HEIGHT_LABEL, height);
-
-		bundle.putInt(SCREEN_WIDTH_LABEL, screenWidth);
-		bundle.putInt(SCREEN_HEIGHT_LABEL, screenHeight);
 
 		BitmapFragment ft = new BitmapFragment();
 		ft.setArguments(bundle);
@@ -143,16 +138,17 @@ public class BitmapFragment extends Fragment implements DrawerListener, RenderSc
 		return status == Status.INITIALIZING;
 	}
 
-	public Fragment registerFragmentAsChild(Fragment childFragment, String tag) {
+	/**
+	 * This is used eg for SaveInBackgroundFragments that attach themselves
+	 * to this fragment to access the bitmap
+	 * @param childFragment The fragment to be attached
+	 * @param tag The tag for the fragment manager.
+	 */
+	public void registerFragmentAsChild(Fragment childFragment, String tag) {
 		FragmentManager fm = getChildFragmentManager();
-
 		FragmentTransaction fragmentTransaction = fm.beginTransaction();
-
 		fragmentTransaction.add(childFragment, tag);
-
 		fragmentTransaction.commit();
-
-		return childFragment;
 	}
 
 	@Override
@@ -162,7 +158,8 @@ public class BitmapFragment extends Fragment implements DrawerListener, RenderSc
 
 		Log.d(getClass().getName(), "onCreate");
 
-		readArguments();
+		this.width = getArguments().getInt(WIDTH_LABEL);
+		this.height = getArguments().getInt(HEIGHT_LABEL);
 
 		// set up logic
 		RenderScriptFragment renderScriptFragment =
@@ -177,30 +174,12 @@ public class BitmapFragment extends Fragment implements DrawerListener, RenderSc
 		}
 	}
 
-	private void readArguments() {
-		// Read initial width/height
-		int screenWidth = getArguments().getInt(SCREEN_WIDTH_LABEL);
-		int screenHeight = getArguments().getInt(SCREEN_HEIGHT_LABEL);
-
-		if(screenWidth < 0 || screenHeight < 0) {
-			throw new IllegalArgumentException("invalid screen size: " + screenWidth + "x" + screenHeight);
-		}
-
-		this.width = getArguments().getInt(WIDTH_LABEL);
-		this.height = getArguments().getInt(HEIGHT_LABEL);
-
-		if(width < 0 || height < 0) {
-			this.width = screenWidth;
-			this.height = screenHeight;
-		}
-	}
-
 	public float progress() {
 		return drawer.progress();
 	}
 
 	public boolean isRunning() {
-		return status != Status.IDLE;
+		return status == Status.RUNNING;
 	}
 
 	// =============================================================
@@ -213,7 +192,7 @@ public class BitmapFragment extends Fragment implements DrawerListener, RenderSc
 	}
 
 	public void scheduleIdleJob(IdleJob job, boolean highPriority, boolean cancelRunning) {
-		Log.d(getClass().getName(), "scheduleIdleJob, cancel=" + cancelRunning);
+		Log.d(getClass().getName(), "scheduleIdleJob=" + job + ", cancel=" + cancelRunning);
 
 		// in ui thread
 		if(highPriority) {
@@ -242,11 +221,7 @@ public class BitmapFragment extends Fragment implements DrawerListener, RenderSc
 		Log.d(getClass().getName(), "executeNextJob");
 
 		// in ui thread.
-		if(status == Status.IDLE) {
-			status = Status.PROCESSING;
-		}
-
-		if(status != Status.PROCESSING) {
+		if(status != Status.IDLE) {
 			throw new IllegalArgumentException("must be processing!");
 		}
 
@@ -254,27 +229,32 @@ public class BitmapFragment extends Fragment implements DrawerListener, RenderSc
 			if(triggerStart) {
 				triggerStart = false;
 				startBackgroundTask();
-			} else {
-				Log.d(getClass().getName(), "no jobs, switching to idle");
-				status = Status.IDLE;
 			}
-		} else {
-			IdleJob job = jobQueue.removeFirst();
 
-			triggerStart |= job.restartDrawing();
+			return;
+		}
 
-			Log.d(getClass().getName(), "executing job. triggerStart=" + triggerStart);
+		IdleJob job = jobQueue.removeFirst();
 
-			if(!job.isFinished()) {
-				// ignore job if it has already finished.
-				job.setCallback(callback);
+		triggerStart |= job.restartDrawing();
 
-				if(job.isPending()) {
-					job.startJob(); // might immediately recursively call handleJobs.
-				}
-			} else {
+		if(job.isFinished()) {
+			Log.d(getClass().getName(), "job was already finished: " + job);
+			executeNextJob();
+			return;
+		}
+
+		// job seems to be doing some work in the background. We tell
+		// it to call the next job when it is finished.
+		job.setCallback(new IdleJob.Callback() {
+			@Override
+			public void jobIsFinished(IdleJob job) {
 				executeNextJob();
 			}
+		});
+
+		if(job.isPending()) {
+			job.startJob(); // might immediately recursively call handleJobs.
 		}
 	}
 
@@ -320,6 +300,8 @@ public class BitmapFragment extends Fragment implements DrawerListener, RenderSc
 			throw new IllegalArgumentException("drawer is already set");
 		}
 
+		Log.d(getClass().getName(), "initializing drawer");
+
 		this.drawer = fragment.createDrawer();
 		this.drawer.init();
 
@@ -335,10 +317,25 @@ public class BitmapFragment extends Fragment implements DrawerListener, RenderSc
 
 		applyNewSize();
 
-		// There should be a job that sets the fractal
-		status = Status.IDLE;
+		if(this.initialFractal != null) {
+			initialLaunch();
+		}
+	}
 
-		executeNextJob();
+	private void initializeFractal(Fractal fractal) {
+		this.initialFractal = fractal;
+
+		if(this.drawer != null) {
+			initialLaunch();
+		}
+	}
+
+	private void initialLaunch() {
+		drawer.setFractal(initialFractal);
+		initialFractal = null; // not needed anymore.
+
+		// Initialization is finished.
+		startBackgroundTask();
 	}
 
 	@Override
@@ -385,6 +382,11 @@ public class BitmapFragment extends Fragment implements DrawerListener, RenderSc
 
 	@Override
 	public void fractalModified(Fractal fractal) {
+		if(status == Status.INITIALIZING) {
+			initializeFractal(fractal);
+			return;
+		}
+
 		scheduleIdleJob(IdleJob.editor(
 				new Runnable() {
 					public void run() {
@@ -450,6 +452,8 @@ public class BitmapFragment extends Fragment implements DrawerListener, RenderSc
 
 	private void applyNewSize() {
 		if(newBitmap != null) {
+			Log.d(getClass().getName(), "new bitmap: " + newBitmap);
+
 			// there might very theoretically be multiple
 			// calls before the calculation stops,
 			// therefore check for null.
@@ -460,6 +464,9 @@ public class BitmapFragment extends Fragment implements DrawerListener, RenderSc
 
 			this.width = bitmap.getWidth();
 			this.height = bitmap.getHeight();
+
+			getArguments().putInt(WIDTH_LABEL, this.width);
+			getArguments().putInt(HEIGHT_LABEL, this.height);
 
 			for(BitmapFragmentListener l : listeners) {
 				l.newBitmapCreated(BitmapFragment.this);

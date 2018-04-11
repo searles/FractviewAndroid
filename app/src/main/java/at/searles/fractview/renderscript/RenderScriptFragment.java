@@ -7,7 +7,6 @@ import android.os.AsyncTask;
 import android.os.Bundle;
 import android.renderscript.RenderScript;
 import android.support.annotation.Nullable;
-import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -70,7 +69,8 @@ public class RenderScriptFragment extends Fragment {
     @Override
     public View onCreateView(LayoutInflater inflater, @Nullable ViewGroup container, Bundle savedInstanceState) {
         if(isInitializing) {
-            showInitDialog();
+            this.progressDialog = createInitDialog();
+            progressDialog.show();
         }
 
         return null;
@@ -84,14 +84,10 @@ public class RenderScriptFragment extends Fragment {
         }
     }
 
-    public void showInitDialog() {
-        Log.d(getClass().getName(), "show init dialog");
-
-        this.progressDialog = new ProgressDialog(getActivity());
-
-        // TODO: Layout
-
-        this.progressDialog.show();
+    public ProgressDialog createInitDialog() {
+        ProgressDialog progressDialog = new ProgressDialog(getActivity());
+        progressDialog.setMessage("Please wait while scripts are initialized.");
+        return progressDialog;
     }
 
     private void dismissInitDialog() {

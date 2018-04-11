@@ -158,12 +158,14 @@ public class MainActivity extends Activity
 			int defaultWidth = prefs.getInt(WIDTH_LABEL, -1);
 			int defaultHeight = prefs.getInt(HEIGHT_LABEL, -1);
 
-			Point dim = screenDimensions(this);
+			if(defaultWidth == -1 || defaultHeight == -1) {
+				Point dim = screenDimensions(this);
 
-			int displayWidth = dim.x;
-			int displayHeight = dim.y;
+				defaultWidth = dim.x;
+				defaultHeight = dim.y;
+			}
 
-			bitmapFragment = BitmapFragment.newInstance(defaultWidth, defaultHeight, displayWidth, displayHeight);
+			bitmapFragment = BitmapFragment.newInstance(defaultWidth, defaultHeight);
 
 			FragmentTransaction transaction = getFragmentManager().beginTransaction();
 			transaction.add(bitmapFragment, BITMAP_FRAGMENT_TAG);
@@ -176,7 +178,6 @@ public class MainActivity extends Activity
 		imageView.setCallBack(fractalFragment.createCallback());
 
 		if(bitmapFragment.isInitializing()) {
-			// FIXME This should be done in fractalFragment?
 			fractalFragment.addListener(bitmapFragment);
 		}
 
@@ -246,7 +247,7 @@ public class MainActivity extends Activity
 			} return true;
 
 			case R.id.action_parameters: {
-				// FIXME Replace this activity
+				// FIXME Replace this case by swipe-in menu
 				Intent i = new Intent(MainActivity.this, ParameterEditorActivity.class);
 				i.putExtra(SourcesListActivity.FRACTAL_INDENT_LABEL, BundleAdapter.fractalToBundle(fractalFragment.fractal()));
 				startActivityForResult(i, PARAMETER_ACTIVITY_RETURN);
@@ -281,6 +282,7 @@ public class MainActivity extends Activity
 			} return true;
 
 			case R.id.action_gui_settings: {
+				// FIXME replace by swipe-in
 				openUiSettingsDialog();
 			} return true;
 
@@ -325,7 +327,6 @@ public class MainActivity extends Activity
 					return;
 				}
 
-				// TODO When there are multiple bitmap fragments, fix this.
 				EnterFilenameDialogFragment fragment = EnterFilenameDialogFragment.newInstance(BITMAP_FRAGMENT_TAG);
 				fragment.show(getFragmentManager(), SAVE_TO_MEDIA_TAG);
 
@@ -485,10 +486,10 @@ public class MainActivity extends Activity
 		Point dim = new Point();
 		WindowManager wm = (WindowManager) context.getSystemService(Context.WINDOW_SERVICE);
 
-		Display display = wm.getDefaultDisplay();
+		Display display = wm != null ? wm.getDefaultDisplay() : null;
 
 		if(display == null) {
-			Log.e(MainActivity.class.getName(), "default display was null");
+			Log.d(MainActivity.class.getName(), "default display was null");
 			dim.set(FALLBACK_DEFAULT_WIDTH, FALLBACK_DEFAULT_HEIGHT);
 		} else {
 			wm.getDefaultDisplay().getSize(dim);
