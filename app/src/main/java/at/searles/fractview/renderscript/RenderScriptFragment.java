@@ -87,6 +87,7 @@ public class RenderScriptFragment extends Fragment {
     public ProgressDialog createInitDialog() {
         ProgressDialog progressDialog = new ProgressDialog(getActivity());
         progressDialog.setMessage("Please wait while scripts are initialized.");
+        progressDialog.setCancelable(false);
         return progressDialog;
     }
 
