@@ -43,10 +43,15 @@ public class SingleFractalFragment extends Fragment implements FractalProvider {
     public void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
+        setRetainInstance(true);
+
         Log.d(getClass().getName(), "onCreate");
 
-        setRetainInstance(true);
-        fractal = BundleAdapter.bundleToFractal(getArguments().getBundle(FRACTAL_KEY));
+        if(savedInstanceState == null) {
+            savedInstanceState = getArguments();
+        }
+
+        fractal = BundleAdapter.bundleToFractal(savedInstanceState.getBundle(FRACTAL_KEY));
 
         try {
             fractal.parse();
@@ -57,12 +62,18 @@ public class SingleFractalFragment extends Fragment implements FractalProvider {
             }
         } catch (CompileException e) {
             e.printStackTrace();
+            // FIXME do something useful!
         }
+
+        System.out.println(fractal.scale());
     }
 
     @Override
     public void onSaveInstanceState(Bundle outState) {
         super.onSaveInstanceState(outState);
+
+        Log.d(getClass().getName(), "onSaveInstanceState");
+
         outState.putBundle(FRACTAL_KEY, BundleAdapter.fractalToBundle(fractal));
     }
 
@@ -115,6 +126,8 @@ public class SingleFractalFragment extends Fragment implements FractalProvider {
 
     public void setFractal(Fractal newFractal, boolean addOldFractalToHistory) {
 
+        Log.d(getClass().getName(), "set fractal");
+
         if(fractal != null && addOldFractalToHistory) {
             history.add(fractal);
         }
@@ -127,6 +140,8 @@ public class SingleFractalFragment extends Fragment implements FractalProvider {
         } catch (CompileException e) {
             e.printStackTrace();
         }
+
+        System.out.println(fractal.scale());
 
         fireFractalChangedEvent();
     }

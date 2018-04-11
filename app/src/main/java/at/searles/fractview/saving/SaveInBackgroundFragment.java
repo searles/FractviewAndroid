@@ -101,12 +101,8 @@ public abstract class SaveInBackgroundFragment extends Fragment {
     public void onDestroy() {
         super.onDestroy();
 
-        if(this.status == Status.Saving) {
-            // special case: The async saving task might already save the image.
-            // Therefore, do not recreate the fragment.
-            this.status = Status.Done;
-            deleteFragmentFromParent();
-        }
+        this.status = Status.Done;
+        deleteFragmentFromParent();
     }
 
     private void deleteFragmentFromParent() {
@@ -257,6 +253,8 @@ public abstract class SaveInBackgroundFragment extends Fragment {
         dialog.setTitle("Please wait...");
         dialog.setMessage("Saving image...");
         dialog.setIndeterminate(true);
+
+        dialog.setCancelable(false);
 
         return dialog;
     }

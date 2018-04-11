@@ -323,6 +323,8 @@ public class BitmapFragment extends Fragment implements DrawerListener, RenderSc
 	}
 
 	private void initializeFractal(Fractal fractal) {
+		Log.d(getClass().getName(), "initialize fractal");
+
 		this.initialFractal = fractal;
 
 		if(this.drawer != null) {
@@ -336,6 +338,16 @@ public class BitmapFragment extends Fragment implements DrawerListener, RenderSc
 
 		// Initialization is finished.
 		startBackgroundTask();
+	}
+
+	@Override
+	public void onDestroy() {
+		super.onDestroy();
+
+		if (drawer != null) {
+			drawer.cancel();
+			drawer = null;
+		}
 	}
 
 	@Override
