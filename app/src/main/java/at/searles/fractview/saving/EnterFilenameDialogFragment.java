@@ -25,8 +25,6 @@ import at.searles.utils.CharUtil;
 
 public class EnterFilenameDialogFragment extends DialogFragment {
 
-    // TODO: Create fragment that handles dialog itself
-
     private static final String BITMAP_FRAGMENT_TAG_KEY = "asdon";
     public static final String FILE_EXTENSION = ".png";
     
@@ -49,6 +47,8 @@ public class EnterFilenameDialogFragment extends DialogFragment {
         AlertDialog.Builder builder = new AlertDialog.Builder(getActivity());
 
         LayoutInflater inflater = getActivity().getLayoutInflater();
+
+        builder.setTitle("Enter Filename");
 
         // null is ok here because there is no parent yet (ie the dialog)
         @SuppressLint("InflateParams") View dialogView = inflater.inflate(R.layout.save_image_layout, null);
