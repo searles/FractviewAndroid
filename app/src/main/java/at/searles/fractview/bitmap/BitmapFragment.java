@@ -20,7 +20,6 @@ import at.searles.fractview.bitmap.ui.BitmapFragmentAccessor;
 import at.searles.fractview.fractal.FractalProviderListener;
 import at.searles.fractview.renderscript.RenderScriptFragment;
 import at.searles.fractview.renderscript.RenderScriptListener;
-import at.searles.fractview.saving.SaveInBackgroundFragment;
 
 /**
  * This class is the glue maintaining all parameters for drawing the fractal
@@ -185,14 +184,14 @@ public class BitmapFragment extends Fragment implements DrawerListener, RenderSc
 	// =============================================================
 	// ====== Managing the job queue ===============================
 	// =============================================================
-	public void removeIdleJob(SaveInBackgroundFragment.SaveJob job) {
+	public void removeIdleJob(IdleJob job) {
 		if(!jobQueue.remove(job)) {
 			Log.i(getClass().getName(), "tried to remove job " + job + " but it was not in the queue...");
 		}
 	}
 
-	public void scheduleIdleJob(IdleJob job, boolean highPriority, boolean cancelRunning) {
-		Log.d(getClass().getName(), "scheduleIdleJob=" + job + ", cancel=" + cancelRunning);
+	public void addIdleJob(IdleJob job, boolean highPriority, boolean cancelRunning) {
+		Log.d(getClass().getName(), "addIdleJob=" + job + ", cancel=" + cancelRunning);
 
 		// in ui thread
 		if(highPriority) {
@@ -399,7 +398,7 @@ public class BitmapFragment extends Fragment implements DrawerListener, RenderSc
 			return;
 		}
 
-		scheduleIdleJob(IdleJob.editor(
+		addIdleJob(IdleJob.editor(
 				new Runnable() {
 					public void run() {
 						// drawer needs to know
@@ -427,7 +426,7 @@ public class BitmapFragment extends Fragment implements DrawerListener, RenderSc
 			return false;
 		}
 
-		scheduleIdleJob(IdleJob.editor(
+		addIdleJob(IdleJob.editor(
 				new Runnable() {
 					@Override
 					public void run() {
