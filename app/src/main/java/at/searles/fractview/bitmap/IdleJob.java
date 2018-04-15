@@ -2,7 +2,7 @@ package at.searles.fractview.bitmap;
 
 /**
  * This class represents jobs that can be started from bitmap fragment if it is idle.
- * For this purpose, they are scheduled using scheduleIdleJob, but they can also
+ * For this purpose, they are scheduled using addIdleJob, but they can also
  * be started independent from a bitmap fragment (eg if the bitmap is saved without
  * waiting for the rendering to finish). In the latter case, scheduling a job will
  * not restart it but still wait until it has finished before the next job is started.

@@ -62,7 +62,7 @@ public abstract class SaveInBackgroundFragment extends Fragment {
 
         // add job to bitmap fragment, executed before all
         // others, but do not interrupt the execution.
-        bitmapFragment.scheduleIdleJob(job, true, false);
+        bitmapFragment.addIdleJob(job, true, false);
     }
 
     @Nullable
@@ -241,6 +241,8 @@ public abstract class SaveInBackgroundFragment extends Fragment {
                 onCancel();
             }
         });
+
+        builder.setCancelable(false);
 
         return builder.create();
     }
