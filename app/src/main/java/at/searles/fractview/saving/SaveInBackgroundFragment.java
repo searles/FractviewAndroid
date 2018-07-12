@@ -49,7 +49,6 @@ public abstract class SaveInBackgroundFragment extends Fragment {
     @Override
     public void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        this.setRetainInstance(true);
 
         // We do not save the state because if the app is terminated
         // then there is no bitmap left. The rendering will restart

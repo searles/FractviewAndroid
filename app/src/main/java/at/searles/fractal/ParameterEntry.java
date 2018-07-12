@@ -13,8 +13,8 @@ import at.searles.math.Scale;
 import at.searles.math.color.Palette;
 
 /**
- * Created by searles on 28.07.17.
- */ // And now for the presets.
+ * And now for the demos/presets.
+ */
 public class ParameterEntry {
 
     public final String title;
@@ -59,8 +59,8 @@ public class ParameterEntry {
                             .add("bailoutvalue", Fractal.Type.Expr, "i + smooth_i")
                             .add("bailouttransfer", Fractal.Type.Expr, "log(1 + value * (0.42 / 28))")
                             .add("laketransfer", Fractal.Type.Expr, "0")
-                            .add("lakepalette", Fractal.Type.Palette, new Palette(1, 1, new int[]{0xff000000}))
-                            .add("bailoutpalette", Fractal.Type.Palette, new Palette(5, 1, new int[]{0xff000764, 0xff206bcb, 0xffedffff, 0xffffaa00, 0xff310231})))
+                            .add("lakepalette", Fractal.Type.Palette, new Palette(new int[][]{{0xff000000}}))
+                            .add("bailoutpalette", Fractal.Type.Palette, new Palette(new int[][]{{0xff000764, 0xff206bcb, 0xffedffff, 0xffffaa00, 0xff310231}})))
             );
 
             _ENTRIES.add(createEntry(am, "Burning Ship", "burningship.png", "Burning Ship Fractal",

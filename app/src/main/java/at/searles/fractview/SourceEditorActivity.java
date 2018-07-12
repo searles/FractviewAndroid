@@ -17,8 +17,7 @@ import java.util.HashMap;
 
 import at.searles.fractal.Fractal;
 import at.searles.fractview.ui.DialogHelper;
-import at.searles.meelan.CompileException;
-import at.searles.parsing.ParsingError;
+import at.searles.meelan.MeelanException;
 
 public class SourceEditorActivity extends Activity implements EditableDialogFragment.Callback {
 
@@ -32,7 +31,6 @@ public class SourceEditorActivity extends Activity implements EditableDialogFrag
 	static private final int LOAD_PROGRAM = -1;
 	static private final int SAVE_PROGRAM = -2;
 	public static final int SOURCE_EDITOR_ACTIVITY_RETURN = 98;
-
 
 	private EditText editor;
     
@@ -104,7 +102,7 @@ public class SourceEditorActivity extends Activity implements EditableDialogFrag
 			acceptedSource = source;
 
 			return true;
-		} catch(ParsingError | CompileException e) {
+		} catch(MeelanException e) {
 			DialogHelper.error(this, "Compiler Error: " + e.getMessage());
 			e.printStackTrace();
 

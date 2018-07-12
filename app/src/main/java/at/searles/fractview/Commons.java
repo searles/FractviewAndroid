@@ -16,13 +16,12 @@ import java.util.Map;
 
 import at.searles.math.Scale;
 import at.searles.math.color.Palette;
-import at.searles.meelan.CompileException;
-import at.searles.meelan.Tree;
-import at.searles.meelan.Value;
-
-/**
- * Created by searles on 11.06.17.
- */
+import at.searles.meelan.MeelanException;
+import at.searles.meelan.optree.Tree;
+import at.searles.meelan.optree.Vec;
+import at.searles.meelan.values.CplxVal;
+import at.searles.meelan.values.Int;
+import at.searles.meelan.values.Real;
 
 public class Commons {
 
@@ -49,7 +48,7 @@ public class Commons {
 
         if(minutes > 0) {
             seconds -= minutes * 60;
-            sb.append(minutes + ":");
+            sb.append(minutes).append(":");
         }
 
         sb.append(String.format("%02.3f", seconds));
@@ -127,35 +126,35 @@ public class Commons {
         }
     }
 
-    public static Scale toScale(Tree init) throws CompileException {
-        if(init instanceof Tree.Vec) {
-            Tree.Vec vec = (Tree.Vec) init;
+    public static Scale toScale(Tree init) throws MeelanException {
+        if(init instanceof Vec) {
+            Vec vec = (Vec) init;
 
             if(vec.size() == 3) {
-                double[] scale = new double[3];
+                double[] scale = new double[6];
 
                 for(int i = 0; i < 3; ++i) {
                     Tree child = vec.get(i);
 
-                    if(child instanceof Value.Int) {
-                        scale[2 * i] = ((Value.Int) child).value;
+                    if(child instanceof Int) {
+                        scale[2 * i] = ((Int) child).value();
                         scale[2 * i + 1] = 0;
-                    } else if(child instanceof Value.Real) {
-                        scale[2 * i] = ((Value.Real) child).value;
+                    } else if(child instanceof Real) {
+                        scale[2 * i] = ((Real) child).value();
                         scale[2 * i + 1] = 0;
-                    } else if(child instanceof Value.CplxVal) {
-                        scale[2 * i] = ((Value.CplxVal) child).value.re();
-                        scale[2 * i + 1] = ((Value.CplxVal) child).value.im();
+                    } else if(child instanceof CplxVal) {
+                        scale[2 * i] = ((CplxVal) child).value().re();
+                        scale[2 * i + 1] = ((CplxVal) child).value().im();
                     } else {
-                        throw new CompileException("Components of scale must be complex numbers");
+                        throw new MeelanException("Components of scale must be complex numbers", init);
                     }
                 }
 
-                return new Scale(scale);
+                return new Scale(scale[0], scale[1], scale[2], scale[3], scale[4], scale[5]);
             }
         }
 
-        throw new CompileException("Scale must be vector of 3 numbers");
+        throw new MeelanException("Scale must be vector of 3 numbers", init);
     }
 
     public static byte[] toPNG(Bitmap bitmap) {
@@ -173,51 +172,47 @@ public class Commons {
      * Converts a term to a palette
      * @param t
      * @return
-     * @throws CompileException
+     * @throws MeelanException
      */
-    public static Palette toPalette(Object t) throws CompileException {
-        if(t == null) {
-            throw new CompileException("Missing list value");
-        }
-
+    public static Palette toPalette(Tree t) throws MeelanException {
         int w, h;
         int colors[];
 
-        if(t instanceof Tree.Vec) {
-            Tree.Vec vec = (Tree.Vec) t;
+        if(t instanceof Vec) {
+            Vec vec = (Vec) t;
 
             if(vec.size() > 0) {
                 Tree element = vec.get(0);
 
-                if(element instanceof Tree.Vec) {
+                if(element instanceof Vec) {
                     // two dimensional palette.
                     h = vec.size();
-                    w = ((Tree.Vec) element).size();
+                    w = ((Vec) element).size();
 
                     colors = new int[w * h];
 
                     int y = 0;
 
                     for(Tree row : vec) {
-                        if(row instanceof Tree.Vec) {
-                            if(((Tree.Vec) row).size() == w) {
+                        if(row instanceof Vec) {
+                            if(((Vec) row).size() == w) {
                                 for(int x = 0; x < w; ++x) {
-                                    Tree color = ((Tree.Vec) row).get(x);
+                                    Tree color = ((Vec) row).get(x);
 
-                                    if(color instanceof Value.Int) {
-                                        colors[x + y * w] = ((Value.Int) color).value;
+                                    if(color instanceof Int) {
+                                        colors[x + y * w] = ((Int) color).value();
                                     } else {
-                                        throw new CompileException("invalid entry in palette");
+                                        throw new MeelanException("invalid entry in palette", t);
                                     }
                                 }
                             }
                         } else {
-                            throw new CompileException("invalid row in palette");
+                            throw new MeelanException("invalid row in palette", t);
                         }
 
                         y++;
                     }
-                } else if(element instanceof Value.Int) {
+                } else if(element instanceof Int) {
                     // just one row.
                     h = 1;
                     w = vec.size();
@@ -227,24 +222,24 @@ public class Commons {
                     for(int x = 0; x < w; ++x) {
                         Tree color = vec.get(x);
 
-                        if(color instanceof Value.Int) {
-                            colors[x] = ((Value.Int) color).value;
+                        if(color instanceof Int) {
+                            colors[x] = ((Int) color).value();
                         } else {
-                            throw new CompileException("invalid entry in palette row");
+                            throw new MeelanException("invalid entry in palette row");
                         }
                     }
                 } else {
-                    throw new CompileException("invalid row in palette");
+                    throw new MeelanException("invalid row in palette", t);
                 }
             } else {
-                throw new CompileException("palette must not be empty");
+                throw new MeelanException("palette must not be empty", t);
             }
-        } else if(t instanceof Value.Int) {
+        } else if(t instanceof Int) {
             w = h = 1;
             colors = new int[1];
-            colors[0] = ((Value.Int) t).value;
+            colors[0] = ((Int) t).value();
         } else {
-            throw new CompileException("invalid palette");
+            throw new MeelanException("invalid palette", t);
         }
 
         return new Palette(w, h, colors);

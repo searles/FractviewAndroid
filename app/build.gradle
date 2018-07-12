@@ -7,7 +7,7 @@ android {
         applicationId "at.searles.fractview"
         minSdkVersion 21
         targetSdkVersion 25
-        versionCode 77
+        versionCode 81
         versionName '3.3'
         testInstrumentationRunner "android.support.test.runner.AndroidJUnitRunner"
         externalNativeBuild {
@@ -43,7 +43,6 @@ dependencies {
     androidTestCompile('com.android.support.test.espresso:espresso-core:2.2.2', {
         exclude group: 'com.android.support', module: 'support-annotations'
     })
-
     //compile 'commons-codec:commons-codec:1.10'
     compile 'com.android.support:appcompat-v7:25.4.0'
     compile 'org.jetbrains:annotations-java5:15.0'
@@ -51,4 +50,5 @@ dependencies {
     compile 'com.android.support:support-v4:25.4.0'
     testCompile 'junit:junit:4.12'
     compile 'com.android.support.constraint:constraint-layout:1.1.0-beta5'
+    compile files('libs/Meelan.jar')
 }

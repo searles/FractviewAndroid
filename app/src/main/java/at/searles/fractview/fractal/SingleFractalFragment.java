@@ -11,28 +11,27 @@ import java.util.List;
 import at.searles.fractal.Fractal;
 import at.searles.fractal.android.BundleAdapter;
 import at.searles.fractview.ui.DialogHelper;
-import at.searles.math.Cplx;
 import at.searles.math.Scale;
-import at.searles.math.color.Palette;
 import at.searles.meelan.CompileException;
+import at.searles.meelan.MeelanException;
 
-public class SingleFractalFragment extends Fragment implements FractalProvider {
+public class SingleFractalFragment extends Fragment {
 
     private static final String FRACTAL_KEY = "asdinoer";
-
-    private Fractal fractal;
 
     private List<FractalProviderListener> listeners = new LinkedList<>();
 
     private LinkedList<Fractal> history = new LinkedList<>();
     private boolean mustIssueWarningOnEmptyHistory = true;
 
+    private SingleFractalProvider provider;
+
     public static SingleFractalFragment newInstance(Fractal fractal) {
         SingleFractalFragment fragment = new SingleFractalFragment();
 
         Bundle bundle = new Bundle();
 
-        bundle.putBundle(FRACTAL_KEY, BundleAdapter.fractalToBundle(fractal));
+        bundle.putBundle(FRACTAL_KEY, fractal.toBundle());
 
         fragment.setArguments(bundle);
 
@@ -51,21 +50,13 @@ public class SingleFractalFragment extends Fragment implements FractalProvider {
             savedInstanceState = getArguments();
         }
 
-        fractal = BundleAdapter.bundleToFractal(savedInstanceState.getBundle(FRACTAL_KEY));
+        Fractal fractal = Fractal.fromBundle(savedInstanceState.getBundle(FRACTAL_KEY));
 
-        try {
-            fractal.parse();
-            fractal.compile();
+        provider.setFractal(fractal);
 
-            for(FractalProviderListener listener : listeners) {
-                listener.fractalModified(fractal);
-            }
-        } catch (CompileException e) {
-            e.printStackTrace();
-            // FIXME do something useful!
+        for(FractalProviderListener listener : listeners) {
+            listener.fractalModified(fractal);
         }
-
-        System.out.println(fractal.scale());
     }
 
     @Override
@@ -74,7 +65,7 @@ public class SingleFractalFragment extends Fragment implements FractalProvider {
 
         Log.d(getClass().getName(), "onSaveInstanceState");
 
-        outState.putBundle(FRACTAL_KEY, BundleAdapter.fractalToBundle(fractal));
+        outState.putBundle(FRACTAL_KEY, fractal().toBundle());
     }
 
     /**
@@ -85,47 +76,33 @@ public class SingleFractalFragment extends Fragment implements FractalProvider {
     public void addListener(FractalProviderListener listener) {
         listeners.add(listener);
 
-        if(fractal != null) {
+        if(fractal() != null) {
             // and provide with new fractal
-            listener.fractalModified(fractal);
+            listener.fractalModified(fractal());
         }
+    }
+
+
+    interface CallBack {
+        void setScaleRelative(Scale sc);
     }
 
     public CallBack createCallback() {
         return new CallBack() {
             @Override
             public void setScaleRelative(Scale sc) {
-                setValue(Fractal.SCALE_KEY, fractal.scale().relative(sc));
+                fractal().data().get(Fractal.SCALE_KEY).setCustomValue(
+                        fractal().scale().relative(sc));
             }
         };
     }
 
-    @Override
-    public Fractal get(int i) {
-        return fractal;
-    }
-
-    @Override
-    public int size() {
-        return 1;
-    }
-
-    @Override
-    public Iterable<String> getParameters() {
-        return fractal.parameters();
-    }
-
-    @Override
-    public Fractal.Type getType(String label) {
-        return fractal.get(label).type();
-    }
 
     public void setFractal(Fractal newFractal) {
         setFractal(newFractal, true);
     }
 
     public void setFractal(Fractal newFractal, boolean addOldFractalToHistory) {
-
         Log.d(getClass().getName(), "set fractal");
 
         if(fractal != null && addOldFractalToHistory) {
@@ -134,15 +111,6 @@ public class SingleFractalFragment extends Fragment implements FractalProvider {
 
         this.fractal = newFractal;
 
-        try {
-            fractal.parse();
-            fractal.compile();
-        } catch (CompileException e) {
-            e.printStackTrace();
-        }
-
-        System.out.println(fractal.scale());
-
         fireFractalChangedEvent();
     }
 
@@ -150,58 +118,6 @@ public class SingleFractalFragment extends Fragment implements FractalProvider {
         for(FractalProviderListener listener : listeners) {
             listener.fractalModified(fractal);
         }
-    }
-
-    @Override
-    public <T> T getValue(String label) {
-        //noinspection unchecked
-        return (T) fractal.get(label).value();
-    }
-
-    @Override
-    public <T> void setValue(String label, T value) {
-        Fractal newFractal = this.fractal.copy();
-
-        switch (getType(label)) {
-            case Int:
-                newFractal.setInt(label, (Integer) value);
-                break;
-            case Real:
-                newFractal.setReal(label, ((Number) value).doubleValue());
-                break;
-            case Cplx:
-                newFractal.setCplx(label, (Cplx) value);
-                break;
-            case Bool:
-                newFractal.setBool(label, (Boolean) value);
-                break;
-            case Expr:
-                newFractal.setExpr(label, (String) value);
-                break;
-            case Color:
-                newFractal.setColor(label, (Integer) value);
-                break;
-            case Palette:
-                newFractal.setPalette(label, (Palette) value);
-                break;
-            case Scale:
-                newFractal.setScale(label, (Scale) value);
-                break;
-            default:
-                throw new IllegalArgumentException();
-        }
-
-        setFractal(newFractal);
-    }
-
-    @Override
-    public boolean isDefault(String label) {
-        return fractal.isDefault(label);
-    }
-
-    @Override
-    public void resetToDefault(String label) {
-        fractal.setToDefault(label);
     }
 
     public Fractal fractal() {

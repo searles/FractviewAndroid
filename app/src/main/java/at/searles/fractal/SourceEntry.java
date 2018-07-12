@@ -9,8 +9,8 @@ import java.util.List;
 import at.searles.fractview.AssetsHelper;
 
 /**
- * Created by searles on 02.08.17.
- */ // And now for the presets.
+ * Main menus
+ */
 public class SourceEntry {
     public final String title;
     public final Bitmap icon;
