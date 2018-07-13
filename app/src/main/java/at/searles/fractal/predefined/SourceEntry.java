@@ -1,4 +1,4 @@
-package at.searles.fractal;
+package at.searles.fractal.predefined;
 
 import android.content.res.AssetManager;
 import android.graphics.Bitmap;

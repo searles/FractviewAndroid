@@ -10,7 +10,7 @@ import android.widget.ProgressBar;
 
 import at.searles.fractview.R;
 import at.searles.fractview.bitmap.BitmapFragmentListener;
-import at.searles.fractview.fractal.FractalProvider;
+import at.searles.fractal.FractalProvider;
 import at.searles.math.Scale;
 
 /**

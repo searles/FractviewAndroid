@@ -12,7 +12,7 @@ import android.widget.ListView;
 import java.util.List;
 
 import at.searles.fractal.Fractal;
-import at.searles.fractal.SourceEntry;
+import at.searles.fractal.predefined.SourceEntry;
 import at.searles.fractal.android.BundleAdapter;
 
 /**

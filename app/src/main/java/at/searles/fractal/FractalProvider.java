@@ -1,12 +1,15 @@
-package at.searles.fractview.fractal;
+package at.searles.fractal;
 
+import java.util.Collection;
+import java.util.Collections;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.LinkedList;
+import java.util.List;
 import java.util.Map;
 
-import at.searles.fractal.Fractal;
-import at.searles.fractal.Type;
+import at.searles.fractview.fractal.FractalProviderListener;
 import at.searles.meelan.symbols.ExternData;
 
 /**
@@ -16,6 +19,11 @@ import at.searles.meelan.symbols.ExternData;
 public class FractalProvider {
 
     private static final String SEPARATOR = "::";
+
+    /**
+     * Listeners
+     */
+    private Map<String, List<FractalProviderListener>> listeners;
 
     /**
      * Which parameters should not be shared?
@@ -33,6 +41,29 @@ public class FractalProvider {
      * Key fractals. These are initialized in constructor and remain fixed.
      */
     private LinkedHashMap<String, Fractal> fractals;
+
+    public static FractalProvider singleFractal(Fractal fractal) {
+        FractalProvider fractalProvider = new FractalProvider(Collections.emptyList());
+
+        fractalProvider.fractals.put("", fractal);
+        for(ExternData.Entry entry : fractal.data().entries()) {
+            Object value = fractal.data().customValue(entry.id);
+
+            if(value != null) {
+                fractalProvider.values.put(entry.id, value);
+            }
+        }
+
+        return fractalProvider;
+    }
+
+    private FractalProvider(Collection<String> individualParameters) {
+        this.individualParameters = new HashSet<>(individualParameters);
+        this.fractals = new LinkedHashMap<>();
+        this.listeners = new HashMap<>();
+        this.entries = new LinkedHashMap<>();
+        this.values = new LinkedHashMap<>();
+    }
 
     /**
      * This one is called from the editor parameter list.
@@ -133,7 +164,7 @@ public class FractalProvider {
     }
 
     private void initializeEntries() {
-        entries = new LinkedHashMap<>();
+        entries.clear();
 
         LinkedHashMap<String, ExternData.Entry> genericParameters = new LinkedHashMap<>();
 
@@ -200,6 +231,35 @@ public class FractalProvider {
     }
 
     private void fireFractalChanged(String label) {
-        // TODO
+        List<FractalProviderListener> listenerList = this.listeners.get(label);
+
+        if(listenerList == null) {
+            return;
+        }
+
+        Fractal fractal = fractals.get(label);
+
+        for(FractalProviderListener listener : listenerList) {
+            listener.fractalModified(fractal);
+        }
+    }
+
+    public void addListener(String label, FractalProviderListener listener) {
+        List<FractalProviderListener> listenerList = this.listeners.get(label);
+
+        if(listenerList == null) {
+            listenerList = new LinkedList<>();
+            this.listeners.put(label, listenerList);
+        }
+
+        listenerList.add(listener);
+    }
+
+    public void removeListener(String label, FractalProviderListener listener) {
+        List<FractalProviderListener> listenerList = listeners.get(label);
+
+        if(listenerList != null) {
+            listenerList.remove(listener);
+        }
     }
 }

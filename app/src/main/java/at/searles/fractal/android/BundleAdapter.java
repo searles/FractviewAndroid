@@ -2,8 +2,6 @@ package at.searles.fractal.android;
 
 import android.os.Bundle;
 
-import at.searles.fractal.ExternParameters;
-import at.searles.fractal.Fractal;
 import at.searles.fractal.Type;
 import at.searles.math.Cplx;
 import at.searles.math.Scale;
@@ -40,9 +38,8 @@ public class BundleAdapter {
         Bundle scaleBundle = new Bundle();
 
         for(ExternData.Entry entry : data.entries()) {
-            if(entry.isCustom()) {
-                Object value = entry.get();
-
+            Object value = data.customValue(entry.id);
+            if(value != null) {
                 Type type = Type.fromString(entry.type);
 
                 if(type == null) {
@@ -105,27 +102,27 @@ public class BundleAdapter {
         Bundle scaleBundle = bundle.getBundle(SCALES_LABEL);
 
         if(intBundle != null) for(String key : intBundle.keySet()) {
-            data.setCustomValue(key, Type.Int.identifier, intBundle.getInt(key));
+            data.setCustomValue(key, intBundle.getInt(key));
         }
 
         if(realBundle != null) for(String key : realBundle.keySet()) {
-            data.setCustomValue(key, Type.Real.identifier, realBundle.getDouble(key));
+            data.setCustomValue(key, realBundle.getDouble(key));
         }
 
         if(cplxBundle != null) for(String key : cplxBundle.keySet()) {
-            data.setCustomValue(key, Type.Cplx.identifier, arrayToCplx(cplxBundle.getDoubleArray(key)));
+            data.setCustomValue(key, arrayToCplx(cplxBundle.getDoubleArray(key)));
         }
 
         if(boolBundle != null) for(String key : boolBundle.keySet()) {
-            data.setCustomValue(key, Type.Bool.identifier, boolBundle.getBoolean(key));
+            data.setCustomValue(key, boolBundle.getBoolean(key));
         }
 
         if(exprBundle != null) for(String key : exprBundle.keySet()) {
-            data.setCustomValue(key, Type.Expr.identifier, exprBundle.getString(key));
+            data.setCustomValue(key, exprBundle.getString(key));
         }
 
         if(colorBundle != null) for(String key : colorBundle.keySet()) {
-            data.setCustomValue(key, Type.Color.identifier, colorBundle.getInt(key));
+            data.setCustomValue(key, colorBundle.getInt(key));
         }
 
         if(paletteBundle != null) for(String key : paletteBundle.keySet()) {

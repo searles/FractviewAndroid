@@ -5,7 +5,6 @@ import at.searles.meelan.compiler.Ast;
 import at.searles.meelan.optree.Tree;
 import at.searles.meelan.parser.MeelanEnv;
 import at.searles.meelan.parser.MeelanParser;
-import at.searles.parsing.lexer.TokStream;
 import at.searles.parsing.parser.ParserStream;
 
 public class ParserInstance {
@@ -28,8 +27,8 @@ public class ParserInstance {
         this.parser = new MeelanParser();
     }
 
-    private Tree parseExpr(String sourceCode) {
-        ParserStream stream = new ParserStream.fromString(sourceCode);
+    public Tree parseExpr(String sourceCode) {
+        ParserStream stream = ParserStream.fromString(sourceCode);
 
         Tree tree = parser.parseExpr(env, stream);
 
@@ -44,6 +43,13 @@ public class ParserInstance {
 
     public Ast parseSource(String sourceCode) {
         ParserStream stream = ParserStream.fromString(sourceCode);
+
+        if(!stream.isEmpty()) {
+            // TODO 2018-07-11: There should be some warning in this case.
+            // Proposal: Throw exception with tree and catch it.
+            throw new MeelanException("not fully parsed!", null);
+        }
+
         return Ast.parse(env, stream);
     }
 }

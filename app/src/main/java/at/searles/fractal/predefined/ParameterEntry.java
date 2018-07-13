@@ -1,4 +1,4 @@
-package at.searles.fractal;
+package at.searles.fractal.predefined;
 
 import android.content.res.AssetManager;
 import android.graphics.Bitmap;
@@ -7,6 +7,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
+import at.searles.fractal.Fractal;
 import at.searles.fractview.AssetsHelper;
 import at.searles.math.Cplx;
 import at.searles.math.Scale;

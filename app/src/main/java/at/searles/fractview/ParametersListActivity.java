@@ -15,7 +15,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 
 import at.searles.fractal.Fractal;
-import at.searles.fractal.ParameterEntry;
+import at.searles.fractal.predefined.ParameterEntry;
 import at.searles.fractal.android.BundleAdapter;
 import at.searles.meelan.CompileException;
 
