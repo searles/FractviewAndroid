@@ -20,7 +20,7 @@
             android:layout_height="wrap_content"
             android:inputType="numberDecimal|numberSigned"
             android:ems="10"
-            android:id="@+id/xEditText"
+            android:id="@+id/reEditText"
             android:layout_weight="1" />
     </LinearLayout>
 
@@ -42,7 +42,7 @@
             android:layout_height="wrap_content"
             android:inputType="numberDecimal|numberSigned"
             android:ems="10"
-            android:id="@+id/yEditText"
+            android:id="@+id/imEditText"
             android:layout_weight="1" />
     </LinearLayout>
 

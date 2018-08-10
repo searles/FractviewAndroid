@@ -1,0 +1,32 @@
+{
+  "data": [
+      ["Default", "default.png", "Basic program for fractals with polynomial functions", "Default.fv"],
+
+      ["Julia Map", "juliamap.png", "Variation of \"Default\" that shows a map of julia sets.", "JuliaMap.fv"],
+      ["Branching", "branching.png", "\"Default\" with an addend for average coloring methods for polynomial functions", "Branching.fv"],
+      ["Cczcpaczcp", "ccz.png", "\"Default\" with a built-in special formula by Mark R Eggleston, called Cczcpaczcp", "Cczcpaczcp.fv"],
+
+      // the ones with orbit traps
+      ["Orbit Trap", "orbittrap.png", "\"Default\" with an orbit trap", "OrbitTrap.fv"],
+      ["Frame Orbit Trap", "frameorbittrap.png", "\"Default\" with an orbit trap with a transparent pattern", "FrameOrbitTrap.fv"],
+      ["Min/Max Trap", "minmaxtrap.png", "Depictures the minimum and maximum distance to the orbit trap", "MinMaxOrbitTrap.fv"],
+
+      // the ones with fold
+      ["Fold", "fold.png", "Program with an aggregator function (fold), also suitable for non-polynomial fractals", "Fold.fv"],
+      ["Two Folds", "twofolds.png", "\"Fold\" with two fold functions", "TwoFold.fv"],
+      ["Lake Fold", "lakefold.png", "\"Fold\" without bailout for Nova- and Newton fractals", "Lake.fv"],
+
+      // Special Lake Fold ones
+      ["Newton", "newton.png", "Newton method for root finding fractals", "Newton.fv"],
+      ["Nova", "nova.png", "Nova fractal defined by z - R * (z^power + argument) / (z^power + argument)' + p", "Nova.fv"],
+      ["Secant", "secant.png", "Secant method for root finding fractals", "Secant.fv"],
+
+      // Completely different onces
+      ["Lyapunov", "lyapunov.png", "Lyapunov fractals", "Lyapunov.fv"],
+
+      ["Pendulum (Multiple Magnets)", "pendulum.png", "Magnetic Pendulum Simulation with multiple magnets", "Pendulum.fv"],
+      ["Pendulum (3 Magnets)", "pendulum3.png", "Magnetic Pendulum Simulation with 3 Magnets", "Pendulum3.fv"],
+
+      ["Complex Function", "complexfn.png", "Complex function (Color Wheel method by default)", "ComplexFn.fv"]
+  ]
+}

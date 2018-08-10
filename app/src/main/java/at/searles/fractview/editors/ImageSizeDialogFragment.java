@@ -21,12 +21,15 @@ import android.widget.TextView;
 
 import java.util.Locale;
 
-import at.searles.fractview.MainActivity;
 import at.searles.fractview.R;
-import at.searles.fractview.bitmap.BitmapFragment;
+import at.searles.fractview.bitmap.FractalCalculator;
 import at.searles.fractview.ui.DialogHelper;
 
 public class ImageSizeDialogFragment extends DialogFragment {
+
+
+    //	public static final String WIDTH_LABEL = "width"; // FIXME Also used in ImageSizeDialog, put into res
+//	public static final String HEIGHT_LABEL = "height"; // FIXME put into res.
 
     private static final int MIN_VALUE = 1;
     private static final int MAX_VALUE = 999999;
@@ -151,7 +154,8 @@ public class ImageSizeDialogFragment extends DialogFragment {
         }
 
         // fetch fragment and change size
-        BitmapFragment fragment = (BitmapFragment) getFragmentManager().findFragmentByTag(getArguments().getString(BITMAP_FRAGMENT_KEY));
+        // TODO
+        FractalCalculator fragment = null;//(FractalCalculator) getFragmentManager().findFragmentByTag(getArguments().getString(BITMAP_FRAGMENT_KEY));
 
         if(!fragment.setSize(width, height)) {
             setErrorMessage(dialog, String.format("Could not change size (size too large)."));
@@ -166,7 +170,7 @@ public class ImageSizeDialogFragment extends DialogFragment {
     }
 
     private void setErrorMessage(AlertDialog dialog, String msg) {
-        TextView errorMessageTextView = (TextView) dialog.findViewById(R.id.errorMessageTextView);
+        TextView errorMessageTextView = (TextView) dialog.findViewById(R.id.msgTextView);
         errorMessageTextView.setVisibility(View.VISIBLE);
         errorMessageTextView.setText(msg);
         errorMessageTextView.setCompoundDrawablesWithIntrinsicBounds(0, 0, android.R.drawable.stat_notify_error, 0);
@@ -230,8 +234,9 @@ public class ImageSizeDialogFragment extends DialogFragment {
     private void switchToDefaultSize(AlertDialog dialog) {
         SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(getActivity());
 
-        int width = prefs.getInt(MainActivity.WIDTH_LABEL, -1);
-        int height = prefs.getInt(MainActivity.HEIGHT_LABEL, -1);
+        // TODO
+        int width = prefs.getInt(WIDTH_KEY, -1);
+        int height = prefs.getInt(HEIGHT_KEY, -1);
 
         if(width == -1 || height == -1) {
             switchToScreenSize(dialog);
@@ -270,8 +275,8 @@ public class ImageSizeDialogFragment extends DialogFragment {
 
     private void storeDefaultSize(int width, int height) {
         SharedPreferences.Editor editor = PreferenceManager.getDefaultSharedPreferences(getActivity()).edit();
-        editor.putInt(MainActivity.WIDTH_LABEL, width);
-        editor.putInt(MainActivity.HEIGHT_LABEL, height);
+        editor.putInt(WIDTH_KEY, width);
+        editor.putInt(HEIGHT_KEY, height);
         editor.apply();
     }
 }

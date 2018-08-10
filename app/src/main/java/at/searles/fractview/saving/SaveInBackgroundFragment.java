@@ -18,7 +18,7 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.lang.ref.WeakReference;
 
-import at.searles.fractview.bitmap.BitmapFragment;
+import at.searles.fractview.bitmap.FractalCalculator;
 import at.searles.fractview.bitmap.IdleJob;
 
 /**
@@ -41,9 +41,9 @@ public abstract class SaveInBackgroundFragment extends Fragment {
         this.status = Status.Waiting;
     }
 
-    protected BitmapFragment bitmapFragment() {
+    protected FractalCalculator fractalCalculator() {
         // get bitmap fragment
-        return (BitmapFragment) getParentFragment();
+        return (FractalCalculator) null;//getParentFragment();
     }
 
     @Override
@@ -57,11 +57,11 @@ public abstract class SaveInBackgroundFragment extends Fragment {
         job = new SaveJob();
 
         // get bitmap fragment
-        BitmapFragment bitmapFragment = (BitmapFragment) getParentFragment();
+        FractalCalculator fractalCalculator = fractalCalculator();//(FractalCalculator) getParentFragment();
 
         // add job to bitmap fragment, executed before all
         // others, but do not interrupt the execution.
-        bitmapFragment.addIdleJob(job, true, false);
+        fractalCalculator.addIdleJob(job, true, false);
     }
 
     @Nullable
@@ -88,7 +88,7 @@ public abstract class SaveInBackgroundFragment extends Fragment {
 
     @Override
     public void onDestroy() {
-        bitmapFragment().removeIdleJob(job);
+        fractalCalculator().removeIdleJob(job);
         super.onDestroy();
     }
 
@@ -102,13 +102,13 @@ public abstract class SaveInBackgroundFragment extends Fragment {
         }
     }
 
-    private void deleteFragmentFromParent() {
-        bitmapFragment().getChildFragmentManager().beginTransaction().remove(this).commit();
-    }
+//    private void deleteFragmentFromParent() {
+//        fractalCalculator().getChildFragmentManager().beginTransaction().remove(this).commit();
+//    }
 
     private void terminate() {
         this.status = Status.Done;
-        deleteFragmentFromParent();
+// todo       deleteFragmentFromParent();
 
         if(dialog != null) {
             dialog.dismiss();
@@ -133,7 +133,7 @@ public abstract class SaveInBackgroundFragment extends Fragment {
     }
 
     protected Bitmap getBitmap() {
-        return ((BitmapFragment) getParentFragment()).bitmap();
+        return null;//fixme ((FractalCalculator) getParentFragment()).bitmap();
     }
 
     protected abstract void prepareSaveInUIThread();
@@ -166,7 +166,7 @@ public abstract class SaveInBackgroundFragment extends Fragment {
 
             if(saveInBackgroundFragment != null) {
                 saveInBackgroundFragment.postSaveInUIThread();
-                saveInBackgroundFragment.deleteFragmentFromParent();
+                //fixme saveInBackgroundFragment.deleteFragmentFromParent();
                 saveInBackgroundFragment.job.onFinished();
             }
         }
@@ -212,12 +212,12 @@ public abstract class SaveInBackgroundFragment extends Fragment {
     }
 
     private void onCancel() {
-        bitmapFragment().removeIdleJob(job);
+        fractalCalculator().removeIdleJob(job);
         terminate();
     }
 
     private void onSkip() {
-        bitmapFragment().removeIdleJob(job);
+        fractalCalculator().removeIdleJob(job);
         job.startJob();
     }
 

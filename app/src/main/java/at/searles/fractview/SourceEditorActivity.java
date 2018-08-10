@@ -5,21 +5,17 @@ import android.content.Intent;
 import android.os.Bundle;
 import android.text.Editable;
 import android.text.TextWatcher;
-import android.util.Log;
 import android.view.Menu;
 import android.view.MenuInflater;
-import android.view.MenuItem;
 import android.view.View;
 import android.widget.Button;
 import android.widget.EditText;
 
-import java.util.HashMap;
-
 import at.searles.fractal.Fractal;
+import at.searles.fractal.data.Parameters;
 import at.searles.fractview.ui.DialogHelper;
-import at.searles.meelan.MeelanException;
 
-public class SourceEditorActivity extends Activity implements EditableDialogFragment.Callback {
+public class SourceEditorActivity extends Activity {
 
 	/**
 	 * Shared preferences that contains programs
@@ -95,14 +91,14 @@ public class SourceEditorActivity extends Activity implements EditableDialogFrag
 		String source = currentSource();
 
 		try {
-			Fractal fractal = new Fractal(source, new HashMap<>());
-			fractal.parse(); // Check whether parsing works
+			Fractal fractal = Fractal.fromData(source, new Parameters());
 			fractal.compile(); // Also checks default-values for external data.
 
 			acceptedSource = source;
 
 			return true;
-		} catch(MeelanException e) {
+		} catch(Throwable e) {
+			// TODO
 			DialogHelper.error(this, "Compiler Error: " + e.getMessage());
 			e.printStackTrace();
 
@@ -118,53 +114,53 @@ public class SourceEditorActivity extends Activity implements EditableDialogFrag
 		return super.onCreateOptionsMenu(menu);
 	}
 
-	@Override
-	public boolean onOptionsItemSelected(MenuItem item) {
+//	@Override
+//	public boolean onOptionsItemSelected(MenuItem item) {
 		// Handle presses on the action bar items
-		switch (item.getItemId()) {
-			case R.id.action_load_program: {
-				EditableDialogFragment ft = EditableDialogFragment.newInstance(LOAD_PROGRAM,
-						"Load Program", false, EditableDialogFragment.Type.LoadSharedPref);
-				ft.show(getFragmentManager(), "dialog");
-				ft.getArguments().putString("prefs_name", PREFS_NAME);
-			} return true;
-			case R.id.action_save_program: {
-				EditableDialogFragment ft = EditableDialogFragment.newInstance(SAVE_PROGRAM,
-						"Save Program", false, EditableDialogFragment.Type.SaveSharedPref);
-				ft.show(getFragmentManager(), "dialog");
-				ft.getArguments().putString("prefs_name", PREFS_NAME);
-			} return true;
-			case R.id.action_compile: {
-				if(checkCompile()) {
-					DialogHelper.info(this, "Program compiled without errors");
-				}
-			} return true;
-			default:
-				return super.onOptionsItemSelected(item);
-		}
-	}
+//		switch (item.getItemId()) {
+//			case R.id.action_load_program: {
+//				EditableDialogFragment ft = EditableDialogFragment.newInstance(LOAD_PROGRAM,
+//						"Load Program", false, EditableDialogFragment.Type.LoadSharedPref);
+//				ft.show(getFragmentManager(), "dialog");
+//				ft.getArguments().putString("prefs_name", PREFS_NAME);
+//			} return true;
+//			case R.id.action_save_program: {
+//				EditableDialogFragment ft = EditableDialogFragment.newInstance(SAVE_PROGRAM,
+//						"Save Program", false, EditableDialogFragment.Type.SaveSharedPref);
+//				ft.show(getFragmentManager(), "dialog");
+//				ft.getArguments().putString("prefs_name", PREFS_NAME);
+//			} return true;
+//			case R.id.action_compile: {
+//				if(checkCompile()) {
+//					DialogHelper.info(this, "Program compiled without errors");
+//				}
+//			} return true;
+//			default:
+//				return super.onOptionsItemSelected(item);
+// todo		}
+//	}
 
 	private String currentSource() {
 		// unchecked acceptedSource code
 		return editor.getText().toString();
 	}
 
-	@Override
-	public void apply(int requestCode, Object o) {
-		switch(requestCode) {
-			case SAVE_PROGRAM: {
-				Log.d(getClass().getName(), "Saving program " + o);
-				String name = (String) o;
-				SharedPrefsHelper.storeInSharedPreferences(this, name, currentSource(), PREFS_NAME);
-			} break;
-			case LOAD_PROGRAM: {
-				String name = (String) o;
-
-				acceptedSource = SharedPrefsHelper.loadFromSharedPreferences(this, name, PREFS_NAME);
-				editor.setText(acceptedSource);
-			} break;
-			default:
-				throw new IllegalArgumentException("Bad call to checkCompile, code: " + requestCode);
-		}
-	}
+//	@Override
+//	public void apply(int requestCode, Object o) {
+//		switch(requestCode) {
+//			case SAVE_PROGRAM: {
+//				Log.d(getClass().getName(), "Saving program " + o);
+//				String name = (String) o;
+//				SharedPrefsHelper.storeInSharedPreferences(this, name, currentSource(), PREFS_NAME);
+//			} break;
+//			case LOAD_PROGRAM: {
+//				String name = (String) o;
+//
+//				acceptedSource = SharedPrefsHelper.loadFromSharedPreferences(this, name, PREFS_NAME);
+//				editor.setText(acceptedSource);
+//			} break;
+//			default:
+//				throw new IllegalArgumentException("Bad call to checkCompile, code: " + requestCode);
+//		}
+// todo	}
 }

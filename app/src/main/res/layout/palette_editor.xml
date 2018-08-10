@@ -8,7 +8,7 @@
     <view
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        class="at.searles.fractview.ui.PaletteView"
+        class="at.searles.fractview.parameters.palettes.PaletteView"
         android:id="@+id/paletteView"
         android:layout_column="0"
         android:layout_weight="0"

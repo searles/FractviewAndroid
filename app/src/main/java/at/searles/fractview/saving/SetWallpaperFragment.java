@@ -30,7 +30,7 @@ public class SetWallpaperFragment extends SaveInBackgroundFragment {
     @Override
     protected void asyncSaveInBackground() {
         try {
-            wallpaperManager.setBitmap(bitmapFragment().bitmap());
+            wallpaperManager.setBitmap(fractalCalculator().bitmap());
         } catch (IOException e) {
             this.exception = e;
         }

@@ -2,11 +2,11 @@ apply plugin: 'com.android.application'
 
 android {
     compileSdkVersion 25
-    buildToolsVersion "25.0.2"
+    buildToolsVersion '27.0.3'
     defaultConfig {
         applicationId "at.searles.fractview"
-        minSdkVersion 21
-        targetSdkVersion 25
+        minSdkVersion 24
+        targetSdkVersion 26
         versionCode 81
         versionName '3.3'
         testInstrumentationRunner "android.support.test.runner.AndroidJUnitRunner"
@@ -14,9 +14,6 @@ android {
             cmake {
                 cppFlags ""
             }
-        }
-        jackOptions {
-            enabled true
         }
     }
     buildTypes {
@@ -39,16 +36,15 @@ android {
 }
 
 dependencies {
-    compile fileTree(include: ['*.jar'], dir: 'libs')
-    androidTestCompile('com.android.support.test.espresso:espresso-core:2.2.2', {
+    implementation fileTree(include: ['*.jar'], dir: 'libs')
+    androidTestImplementation('com.android.support.test.espresso:espresso-core:2.2.2', {
         exclude group: 'com.android.support', module: 'support-annotations'
     })
     //compile 'commons-codec:commons-codec:1.10'
-    compile 'com.android.support:appcompat-v7:25.4.0'
-    compile 'org.jetbrains:annotations-java5:15.0'
-    compile 'com.google.code.gson:gson:2.8.0'
-    compile 'com.android.support:support-v4:25.4.0'
-    testCompile 'junit:junit:4.12'
-    compile 'com.android.support.constraint:constraint-layout:1.1.0-beta5'
-    compile files('libs/Meelan.jar')
+    implementation 'com.android.support:appcompat-v7:25.4.0'
+    implementation 'org.jetbrains:annotations-java5:15.0'
+    implementation 'com.android.support:support-v4:25.4.0'
+    testImplementation 'junit:junit:4.12'
+    implementation 'com.android.support.constraint:constraint-layout:1.1.0-beta5'
+    implementation files('libs/Fractals.jar')
 }

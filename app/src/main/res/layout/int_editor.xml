@@ -11,4 +11,15 @@
         android:layout_gravity="center_horizontal"
         android:layout_row="0"
         android:layout_column="1" />
+
+    <TextView
+        android:id="@+id/msgTextView"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_marginEnd="8dp"
+        android:layout_marginStart="8dp"
+        android:layout_marginTop="8dp"
+        android:text=""
+        android:visibility="invisible"
+    />
 </GridLayout>

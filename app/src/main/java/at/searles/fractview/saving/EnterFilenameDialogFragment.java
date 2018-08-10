@@ -17,11 +17,10 @@ import android.widget.TextView;
 
 import java.io.File;
 
-import at.searles.fractview.MainActivity;
 import at.searles.fractview.R;
-import at.searles.fractview.bitmap.BitmapFragment;
 import at.searles.fractview.ui.DialogHelper;
-import at.searles.utils.CharUtil;
+import at.searles.fractview.utils.CharUtil;
+//import at.searles.utils.CharUtil;
 
 public class EnterFilenameDialogFragment extends DialogFragment {
 
@@ -156,7 +155,8 @@ public class EnterFilenameDialogFragment extends DialogFragment {
         boolean addToFavorites = addToFavoritesCheckBox.isChecked();
 
         if (addToFavorites) {
-            ((MainActivity) getActivity()).saveFavorite(filenamePrefix);
+            // TODO
+            //((MainActivity) getActivity()).saveFavorite(filenamePrefix);
         }
 
         File directory = getMediaDirectory();
@@ -177,8 +177,9 @@ public class EnterFilenameDialogFragment extends DialogFragment {
 
         String bitmapFragmentTag = getArguments().getString(BITMAP_FRAGMENT_TAG_KEY);
 
-        BitmapFragment bitmapFragment = (BitmapFragment) getFragmentManager().findFragmentByTag(bitmapFragmentTag);
-
-        bitmapFragment.registerFragmentAsChild(SaveBitmapToMediaFragment.newInstance(filenamePrefix), SaveInBackgroundFragment.SAVE_FRAGMENT_TAG);
+        // fixme
+//        FractalCalculator fractalCalculator = (FractalCalculator) getFragmentManager().findFragmentByTag(bitmapFragmentTag);
+//
+//        fractalCalculator.registerFragmentAsChild(SaveBitmapToMediaFragment.newInstance(filenamePrefix), SaveInBackgroundFragment.SAVE_FRAGMENT_TAG);
     }
 }

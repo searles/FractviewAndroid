@@ -24,6 +24,11 @@ import at.searles.math.Scale;
 
 public class ScaleableImageView extends View {
 
+	private static final int SHOW_GRID_MASK = 0x01;
+	private static final int ROTATION_LOCK_MASK = 0x02;
+	private static final int CONFIRM_ZOOM_MASK = 0x04;
+	private static final int DEACTIVATE_ZOOM_MASK = 0x08;
+
 	/**
 	 * Scale factor on double tapping
 	 */
@@ -69,6 +74,7 @@ public class ScaleableImageView extends View {
 	 */
 	static class ViewState extends BaseSavedState {
 
+
 		/**
 		 * Should the grid be shown or not?
 		 */
@@ -83,20 +89,27 @@ public class ScaleableImageView extends View {
 
 		private ViewState(Parcel in) {
 			super(in);
-			this.showGrid = in.readInt() == 1;
-			this.rotationLock = in.readInt() == 1;
-			this.confirmZoom = in.readInt() == 1;
-			this.deactivateZoom = in.readInt() == 1;
+
+			int masked = in.readInt();
+
+			this.showGrid = (masked & SHOW_GRID_MASK) != 0;
+			this.rotationLock = (masked & ROTATION_LOCK_MASK) != 0;
+			this.confirmZoom = (masked & CONFIRM_ZOOM_MASK) != 0;
+			this.deactivateZoom = (masked & DEACTIVATE_ZOOM_MASK) != 0;
 		}
 
 		@Override
 		public void writeToParcel(Parcel dest, int flags) {
 			super.writeToParcel(dest, flags);
 
-			dest.writeInt(showGrid ? 1 : 0);
-			dest.writeInt(rotationLock ? 1 : 0);
-			dest.writeInt(confirmZoom ? 1 : 0);
-			dest.writeInt(deactivateZoom ? 1 : 0);
+			int masked = 0;
+
+			masked |= showGrid ? SHOW_GRID_MASK : 0;
+			masked |= rotationLock ? ROTATION_LOCK_MASK : 0;
+			masked |= confirmZoom ? CONFIRM_ZOOM_MASK : 0;
+			masked |= deactivateZoom ? DEACTIVATE_ZOOM_MASK : 0;
+
+			dest.writeInt(masked);
 		}
 
 		public static final Creator<ViewState> CREATOR = new Creator<ViewState>() {
@@ -237,6 +250,8 @@ public class ScaleableImageView extends View {
 	public Parcelable onSaveInstanceState() {
 		//begin boilerplate code that allows parent classes to save state
 		Parcelable superState = super.onSaveInstanceState();
+
+		// TODO Read https://trickyandroid.com/saving-android-view-state-correctly/
 
 		ViewState vs = new ViewState(superState);
 		vs.showGrid = this.showGrid;

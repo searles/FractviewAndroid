@@ -7,7 +7,7 @@
     android:rowCount="3"
     android:columnCount="3">
 
-    <at.searles.fractview.bitmap.ui.BitmapFragmentView
+    <at.searles.fractview.bitmap.ui.FractalCalculatorView
         android:layout_width="fill_parent"
         android:layout_height="fill_parent"
         android:id="@+id/mainBitmapFragmentView"

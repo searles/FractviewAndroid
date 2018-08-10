@@ -5,28 +5,23 @@ import android.os.Bundle;
 import android.support.annotation.Nullable;
 import android.util.Log;
 
-import java.util.LinkedList;
-
 import at.searles.fractal.Fractal;
 import at.searles.fractal.FractalProvider;
+import at.searles.fractal.data.FractalData;
 import at.searles.math.Scale;
 
 public class SingleFractalFragment extends Fragment {
 
     private static final String FRACTAL_KEY = "asdinoer";
 
-    private LinkedList<Fractal> history = new LinkedList<>(); // TODO???
-
-    private boolean mustIssueWarningOnEmptyHistory = true;
-
     private FractalProvider provider;
 
-    public static SingleFractalFragment newInstance(Fractal fractal) {
+    public static SingleFractalFragment newInstance(FractalData fractal) {
         SingleFractalFragment fragment = new SingleFractalFragment();
 
         Bundle bundle = new Bundle();
 
-        bundle.putBundle(FRACTAL_KEY, fractal.toBundle());
+        bundle.putBundle(FRACTAL_KEY, BundleAdapter.toBundle(fractal));
 
         fragment.setArguments(bundle);
 
@@ -45,7 +40,7 @@ public class SingleFractalFragment extends Fragment {
             savedInstanceState = getArguments();
         }
 
-        Fractal fractal = Fractal.fromBundle(savedInstanceState.getBundle(FRACTAL_KEY));
+        FractalData fractal = BundleAdapter.fractalFromBundle(savedInstanceState.getBundle(FRACTAL_KEY));
 
         this.provider = FractalProvider.singleFractal(fractal);
 
@@ -81,12 +76,12 @@ public class SingleFractalFragment extends Fragment {
         void setScaleRelative(Scale sc);
     }
 
-    public CallBack createCallback() {
+    public CallBack createCallback(String label) {
         return new CallBack() {
             @Override
             public void setScaleRelative(Scale sc) {
-                Scale absoluteScale = ((Scale) provider.value(Fractal.SCALE_KEY)).relative(sc);
-                provider.set(Fractal.SCALE_KEY, absoluteScale);
+                Scale absoluteScale = ((Scale) provider.get(label).data().value(Fractal.SCALE_LABEL)).relative(sc);
+                provider.set(Fractal.SCALE_KEY, label, absoluteScale);
             }
         };
     }

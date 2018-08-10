@@ -6,7 +6,7 @@ import android.util.Log;
 
 import at.searles.fractal.gson.Serializers;
 import at.searles.fractview.ui.DialogHelper;
-import at.searles.utils.CharUtil;
+import at.searles.fractview.utils.CharUtil;
 
 /**
  * Helper for Shared Preferences
@@ -29,9 +29,6 @@ public class SharedPrefsHelper {
 
     /**
      *
-     * @param name
-     * @param entryString
-     * @param preferences
      * @return the actual key under which this is stored
      */
     public static String storeInSharedPreferences(String name, String entryString, SharedPreferences preferences) {
@@ -54,10 +51,6 @@ public class SharedPrefsHelper {
 
     /**
      *
-     * @param context
-     * @param oldKey
-     * @param newKey
-     * @param prefs
      * @return true if successfully renamed
      */
     public static String renameKey(Context context, String oldKey, String newKey, SharedPreferences prefs) {

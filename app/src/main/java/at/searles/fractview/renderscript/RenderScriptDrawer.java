@@ -14,8 +14,8 @@ import android.util.Log;
 import java.util.LinkedList;
 import java.util.List;
 
-import at.searles.fractal.Drawer;
-import at.searles.fractal.DrawerListener;
+import at.searles.fractview.fractal.Drawer;
+import at.searles.fractview.fractal.DrawerListener;
 import at.searles.fractal.Fractal;
 import at.searles.fractview.ScriptC_fillimage;
 import at.searles.fractview.ScriptC_fractal;
@@ -57,7 +57,7 @@ public class RenderScriptDrawer implements Drawer {
 	private volatile int progress;
 	private boolean isCancelled;
 
-	RenderScriptDrawer(RenderScript rs, ScriptC_fractal script, ScriptC_fillimage fillScript) {
+	public RenderScriptDrawer(RenderScript rs, ScriptC_fractal script, ScriptC_fillimage fillScript) {
 		this.rs = rs;
 		this.script = script;
 		this.fillScript = fillScript;
@@ -305,12 +305,12 @@ public class RenderScriptDrawer implements Drawer {
 	}
 
 	private void updateProgram(int[] code) {
-		script.set_len(code.length);
+		script.set_codeLen(code.length);
 
 		if (code.length == 0) return;
 
 		program_alloc = intAlloc(code, program_alloc);
-		script.bind_program(program_alloc);
+		script.bind_code(program_alloc);
 	}
 
 
@@ -379,10 +379,10 @@ public class RenderScriptDrawer implements Drawer {
 	}
 
 	private void updateScale(Scale scale) {
-		Double2 x = new Double2(scale.xx(), scale.xy());
-		Double2 y = new Double2(scale.yx(), scale.yy());
+		Double2 x = new Double2(scale.xx, scale.xy);
+		Double2 y = new Double2(scale.yx, scale.yy);
 
-		Double2 c = new Double2(scale.cx(), scale.cy());
+		Double2 c = new Double2(scale.cx, scale.cy);
 
 		script.set_xx(x);
 		script.set_yy(y);

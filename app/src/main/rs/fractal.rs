@@ -276,15 +276,16 @@ int height;
 
 // program
 
-int *program;
-int len;
+int *code;
+int codeLen;
 
 // colors
 
 struct palette * palettes;
 struct lab_surface * palette_data;
 
-static double2 __attribute__((overloadable)) map(double x, double y) {
+static double2 __attribute__((overloadable)) mapcoordinates(double x, double y) {
+    // todo use index to use multiple scales.
     double centerX = (width - 1.) / 2.;
     double centerY = (height - 1.) / 2.;
     double factor = 1. / (centerX < centerY ? centerX : centerY);
@@ -300,8 +301,8 @@ static double2 __attribute__((overloadable)) map(double x, double y) {
     return (double2) { a * x + b * y + e, c * x + d * y + f };
 }
 
-static double2 __attribute__((overloadable)) map(double2 xy) {
-    return map(xy.x, xy.y); // apply affine tranformation
+static double2 __attribute__((overloadable)) mapcoordinates(double2 xy) {
+    return mapcoordinates(xy.x, xy.y); // apply affine tranformation
 }
 
 // ===================== from here serious renderscript =========================
@@ -410,26 +411,26 @@ static double2 __attribute__((overloadable)) iabs(double2 a) { return (double2){
 static double2 __attribute__((overloadable)) flip(double2 a) { return (double2){ a.y, a.x }; }
 
 
-static int __attribute__((overloadable)) ipow(int base, int exp) {
+static int __attribute__((overloadable)) pow(int base, int exp) {
     int r = 1; if(exp < 0) { base = 1 / base; exp = -exp; }
     for(;exp; exp >>= 1, base *= base) if(exp & 1) r *= base;
     return r;
 }
 
-static double __attribute__((overloadable)) ipow(double base, int exp) {
+static double __attribute__((overloadable)) pow(double base, int exp) {
     double r = 1; if(exp < 0) { base = 1 / base; exp = -exp; }
     for(;exp; exp >>= 1, base *= base) if(exp & 1) r *= base;
     return r;
 }
 
-static double2 __attribute__((overloadable)) ipow(double2 base, int exp) {
+static double2 __attribute__((overloadable)) pow(double2 base, int exp) {
     double2 r = (double2){1., 0.};
     if(exp < 0) { base = recip(base); exp = -exp; }
     for(;exp; exp >>= 1, base = mul(base, base)) if(exp & 1) r = mul(r, base);
     return r;
 }
 
-static double4 __attribute__((overloadable)) ipow(double4 base, int exp) {
+static double4 __attribute__((overloadable)) pow(double4 base, int exp) {
     double4 r = (double4){1., 0., 0., 0.};
     if(exp < 0) { base = recip(base); exp = -exp; }
     for(;exp; exp >>= 1, base = mul(base, base)) if(exp & 1) r = mul(r, base);
@@ -750,15 +751,35 @@ static double smoothen(double2 z, double bailout, double power) {
 	return 1 + s;
 }
 
+static double2 __attribute((overloadable)) norm(double2 d) {
+    return d / rad(d);
+}
+
 /*static double2 __attribute__((overloadable)) floor(double2 d) {
     return (double2) { floor(d.x), floor(d.y) };
 }*/
+
+static void __attribute((overloadable)) debug(int i) {
+    rsDebug("int", i);
+}
+
+static void __attribute((overloadable)) debug(double d) {
+    rsDebug("double", d);
+}
+
+static void __attribute((overloadable)) debug(double2 d2) {
+    rsDebug("double2", d2);
+}
+
+static void __attribute((overloadable)) debug(double4 d4) {
+    rsDebug("double4", d4);
+}
 
 // helper function for the palette:
 static double z(rs_matrix4x4 * m, double2 c) {
     // assert 0 <= x <= 1
     // assert 0 <= y <= 1
-    // FIXME: It is transposed, but why?
+    // XXX It is transposed, but why?
     return (((((((m->m[15] * c.y) + m->m[11]) * c.y + m->m[7]) * c.y) + m->m[3]) * c.x +
             (((((m->m[14] * c.y) + m->m[10]) * c.y + m->m[6]) * c.y) + m->m[2])) * c.x +
             (((((m->m[13] * c.y) + m->m[9]) * c.y + m->m[5]) * c.y) + m->m[1])) * c.x +
@@ -853,619 +874,1418 @@ static uchar4 calc(int x, int y) {
     double2 td2_0, td2_1;
 
     // program counter + current instruction
-    int * is = program;
+    int * is = code;
 
 	int data[192];
 	data[0] = x; data[1] = y;
 	// int* color = &data[2];
 	data[3] = width; data[4] = height;
 
-
-	int pc = 0; ///// Start of generated code
-	while(pc < len) {
-		switch(is[pc]) {
-			///// mov[20]
-			case 0: /* integer reg[integer] */	(* (int*) &data[is[pc + 2]]) = ((* (int*) &is[pc + 1])); pc += 3; break;
-			case 1: /* reg[integer] reg[integer] */	(* (int*) &data[is[pc + 2]]) = ((* (int*) &data[is[pc + 1]])); pc += 3; break;
-			case 2: /* integer reg[real] */	(* (double*) &data[is[pc + 2]]) = convert_real((* (int*) &is[pc + 1])); pc += 3; break;
-			case 3: /* reg[integer] reg[real] */	(* (double*) &data[is[pc + 2]]) = convert_real((* (int*) &data[is[pc + 1]])); pc += 3; break;
-			case 4: /* real reg[real] */	(* (double*) &data[is[pc + 3]]) = ((* (double*) &is[pc + 1])); pc += 4; break;
-			case 5: /* reg[real] reg[real] */	(* (double*) &data[is[pc + 2]]) = ((* (double*) &data[is[pc + 1]])); pc += 3; break;
-			case 6: /* integer reg[cplx] */	(* (double2*) &data[is[pc + 2]]) = convert_cplx((* (int*) &is[pc + 1])); pc += 3; break;
-			case 7: /* reg[integer] reg[cplx] */	(* (double2*) &data[is[pc + 2]]) = convert_cplx((* (int*) &data[is[pc + 1]])); pc += 3; break;
-			case 8: /* real reg[cplx] */	(* (double2*) &data[is[pc + 3]]) = convert_cplx((* (double*) &is[pc + 1])); pc += 4; break;
-			case 9: /* reg[real] reg[cplx] */	(* (double2*) &data[is[pc + 2]]) = convert_cplx((* (double*) &data[is[pc + 1]])); pc += 3; break;
-			case 10: /* cplx reg[cplx] */	(* (double2*) &data[is[pc + 5]]) = ((* (double2*) &is[pc + 1])); pc += 6; break;
-			case 11: /* reg[cplx] reg[cplx] */	(* (double2*) &data[is[pc + 2]]) = ((* (double2*) &data[is[pc + 1]])); pc += 3; break;
-			case 12: /* integer reg[quat] */	(* (double4*) &data[is[pc + 2]]) = convert_quat((* (int*) &is[pc + 1])); pc += 3; break;
-			case 13: /* reg[integer] reg[quat] */	(* (double4*) &data[is[pc + 2]]) = convert_quat((* (int*) &data[is[pc + 1]])); pc += 3; break;
-			case 14: /* real reg[quat] */	(* (double4*) &data[is[pc + 3]]) = convert_quat((* (double*) &is[pc + 1])); pc += 4; break;
-			case 15: /* reg[real] reg[quat] */	(* (double4*) &data[is[pc + 2]]) = convert_quat((* (double*) &data[is[pc + 1]])); pc += 3; break;
-			case 16: /* cplx reg[quat] */	(* (double4*) &data[is[pc + 5]]) = convert_quat((* (double2*) &is[pc + 1])); pc += 6; break;
-			case 17: /* reg[cplx] reg[quat] */	(* (double4*) &data[is[pc + 2]]) = convert_quat((* (double2*) &data[is[pc + 1]])); pc += 3; break;
-			case 18: /* quat reg[quat] */	(* (double4*) &data[is[pc + 9]]) = ((* (double4*) &is[pc + 1])); pc += 10; break;
-			case 19: /* reg[quat] reg[quat] */	(* (double4*) &data[is[pc + 2]]) = ((* (double4*) &data[is[pc + 1]])); pc += 3; break;
-
-			///// next[2]
-			case 20: /* reg[integer] integer label label */	pc = (++(* (int*) &data[is[pc + 1]])) < (* (int*) &is[pc + 2]) ? is[pc + 3] : is[pc + 4]; break;
-			case 21: /* reg[integer] reg[integer] label label */	pc = (++(* (int*) &data[is[pc + 1]])) < (* (int*) &data[is[pc + 2]]) ? is[pc + 3] : is[pc + 4]; break;
-
-			///// g[8]
-			case 22: /* integer integer label label */	pc = ((* (int*) &is[pc + 1]) > (* (int*) &is[pc + 2])) ? is[pc + 3] : is[pc + 4];  break;
-			case 23: /* reg[integer] integer label label */	pc = ((* (int*) &data[is[pc + 1]]) > (* (int*) &is[pc + 2])) ? is[pc + 3] : is[pc + 4];  break;
-			case 24: /* integer reg[integer] label label */	pc = ((* (int*) &is[pc + 1]) > (* (int*) &data[is[pc + 2]])) ? is[pc + 3] : is[pc + 4];  break;
-			case 25: /* reg[integer] reg[integer] label label */	pc = ((* (int*) &data[is[pc + 1]]) > (* (int*) &data[is[pc + 2]])) ? is[pc + 3] : is[pc + 4];  break;
-			case 26: /* real real label label */	pc = ((* (double*) &is[pc + 1]) > (* (double*) &is[pc + 3])) ? is[pc + 5] : is[pc + 6];  break;
-			case 27: /* reg[real] real label label */	pc = ((* (double*) &data[is[pc + 1]]) > (* (double*) &is[pc + 2])) ? is[pc + 4] : is[pc + 5];  break;
-			case 28: /* real reg[real] label label */	pc = ((* (double*) &is[pc + 1]) > (* (double*) &data[is[pc + 3]])) ? is[pc + 4] : is[pc + 5];  break;
-			case 29: /* reg[real] reg[real] label label */	pc = ((* (double*) &data[is[pc + 1]]) > (* (double*) &data[is[pc + 2]])) ? is[pc + 3] : is[pc + 4];  break;
-
-			///// ge[8]
-			case 30: /* integer integer label label */	pc = ((* (int*) &is[pc + 1]) >= (* (int*) &is[pc + 2])) ? is[pc + 3] : is[pc + 4];  break;
-			case 31: /* reg[integer] integer label label */	pc = ((* (int*) &data[is[pc + 1]]) >= (* (int*) &is[pc + 2])) ? is[pc + 3] : is[pc + 4];  break;
-			case 32: /* integer reg[integer] label label */	pc = ((* (int*) &is[pc + 1]) >= (* (int*) &data[is[pc + 2]])) ? is[pc + 3] : is[pc + 4];  break;
-			case 33: /* reg[integer] reg[integer] label label */	pc = ((* (int*) &data[is[pc + 1]]) >= (* (int*) &data[is[pc + 2]])) ? is[pc + 3] : is[pc + 4];  break;
-			case 34: /* real real label label */	pc = ((* (double*) &is[pc + 1]) >= (* (double*) &is[pc + 3])) ? is[pc + 5] : is[pc + 6];  break;
-			case 35: /* reg[real] real label label */	pc = ((* (double*) &data[is[pc + 1]]) >= (* (double*) &is[pc + 2])) ? is[pc + 4] : is[pc + 5];  break;
-			case 36: /* real reg[real] label label */	pc = ((* (double*) &is[pc + 1]) >= (* (double*) &data[is[pc + 3]])) ? is[pc + 4] : is[pc + 5];  break;
-			case 37: /* reg[real] reg[real] label label */	pc = ((* (double*) &data[is[pc + 1]]) >= (* (double*) &data[is[pc + 2]])) ? is[pc + 3] : is[pc + 4];  break;
-
-			///// eq[8]
-			case 38: /* integer integer label label */	pc = ((* (int*) &is[pc + 1]) == (* (int*) &is[pc + 2])) ? is[pc + 3] : is[pc + 4];  break;
-			case 39: /* reg[integer] integer label label */	pc = ((* (int*) &data[is[pc + 1]]) == (* (int*) &is[pc + 2])) ? is[pc + 3] : is[pc + 4];  break;
-			case 40: /* integer reg[integer] label label */	pc = ((* (int*) &is[pc + 1]) == (* (int*) &data[is[pc + 2]])) ? is[pc + 3] : is[pc + 4];  break;
-			case 41: /* reg[integer] reg[integer] label label */	pc = ((* (int*) &data[is[pc + 1]]) == (* (int*) &data[is[pc + 2]])) ? is[pc + 3] : is[pc + 4];  break;
-			case 42: /* real real label label */	pc = ((* (double*) &is[pc + 1]) == (* (double*) &is[pc + 3])) ? is[pc + 5] : is[pc + 6];  break;
-			case 43: /* reg[real] real label label */	pc = ((* (double*) &data[is[pc + 1]]) == (* (double*) &is[pc + 2])) ? is[pc + 4] : is[pc + 5];  break;
-			case 44: /* real reg[real] label label */	pc = ((* (double*) &is[pc + 1]) == (* (double*) &data[is[pc + 3]])) ? is[pc + 4] : is[pc + 5];  break;
-			case 45: /* reg[real] reg[real] label label */	pc = ((* (double*) &data[is[pc + 1]]) == (* (double*) &data[is[pc + 2]])) ? is[pc + 3] : is[pc + 4];  break;
-
-			///// ne[8]
-			case 46: /* integer integer label label */	pc = ((* (int*) &is[pc + 1]) != (* (int*) &is[pc + 2])) ? is[pc + 3] : is[pc + 4];  break;
-			case 47: /* reg[integer] integer label label */	pc = ((* (int*) &data[is[pc + 1]]) != (* (int*) &is[pc + 2])) ? is[pc + 3] : is[pc + 4];  break;
-			case 48: /* integer reg[integer] label label */	pc = ((* (int*) &is[pc + 1]) != (* (int*) &data[is[pc + 2]])) ? is[pc + 3] : is[pc + 4];  break;
-			case 49: /* reg[integer] reg[integer] label label */	pc = ((* (int*) &data[is[pc + 1]]) != (* (int*) &data[is[pc + 2]])) ? is[pc + 3] : is[pc + 4];  break;
-			case 50: /* real real label label */	pc = ((* (double*) &is[pc + 1]) != (* (double*) &is[pc + 3])) ? is[pc + 5] : is[pc + 6];  break;
-			case 51: /* reg[real] real label label */	pc = ((* (double*) &data[is[pc + 1]]) != (* (double*) &is[pc + 2])) ? is[pc + 4] : is[pc + 5];  break;
-			case 52: /* real reg[real] label label */	pc = ((* (double*) &is[pc + 1]) != (* (double*) &data[is[pc + 3]])) ? is[pc + 4] : is[pc + 5];  break;
-			case 53: /* reg[real] reg[real] label label */	pc = ((* (double*) &data[is[pc + 1]]) != (* (double*) &data[is[pc + 2]])) ? is[pc + 3] : is[pc + 4];  break;
-
-			///// le[8]
-			case 54: /* integer integer label label */	pc = ((* (int*) &is[pc + 1]) <= (* (int*) &is[pc + 2])) ? is[pc + 3] : is[pc + 4];  break;
-			case 55: /* reg[integer] integer label label */	pc = ((* (int*) &data[is[pc + 1]]) <= (* (int*) &is[pc + 2])) ? is[pc + 3] : is[pc + 4];  break;
-			case 56: /* integer reg[integer] label label */	pc = ((* (int*) &is[pc + 1]) <= (* (int*) &data[is[pc + 2]])) ? is[pc + 3] : is[pc + 4];  break;
-			case 57: /* reg[integer] reg[integer] label label */	pc = ((* (int*) &data[is[pc + 1]]) <= (* (int*) &data[is[pc + 2]])) ? is[pc + 3] : is[pc + 4];  break;
-			case 58: /* real real label label */	pc = ((* (double*) &is[pc + 1]) <= (* (double*) &is[pc + 3])) ? is[pc + 5] : is[pc + 6];  break;
-			case 59: /* reg[real] real label label */	pc = ((* (double*) &data[is[pc + 1]]) <= (* (double*) &is[pc + 2])) ? is[pc + 4] : is[pc + 5];  break;
-			case 60: /* real reg[real] label label */	pc = ((* (double*) &is[pc + 1]) <= (* (double*) &data[is[pc + 3]])) ? is[pc + 4] : is[pc + 5];  break;
-			case 61: /* reg[real] reg[real] label label */	pc = ((* (double*) &data[is[pc + 1]]) <= (* (double*) &data[is[pc + 2]])) ? is[pc + 3] : is[pc + 4];  break;
-
-			///// l[8]
-			case 62: /* integer integer label label */	pc = ((* (int*) &is[pc + 1]) < (* (int*) &is[pc + 2])) ? is[pc + 3] : is[pc + 4];  break;
-			case 63: /* reg[integer] integer label label */	pc = ((* (int*) &data[is[pc + 1]]) < (* (int*) &is[pc + 2])) ? is[pc + 3] : is[pc + 4];  break;
-			case 64: /* integer reg[integer] label label */	pc = ((* (int*) &is[pc + 1]) < (* (int*) &data[is[pc + 2]])) ? is[pc + 3] : is[pc + 4];  break;
-			case 65: /* reg[integer] reg[integer] label label */	pc = ((* (int*) &data[is[pc + 1]]) < (* (int*) &data[is[pc + 2]])) ? is[pc + 3] : is[pc + 4];  break;
-			case 66: /* real real label label */	pc = ((* (double*) &is[pc + 1]) < (* (double*) &is[pc + 3])) ? is[pc + 5] : is[pc + 6];  break;
-			case 67: /* reg[real] real label label */	pc = ((* (double*) &data[is[pc + 1]]) < (* (double*) &is[pc + 2])) ? is[pc + 4] : is[pc + 5];  break;
-			case 68: /* real reg[real] label label */	pc = ((* (double*) &is[pc + 1]) < (* (double*) &data[is[pc + 3]])) ? is[pc + 4] : is[pc + 5];  break;
-			case 69: /* reg[real] reg[real] label label */	pc = ((* (double*) &data[is[pc + 1]]) < (* (double*) &data[is[pc + 2]])) ? is[pc + 3] : is[pc + 4];  break;
-
-			///// radless[4]
-			case 70: /* cplx real label label */	pc = rad2((* (double2*) &is[pc + 1])) < sqr((* (double*) &is[pc + 5])) ? is[pc + 7] : is[pc + 8]; break;
-			case 71: /* reg[cplx] real label label */	pc = rad2((* (double2*) &data[is[pc + 1]])) < sqr((* (double*) &is[pc + 2])) ? is[pc + 4] : is[pc + 5]; break;
-			case 72: /* cplx reg[real] label label */	pc = rad2((* (double2*) &is[pc + 1])) < sqr((* (double*) &data[is[pc + 5]])) ? is[pc + 6] : is[pc + 7]; break;
-			case 73: /* reg[cplx] reg[real] label label */	pc = rad2((* (double2*) &data[is[pc + 1]])) < sqr((* (double*) &data[is[pc + 2]])) ? is[pc + 3] : is[pc + 4]; break;
-
-			///// distless[8]
-			case 74: /* cplx cplx real label label */	pc = rad2((* (double2*) &is[pc + 1]) - (* (double2*) &is[pc + 5])) < sqr((* (double*) &is[pc + 9])) ? is[pc + 11] : is[pc + 12]; break;
-			case 75: /* reg[cplx] cplx real label label */	pc = rad2((* (double2*) &data[is[pc + 1]]) - (* (double2*) &is[pc + 2])) < sqr((* (double*) &is[pc + 6])) ? is[pc + 8] : is[pc + 9]; break;
-			case 76: /* cplx reg[cplx] real label label */	pc = rad2((* (double2*) &is[pc + 1]) - (* (double2*) &data[is[pc + 5]])) < sqr((* (double*) &is[pc + 6])) ? is[pc + 8] : is[pc + 9]; break;
-			case 77: /* reg[cplx] reg[cplx] real label label */	pc = rad2((* (double2*) &data[is[pc + 1]]) - (* (double2*) &data[is[pc + 2]])) < sqr((* (double*) &is[pc + 3])) ? is[pc + 5] : is[pc + 6]; break;
-			case 78: /* cplx cplx reg[real] label label */	pc = rad2((* (double2*) &is[pc + 1]) - (* (double2*) &is[pc + 5])) < sqr((* (double*) &data[is[pc + 9]])) ? is[pc + 10] : is[pc + 11]; break;
-			case 79: /* reg[cplx] cplx reg[real] label label */	pc = rad2((* (double2*) &data[is[pc + 1]]) - (* (double2*) &is[pc + 2])) < sqr((* (double*) &data[is[pc + 6]])) ? is[pc + 7] : is[pc + 8]; break;
-			case 80: /* cplx reg[cplx] reg[real] label label */	pc = rad2((* (double2*) &is[pc + 1]) - (* (double2*) &data[is[pc + 5]])) < sqr((* (double*) &data[is[pc + 6]])) ? is[pc + 7] : is[pc + 8]; break;
-			case 81: /* reg[cplx] reg[cplx] reg[real] label label */	pc = rad2((* (double2*) &data[is[pc + 1]]) - (* (double2*) &data[is[pc + 2]])) < sqr((* (double*) &data[is[pc + 3]])) ? is[pc + 4] : is[pc + 5]; break;
-
-			///// radrange[16]
-			case 82: /* cplx cplx real real label label label */	pc = radrange((* (double2*) &is[pc + 1]), (* (double2*) &is[pc + 5]), (* (double*) &is[pc + 9]), (* (double*) &is[pc + 11]), is[pc + 13], is[pc + 14], is[pc + 15]); break;
-			case 83: /* reg[cplx] cplx real real label label label */	pc = radrange((* (double2*) &data[is[pc + 1]]), (* (double2*) &is[pc + 2]), (* (double*) &is[pc + 6]), (* (double*) &is[pc + 8]), is[pc + 10], is[pc + 11], is[pc + 12]); break;
-			case 84: /* cplx reg[cplx] real real label label label */	pc = radrange((* (double2*) &is[pc + 1]), (* (double2*) &data[is[pc + 5]]), (* (double*) &is[pc + 6]), (* (double*) &is[pc + 8]), is[pc + 10], is[pc + 11], is[pc + 12]); break;
-			case 85: /* reg[cplx] reg[cplx] real real label label label */	pc = radrange((* (double2*) &data[is[pc + 1]]), (* (double2*) &data[is[pc + 2]]), (* (double*) &is[pc + 3]), (* (double*) &is[pc + 5]), is[pc + 7], is[pc + 8], is[pc + 9]); break;
-			case 86: /* cplx cplx reg[real] real label label label */	pc = radrange((* (double2*) &is[pc + 1]), (* (double2*) &is[pc + 5]), (* (double*) &data[is[pc + 9]]), (* (double*) &is[pc + 10]), is[pc + 12], is[pc + 13], is[pc + 14]); break;
-			case 87: /* reg[cplx] cplx reg[real] real label label label */	pc = radrange((* (double2*) &data[is[pc + 1]]), (* (double2*) &is[pc + 2]), (* (double*) &data[is[pc + 6]]), (* (double*) &is[pc + 7]), is[pc + 9], is[pc + 10], is[pc + 11]); break;
-			case 88: /* cplx reg[cplx] reg[real] real label label label */	pc = radrange((* (double2*) &is[pc + 1]), (* (double2*) &data[is[pc + 5]]), (* (double*) &data[is[pc + 6]]), (* (double*) &is[pc + 7]), is[pc + 9], is[pc + 10], is[pc + 11]); break;
-			case 89: /* reg[cplx] reg[cplx] reg[real] real label label label */	pc = radrange((* (double2*) &data[is[pc + 1]]), (* (double2*) &data[is[pc + 2]]), (* (double*) &data[is[pc + 3]]), (* (double*) &is[pc + 4]), is[pc + 6], is[pc + 7], is[pc + 8]); break;
-			case 90: /* cplx cplx real reg[real] label label label */	pc = radrange((* (double2*) &is[pc + 1]), (* (double2*) &is[pc + 5]), (* (double*) &is[pc + 9]), (* (double*) &data[is[pc + 11]]), is[pc + 12], is[pc + 13], is[pc + 14]); break;
-			case 91: /* reg[cplx] cplx real reg[real] label label label */	pc = radrange((* (double2*) &data[is[pc + 1]]), (* (double2*) &is[pc + 2]), (* (double*) &is[pc + 6]), (* (double*) &data[is[pc + 8]]), is[pc + 9], is[pc + 10], is[pc + 11]); break;
-			case 92: /* cplx reg[cplx] real reg[real] label label label */	pc = radrange((* (double2*) &is[pc + 1]), (* (double2*) &data[is[pc + 5]]), (* (double*) &is[pc + 6]), (* (double*) &data[is[pc + 8]]), is[pc + 9], is[pc + 10], is[pc + 11]); break;
-			case 93: /* reg[cplx] reg[cplx] real reg[real] label label label */	pc = radrange((* (double2*) &data[is[pc + 1]]), (* (double2*) &data[is[pc + 2]]), (* (double*) &is[pc + 3]), (* (double*) &data[is[pc + 5]]), is[pc + 6], is[pc + 7], is[pc + 8]); break;
-			case 94: /* cplx cplx reg[real] reg[real] label label label */	pc = radrange((* (double2*) &is[pc + 1]), (* (double2*) &is[pc + 5]), (* (double*) &data[is[pc + 9]]), (* (double*) &data[is[pc + 10]]), is[pc + 11], is[pc + 12], is[pc + 13]); break;
-			case 95: /* reg[cplx] cplx reg[real] reg[real] label label label */	pc = radrange((* (double2*) &data[is[pc + 1]]), (* (double2*) &is[pc + 2]), (* (double*) &data[is[pc + 6]]), (* (double*) &data[is[pc + 7]]), is[pc + 8], is[pc + 9], is[pc + 10]); break;
-			case 96: /* cplx reg[cplx] reg[real] reg[real] label label label */	pc = radrange((* (double2*) &is[pc + 1]), (* (double2*) &data[is[pc + 5]]), (* (double*) &data[is[pc + 6]]), (* (double*) &data[is[pc + 7]]), is[pc + 8], is[pc + 9], is[pc + 10]); break;
-			case 97: /* reg[cplx] reg[cplx] reg[real] reg[real] label label label */	pc = radrange((* (double2*) &data[is[pc + 1]]), (* (double2*) &data[is[pc + 2]]), (* (double*) &data[is[pc + 3]]), (* (double*) &data[is[pc + 4]]), is[pc + 5], is[pc + 6], is[pc + 7]); break;
-
-			///// add[16]
-			case 98: /* integer integer reg[integer] */	(* (int*) &data[is[pc + 3]]) = add((* (int*) &is[pc + 1]), (* (int*) &is[pc + 2])); pc += 4; break;
-			case 99: /* reg[integer] integer reg[integer] */	(* (int*) &data[is[pc + 3]]) = add((* (int*) &data[is[pc + 1]]), (* (int*) &is[pc + 2])); pc += 4; break;
-			case 100: /* integer reg[integer] reg[integer] */	(* (int*) &data[is[pc + 3]]) = add((* (int*) &is[pc + 1]), (* (int*) &data[is[pc + 2]])); pc += 4; break;
-			case 101: /* reg[integer] reg[integer] reg[integer] */	(* (int*) &data[is[pc + 3]]) = add((* (int*) &data[is[pc + 1]]), (* (int*) &data[is[pc + 2]])); pc += 4; break;
-			case 102: /* real real reg[real] */	(* (double*) &data[is[pc + 5]]) = add((* (double*) &is[pc + 1]), (* (double*) &is[pc + 3])); pc += 6; break;
-			case 103: /* reg[real] real reg[real] */	(* (double*) &data[is[pc + 4]]) = add((* (double*) &data[is[pc + 1]]), (* (double*) &is[pc + 2])); pc += 5; break;
-			case 104: /* real reg[real] reg[real] */	(* (double*) &data[is[pc + 4]]) = add((* (double*) &is[pc + 1]), (* (double*) &data[is[pc + 3]])); pc += 5; break;
-			case 105: /* reg[real] reg[real] reg[real] */	(* (double*) &data[is[pc + 3]]) = add((* (double*) &data[is[pc + 1]]), (* (double*) &data[is[pc + 2]])); pc += 4; break;
-			case 106: /* cplx cplx reg[cplx] */	(* (double2*) &data[is[pc + 9]]) = add((* (double2*) &is[pc + 1]), (* (double2*) &is[pc + 5])); pc += 10; break;
-			case 107: /* reg[cplx] cplx reg[cplx] */	(* (double2*) &data[is[pc + 6]]) = add((* (double2*) &data[is[pc + 1]]), (* (double2*) &is[pc + 2])); pc += 7; break;
-			case 108: /* cplx reg[cplx] reg[cplx] */	(* (double2*) &data[is[pc + 6]]) = add((* (double2*) &is[pc + 1]), (* (double2*) &data[is[pc + 5]])); pc += 7; break;
-			case 109: /* reg[cplx] reg[cplx] reg[cplx] */	(* (double2*) &data[is[pc + 3]]) = add((* (double2*) &data[is[pc + 1]]), (* (double2*) &data[is[pc + 2]])); pc += 4; break;
-			case 110: /* quat quat reg[quat] */	(* (double4*) &data[is[pc + 17]]) = add((* (double4*) &is[pc + 1]), (* (double4*) &is[pc + 9])); pc += 18; break;
-			case 111: /* reg[quat] quat reg[quat] */	(* (double4*) &data[is[pc + 10]]) = add((* (double4*) &data[is[pc + 1]]), (* (double4*) &is[pc + 2])); pc += 11; break;
-			case 112: /* quat reg[quat] reg[quat] */	(* (double4*) &data[is[pc + 10]]) = add((* (double4*) &is[pc + 1]), (* (double4*) &data[is[pc + 9]])); pc += 11; break;
-			case 113: /* reg[quat] reg[quat] reg[quat] */	(* (double4*) &data[is[pc + 3]]) = add((* (double4*) &data[is[pc + 1]]), (* (double4*) &data[is[pc + 2]])); pc += 4; break;
-
-			///// sub[16]
-			case 114: /* integer integer reg[integer] */	(* (int*) &data[is[pc + 3]]) = sub((* (int*) &is[pc + 1]), (* (int*) &is[pc + 2])); pc += 4; break;
-			case 115: /* reg[integer] integer reg[integer] */	(* (int*) &data[is[pc + 3]]) = sub((* (int*) &data[is[pc + 1]]), (* (int*) &is[pc + 2])); pc += 4; break;
-			case 116: /* integer reg[integer] reg[integer] */	(* (int*) &data[is[pc + 3]]) = sub((* (int*) &is[pc + 1]), (* (int*) &data[is[pc + 2]])); pc += 4; break;
-			case 117: /* reg[integer] reg[integer] reg[integer] */	(* (int*) &data[is[pc + 3]]) = sub((* (int*) &data[is[pc + 1]]), (* (int*) &data[is[pc + 2]])); pc += 4; break;
-			case 118: /* real real reg[real] */	(* (double*) &data[is[pc + 5]]) = sub((* (double*) &is[pc + 1]), (* (double*) &is[pc + 3])); pc += 6; break;
-			case 119: /* reg[real] real reg[real] */	(* (double*) &data[is[pc + 4]]) = sub((* (double*) &data[is[pc + 1]]), (* (double*) &is[pc + 2])); pc += 5; break;
-			case 120: /* real reg[real] reg[real] */	(* (double*) &data[is[pc + 4]]) = sub((* (double*) &is[pc + 1]), (* (double*) &data[is[pc + 3]])); pc += 5; break;
-			case 121: /* reg[real] reg[real] reg[real] */	(* (double*) &data[is[pc + 3]]) = sub((* (double*) &data[is[pc + 1]]), (* (double*) &data[is[pc + 2]])); pc += 4; break;
-			case 122: /* cplx cplx reg[cplx] */	(* (double2*) &data[is[pc + 9]]) = sub((* (double2*) &is[pc + 1]), (* (double2*) &is[pc + 5])); pc += 10; break;
-			case 123: /* reg[cplx] cplx reg[cplx] */	(* (double2*) &data[is[pc + 6]]) = sub((* (double2*) &data[is[pc + 1]]), (* (double2*) &is[pc + 2])); pc += 7; break;
-			case 124: /* cplx reg[cplx] reg[cplx] */	(* (double2*) &data[is[pc + 6]]) = sub((* (double2*) &is[pc + 1]), (* (double2*) &data[is[pc + 5]])); pc += 7; break;
-			case 125: /* reg[cplx] reg[cplx] reg[cplx] */	(* (double2*) &data[is[pc + 3]]) = sub((* (double2*) &data[is[pc + 1]]), (* (double2*) &data[is[pc + 2]])); pc += 4; break;
-			case 126: /* quat quat reg[quat] */	(* (double4*) &data[is[pc + 17]]) = sub((* (double4*) &is[pc + 1]), (* (double4*) &is[pc + 9])); pc += 18; break;
-			case 127: /* reg[quat] quat reg[quat] */	(* (double4*) &data[is[pc + 10]]) = sub((* (double4*) &data[is[pc + 1]]), (* (double4*) &is[pc + 2])); pc += 11; break;
-			case 128: /* quat reg[quat] reg[quat] */	(* (double4*) &data[is[pc + 10]]) = sub((* (double4*) &is[pc + 1]), (* (double4*) &data[is[pc + 9]])); pc += 11; break;
-			case 129: /* reg[quat] reg[quat] reg[quat] */	(* (double4*) &data[is[pc + 3]]) = sub((* (double4*) &data[is[pc + 1]]), (* (double4*) &data[is[pc + 2]])); pc += 4; break;
-
-			///// mul[16]
-			case 130: /* integer integer reg[integer] */	(* (int*) &data[is[pc + 3]]) = mul((* (int*) &is[pc + 1]), (* (int*) &is[pc + 2])); pc += 4; break;
-			case 131: /* reg[integer] integer reg[integer] */	(* (int*) &data[is[pc + 3]]) = mul((* (int*) &data[is[pc + 1]]), (* (int*) &is[pc + 2])); pc += 4; break;
-			case 132: /* integer reg[integer] reg[integer] */	(* (int*) &data[is[pc + 3]]) = mul((* (int*) &is[pc + 1]), (* (int*) &data[is[pc + 2]])); pc += 4; break;
-			case 133: /* reg[integer] reg[integer] reg[integer] */	(* (int*) &data[is[pc + 3]]) = mul((* (int*) &data[is[pc + 1]]), (* (int*) &data[is[pc + 2]])); pc += 4; break;
-			case 134: /* real real reg[real] */	(* (double*) &data[is[pc + 5]]) = mul((* (double*) &is[pc + 1]), (* (double*) &is[pc + 3])); pc += 6; break;
-			case 135: /* reg[real] real reg[real] */	(* (double*) &data[is[pc + 4]]) = mul((* (double*) &data[is[pc + 1]]), (* (double*) &is[pc + 2])); pc += 5; break;
-			case 136: /* real reg[real] reg[real] */	(* (double*) &data[is[pc + 4]]) = mul((* (double*) &is[pc + 1]), (* (double*) &data[is[pc + 3]])); pc += 5; break;
-			case 137: /* reg[real] reg[real] reg[real] */	(* (double*) &data[is[pc + 3]]) = mul((* (double*) &data[is[pc + 1]]), (* (double*) &data[is[pc + 2]])); pc += 4; break;
-			case 138: /* cplx cplx reg[cplx] */	(* (double2*) &data[is[pc + 9]]) = mul((* (double2*) &is[pc + 1]), (* (double2*) &is[pc + 5])); pc += 10; break;
-			case 139: /* reg[cplx] cplx reg[cplx] */	(* (double2*) &data[is[pc + 6]]) = mul((* (double2*) &data[is[pc + 1]]), (* (double2*) &is[pc + 2])); pc += 7; break;
-			case 140: /* cplx reg[cplx] reg[cplx] */	(* (double2*) &data[is[pc + 6]]) = mul((* (double2*) &is[pc + 1]), (* (double2*) &data[is[pc + 5]])); pc += 7; break;
-			case 141: /* reg[cplx] reg[cplx] reg[cplx] */	(* (double2*) &data[is[pc + 3]]) = mul((* (double2*) &data[is[pc + 1]]), (* (double2*) &data[is[pc + 2]])); pc += 4; break;
-			case 142: /* quat quat reg[quat] */	(* (double4*) &data[is[pc + 17]]) = mul((* (double4*) &is[pc + 1]), (* (double4*) &is[pc + 9])); pc += 18; break;
-			case 143: /* reg[quat] quat reg[quat] */	(* (double4*) &data[is[pc + 10]]) = mul((* (double4*) &data[is[pc + 1]]), (* (double4*) &is[pc + 2])); pc += 11; break;
-			case 144: /* quat reg[quat] reg[quat] */	(* (double4*) &data[is[pc + 10]]) = mul((* (double4*) &is[pc + 1]), (* (double4*) &data[is[pc + 9]])); pc += 11; break;
-			case 145: /* reg[quat] reg[quat] reg[quat] */	(* (double4*) &data[is[pc + 3]]) = mul((* (double4*) &data[is[pc + 1]]), (* (double4*) &data[is[pc + 2]])); pc += 4; break;
-
-			///// scalarmul[4]
-			case 146: /* cplx cplx reg[cplx] */	(* (double2*) &data[is[pc + 9]]) = scalarmul((* (double2*) &is[pc + 1]), (* (double2*) &is[pc + 5])); pc += 10; break;
-			case 147: /* reg[cplx] cplx reg[cplx] */	(* (double2*) &data[is[pc + 6]]) = scalarmul((* (double2*) &data[is[pc + 1]]), (* (double2*) &is[pc + 2])); pc += 7; break;
-			case 148: /* cplx reg[cplx] reg[cplx] */	(* (double2*) &data[is[pc + 6]]) = scalarmul((* (double2*) &is[pc + 1]), (* (double2*) &data[is[pc + 5]])); pc += 7; break;
-			case 149: /* reg[cplx] reg[cplx] reg[cplx] */	(* (double2*) &data[is[pc + 3]]) = scalarmul((* (double2*) &data[is[pc + 1]]), (* (double2*) &data[is[pc + 2]])); pc += 4; break;
-
-			///// div[12]
-			case 150: /* real real reg[real] */	(* (double*) &data[is[pc + 5]]) = div((* (double*) &is[pc + 1]), (* (double*) &is[pc + 3])); pc += 6; break;
-			case 151: /* reg[real] real reg[real] */	(* (double*) &data[is[pc + 4]]) = div((* (double*) &data[is[pc + 1]]), (* (double*) &is[pc + 2])); pc += 5; break;
-			case 152: /* real reg[real] reg[real] */	(* (double*) &data[is[pc + 4]]) = div((* (double*) &is[pc + 1]), (* (double*) &data[is[pc + 3]])); pc += 5; break;
-			case 153: /* reg[real] reg[real] reg[real] */	(* (double*) &data[is[pc + 3]]) = div((* (double*) &data[is[pc + 1]]), (* (double*) &data[is[pc + 2]])); pc += 4; break;
-			case 154: /* cplx cplx reg[cplx] */	(* (double2*) &data[is[pc + 9]]) = div((* (double2*) &is[pc + 1]), (* (double2*) &is[pc + 5])); pc += 10; break;
-			case 155: /* reg[cplx] cplx reg[cplx] */	(* (double2*) &data[is[pc + 6]]) = div((* (double2*) &data[is[pc + 1]]), (* (double2*) &is[pc + 2])); pc += 7; break;
-			case 156: /* cplx reg[cplx] reg[cplx] */	(* (double2*) &data[is[pc + 6]]) = div((* (double2*) &is[pc + 1]), (* (double2*) &data[is[pc + 5]])); pc += 7; break;
-			case 157: /* reg[cplx] reg[cplx] reg[cplx] */	(* (double2*) &data[is[pc + 3]]) = div((* (double2*) &data[is[pc + 1]]), (* (double2*) &data[is[pc + 2]])); pc += 4; break;
-			case 158: /* quat quat reg[quat] */	(* (double4*) &data[is[pc + 17]]) = div((* (double4*) &is[pc + 1]), (* (double4*) &is[pc + 9])); pc += 18; break;
-			case 159: /* reg[quat] quat reg[quat] */	(* (double4*) &data[is[pc + 10]]) = div((* (double4*) &data[is[pc + 1]]), (* (double4*) &is[pc + 2])); pc += 11; break;
-			case 160: /* quat reg[quat] reg[quat] */	(* (double4*) &data[is[pc + 10]]) = div((* (double4*) &is[pc + 1]), (* (double4*) &data[is[pc + 9]])); pc += 11; break;
-			case 161: /* reg[quat] reg[quat] reg[quat] */	(* (double4*) &data[is[pc + 3]]) = div((* (double4*) &data[is[pc + 1]]), (* (double4*) &data[is[pc + 2]])); pc += 4; break;
-
-			///// mod[4]
-			case 162: /* integer integer reg[integer] */	(* (int*) &data[is[pc + 3]]) = mod((* (int*) &is[pc + 1]), (* (int*) &is[pc + 2])); pc += 4; break;
-			case 163: /* reg[integer] integer reg[integer] */	(* (int*) &data[is[pc + 3]]) = mod((* (int*) &data[is[pc + 1]]), (* (int*) &is[pc + 2])); pc += 4; break;
-			case 164: /* integer reg[integer] reg[integer] */	(* (int*) &data[is[pc + 3]]) = mod((* (int*) &is[pc + 1]), (* (int*) &data[is[pc + 2]])); pc += 4; break;
-			case 165: /* reg[integer] reg[integer] reg[integer] */	(* (int*) &data[is[pc + 3]]) = mod((* (int*) &data[is[pc + 1]]), (* (int*) &data[is[pc + 2]])); pc += 4; break;
-
-			///// pow[24]
-			case 166: /* integer integer reg[integer] */	(* (int*) &data[is[pc + 3]]) = ipow((* (int*) &is[pc + 1]), (* (int*) &is[pc + 2])); pc += 4; break;
-			case 167: /* reg[integer] integer reg[integer] */	(* (int*) &data[is[pc + 3]]) = ipow((* (int*) &data[is[pc + 1]]), (* (int*) &is[pc + 2])); pc += 4; break;
-			case 168: /* integer reg[integer] reg[integer] */	(* (int*) &data[is[pc + 3]]) = ipow((* (int*) &is[pc + 1]), (* (int*) &data[is[pc + 2]])); pc += 4; break;
-			case 169: /* reg[integer] reg[integer] reg[integer] */	(* (int*) &data[is[pc + 3]]) = ipow((* (int*) &data[is[pc + 1]]), (* (int*) &data[is[pc + 2]])); pc += 4; break;
-			case 170: /* real integer reg[real] */	(* (double*) &data[is[pc + 4]]) = ipow((* (double*) &is[pc + 1]), (* (int*) &is[pc + 3])); pc += 5; break;
-			case 171: /* reg[real] integer reg[real] */	(* (double*) &data[is[pc + 3]]) = ipow((* (double*) &data[is[pc + 1]]), (* (int*) &is[pc + 2])); pc += 4; break;
-			case 172: /* real reg[integer] reg[real] */	(* (double*) &data[is[pc + 4]]) = ipow((* (double*) &is[pc + 1]), (* (int*) &data[is[pc + 3]])); pc += 5; break;
-			case 173: /* reg[real] reg[integer] reg[real] */	(* (double*) &data[is[pc + 3]]) = ipow((* (double*) &data[is[pc + 1]]), (* (int*) &data[is[pc + 2]])); pc += 4; break;
-			case 174: /* cplx integer reg[cplx] */	(* (double2*) &data[is[pc + 6]]) = ipow((* (double2*) &is[pc + 1]), (* (int*) &is[pc + 5])); pc += 7; break;
-			case 175: /* reg[cplx] integer reg[cplx] */	(* (double2*) &data[is[pc + 3]]) = ipow((* (double2*) &data[is[pc + 1]]), (* (int*) &is[pc + 2])); pc += 4; break;
-			case 176: /* cplx reg[integer] reg[cplx] */	(* (double2*) &data[is[pc + 6]]) = ipow((* (double2*) &is[pc + 1]), (* (int*) &data[is[pc + 5]])); pc += 7; break;
-			case 177: /* reg[cplx] reg[integer] reg[cplx] */	(* (double2*) &data[is[pc + 3]]) = ipow((* (double2*) &data[is[pc + 1]]), (* (int*) &data[is[pc + 2]])); pc += 4; break;
-			case 178: /* quat integer reg[quat] */	(* (double4*) &data[is[pc + 10]]) = ipow((* (double4*) &is[pc + 1]), (* (int*) &is[pc + 9])); pc += 11; break;
-			case 179: /* reg[quat] integer reg[quat] */	(* (double4*) &data[is[pc + 3]]) = ipow((* (double4*) &data[is[pc + 1]]), (* (int*) &is[pc + 2])); pc += 4; break;
-			case 180: /* quat reg[integer] reg[quat] */	(* (double4*) &data[is[pc + 10]]) = ipow((* (double4*) &is[pc + 1]), (* (int*) &data[is[pc + 9]])); pc += 11; break;
-			case 181: /* reg[quat] reg[integer] reg[quat] */	(* (double4*) &data[is[pc + 3]]) = ipow((* (double4*) &data[is[pc + 1]]), (* (int*) &data[is[pc + 2]])); pc += 4; break;
-			case 182: /* real real reg[real] */	(* (double*) &data[is[pc + 5]]) = pow((* (double*) &is[pc + 1]), (* (double*) &is[pc + 3])); pc += 6; break;
-			case 183: /* reg[real] real reg[real] */	(* (double*) &data[is[pc + 4]]) = pow((* (double*) &data[is[pc + 1]]), (* (double*) &is[pc + 2])); pc += 5; break;
-			case 184: /* real reg[real] reg[real] */	(* (double*) &data[is[pc + 4]]) = pow((* (double*) &is[pc + 1]), (* (double*) &data[is[pc + 3]])); pc += 5; break;
-			case 185: /* reg[real] reg[real] reg[real] */	(* (double*) &data[is[pc + 3]]) = pow((* (double*) &data[is[pc + 1]]), (* (double*) &data[is[pc + 2]])); pc += 4; break;
-			case 186: /* cplx cplx reg[cplx] */	(* (double2*) &data[is[pc + 9]]) = pow((* (double2*) &is[pc + 1]), (* (double2*) &is[pc + 5])); pc += 10; break;
-			case 187: /* reg[cplx] cplx reg[cplx] */	(* (double2*) &data[is[pc + 6]]) = pow((* (double2*) &data[is[pc + 1]]), (* (double2*) &is[pc + 2])); pc += 7; break;
-			case 188: /* cplx reg[cplx] reg[cplx] */	(* (double2*) &data[is[pc + 6]]) = pow((* (double2*) &is[pc + 1]), (* (double2*) &data[is[pc + 5]])); pc += 7; break;
-			case 189: /* reg[cplx] reg[cplx] reg[cplx] */	(* (double2*) &data[is[pc + 3]]) = pow((* (double2*) &data[is[pc + 1]]), (* (double2*) &data[is[pc + 2]])); pc += 4; break;
-
-			///// min[16]
-			case 190: /* integer integer reg[integer] */	(* (int*) &data[is[pc + 3]]) = min((* (int*) &is[pc + 1]), (* (int*) &is[pc + 2])); pc += 4; break;
-			case 191: /* reg[integer] integer reg[integer] */	(* (int*) &data[is[pc + 3]]) = min((* (int*) &data[is[pc + 1]]), (* (int*) &is[pc + 2])); pc += 4; break;
-			case 192: /* integer reg[integer] reg[integer] */	(* (int*) &data[is[pc + 3]]) = min((* (int*) &is[pc + 1]), (* (int*) &data[is[pc + 2]])); pc += 4; break;
-			case 193: /* reg[integer] reg[integer] reg[integer] */	(* (int*) &data[is[pc + 3]]) = min((* (int*) &data[is[pc + 1]]), (* (int*) &data[is[pc + 2]])); pc += 4; break;
-			case 194: /* real real reg[real] */	(* (double*) &data[is[pc + 5]]) = min((* (double*) &is[pc + 1]), (* (double*) &is[pc + 3])); pc += 6; break;
-			case 195: /* reg[real] real reg[real] */	(* (double*) &data[is[pc + 4]]) = min((* (double*) &data[is[pc + 1]]), (* (double*) &is[pc + 2])); pc += 5; break;
-			case 196: /* real reg[real] reg[real] */	(* (double*) &data[is[pc + 4]]) = min((* (double*) &is[pc + 1]), (* (double*) &data[is[pc + 3]])); pc += 5; break;
-			case 197: /* reg[real] reg[real] reg[real] */	(* (double*) &data[is[pc + 3]]) = min((* (double*) &data[is[pc + 1]]), (* (double*) &data[is[pc + 2]])); pc += 4; break;
-			case 198: /* cplx cplx reg[cplx] */	(* (double2*) &data[is[pc + 9]]) = min((* (double2*) &is[pc + 1]), (* (double2*) &is[pc + 5])); pc += 10; break;
-			case 199: /* reg[cplx] cplx reg[cplx] */	(* (double2*) &data[is[pc + 6]]) = min((* (double2*) &data[is[pc + 1]]), (* (double2*) &is[pc + 2])); pc += 7; break;
-			case 200: /* cplx reg[cplx] reg[cplx] */	(* (double2*) &data[is[pc + 6]]) = min((* (double2*) &is[pc + 1]), (* (double2*) &data[is[pc + 5]])); pc += 7; break;
-			case 201: /* reg[cplx] reg[cplx] reg[cplx] */	(* (double2*) &data[is[pc + 3]]) = min((* (double2*) &data[is[pc + 1]]), (* (double2*) &data[is[pc + 2]])); pc += 4; break;
-			case 202: /* quat quat reg[quat] */	(* (double4*) &data[is[pc + 17]]) = min((* (double4*) &is[pc + 1]), (* (double4*) &is[pc + 9])); pc += 18; break;
-			case 203: /* reg[quat] quat reg[quat] */	(* (double4*) &data[is[pc + 10]]) = min((* (double4*) &data[is[pc + 1]]), (* (double4*) &is[pc + 2])); pc += 11; break;
-			case 204: /* quat reg[quat] reg[quat] */	(* (double4*) &data[is[pc + 10]]) = min((* (double4*) &is[pc + 1]), (* (double4*) &data[is[pc + 9]])); pc += 11; break;
-			case 205: /* reg[quat] reg[quat] reg[quat] */	(* (double4*) &data[is[pc + 3]]) = min((* (double4*) &data[is[pc + 1]]), (* (double4*) &data[is[pc + 2]])); pc += 4; break;
-
-			///// max[16]
-			case 206: /* integer integer reg[integer] */	(* (int*) &data[is[pc + 3]]) = max((* (int*) &is[pc + 1]), (* (int*) &is[pc + 2])); pc += 4; break;
-			case 207: /* reg[integer] integer reg[integer] */	(* (int*) &data[is[pc + 3]]) = max((* (int*) &data[is[pc + 1]]), (* (int*) &is[pc + 2])); pc += 4; break;
-			case 208: /* integer reg[integer] reg[integer] */	(* (int*) &data[is[pc + 3]]) = max((* (int*) &is[pc + 1]), (* (int*) &data[is[pc + 2]])); pc += 4; break;
-			case 209: /* reg[integer] reg[integer] reg[integer] */	(* (int*) &data[is[pc + 3]]) = max((* (int*) &data[is[pc + 1]]), (* (int*) &data[is[pc + 2]])); pc += 4; break;
-			case 210: /* real real reg[real] */	(* (double*) &data[is[pc + 5]]) = max((* (double*) &is[pc + 1]), (* (double*) &is[pc + 3])); pc += 6; break;
-			case 211: /* reg[real] real reg[real] */	(* (double*) &data[is[pc + 4]]) = max((* (double*) &data[is[pc + 1]]), (* (double*) &is[pc + 2])); pc += 5; break;
-			case 212: /* real reg[real] reg[real] */	(* (double*) &data[is[pc + 4]]) = max((* (double*) &is[pc + 1]), (* (double*) &data[is[pc + 3]])); pc += 5; break;
-			case 213: /* reg[real] reg[real] reg[real] */	(* (double*) &data[is[pc + 3]]) = max((* (double*) &data[is[pc + 1]]), (* (double*) &data[is[pc + 2]])); pc += 4; break;
-			case 214: /* cplx cplx reg[cplx] */	(* (double2*) &data[is[pc + 9]]) = max((* (double2*) &is[pc + 1]), (* (double2*) &is[pc + 5])); pc += 10; break;
-			case 215: /* reg[cplx] cplx reg[cplx] */	(* (double2*) &data[is[pc + 6]]) = max((* (double2*) &data[is[pc + 1]]), (* (double2*) &is[pc + 2])); pc += 7; break;
-			case 216: /* cplx reg[cplx] reg[cplx] */	(* (double2*) &data[is[pc + 6]]) = max((* (double2*) &is[pc + 1]), (* (double2*) &data[is[pc + 5]])); pc += 7; break;
-			case 217: /* reg[cplx] reg[cplx] reg[cplx] */	(* (double2*) &data[is[pc + 3]]) = max((* (double2*) &data[is[pc + 1]]), (* (double2*) &data[is[pc + 2]])); pc += 4; break;
-			case 218: /* quat quat reg[quat] */	(* (double4*) &data[is[pc + 17]]) = max((* (double4*) &is[pc + 1]), (* (double4*) &is[pc + 9])); pc += 18; break;
-			case 219: /* reg[quat] quat reg[quat] */	(* (double4*) &data[is[pc + 10]]) = max((* (double4*) &data[is[pc + 1]]), (* (double4*) &is[pc + 2])); pc += 11; break;
-			case 220: /* quat reg[quat] reg[quat] */	(* (double4*) &data[is[pc + 10]]) = max((* (double4*) &is[pc + 1]), (* (double4*) &data[is[pc + 9]])); pc += 11; break;
-			case 221: /* reg[quat] reg[quat] reg[quat] */	(* (double4*) &data[is[pc + 3]]) = max((* (double4*) &data[is[pc + 1]]), (* (double4*) &data[is[pc + 2]])); pc += 4; break;
-
-			///// cons[20]
-			case 222: /* real real reg[cplx] */	(* (double2*) &data[is[pc + 5]]) = cons((* (double*) &is[pc + 1]), (* (double*) &is[pc + 3])); pc += 6; break;
-			case 223: /* reg[real] real reg[cplx] */	(* (double2*) &data[is[pc + 4]]) = cons((* (double*) &data[is[pc + 1]]), (* (double*) &is[pc + 2])); pc += 5; break;
-			case 224: /* real reg[real] reg[cplx] */	(* (double2*) &data[is[pc + 4]]) = cons((* (double*) &is[pc + 1]), (* (double*) &data[is[pc + 3]])); pc += 5; break;
-			case 225: /* reg[real] reg[real] reg[cplx] */	(* (double2*) &data[is[pc + 3]]) = cons((* (double*) &data[is[pc + 1]]), (* (double*) &data[is[pc + 2]])); pc += 4; break;
-			case 226: /* real real real real reg[quat] */	(* (double4*) &data[is[pc + 9]]) = cons((* (double*) &is[pc + 1]), (* (double*) &is[pc + 3]), (* (double*) &is[pc + 5]), (* (double*) &is[pc + 7])); pc += 10; break;
-			case 227: /* reg[real] real real real reg[quat] */	(* (double4*) &data[is[pc + 8]]) = cons((* (double*) &data[is[pc + 1]]), (* (double*) &is[pc + 2]), (* (double*) &is[pc + 4]), (* (double*) &is[pc + 6])); pc += 9; break;
-			case 228: /* real reg[real] real real reg[quat] */	(* (double4*) &data[is[pc + 8]]) = cons((* (double*) &is[pc + 1]), (* (double*) &data[is[pc + 3]]), (* (double*) &is[pc + 4]), (* (double*) &is[pc + 6])); pc += 9; break;
-			case 229: /* reg[real] reg[real] real real reg[quat] */	(* (double4*) &data[is[pc + 7]]) = cons((* (double*) &data[is[pc + 1]]), (* (double*) &data[is[pc + 2]]), (* (double*) &is[pc + 3]), (* (double*) &is[pc + 5])); pc += 8; break;
-			case 230: /* real real reg[real] real reg[quat] */	(* (double4*) &data[is[pc + 8]]) = cons((* (double*) &is[pc + 1]), (* (double*) &is[pc + 3]), (* (double*) &data[is[pc + 5]]), (* (double*) &is[pc + 6])); pc += 9; break;
-			case 231: /* reg[real] real reg[real] real reg[quat] */	(* (double4*) &data[is[pc + 7]]) = cons((* (double*) &data[is[pc + 1]]), (* (double*) &is[pc + 2]), (* (double*) &data[is[pc + 4]]), (* (double*) &is[pc + 5])); pc += 8; break;
-			case 232: /* real reg[real] reg[real] real reg[quat] */	(* (double4*) &data[is[pc + 7]]) = cons((* (double*) &is[pc + 1]), (* (double*) &data[is[pc + 3]]), (* (double*) &data[is[pc + 4]]), (* (double*) &is[pc + 5])); pc += 8; break;
-			case 233: /* reg[real] reg[real] reg[real] real reg[quat] */	(* (double4*) &data[is[pc + 6]]) = cons((* (double*) &data[is[pc + 1]]), (* (double*) &data[is[pc + 2]]), (* (double*) &data[is[pc + 3]]), (* (double*) &is[pc + 4])); pc += 7; break;
-			case 234: /* real real real reg[real] reg[quat] */	(* (double4*) &data[is[pc + 8]]) = cons((* (double*) &is[pc + 1]), (* (double*) &is[pc + 3]), (* (double*) &is[pc + 5]), (* (double*) &data[is[pc + 7]])); pc += 9; break;
-			case 235: /* reg[real] real real reg[real] reg[quat] */	(* (double4*) &data[is[pc + 7]]) = cons((* (double*) &data[is[pc + 1]]), (* (double*) &is[pc + 2]), (* (double*) &is[pc + 4]), (* (double*) &data[is[pc + 6]])); pc += 8; break;
-			case 236: /* real reg[real] real reg[real] reg[quat] */	(* (double4*) &data[is[pc + 7]]) = cons((* (double*) &is[pc + 1]), (* (double*) &data[is[pc + 3]]), (* (double*) &is[pc + 4]), (* (double*) &data[is[pc + 6]])); pc += 8; break;
-			case 237: /* reg[real] reg[real] real reg[real] reg[quat] */	(* (double4*) &data[is[pc + 6]]) = cons((* (double*) &data[is[pc + 1]]), (* (double*) &data[is[pc + 2]]), (* (double*) &is[pc + 3]), (* (double*) &data[is[pc + 5]])); pc += 7; break;
-			case 238: /* real real reg[real] reg[real] reg[quat] */	(* (double4*) &data[is[pc + 7]]) = cons((* (double*) &is[pc + 1]), (* (double*) &is[pc + 3]), (* (double*) &data[is[pc + 5]]), (* (double*) &data[is[pc + 6]])); pc += 8; break;
-			case 239: /* reg[real] real reg[real] reg[real] reg[quat] */	(* (double4*) &data[is[pc + 6]]) = cons((* (double*) &data[is[pc + 1]]), (* (double*) &is[pc + 2]), (* (double*) &data[is[pc + 4]]), (* (double*) &data[is[pc + 5]])); pc += 7; break;
-			case 240: /* real reg[real] reg[real] reg[real] reg[quat] */	(* (double4*) &data[is[pc + 6]]) = cons((* (double*) &is[pc + 1]), (* (double*) &data[is[pc + 3]]), (* (double*) &data[is[pc + 4]]), (* (double*) &data[is[pc + 5]])); pc += 7; break;
-			case 241: /* reg[real] reg[real] reg[real] reg[real] reg[quat] */	(* (double4*) &data[is[pc + 5]]) = cons((* (double*) &data[is[pc + 1]]), (* (double*) &data[is[pc + 2]]), (* (double*) &data[is[pc + 3]]), (* (double*) &data[is[pc + 4]])); pc += 6; break;
-
-			///// neg[8]
-			case 242: /* integer reg[integer] */	(* (int*) &data[is[pc + 2]]) = neg((* (int*) &is[pc + 1])); pc += 3; break;
-			case 243: /* reg[integer] reg[integer] */	(* (int*) &data[is[pc + 2]]) = neg((* (int*) &data[is[pc + 1]])); pc += 3; break;
-			case 244: /* real reg[real] */	(* (double*) &data[is[pc + 3]]) = neg((* (double*) &is[pc + 1])); pc += 4; break;
-			case 245: /* reg[real] reg[real] */	(* (double*) &data[is[pc + 2]]) = neg((* (double*) &data[is[pc + 1]])); pc += 3; break;
-			case 246: /* cplx reg[cplx] */	(* (double2*) &data[is[pc + 5]]) = neg((* (double2*) &is[pc + 1])); pc += 6; break;
-			case 247: /* reg[cplx] reg[cplx] */	(* (double2*) &data[is[pc + 2]]) = neg((* (double2*) &data[is[pc + 1]])); pc += 3; break;
-			case 248: /* quat reg[quat] */	(* (double4*) &data[is[pc + 9]]) = neg((* (double4*) &is[pc + 1])); pc += 10; break;
-			case 249: /* reg[quat] reg[quat] */	(* (double4*) &data[is[pc + 2]]) = neg((* (double4*) &data[is[pc + 1]])); pc += 3; break;
-
-			///// recip[8]
-			case 250: /* integer reg[real] */	(* (double*) &data[is[pc + 2]]) = recip((* (int*) &is[pc + 1])); pc += 3; break;
-			case 251: /* reg[integer] reg[real] */	(* (double*) &data[is[pc + 2]]) = recip((* (int*) &data[is[pc + 1]])); pc += 3; break;
-			case 252: /* real reg[real] */	(* (double*) &data[is[pc + 3]]) = recip((* (double*) &is[pc + 1])); pc += 4; break;
-			case 253: /* reg[real] reg[real] */	(* (double*) &data[is[pc + 2]]) = recip((* (double*) &data[is[pc + 1]])); pc += 3; break;
-			case 254: /* cplx reg[cplx] */	(* (double2*) &data[is[pc + 5]]) = recip((* (double2*) &is[pc + 1])); pc += 6; break;
-			case 255: /* reg[cplx] reg[cplx] */	(* (double2*) &data[is[pc + 2]]) = recip((* (double2*) &data[is[pc + 1]])); pc += 3; break;
-			case 256: /* quat reg[quat] */	(* (double4*) &data[is[pc + 9]]) = recip((* (double4*) &is[pc + 1])); pc += 10; break;
-			case 257: /* reg[quat] reg[quat] */	(* (double4*) &data[is[pc + 2]]) = recip((* (double4*) &data[is[pc + 1]])); pc += 3; break;
-
-			///// abs[8]
-			case 258: /* integer reg[integer] */	(* (int*) &data[is[pc + 2]]) = abs((* (int*) &is[pc + 1])); pc += 3; break;
-			case 259: /* reg[integer] reg[integer] */	(* (int*) &data[is[pc + 2]]) = abs((* (int*) &data[is[pc + 1]])); pc += 3; break;
-			case 260: /* real reg[real] */	(* (double*) &data[is[pc + 3]]) = abs((* (double*) &is[pc + 1])); pc += 4; break;
-			case 261: /* reg[real] reg[real] */	(* (double*) &data[is[pc + 2]]) = abs((* (double*) &data[is[pc + 1]])); pc += 3; break;
-			case 262: /* cplx reg[cplx] */	(* (double2*) &data[is[pc + 5]]) = abs((* (double2*) &is[pc + 1])); pc += 6; break;
-			case 263: /* reg[cplx] reg[cplx] */	(* (double2*) &data[is[pc + 2]]) = abs((* (double2*) &data[is[pc + 1]])); pc += 3; break;
-			case 264: /* quat reg[quat] */	(* (double4*) &data[is[pc + 9]]) = abs((* (double4*) &is[pc + 1])); pc += 10; break;
-			case 265: /* reg[quat] reg[quat] */	(* (double4*) &data[is[pc + 2]]) = abs((* (double4*) &data[is[pc + 1]])); pc += 3; break;
-
-			///// sqr[8]
-			case 266: /* integer reg[integer] */	(* (int*) &data[is[pc + 2]]) = sqr((* (int*) &is[pc + 1])); pc += 3; break;
-			case 267: /* reg[integer] reg[integer] */	(* (int*) &data[is[pc + 2]]) = sqr((* (int*) &data[is[pc + 1]])); pc += 3; break;
-			case 268: /* real reg[real] */	(* (double*) &data[is[pc + 3]]) = sqr((* (double*) &is[pc + 1])); pc += 4; break;
-			case 269: /* reg[real] reg[real] */	(* (double*) &data[is[pc + 2]]) = sqr((* (double*) &data[is[pc + 1]])); pc += 3; break;
-			case 270: /* cplx reg[cplx] */	(* (double2*) &data[is[pc + 5]]) = sqr((* (double2*) &is[pc + 1])); pc += 6; break;
-			case 271: /* reg[cplx] reg[cplx] */	(* (double2*) &data[is[pc + 2]]) = sqr((* (double2*) &data[is[pc + 1]])); pc += 3; break;
-			case 272: /* quat reg[quat] */	(* (double4*) &data[is[pc + 9]]) = sqr((* (double4*) &is[pc + 1])); pc += 10; break;
-			case 273: /* reg[quat] reg[quat] */	(* (double4*) &data[is[pc + 2]]) = sqr((* (double4*) &data[is[pc + 1]])); pc += 3; break;
-
-			///// conj[2]
-			case 274: /* cplx reg[cplx] */	(* (double2*) &data[is[pc + 5]]) = conj((* (double2*) &is[pc + 1])); pc += 6; break;
-			case 275: /* reg[cplx] reg[cplx] */	(* (double2*) &data[is[pc + 2]]) = conj((* (double2*) &data[is[pc + 1]])); pc += 3; break;
-
-			///// exp[4]
-			case 276: /* real reg[real] */	(* (double*) &data[is[pc + 3]]) = exp((* (double*) &is[pc + 1])); pc += 4; break;
-			case 277: /* reg[real] reg[real] */	(* (double*) &data[is[pc + 2]]) = exp((* (double*) &data[is[pc + 1]])); pc += 3; break;
-			case 278: /* cplx reg[cplx] */	(* (double2*) &data[is[pc + 5]]) = exp((* (double2*) &is[pc + 1])); pc += 6; break;
-			case 279: /* reg[cplx] reg[cplx] */	(* (double2*) &data[is[pc + 2]]) = exp((* (double2*) &data[is[pc + 1]])); pc += 3; break;
-
-			///// log[4]
-			case 280: /* real reg[real] */	(* (double*) &data[is[pc + 3]]) = log((* (double*) &is[pc + 1])); pc += 4; break;
-			case 281: /* reg[real] reg[real] */	(* (double*) &data[is[pc + 2]]) = log((* (double*) &data[is[pc + 1]])); pc += 3; break;
-			case 282: /* cplx reg[cplx] */	(* (double2*) &data[is[pc + 5]]) = log((* (double2*) &is[pc + 1])); pc += 6; break;
-			case 283: /* reg[cplx] reg[cplx] */	(* (double2*) &data[is[pc + 2]]) = log((* (double2*) &data[is[pc + 1]])); pc += 3; break;
-
-			///// sqrt[4]
-			case 284: /* real reg[real] */	(* (double*) &data[is[pc + 3]]) = sqrt((* (double*) &is[pc + 1])); pc += 4; break;
-			case 285: /* reg[real] reg[real] */	(* (double*) &data[is[pc + 2]]) = sqrt((* (double*) &data[is[pc + 1]])); pc += 3; break;
-			case 286: /* cplx reg[cplx] */	(* (double2*) &data[is[pc + 5]]) = sqrt((* (double2*) &is[pc + 1])); pc += 6; break;
-			case 287: /* reg[cplx] reg[cplx] */	(* (double2*) &data[is[pc + 2]]) = sqrt((* (double2*) &data[is[pc + 1]])); pc += 3; break;
-
-			///// sin[4]
-			case 288: /* real reg[real] */	(* (double*) &data[is[pc + 3]]) = sin((* (double*) &is[pc + 1])); pc += 4; break;
-			case 289: /* reg[real] reg[real] */	(* (double*) &data[is[pc + 2]]) = sin((* (double*) &data[is[pc + 1]])); pc += 3; break;
-			case 290: /* cplx reg[cplx] */	(* (double2*) &data[is[pc + 5]]) = sin((* (double2*) &is[pc + 1])); pc += 6; break;
-			case 291: /* reg[cplx] reg[cplx] */	(* (double2*) &data[is[pc + 2]]) = sin((* (double2*) &data[is[pc + 1]])); pc += 3; break;
-
-			///// cos[4]
-			case 292: /* real reg[real] */	(* (double*) &data[is[pc + 3]]) = cos((* (double*) &is[pc + 1])); pc += 4; break;
-			case 293: /* reg[real] reg[real] */	(* (double*) &data[is[pc + 2]]) = cos((* (double*) &data[is[pc + 1]])); pc += 3; break;
-			case 294: /* cplx reg[cplx] */	(* (double2*) &data[is[pc + 5]]) = cos((* (double2*) &is[pc + 1])); pc += 6; break;
-			case 295: /* reg[cplx] reg[cplx] */	(* (double2*) &data[is[pc + 2]]) = cos((* (double2*) &data[is[pc + 1]])); pc += 3; break;
-
-			///// tan[4]
-			case 296: /* real reg[real] */	(* (double*) &data[is[pc + 3]]) = tan((* (double*) &is[pc + 1])); pc += 4; break;
-			case 297: /* reg[real] reg[real] */	(* (double*) &data[is[pc + 2]]) = tan((* (double*) &data[is[pc + 1]])); pc += 3; break;
-			case 298: /* cplx reg[cplx] */	(* (double2*) &data[is[pc + 5]]) = tan((* (double2*) &is[pc + 1])); pc += 6; break;
-			case 299: /* reg[cplx] reg[cplx] */	(* (double2*) &data[is[pc + 2]]) = tan((* (double2*) &data[is[pc + 1]])); pc += 3; break;
-
-			///// atan[4]
-			case 300: /* real reg[real] */	(* (double*) &data[is[pc + 3]]) = atan((* (double*) &is[pc + 1])); pc += 4; break;
-			case 301: /* reg[real] reg[real] */	(* (double*) &data[is[pc + 2]]) = atan((* (double*) &data[is[pc + 1]])); pc += 3; break;
-			case 302: /* cplx reg[cplx] */	(* (double2*) &data[is[pc + 5]]) = atan((* (double2*) &is[pc + 1])); pc += 6; break;
-			case 303: /* reg[cplx] reg[cplx] */	(* (double2*) &data[is[pc + 2]]) = atan((* (double2*) &data[is[pc + 1]])); pc += 3; break;
-
-			///// sinh[4]
-			case 304: /* real reg[real] */	(* (double*) &data[is[pc + 3]]) = sinh((* (double*) &is[pc + 1])); pc += 4; break;
-			case 305: /* reg[real] reg[real] */	(* (double*) &data[is[pc + 2]]) = sinh((* (double*) &data[is[pc + 1]])); pc += 3; break;
-			case 306: /* cplx reg[cplx] */	(* (double2*) &data[is[pc + 5]]) = sinh((* (double2*) &is[pc + 1])); pc += 6; break;
-			case 307: /* reg[cplx] reg[cplx] */	(* (double2*) &data[is[pc + 2]]) = sinh((* (double2*) &data[is[pc + 1]])); pc += 3; break;
-
-			///// cosh[4]
-			case 308: /* real reg[real] */	(* (double*) &data[is[pc + 3]]) = cosh((* (double*) &is[pc + 1])); pc += 4; break;
-			case 309: /* reg[real] reg[real] */	(* (double*) &data[is[pc + 2]]) = cosh((* (double*) &data[is[pc + 1]])); pc += 3; break;
-			case 310: /* cplx reg[cplx] */	(* (double2*) &data[is[pc + 5]]) = cosh((* (double2*) &is[pc + 1])); pc += 6; break;
-			case 311: /* reg[cplx] reg[cplx] */	(* (double2*) &data[is[pc + 2]]) = cosh((* (double2*) &data[is[pc + 1]])); pc += 3; break;
-
-			///// tanh[4]
-			case 312: /* real reg[real] */	(* (double*) &data[is[pc + 3]]) = tanh((* (double*) &is[pc + 1])); pc += 4; break;
-			case 313: /* reg[real] reg[real] */	(* (double*) &data[is[pc + 2]]) = tanh((* (double*) &data[is[pc + 1]])); pc += 3; break;
-			case 314: /* cplx reg[cplx] */	(* (double2*) &data[is[pc + 5]]) = tanh((* (double2*) &is[pc + 1])); pc += 6; break;
-			case 315: /* reg[cplx] reg[cplx] */	(* (double2*) &data[is[pc + 2]]) = tanh((* (double2*) &data[is[pc + 1]])); pc += 3; break;
-
-			///// atanh[4]
-			case 316: /* real reg[real] */	(* (double*) &data[is[pc + 3]]) = atanh((* (double*) &is[pc + 1])); pc += 4; break;
-			case 317: /* reg[real] reg[real] */	(* (double*) &data[is[pc + 2]]) = atanh((* (double*) &data[is[pc + 1]])); pc += 3; break;
-			case 318: /* cplx reg[cplx] */	(* (double2*) &data[is[pc + 5]]) = atanh((* (double2*) &is[pc + 1])); pc += 6; break;
-			case 319: /* reg[cplx] reg[cplx] */	(* (double2*) &data[is[pc + 2]]) = atanh((* (double2*) &data[is[pc + 1]])); pc += 3; break;
-
-			///// floor[4]
-			case 320: /* real reg[real] */	(* (double*) &data[is[pc + 3]]) = floor((* (double*) &is[pc + 1])); pc += 4; break;
-			case 321: /* reg[real] reg[real] */	(* (double*) &data[is[pc + 2]]) = floor((* (double*) &data[is[pc + 1]])); pc += 3; break;
-			case 322: /* cplx reg[cplx] */	(* (double2*) &data[is[pc + 5]]) = floor((* (double2*) &is[pc + 1])); pc += 6; break;
-			case 323: /* reg[cplx] reg[cplx] */	(* (double2*) &data[is[pc + 2]]) = floor((* (double2*) &data[is[pc + 1]])); pc += 3; break;
-
-			///// ceil[4]
-			case 324: /* real reg[real] */	(* (double*) &data[is[pc + 3]]) = ceil((* (double*) &is[pc + 1])); pc += 4; break;
-			case 325: /* reg[real] reg[real] */	(* (double*) &data[is[pc + 2]]) = ceil((* (double*) &data[is[pc + 1]])); pc += 3; break;
-			case 326: /* cplx reg[cplx] */	(* (double2*) &data[is[pc + 5]]) = ceil((* (double2*) &is[pc + 1])); pc += 6; break;
-			case 327: /* reg[cplx] reg[cplx] */	(* (double2*) &data[is[pc + 2]]) = ceil((* (double2*) &data[is[pc + 1]])); pc += 3; break;
-
-			///// fract[4]
-			case 328: /* real reg[real] */	(* (double*) &data[is[pc + 3]]) = fract((* (double*) &is[pc + 1])); pc += 4; break;
-			case 329: /* reg[real] reg[real] */	(* (double*) &data[is[pc + 2]]) = fract((* (double*) &data[is[pc + 1]])); pc += 3; break;
-			case 330: /* cplx reg[cplx] */	(* (double2*) &data[is[pc + 5]]) = fract((* (double2*) &is[pc + 1])); pc += 6; break;
-			case 331: /* reg[cplx] reg[cplx] */	(* (double2*) &data[is[pc + 2]]) = fract((* (double2*) &data[is[pc + 1]])); pc += 3; break;
-
-			///// circlefn[4]
-			case 332: /* real reg[real] */	(* (double*) &data[is[pc + 3]]) = circlefn((* (double*) &is[pc + 1])); pc += 4; break;
-			case 333: /* reg[real] reg[real] */	(* (double*) &data[is[pc + 2]]) = circlefn((* (double*) &data[is[pc + 1]])); pc += 3; break;
-			case 334: /* cplx reg[cplx] */	(* (double2*) &data[is[pc + 5]]) = circlefn((* (double2*) &is[pc + 1])); pc += 6; break;
-			case 335: /* reg[cplx] reg[cplx] */	(* (double2*) &data[is[pc + 2]]) = circlefn((* (double2*) &data[is[pc + 1]])); pc += 3; break;
-
-			///// real2int[2]
-			case 336: /* real reg[integer] */	(* (int*) &data[is[pc + 3]]) = real2int((* (double*) &is[pc + 1])); pc += 4; break;
-			case 337: /* reg[real] reg[integer] */	(* (int*) &data[is[pc + 2]]) = real2int((* (double*) &data[is[pc + 1]])); pc += 3; break;
-
-			///// re[2]
-			case 338: /* cplx reg[real] */	(* (double*) &data[is[pc + 5]]) = re((* (double2*) &is[pc + 1])); pc += 6; break;
-			case 339: /* reg[cplx] reg[real] */	(* (double*) &data[is[pc + 2]]) = re((* (double2*) &data[is[pc + 1]])); pc += 3; break;
-
-			///// im[2]
-			case 340: /* cplx reg[real] */	(* (double*) &data[is[pc + 5]]) = im((* (double2*) &is[pc + 1])); pc += 6; break;
-			case 341: /* reg[cplx] reg[real] */	(* (double*) &data[is[pc + 2]]) = im((* (double2*) &data[is[pc + 1]])); pc += 3; break;
-
-			///// mandelbrot[4]
-			case 342: /* cplx cplx reg[cplx] */	(* (double2*) &data[is[pc + 9]]) = mandelbrot((* (double2*) &is[pc + 1]), (* (double2*) &is[pc + 5])); pc += 10; break;
-			case 343: /* reg[cplx] cplx reg[cplx] */	(* (double2*) &data[is[pc + 6]]) = mandelbrot((* (double2*) &data[is[pc + 1]]), (* (double2*) &is[pc + 2])); pc += 7; break;
-			case 344: /* cplx reg[cplx] reg[cplx] */	(* (double2*) &data[is[pc + 6]]) = mandelbrot((* (double2*) &is[pc + 1]), (* (double2*) &data[is[pc + 5]])); pc += 7; break;
-			case 345: /* reg[cplx] reg[cplx] reg[cplx] */	(* (double2*) &data[is[pc + 3]]) = mandelbrot((* (double2*) &data[is[pc + 1]]), (* (double2*) &data[is[pc + 2]])); pc += 4; break;
-
-			///// dot[4]
-			case 346: /* cplx cplx reg[real] */	(* (double*) &data[is[pc + 9]]) = dot((* (double2*) &is[pc + 1]), (* (double2*) &is[pc + 5])); pc += 10; break;
-			case 347: /* reg[cplx] cplx reg[real] */	(* (double*) &data[is[pc + 6]]) = dot((* (double2*) &data[is[pc + 1]]), (* (double2*) &is[pc + 2])); pc += 7; break;
-			case 348: /* cplx reg[cplx] reg[real] */	(* (double*) &data[is[pc + 6]]) = dot((* (double2*) &is[pc + 1]), (* (double2*) &data[is[pc + 5]])); pc += 7; break;
-			case 349: /* reg[cplx] reg[cplx] reg[real] */	(* (double*) &data[is[pc + 3]]) = dot((* (double2*) &data[is[pc + 1]]), (* (double2*) &data[is[pc + 2]])); pc += 4; break;
-
-			///// rad2[2]
-			case 350: /* cplx reg[real] */	(* (double*) &data[is[pc + 5]]) = rad2((* (double2*) &is[pc + 1])); pc += 6; break;
-			case 351: /* reg[cplx] reg[real] */	(* (double*) &data[is[pc + 2]]) = rad2((* (double2*) &data[is[pc + 1]])); pc += 3; break;
-
-			///// rad[2]
-			case 352: /* cplx reg[real] */	(* (double*) &data[is[pc + 5]]) = rad((* (double2*) &is[pc + 1])); pc += 6; break;
-			case 353: /* reg[cplx] reg[real] */	(* (double*) &data[is[pc + 2]]) = rad((* (double2*) &data[is[pc + 1]])); pc += 3; break;
-
-			///// arc[2]
-			case 354: /* cplx reg[real] */	(* (double*) &data[is[pc + 5]]) = arc((* (double2*) &is[pc + 1])); pc += 6; break;
-			case 355: /* reg[cplx] reg[real] */	(* (double*) &data[is[pc + 2]]) = arc((* (double2*) &data[is[pc + 1]])); pc += 3; break;
-
-			///// arcnorm[2]
-			case 356: /* cplx reg[real] */	(* (double*) &data[is[pc + 5]]) = arcnorm((* (double2*) &is[pc + 1])); pc += 6; break;
-			case 357: /* reg[cplx] reg[real] */	(* (double*) &data[is[pc + 2]]) = arcnorm((* (double2*) &data[is[pc + 1]])); pc += 3; break;
-
-			///// dist2[4]
-			case 358: /* cplx cplx reg[real] */	(* (double*) &data[is[pc + 9]]) = dist2((* (double2*) &is[pc + 1]), (* (double2*) &is[pc + 5])); pc += 10; break;
-			case 359: /* reg[cplx] cplx reg[real] */	(* (double*) &data[is[pc + 6]]) = dist2((* (double2*) &data[is[pc + 1]]), (* (double2*) &is[pc + 2])); pc += 7; break;
-			case 360: /* cplx reg[cplx] reg[real] */	(* (double*) &data[is[pc + 6]]) = dist2((* (double2*) &is[pc + 1]), (* (double2*) &data[is[pc + 5]])); pc += 7; break;
-			case 361: /* reg[cplx] reg[cplx] reg[real] */	(* (double*) &data[is[pc + 3]]) = dist2((* (double2*) &data[is[pc + 1]]), (* (double2*) &data[is[pc + 2]])); pc += 4; break;
-
-			///// dist[4]
-			case 362: /* cplx cplx reg[real] */	(* (double*) &data[is[pc + 9]]) = dist((* (double2*) &is[pc + 1]), (* (double2*) &is[pc + 5])); pc += 10; break;
-			case 363: /* reg[cplx] cplx reg[real] */	(* (double*) &data[is[pc + 6]]) = dist((* (double2*) &data[is[pc + 1]]), (* (double2*) &is[pc + 2])); pc += 7; break;
-			case 364: /* cplx reg[cplx] reg[real] */	(* (double*) &data[is[pc + 6]]) = dist((* (double2*) &is[pc + 1]), (* (double2*) &data[is[pc + 5]])); pc += 7; break;
-			case 365: /* reg[cplx] reg[cplx] reg[real] */	(* (double*) &data[is[pc + 3]]) = dist((* (double2*) &data[is[pc + 1]]), (* (double2*) &data[is[pc + 2]])); pc += 4; break;
-
-			///// rabs[2]
-			case 366: /* cplx reg[cplx] */	(* (double2*) &data[is[pc + 5]]) = rabs((* (double2*) &is[pc + 1])); pc += 6; break;
-			case 367: /* reg[cplx] reg[cplx] */	(* (double2*) &data[is[pc + 2]]) = rabs((* (double2*) &data[is[pc + 1]])); pc += 3; break;
-
-			///// iabs[2]
-			case 368: /* cplx reg[cplx] */	(* (double2*) &data[is[pc + 5]]) = iabs((* (double2*) &is[pc + 1])); pc += 6; break;
-			case 369: /* reg[cplx] reg[cplx] */	(* (double2*) &data[is[pc + 2]]) = iabs((* (double2*) &data[is[pc + 1]])); pc += 3; break;
-
-			///// flip[2]
-			case 370: /* cplx reg[cplx] */	(* (double2*) &data[is[pc + 5]]) = flip((* (double2*) &is[pc + 1])); pc += 6; break;
-			case 371: /* reg[cplx] reg[cplx] */	(* (double2*) &data[is[pc + 2]]) = flip((* (double2*) &data[is[pc + 1]])); pc += 3; break;
-
-			///// polar[2]
-			case 372: /* cplx reg[cplx] */	(* (double2*) &data[is[pc + 5]]) = polar((* (double2*) &is[pc + 1])); pc += 6; break;
-			case 373: /* reg[cplx] reg[cplx] */	(* (double2*) &data[is[pc + 2]]) = polar((* (double2*) &data[is[pc + 1]])); pc += 3; break;
-
-			///// rect[2]
-			case 374: /* cplx reg[cplx] */	(* (double2*) &data[is[pc + 5]]) = rect((* (double2*) &is[pc + 1])); pc += 6; break;
-			case 375: /* reg[cplx] reg[cplx] */	(* (double2*) &data[is[pc + 2]]) = rect((* (double2*) &data[is[pc + 1]])); pc += 3; break;
-
-			///// circle[8]
-			case 376: /* cplx real cplx reg[real] */	(* (double*) &data[is[pc + 11]]) = circle((* (double2*) &is[pc + 1]), (* (double*) &is[pc + 5]), (* (double2*) &is[pc + 7])); pc += 12; break;
-			case 377: /* reg[cplx] real cplx reg[real] */	(* (double*) &data[is[pc + 8]]) = circle((* (double2*) &data[is[pc + 1]]), (* (double*) &is[pc + 2]), (* (double2*) &is[pc + 4])); pc += 9; break;
-			case 378: /* cplx reg[real] cplx reg[real] */	(* (double*) &data[is[pc + 10]]) = circle((* (double2*) &is[pc + 1]), (* (double*) &data[is[pc + 5]]), (* (double2*) &is[pc + 6])); pc += 11; break;
-			case 379: /* reg[cplx] reg[real] cplx reg[real] */	(* (double*) &data[is[pc + 7]]) = circle((* (double2*) &data[is[pc + 1]]), (* (double*) &data[is[pc + 2]]), (* (double2*) &is[pc + 3])); pc += 8; break;
-			case 380: /* cplx real reg[cplx] reg[real] */	(* (double*) &data[is[pc + 8]]) = circle((* (double2*) &is[pc + 1]), (* (double*) &is[pc + 5]), (* (double2*) &data[is[pc + 7]])); pc += 9; break;
-			case 381: /* reg[cplx] real reg[cplx] reg[real] */	(* (double*) &data[is[pc + 5]]) = circle((* (double2*) &data[is[pc + 1]]), (* (double*) &is[pc + 2]), (* (double2*) &data[is[pc + 4]])); pc += 6; break;
-			case 382: /* cplx reg[real] reg[cplx] reg[real] */	(* (double*) &data[is[pc + 7]]) = circle((* (double2*) &is[pc + 1]), (* (double*) &data[is[pc + 5]]), (* (double2*) &data[is[pc + 6]])); pc += 8; break;
-			case 383: /* reg[cplx] reg[real] reg[cplx] reg[real] */	(* (double*) &data[is[pc + 4]]) = circle((* (double2*) &data[is[pc + 1]]), (* (double*) &data[is[pc + 2]]), (* (double2*) &data[is[pc + 3]])); pc += 5; break;
-
-			///// line[8]
-			case 384: /* cplx cplx cplx reg[real] */	(* (double*) &data[is[pc + 13]]) = line((* (double2*) &is[pc + 1]), (* (double2*) &is[pc + 5]), (* (double2*) &is[pc + 9])); pc += 14; break;
-			case 385: /* reg[cplx] cplx cplx reg[real] */	(* (double*) &data[is[pc + 10]]) = line((* (double2*) &data[is[pc + 1]]), (* (double2*) &is[pc + 2]), (* (double2*) &is[pc + 6])); pc += 11; break;
-			case 386: /* cplx reg[cplx] cplx reg[real] */	(* (double*) &data[is[pc + 10]]) = line((* (double2*) &is[pc + 1]), (* (double2*) &data[is[pc + 5]]), (* (double2*) &is[pc + 6])); pc += 11; break;
-			case 387: /* reg[cplx] reg[cplx] cplx reg[real] */	(* (double*) &data[is[pc + 7]]) = line((* (double2*) &data[is[pc + 1]]), (* (double2*) &data[is[pc + 2]]), (* (double2*) &is[pc + 3])); pc += 8; break;
-			case 388: /* cplx cplx reg[cplx] reg[real] */	(* (double*) &data[is[pc + 10]]) = line((* (double2*) &is[pc + 1]), (* (double2*) &is[pc + 5]), (* (double2*) &data[is[pc + 9]])); pc += 11; break;
-			case 389: /* reg[cplx] cplx reg[cplx] reg[real] */	(* (double*) &data[is[pc + 7]]) = line((* (double2*) &data[is[pc + 1]]), (* (double2*) &is[pc + 2]), (* (double2*) &data[is[pc + 6]])); pc += 8; break;
-			case 390: /* cplx reg[cplx] reg[cplx] reg[real] */	(* (double*) &data[is[pc + 7]]) = line((* (double2*) &is[pc + 1]), (* (double2*) &data[is[pc + 5]]), (* (double2*) &data[is[pc + 6]])); pc += 8; break;
-			case 391: /* reg[cplx] reg[cplx] reg[cplx] reg[real] */	(* (double*) &data[is[pc + 4]]) = line((* (double2*) &data[is[pc + 1]]), (* (double2*) &data[is[pc + 2]]), (* (double2*) &data[is[pc + 3]])); pc += 5; break;
-
-			///// segment[8]
-			case 392: /* cplx cplx cplx reg[real] */	(* (double*) &data[is[pc + 13]]) = segment((* (double2*) &is[pc + 1]), (* (double2*) &is[pc + 5]), (* (double2*) &is[pc + 9])); pc += 14; break;
-			case 393: /* reg[cplx] cplx cplx reg[real] */	(* (double*) &data[is[pc + 10]]) = segment((* (double2*) &data[is[pc + 1]]), (* (double2*) &is[pc + 2]), (* (double2*) &is[pc + 6])); pc += 11; break;
-			case 394: /* cplx reg[cplx] cplx reg[real] */	(* (double*) &data[is[pc + 10]]) = segment((* (double2*) &is[pc + 1]), (* (double2*) &data[is[pc + 5]]), (* (double2*) &is[pc + 6])); pc += 11; break;
-			case 395: /* reg[cplx] reg[cplx] cplx reg[real] */	(* (double*) &data[is[pc + 7]]) = segment((* (double2*) &data[is[pc + 1]]), (* (double2*) &data[is[pc + 2]]), (* (double2*) &is[pc + 3])); pc += 8; break;
-			case 396: /* cplx cplx reg[cplx] reg[real] */	(* (double*) &data[is[pc + 10]]) = segment((* (double2*) &is[pc + 1]), (* (double2*) &is[pc + 5]), (* (double2*) &data[is[pc + 9]])); pc += 11; break;
-			case 397: /* reg[cplx] cplx reg[cplx] reg[real] */	(* (double*) &data[is[pc + 7]]) = segment((* (double2*) &data[is[pc + 1]]), (* (double2*) &is[pc + 2]), (* (double2*) &data[is[pc + 6]])); pc += 8; break;
-			case 398: /* cplx reg[cplx] reg[cplx] reg[real] */	(* (double*) &data[is[pc + 7]]) = segment((* (double2*) &is[pc + 1]), (* (double2*) &data[is[pc + 5]]), (* (double2*) &data[is[pc + 6]])); pc += 8; break;
-			case 399: /* reg[cplx] reg[cplx] reg[cplx] reg[real] */	(* (double*) &data[is[pc + 4]]) = segment((* (double2*) &data[is[pc + 1]]), (* (double2*) &data[is[pc + 2]]), (* (double2*) &data[is[pc + 3]])); pc += 5; break;
-
-			///// box[8]
-			case 400: /* cplx cplx cplx reg[real] */	(* (double*) &data[is[pc + 13]]) = box((* (double2*) &is[pc + 1]), (* (double2*) &is[pc + 5]), (* (double2*) &is[pc + 9])); pc += 14; break;
-			case 401: /* reg[cplx] cplx cplx reg[real] */	(* (double*) &data[is[pc + 10]]) = box((* (double2*) &data[is[pc + 1]]), (* (double2*) &is[pc + 2]), (* (double2*) &is[pc + 6])); pc += 11; break;
-			case 402: /* cplx reg[cplx] cplx reg[real] */	(* (double*) &data[is[pc + 10]]) = box((* (double2*) &is[pc + 1]), (* (double2*) &data[is[pc + 5]]), (* (double2*) &is[pc + 6])); pc += 11; break;
-			case 403: /* reg[cplx] reg[cplx] cplx reg[real] */	(* (double*) &data[is[pc + 7]]) = box((* (double2*) &data[is[pc + 1]]), (* (double2*) &data[is[pc + 2]]), (* (double2*) &is[pc + 3])); pc += 8; break;
-			case 404: /* cplx cplx reg[cplx] reg[real] */	(* (double*) &data[is[pc + 10]]) = box((* (double2*) &is[pc + 1]), (* (double2*) &is[pc + 5]), (* (double2*) &data[is[pc + 9]])); pc += 11; break;
-			case 405: /* reg[cplx] cplx reg[cplx] reg[real] */	(* (double*) &data[is[pc + 7]]) = box((* (double2*) &data[is[pc + 1]]), (* (double2*) &is[pc + 2]), (* (double2*) &data[is[pc + 6]])); pc += 8; break;
-			case 406: /* cplx reg[cplx] reg[cplx] reg[real] */	(* (double*) &data[is[pc + 7]]) = box((* (double2*) &is[pc + 1]), (* (double2*) &data[is[pc + 5]]), (* (double2*) &data[is[pc + 6]])); pc += 8; break;
-			case 407: /* reg[cplx] reg[cplx] reg[cplx] reg[real] */	(* (double*) &data[is[pc + 4]]) = box((* (double2*) &data[is[pc + 1]]), (* (double2*) &data[is[pc + 2]]), (* (double2*) &data[is[pc + 3]])); pc += 5; break;
-
-			///// map[6]
-			case 408: /* real real reg[cplx] */	(* (double2*) &data[is[pc + 5]]) = map((* (double*) &is[pc + 1]), (* (double*) &is[pc + 3])); pc += 6; break;
-			case 409: /* reg[real] real reg[cplx] */	(* (double2*) &data[is[pc + 4]]) = map((* (double*) &data[is[pc + 1]]), (* (double*) &is[pc + 2])); pc += 5; break;
-			case 410: /* real reg[real] reg[cplx] */	(* (double2*) &data[is[pc + 4]]) = map((* (double*) &is[pc + 1]), (* (double*) &data[is[pc + 3]])); pc += 5; break;
-			case 411: /* reg[real] reg[real] reg[cplx] */	(* (double2*) &data[is[pc + 3]]) = map((* (double*) &data[is[pc + 1]]), (* (double*) &data[is[pc + 2]])); pc += 4; break;
-			case 412: /* cplx reg[cplx] */	(* (double2*) &data[is[pc + 5]]) = map((* (double2*) &is[pc + 1])); pc += 6; break;
-			case 413: /* reg[cplx] reg[cplx] */	(* (double2*) &data[is[pc + 2]]) = map((* (double2*) &data[is[pc + 1]])); pc += 3; break;
-
-			///// smooth[8]
-			case 414: /* cplx real real reg[real] */	(* (double*) &data[is[pc + 9]]) = smooth((* (double2*) &is[pc + 1]), (* (double*) &is[pc + 5]), (* (double*) &is[pc + 7])); pc += 10; break;
-			case 415: /* reg[cplx] real real reg[real] */	(* (double*) &data[is[pc + 6]]) = smooth((* (double2*) &data[is[pc + 1]]), (* (double*) &is[pc + 2]), (* (double*) &is[pc + 4])); pc += 7; break;
-			case 416: /* cplx reg[real] real reg[real] */	(* (double*) &data[is[pc + 8]]) = smooth((* (double2*) &is[pc + 1]), (* (double*) &data[is[pc + 5]]), (* (double*) &is[pc + 6])); pc += 9; break;
-			case 417: /* reg[cplx] reg[real] real reg[real] */	(* (double*) &data[is[pc + 5]]) = smooth((* (double2*) &data[is[pc + 1]]), (* (double*) &data[is[pc + 2]]), (* (double*) &is[pc + 3])); pc += 6; break;
-			case 418: /* cplx real reg[real] reg[real] */	(* (double*) &data[is[pc + 8]]) = smooth((* (double2*) &is[pc + 1]), (* (double*) &is[pc + 5]), (* (double*) &data[is[pc + 7]])); pc += 9; break;
-			case 419: /* reg[cplx] real reg[real] reg[real] */	(* (double*) &data[is[pc + 5]]) = smooth((* (double2*) &data[is[pc + 1]]), (* (double*) &is[pc + 2]), (* (double*) &data[is[pc + 4]])); pc += 6; break;
-			case 420: /* cplx reg[real] reg[real] reg[real] */	(* (double*) &data[is[pc + 7]]) = smooth((* (double2*) &is[pc + 1]), (* (double*) &data[is[pc + 5]]), (* (double*) &data[is[pc + 6]])); pc += 8; break;
-			case 421: /* reg[cplx] reg[real] reg[real] reg[real] */	(* (double*) &data[is[pc + 4]]) = smooth((* (double2*) &data[is[pc + 1]]), (* (double*) &data[is[pc + 2]]), (* (double*) &data[is[pc + 3]])); pc += 5; break;
-
-			///// smoothen[8]
-			case 422: /* cplx real real reg[real] */	(* (double*) &data[is[pc + 9]]) = smoothen((* (double2*) &is[pc + 1]), (* (double*) &is[pc + 5]), (* (double*) &is[pc + 7])); pc += 10; break;
-			case 423: /* reg[cplx] real real reg[real] */	(* (double*) &data[is[pc + 6]]) = smoothen((* (double2*) &data[is[pc + 1]]), (* (double*) &is[pc + 2]), (* (double*) &is[pc + 4])); pc += 7; break;
-			case 424: /* cplx reg[real] real reg[real] */	(* (double*) &data[is[pc + 8]]) = smoothen((* (double2*) &is[pc + 1]), (* (double*) &data[is[pc + 5]]), (* (double*) &is[pc + 6])); pc += 9; break;
-			case 425: /* reg[cplx] reg[real] real reg[real] */	(* (double*) &data[is[pc + 5]]) = smoothen((* (double2*) &data[is[pc + 1]]), (* (double*) &data[is[pc + 2]]), (* (double*) &is[pc + 3])); pc += 6; break;
-			case 426: /* cplx real reg[real] reg[real] */	(* (double*) &data[is[pc + 8]]) = smoothen((* (double2*) &is[pc + 1]), (* (double*) &is[pc + 5]), (* (double*) &data[is[pc + 7]])); pc += 9; break;
-			case 427: /* reg[cplx] real reg[real] reg[real] */	(* (double*) &data[is[pc + 5]]) = smoothen((* (double2*) &data[is[pc + 1]]), (* (double*) &is[pc + 2]), (* (double*) &data[is[pc + 4]])); pc += 6; break;
-			case 428: /* cplx reg[real] reg[real] reg[real] */	(* (double*) &data[is[pc + 7]]) = smoothen((* (double2*) &is[pc + 1]), (* (double*) &data[is[pc + 5]]), (* (double*) &data[is[pc + 6]])); pc += 8; break;
-			case 429: /* reg[cplx] reg[real] reg[real] reg[real] */	(* (double*) &data[is[pc + 4]]) = smoothen((* (double2*) &data[is[pc + 1]]), (* (double*) &data[is[pc + 2]]), (* (double*) &data[is[pc + 3]])); pc += 5; break;
-
-			///// over[4]
-			case 430: /* quat quat reg[quat] */	(* (double4*) &data[is[pc + 17]]) = over((* (double4*) &is[pc + 1]), (* (double4*) &is[pc + 9])); pc += 18; break;
-			case 431: /* reg[quat] quat reg[quat] */	(* (double4*) &data[is[pc + 10]]) = over((* (double4*) &data[is[pc + 1]]), (* (double4*) &is[pc + 2])); pc += 11; break;
-			case 432: /* quat reg[quat] reg[quat] */	(* (double4*) &data[is[pc + 10]]) = over((* (double4*) &is[pc + 1]), (* (double4*) &data[is[pc + 9]])); pc += 11; break;
-			case 433: /* reg[quat] reg[quat] reg[quat] */	(* (double4*) &data[is[pc + 3]]) = over((* (double4*) &data[is[pc + 1]]), (* (double4*) &data[is[pc + 2]])); pc += 4; break;
-
-			///// lab2rgb[2]
-			case 434: /* quat reg[quat] */	(* (double4*) &data[is[pc + 9]]) = lab2rgb((* (double4*) &is[pc + 1])); pc += 10; break;
-			case 435: /* reg[quat] reg[quat] */	(* (double4*) &data[is[pc + 2]]) = lab2rgb((* (double4*) &data[is[pc + 1]])); pc += 3; break;
-
-			///// rgb2lab[2]
-			case 436: /* quat reg[quat] */	(* (double4*) &data[is[pc + 9]]) = rgb2lab((* (double4*) &is[pc + 1])); pc += 10; break;
-			case 437: /* reg[quat] reg[quat] */	(* (double4*) &data[is[pc + 2]]) = rgb2lab((* (double4*) &data[is[pc + 1]])); pc += 3; break;
-
-			///// int2rgb[2]
-			case 438: /* integer reg[quat] */	(* (double4*) &data[is[pc + 2]]) = int2rgb((* (int*) &is[pc + 1])); pc += 3; break;
-			case 439: /* reg[integer] reg[quat] */	(* (double4*) &data[is[pc + 2]]) = int2rgb((* (int*) &data[is[pc + 1]])); pc += 3; break;
-
-			///// rgb2int[2]
-			case 440: /* quat reg[integer] */	(* (int*) &data[is[pc + 9]]) = rgb2int((* (double4*) &is[pc + 1])); pc += 10; break;
-			case 441: /* reg[quat] reg[integer] */	(* (int*) &data[is[pc + 2]]) = rgb2int((* (double4*) &data[is[pc + 1]])); pc += 3; break;
-
-			///// int2lab[2]
-			case 442: /* integer reg[quat] */	(* (double4*) &data[is[pc + 2]]) = int2lab((* (int*) &is[pc + 1])); pc += 3; break;
-			case 443: /* reg[integer] reg[quat] */	(* (double4*) &data[is[pc + 2]]) = int2lab((* (int*) &data[is[pc + 1]])); pc += 3; break;
-
-			///// lab2int[2]
-			case 444: /* quat reg[integer] */	(* (int*) &data[is[pc + 9]]) = lab2int((* (double4*) &is[pc + 1])); pc += 10; break;
-			case 445: /* reg[quat] reg[integer] */	(* (int*) &data[is[pc + 2]]) = lab2int((* (double4*) &data[is[pc + 1]])); pc += 3; break;
-
-			///// __jump[1]
-			case 446: /* label */	pc = is[pc + 1]; break;
-
-			///// __jumprel[2]
-			case 447: /* integer */	pc = is[pc + 2 + (* (int*) &is[pc + 1])]; break;
-			case 448: /* reg[integer] */	pc = is[pc + 2 + (* (int*) &data[is[pc + 1]])]; break;
-
-			///// __ld_palette[2]
-			case 449: /* label cplx reg[quat] */	(* (double4*) &data[is[pc + 6]]) = palette_lab(is[pc + 1], (* (double2*) &is[pc + 2])); pc += 7; break;
-			case 450: /* label reg[cplx] reg[quat] */	(* (double4*) &data[is[pc + 3]]) = palette_lab(is[pc + 1], (* (double2*) &data[is[pc + 2]])); pc += 4; break;
-
-		}
-	} ///// End of generated code
-
+    // The VM requires two int-arrays to operate:
+    // * The data-array holds all registers and thus is not shared amongst instances.
+    //   The required size is obtained by calling 'dataSize' in IntCode.
+    // * The code-array, that contains the actual program. It is read-only.
+
+    int pc = 0; // program counter, current index in 'code'-array
+
+    while(pc < codeLen) {
+        switch(code[pc]) {
+            // Cons with 20 cases
+
+            case   0: // Cons[real, real, cplxReg]
+                *((double2*) &data[code[pc + 5]]) = (double2) {*((double*) &code[pc + 1]), *((double*) &code[pc + 3])}; pc += 6;
+                break;
+            case   1: // Cons[real, realReg, cplxReg]
+                *((double2*) &data[code[pc + 4]]) = (double2) {*((double*) &code[pc + 1]), *((double*) &data[code[pc + 3]])}; pc += 5;
+                break;
+            case   2: // Cons[realReg, real, cplxReg]
+                *((double2*) &data[code[pc + 4]]) = (double2) {*((double*) &data[code[pc + 1]]), *((double*) &code[pc + 2])}; pc += 5;
+                break;
+            case   3: // Cons[realReg, realReg, cplxReg]
+                *((double2*) &data[code[pc + 3]]) = (double2) {*((double*) &data[code[pc + 1]]), *((double*) &data[code[pc + 2]])}; pc += 4;
+                break;
+            case   4: // Cons[real, real, real, real, quatReg]
+                *((double4*) &data[code[pc + 9]]) = (double4) {*((double*) &code[pc + 1]), *((double*) &code[pc + 3])}; pc += 10;
+                break;
+            case   5: // Cons[real, real, real, realReg, quatReg]
+                *((double4*) &data[code[pc + 8]]) = (double4) {*((double*) &code[pc + 1]), *((double*) &code[pc + 3])}; pc += 9;
+                break;
+            case   6: // Cons[real, real, realReg, real, quatReg]
+                *((double4*) &data[code[pc + 8]]) = (double4) {*((double*) &code[pc + 1]), *((double*) &code[pc + 3])}; pc += 9;
+                break;
+            case   7: // Cons[real, real, realReg, realReg, quatReg]
+                *((double4*) &data[code[pc + 7]]) = (double4) {*((double*) &code[pc + 1]), *((double*) &code[pc + 3])}; pc += 8;
+                break;
+            case   8: // Cons[real, realReg, real, real, quatReg]
+                *((double4*) &data[code[pc + 8]]) = (double4) {*((double*) &code[pc + 1]), *((double*) &data[code[pc + 3]])}; pc += 9;
+                break;
+            case   9: // Cons[real, realReg, real, realReg, quatReg]
+                *((double4*) &data[code[pc + 7]]) = (double4) {*((double*) &code[pc + 1]), *((double*) &data[code[pc + 3]])}; pc += 8;
+                break;
+            case  10: // Cons[real, realReg, realReg, real, quatReg]
+                *((double4*) &data[code[pc + 7]]) = (double4) {*((double*) &code[pc + 1]), *((double*) &data[code[pc + 3]])}; pc += 8;
+                break;
+            case  11: // Cons[real, realReg, realReg, realReg, quatReg]
+                *((double4*) &data[code[pc + 6]]) = (double4) {*((double*) &code[pc + 1]), *((double*) &data[code[pc + 3]])}; pc += 7;
+                break;
+            case  12: // Cons[realReg, real, real, real, quatReg]
+                *((double4*) &data[code[pc + 8]]) = (double4) {*((double*) &data[code[pc + 1]]), *((double*) &code[pc + 2])}; pc += 9;
+                break;
+            case  13: // Cons[realReg, real, real, realReg, quatReg]
+                *((double4*) &data[code[pc + 7]]) = (double4) {*((double*) &data[code[pc + 1]]), *((double*) &code[pc + 2])}; pc += 8;
+                break;
+            case  14: // Cons[realReg, real, realReg, real, quatReg]
+                *((double4*) &data[code[pc + 7]]) = (double4) {*((double*) &data[code[pc + 1]]), *((double*) &code[pc + 2])}; pc += 8;
+                break;
+            case  15: // Cons[realReg, real, realReg, realReg, quatReg]
+                *((double4*) &data[code[pc + 6]]) = (double4) {*((double*) &data[code[pc + 1]]), *((double*) &code[pc + 2])}; pc += 7;
+                break;
+            case  16: // Cons[realReg, realReg, real, real, quatReg]
+                *((double4*) &data[code[pc + 7]]) = (double4) {*((double*) &data[code[pc + 1]]), *((double*) &data[code[pc + 2]])}; pc += 8;
+                break;
+            case  17: // Cons[realReg, realReg, real, realReg, quatReg]
+                *((double4*) &data[code[pc + 6]]) = (double4) {*((double*) &data[code[pc + 1]]), *((double*) &data[code[pc + 2]])}; pc += 7;
+                break;
+            case  18: // Cons[realReg, realReg, realReg, real, quatReg]
+                *((double4*) &data[code[pc + 6]]) = (double4) {*((double*) &data[code[pc + 1]]), *((double*) &data[code[pc + 2]])}; pc += 7;
+                break;
+            case  19: // Cons[realReg, realReg, realReg, realReg, quatReg]
+                *((double4*) &data[code[pc + 5]]) = (double4) {*((double*) &data[code[pc + 1]]), *((double*) &data[code[pc + 2]])}; pc += 6;
+                break;
+
+            // RealToInt with 2 cases
+
+            case  20: // RealToInt[real, integerReg]
+                data[code[pc + 3]] = (int) *((double*) &code[pc + 1]); pc += 4;
+                break;
+            case  21: // RealToInt[realReg, integerReg]
+                data[code[pc + 2]] = (int) *((double*) &data[code[pc + 1]]); pc += 3;
+                break;
+
+            // IntToReal with 2 cases
+
+            case  22: // IntToReal[integer, realReg]
+                *((double*) &data[code[pc + 2]]) = (double) code[pc + 1]; pc += 3;
+                break;
+            case  23: // IntToReal[integerReg, realReg]
+                *((double*) &data[code[pc + 2]]) = (double) data[code[pc + 1]]; pc += 3;
+                break;
+
+            // Add with 16 cases
+
+            case  24: // Add[integer, integer, integerReg]
+                data[code[pc + 3]] = code[pc + 1] + code[pc + 2]; pc += 4;
+                break;
+            case  25: // Add[integer, integerReg, integerReg]
+                data[code[pc + 3]] = code[pc + 1] + data[code[pc + 2]]; pc += 4;
+                break;
+            case  26: // Add[integerReg, integer, integerReg]
+                data[code[pc + 3]] = data[code[pc + 1]] + code[pc + 2]; pc += 4;
+                break;
+            case  27: // Add[integerReg, integerReg, integerReg]
+                data[code[pc + 3]] = data[code[pc + 1]] + data[code[pc + 2]]; pc += 4;
+                break;
+            case  28: // Add[real, real, realReg]
+                *((double*) &data[code[pc + 5]]) = *((double*) &code[pc + 1]) + *((double*) &code[pc + 3]); pc += 6;
+                break;
+            case  29: // Add[real, realReg, realReg]
+                *((double*) &data[code[pc + 4]]) = *((double*) &code[pc + 1]) + *((double*) &data[code[pc + 3]]); pc += 5;
+                break;
+            case  30: // Add[realReg, real, realReg]
+                *((double*) &data[code[pc + 4]]) = *((double*) &data[code[pc + 1]]) + *((double*) &code[pc + 2]); pc += 5;
+                break;
+            case  31: // Add[realReg, realReg, realReg]
+                *((double*) &data[code[pc + 3]]) = *((double*) &data[code[pc + 1]]) + *((double*) &data[code[pc + 2]]); pc += 4;
+                break;
+            case  32: // Add[cplx, cplx, cplxReg]
+                *((double2*) &data[code[pc + 9]]) = *((double2*) &code[pc + 1]) + *((double2*) &code[pc + 5]); pc += 10;
+                break;
+            case  33: // Add[cplx, cplxReg, cplxReg]
+                *((double2*) &data[code[pc + 6]]) = *((double2*) &code[pc + 1]) + *((double2*) &data[code[pc + 5]]); pc += 7;
+                break;
+            case  34: // Add[cplxReg, cplx, cplxReg]
+                *((double2*) &data[code[pc + 6]]) = *((double2*) &data[code[pc + 1]]) + *((double2*) &code[pc + 2]); pc += 7;
+                break;
+            case  35: // Add[cplxReg, cplxReg, cplxReg]
+                *((double2*) &data[code[pc + 3]]) = *((double2*) &data[code[pc + 1]]) + *((double2*) &data[code[pc + 2]]); pc += 4;
+                break;
+            case  36: // Add[quat, quat, quatReg]
+                *((double4*) &data[code[pc + 17]]) = *((double4*) &code[pc + 1]) + *((double4*) &code[pc + 9]); pc += 18;
+                break;
+            case  37: // Add[quat, quatReg, quatReg]
+                *((double4*) &data[code[pc + 10]]) = *((double4*) &code[pc + 1]) + *((double4*) &data[code[pc + 9]]); pc += 11;
+                break;
+            case  38: // Add[quatReg, quat, quatReg]
+                *((double4*) &data[code[pc + 10]]) = *((double4*) &data[code[pc + 1]]) + *((double4*) &code[pc + 2]); pc += 11;
+                break;
+            case  39: // Add[quatReg, quatReg, quatReg]
+                *((double4*) &data[code[pc + 3]]) = *((double4*) &data[code[pc + 1]]) + *((double4*) &data[code[pc + 2]]); pc += 4;
+                break;
+
+            // Sub with 16 cases
+
+            case  40: // Sub[integer, integer, integerReg]
+                data[code[pc + 3]] = code[pc + 1] - code[pc + 2]; pc += 4;
+                break;
+            case  41: // Sub[integer, integerReg, integerReg]
+                data[code[pc + 3]] = code[pc + 1] - data[code[pc + 2]]; pc += 4;
+                break;
+            case  42: // Sub[integerReg, integer, integerReg]
+                data[code[pc + 3]] = data[code[pc + 1]] - code[pc + 2]; pc += 4;
+                break;
+            case  43: // Sub[integerReg, integerReg, integerReg]
+                data[code[pc + 3]] = data[code[pc + 1]] - data[code[pc + 2]]; pc += 4;
+                break;
+            case  44: // Sub[real, real, realReg]
+                *((double*) &data[code[pc + 5]]) = *((double*) &code[pc + 1]) - *((double*) &code[pc + 3]); pc += 6;
+                break;
+            case  45: // Sub[real, realReg, realReg]
+                *((double*) &data[code[pc + 4]]) = *((double*) &code[pc + 1]) - *((double*) &data[code[pc + 3]]); pc += 5;
+                break;
+            case  46: // Sub[realReg, real, realReg]
+                *((double*) &data[code[pc + 4]]) = *((double*) &data[code[pc + 1]]) - *((double*) &code[pc + 2]); pc += 5;
+                break;
+            case  47: // Sub[realReg, realReg, realReg]
+                *((double*) &data[code[pc + 3]]) = *((double*) &data[code[pc + 1]]) - *((double*) &data[code[pc + 2]]); pc += 4;
+                break;
+            case  48: // Sub[cplx, cplx, cplxReg]
+                *((double2*) &data[code[pc + 9]]) = *((double2*) &code[pc + 1]) - *((double2*) &code[pc + 5]); pc += 10;
+                break;
+            case  49: // Sub[cplx, cplxReg, cplxReg]
+                *((double2*) &data[code[pc + 6]]) = *((double2*) &code[pc + 1]) - *((double2*) &data[code[pc + 5]]); pc += 7;
+                break;
+            case  50: // Sub[cplxReg, cplx, cplxReg]
+                *((double2*) &data[code[pc + 6]]) = *((double2*) &data[code[pc + 1]]) - *((double2*) &code[pc + 2]); pc += 7;
+                break;
+            case  51: // Sub[cplxReg, cplxReg, cplxReg]
+                *((double2*) &data[code[pc + 3]]) = *((double2*) &data[code[pc + 1]]) - *((double2*) &data[code[pc + 2]]); pc += 4;
+                break;
+            case  52: // Sub[quat, quat, quatReg]
+                *((double4*) &data[code[pc + 17]]) = *((double4*) &code[pc + 1]) - *((double4*) &code[pc + 9]); pc += 18;
+                break;
+            case  53: // Sub[quat, quatReg, quatReg]
+                *((double4*) &data[code[pc + 10]]) = *((double4*) &code[pc + 1]) - *((double4*) &data[code[pc + 9]]); pc += 11;
+                break;
+            case  54: // Sub[quatReg, quat, quatReg]
+                *((double4*) &data[code[pc + 10]]) = *((double4*) &data[code[pc + 1]]) - *((double4*) &code[pc + 2]); pc += 11;
+                break;
+            case  55: // Sub[quatReg, quatReg, quatReg]
+                *((double4*) &data[code[pc + 3]]) = *((double4*) &data[code[pc + 1]]) - *((double4*) &data[code[pc + 2]]); pc += 4;
+                break;
+
+            // Mul with 16 cases
+
+            case  56: // Mul[integer, integer, integerReg]
+                data[code[pc + 3]] = code[pc + 1] * code[pc + 2]; pc += 4;
+                break;
+            case  57: // Mul[integer, integerReg, integerReg]
+                data[code[pc + 3]] = code[pc + 1] * data[code[pc + 2]]; pc += 4;
+                break;
+            case  58: // Mul[integerReg, integer, integerReg]
+                data[code[pc + 3]] = data[code[pc + 1]] * code[pc + 2]; pc += 4;
+                break;
+            case  59: // Mul[integerReg, integerReg, integerReg]
+                data[code[pc + 3]] = data[code[pc + 1]] * data[code[pc + 2]]; pc += 4;
+                break;
+            case  60: // Mul[real, real, realReg]
+                *((double*) &data[code[pc + 5]]) = *((double*) &code[pc + 1]) * *((double*) &code[pc + 3]); pc += 6;
+                break;
+            case  61: // Mul[real, realReg, realReg]
+                *((double*) &data[code[pc + 4]]) = *((double*) &code[pc + 1]) * *((double*) &data[code[pc + 3]]); pc += 5;
+                break;
+            case  62: // Mul[realReg, real, realReg]
+                *((double*) &data[code[pc + 4]]) = *((double*) &data[code[pc + 1]]) * *((double*) &code[pc + 2]); pc += 5;
+                break;
+            case  63: // Mul[realReg, realReg, realReg]
+                *((double*) &data[code[pc + 3]]) = *((double*) &data[code[pc + 1]]) * *((double*) &data[code[pc + 2]]); pc += 4;
+                break;
+            case  64: // Mul[cplx, cplx, cplxReg]
+                *((double2*) &data[code[pc + 9]]) = mul(*((double2*) &code[pc + 1]), *((double2*) &code[pc + 5])); pc += 10;
+                break;
+            case  65: // Mul[cplx, cplxReg, cplxReg]
+                *((double2*) &data[code[pc + 6]]) = mul(*((double2*) &code[pc + 1]), *((double2*) &data[code[pc + 5]])); pc += 7;
+                break;
+            case  66: // Mul[cplxReg, cplx, cplxReg]
+                *((double2*) &data[code[pc + 6]]) = mul(*((double2*) &data[code[pc + 1]]), *((double2*) &code[pc + 2])); pc += 7;
+                break;
+            case  67: // Mul[cplxReg, cplxReg, cplxReg]
+                *((double2*) &data[code[pc + 3]]) = mul(*((double2*) &data[code[pc + 1]]), *((double2*) &data[code[pc + 2]])); pc += 4;
+                break;
+            case  68: // Mul[quat, quat, quatReg]
+                *((double4*) &data[code[pc + 17]]) = mul(*((double4*) &code[pc + 1]), *((double4*) &code[pc + 9])); pc += 18;
+                break;
+            case  69: // Mul[quat, quatReg, quatReg]
+                *((double4*) &data[code[pc + 10]]) = mul(*((double4*) &code[pc + 1]), *((double4*) &data[code[pc + 9]])); pc += 11;
+                break;
+            case  70: // Mul[quatReg, quat, quatReg]
+                *((double4*) &data[code[pc + 10]]) = mul(*((double4*) &data[code[pc + 1]]), *((double4*) &code[pc + 2])); pc += 11;
+                break;
+            case  71: // Mul[quatReg, quatReg, quatReg]
+                *((double4*) &data[code[pc + 3]]) = mul(*((double4*) &data[code[pc + 1]]), *((double4*) &data[code[pc + 2]])); pc += 4;
+                break;
+
+            // Div with 12 cases
+
+            case  72: // Div[real, real, realReg]
+                *((double*) &data[code[pc + 5]]) = *((double*) &code[pc + 1]) / *((double*) &code[pc + 3]); pc += 6;
+                break;
+            case  73: // Div[real, realReg, realReg]
+                *((double*) &data[code[pc + 4]]) = *((double*) &code[pc + 1]) / *((double*) &data[code[pc + 3]]); pc += 5;
+                break;
+            case  74: // Div[realReg, real, realReg]
+                *((double*) &data[code[pc + 4]]) = *((double*) &data[code[pc + 1]]) / *((double*) &code[pc + 2]); pc += 5;
+                break;
+            case  75: // Div[realReg, realReg, realReg]
+                *((double*) &data[code[pc + 3]]) = *((double*) &data[code[pc + 1]]) / *((double*) &data[code[pc + 2]]); pc += 4;
+                break;
+            case  76: // Div[cplx, cplx, cplxReg]
+                *((double2*) &data[code[pc + 9]]) = div(*((double2*) &code[pc + 1]), *((double2*) &code[pc + 5])); pc += 10;
+                break;
+            case  77: // Div[cplx, cplxReg, cplxReg]
+                *((double2*) &data[code[pc + 6]]) = div(*((double2*) &code[pc + 1]), *((double2*) &data[code[pc + 5]])); pc += 7;
+                break;
+            case  78: // Div[cplxReg, cplx, cplxReg]
+                *((double2*) &data[code[pc + 6]]) = div(*((double2*) &data[code[pc + 1]]), *((double2*) &code[pc + 2])); pc += 7;
+                break;
+            case  79: // Div[cplxReg, cplxReg, cplxReg]
+                *((double2*) &data[code[pc + 3]]) = div(*((double2*) &data[code[pc + 1]]), *((double2*) &data[code[pc + 2]])); pc += 4;
+                break;
+            case  80: // Div[quat, quat, quatReg]
+                *((double4*) &data[code[pc + 17]]) = div(*((double4*) &code[pc + 1]), *((double4*) &code[pc + 9])); pc += 18;
+                break;
+            case  81: // Div[quat, quatReg, quatReg]
+                *((double4*) &data[code[pc + 10]]) = div(*((double4*) &code[pc + 1]), *((double4*) &data[code[pc + 9]])); pc += 11;
+                break;
+            case  82: // Div[quatReg, quat, quatReg]
+                *((double4*) &data[code[pc + 10]]) = div(*((double4*) &data[code[pc + 1]]), *((double4*) &code[pc + 2])); pc += 11;
+                break;
+            case  83: // Div[quatReg, quatReg, quatReg]
+                *((double4*) &data[code[pc + 3]]) = div(*((double4*) &data[code[pc + 1]]), *((double4*) &data[code[pc + 2]])); pc += 4;
+                break;
+
+            // Mod with 4 cases
+
+            case  84: // Mod[integer, integer, integerReg]
+                data[code[pc + 3]] = code[pc + 1] % code[pc + 2]; pc += 4;
+                break;
+            case  85: // Mod[integer, integerReg, integerReg]
+                data[code[pc + 3]] = code[pc + 1] % data[code[pc + 2]]; pc += 4;
+                break;
+            case  86: // Mod[integerReg, integer, integerReg]
+                data[code[pc + 3]] = data[code[pc + 1]] % code[pc + 2]; pc += 4;
+                break;
+            case  87: // Mod[integerReg, integerReg, integerReg]
+                data[code[pc + 3]] = data[code[pc + 1]] % data[code[pc + 2]]; pc += 4;
+                break;
+
+            // Pow with 24 cases
+
+            case  88: // Pow[integer, integer, integerReg]
+                data[code[pc + 3]] = pow(code[pc + 1], code[pc + 2]); pc += 4;
+                break;
+            case  89: // Pow[integer, integerReg, integerReg]
+                data[code[pc + 3]] = pow(code[pc + 1], data[code[pc + 2]]); pc += 4;
+                break;
+            case  90: // Pow[integerReg, integer, integerReg]
+                data[code[pc + 3]] = pow(data[code[pc + 1]], code[pc + 2]); pc += 4;
+                break;
+            case  91: // Pow[integerReg, integerReg, integerReg]
+                data[code[pc + 3]] = pow(data[code[pc + 1]], data[code[pc + 2]]); pc += 4;
+                break;
+            case  92: // Pow[real, integer, realReg]
+                *((double*) &data[code[pc + 4]]) = pow(*((double*) &code[pc + 1]), code[pc + 3]); pc += 5;
+                break;
+            case  93: // Pow[real, integerReg, realReg]
+                *((double*) &data[code[pc + 4]]) = pow(*((double*) &code[pc + 1]), data[code[pc + 3]]); pc += 5;
+                break;
+            case  94: // Pow[realReg, integer, realReg]
+                *((double*) &data[code[pc + 3]]) = pow(*((double*) &data[code[pc + 1]]), code[pc + 2]); pc += 4;
+                break;
+            case  95: // Pow[realReg, integerReg, realReg]
+                *((double*) &data[code[pc + 3]]) = pow(*((double*) &data[code[pc + 1]]), data[code[pc + 2]]); pc += 4;
+                break;
+            case  96: // Pow[real, real, realReg]
+                *((double*) &data[code[pc + 5]]) = pow(*((double*) &code[pc + 1]), *((double*) &code[pc + 3])); pc += 6;
+                break;
+            case  97: // Pow[real, realReg, realReg]
+                *((double*) &data[code[pc + 4]]) = pow(*((double*) &code[pc + 1]), *((double*) &data[code[pc + 3]])); pc += 5;
+                break;
+            case  98: // Pow[realReg, real, realReg]
+                *((double*) &data[code[pc + 4]]) = pow(*((double*) &data[code[pc + 1]]), *((double*) &code[pc + 2])); pc += 5;
+                break;
+            case  99: // Pow[realReg, realReg, realReg]
+                *((double*) &data[code[pc + 3]]) = pow(*((double*) &data[code[pc + 1]]), *((double*) &data[code[pc + 2]])); pc += 4;
+                break;
+            case 100: // Pow[cplx, integer, cplxReg]
+                *((double2*) &data[code[pc + 6]]) = pow(*((double2*) &code[pc + 1]), code[pc + 5]); pc += 7;
+                break;
+            case 101: // Pow[cplx, integerReg, cplxReg]
+                *((double2*) &data[code[pc + 6]]) = pow(*((double2*) &code[pc + 1]), data[code[pc + 5]]); pc += 7;
+                break;
+            case 102: // Pow[cplxReg, integer, cplxReg]
+                *((double2*) &data[code[pc + 3]]) = pow(*((double2*) &data[code[pc + 1]]), code[pc + 2]); pc += 4;
+                break;
+            case 103: // Pow[cplxReg, integerReg, cplxReg]
+                *((double2*) &data[code[pc + 3]]) = pow(*((double2*) &data[code[pc + 1]]), data[code[pc + 2]]); pc += 4;
+                break;
+            case 104: // Pow[cplx, real, cplxReg]
+                *((double2*) &data[code[pc + 7]]) = pow(*((double2*) &code[pc + 1]), *((double*) &code[pc + 5])); pc += 8;
+                break;
+            case 105: // Pow[cplx, realReg, cplxReg]
+                *((double2*) &data[code[pc + 6]]) = pow(*((double2*) &code[pc + 1]), *((double*) &data[code[pc + 5]])); pc += 7;
+                break;
+            case 106: // Pow[cplxReg, real, cplxReg]
+                *((double2*) &data[code[pc + 4]]) = pow(*((double2*) &data[code[pc + 1]]), *((double*) &code[pc + 2])); pc += 5;
+                break;
+            case 107: // Pow[cplxReg, realReg, cplxReg]
+                *((double2*) &data[code[pc + 3]]) = pow(*((double2*) &data[code[pc + 1]]), *((double*) &data[code[pc + 2]])); pc += 4;
+                break;
+            case 108: // Pow[cplx, cplx, cplxReg]
+                *((double2*) &data[code[pc + 9]]) = pow(*((double2*) &code[pc + 1]), *((double2*) &code[pc + 5])); pc += 10;
+                break;
+            case 109: // Pow[cplx, cplxReg, cplxReg]
+                *((double2*) &data[code[pc + 6]]) = pow(*((double2*) &code[pc + 1]), *((double2*) &data[code[pc + 5]])); pc += 7;
+                break;
+            case 110: // Pow[cplxReg, cplx, cplxReg]
+                *((double2*) &data[code[pc + 6]]) = pow(*((double2*) &data[code[pc + 1]]), *((double2*) &code[pc + 2])); pc += 7;
+                break;
+            case 111: // Pow[cplxReg, cplxReg, cplxReg]
+                *((double2*) &data[code[pc + 3]]) = pow(*((double2*) &data[code[pc + 1]]), *((double2*) &data[code[pc + 2]])); pc += 4;
+                break;
+
+            // Recip with 6 cases
+
+            case 112: // Recip[real, realReg]
+                *((double*) &data[code[pc + 3]]) = 1.0 / *((double*) &code[pc + 1]); pc += 4;
+                break;
+            case 113: // Recip[realReg, realReg]
+                *((double*) &data[code[pc + 2]]) = 1.0 / *((double*) &data[code[pc + 1]]); pc += 3;
+                break;
+            case 114: // Recip[cplx, cplxReg]
+                *((double2*) &data[code[pc + 5]]) = recip(*((double2*) &code[pc + 1])); pc += 6;
+                break;
+            case 115: // Recip[cplxReg, cplxReg]
+                *((double2*) &data[code[pc + 2]]) = recip(*((double2*) &data[code[pc + 1]])); pc += 3;
+                break;
+            case 116: // Recip[quat, quatReg]
+                *((double4*) &data[code[pc + 9]]) = recip(*((double4*) &code[pc + 1])); pc += 10;
+                break;
+            case 117: // Recip[quatReg, quatReg]
+                *((double4*) &data[code[pc + 2]]) = recip(*((double4*) &data[code[pc + 1]])); pc += 3;
+                break;
+
+            // Neg with 8 cases
+
+            case 118: // Neg[integer, integerReg]
+                data[code[pc + 2]] = -code[pc + 1]; pc += 3;
+                break;
+            case 119: // Neg[integerReg, integerReg]
+                data[code[pc + 2]] = -data[code[pc + 1]]; pc += 3;
+                break;
+            case 120: // Neg[real, realReg]
+                *((double*) &data[code[pc + 3]]) = -*((double*) &code[pc + 1]); pc += 4;
+                break;
+            case 121: // Neg[realReg, realReg]
+                *((double*) &data[code[pc + 2]]) = -*((double*) &data[code[pc + 1]]); pc += 3;
+                break;
+            case 122: // Neg[cplx, cplxReg]
+                *((double2*) &data[code[pc + 5]]) = -*((double2*) &code[pc + 1]); pc += 6;
+                break;
+            case 123: // Neg[cplxReg, cplxReg]
+                *((double2*) &data[code[pc + 2]]) = -*((double2*) &data[code[pc + 1]]); pc += 3;
+                break;
+            case 124: // Neg[quat, quatReg]
+                *((double4*) &data[code[pc + 9]]) = -*((double4*) &code[pc + 1]); pc += 10;
+                break;
+            case 125: // Neg[quatReg, quatReg]
+                *((double4*) &data[code[pc + 2]]) = -*((double4*) &data[code[pc + 1]]); pc += 3;
+                break;
+
+            // Atan with 4 cases
+
+            case 126: // Atan[real, realReg]
+                *((double*) &data[code[pc + 3]]) = atan(*((double*) &code[pc + 1])); pc += 4;
+                break;
+            case 127: // Atan[realReg, realReg]
+                *((double*) &data[code[pc + 2]]) = atan(*((double*) &data[code[pc + 1]])); pc += 3;
+                break;
+            case 128: // Atan[cplx, cplxReg]
+                *((double2*) &data[code[pc + 5]]) = atan(*((double2*) &code[pc + 1])); pc += 6;
+                break;
+            case 129: // Atan[cplxReg, cplxReg]
+                *((double2*) &data[code[pc + 2]]) = atan(*((double2*) &data[code[pc + 1]])); pc += 3;
+                break;
+
+            // Atanh with 4 cases
+
+            case 130: // Atanh[real, realReg]
+                *((double*) &data[code[pc + 3]]) = atanh(*((double*) &code[pc + 1])); pc += 4;
+                break;
+            case 131: // Atanh[realReg, realReg]
+                *((double*) &data[code[pc + 2]]) = atanh(*((double*) &data[code[pc + 1]])); pc += 3;
+                break;
+            case 132: // Atanh[cplx, cplxReg]
+                *((double2*) &data[code[pc + 5]]) = atanh(*((double2*) &code[pc + 1])); pc += 6;
+                break;
+            case 133: // Atanh[cplxReg, cplxReg]
+                *((double2*) &data[code[pc + 2]]) = atanh(*((double2*) &data[code[pc + 1]])); pc += 3;
+                break;
+
+            // Cos with 4 cases
+
+            case 134: // Cos[real, realReg]
+                *((double*) &data[code[pc + 3]]) = cos(*((double*) &code[pc + 1])); pc += 4;
+                break;
+            case 135: // Cos[realReg, realReg]
+                *((double*) &data[code[pc + 2]]) = cos(*((double*) &data[code[pc + 1]])); pc += 3;
+                break;
+            case 136: // Cos[cplx, cplxReg]
+                *((double2*) &data[code[pc + 5]]) = cos(*((double2*) &code[pc + 1])); pc += 6;
+                break;
+            case 137: // Cos[cplxReg, cplxReg]
+                *((double2*) &data[code[pc + 2]]) = cos(*((double2*) &data[code[pc + 1]])); pc += 3;
+                break;
+
+            // Cosh with 4 cases
+
+            case 138: // Cosh[real, realReg]
+                *((double*) &data[code[pc + 3]]) = cosh(*((double*) &code[pc + 1])); pc += 4;
+                break;
+            case 139: // Cosh[realReg, realReg]
+                *((double*) &data[code[pc + 2]]) = cosh(*((double*) &data[code[pc + 1]])); pc += 3;
+                break;
+            case 140: // Cosh[cplx, cplxReg]
+                *((double2*) &data[code[pc + 5]]) = cosh(*((double2*) &code[pc + 1])); pc += 6;
+                break;
+            case 141: // Cosh[cplxReg, cplxReg]
+                *((double2*) &data[code[pc + 2]]) = cosh(*((double2*) &data[code[pc + 1]])); pc += 3;
+                break;
+
+            // Exp with 4 cases
+
+            case 142: // Exp[real, realReg]
+                *((double*) &data[code[pc + 3]]) = exp(*((double*) &code[pc + 1])); pc += 4;
+                break;
+            case 143: // Exp[realReg, realReg]
+                *((double*) &data[code[pc + 2]]) = exp(*((double*) &data[code[pc + 1]])); pc += 3;
+                break;
+            case 144: // Exp[cplx, cplxReg]
+                *((double2*) &data[code[pc + 5]]) = exp(*((double2*) &code[pc + 1])); pc += 6;
+                break;
+            case 145: // Exp[cplxReg, cplxReg]
+                *((double2*) &data[code[pc + 2]]) = exp(*((double2*) &data[code[pc + 1]])); pc += 3;
+                break;
+
+            // Log with 4 cases
+
+            case 146: // Log[real, realReg]
+                *((double*) &data[code[pc + 3]]) = log(*((double*) &code[pc + 1])); pc += 4;
+                break;
+            case 147: // Log[realReg, realReg]
+                *((double*) &data[code[pc + 2]]) = log(*((double*) &data[code[pc + 1]])); pc += 3;
+                break;
+            case 148: // Log[cplx, cplxReg]
+                *((double2*) &data[code[pc + 5]]) = log(*((double2*) &code[pc + 1])); pc += 6;
+                break;
+            case 149: // Log[cplxReg, cplxReg]
+                *((double2*) &data[code[pc + 2]]) = log(*((double2*) &data[code[pc + 1]])); pc += 3;
+                break;
+
+            // Sin with 4 cases
+
+            case 150: // Sin[real, realReg]
+                *((double*) &data[code[pc + 3]]) = sin(*((double*) &code[pc + 1])); pc += 4;
+                break;
+            case 151: // Sin[realReg, realReg]
+                *((double*) &data[code[pc + 2]]) = sin(*((double*) &data[code[pc + 1]])); pc += 3;
+                break;
+            case 152: // Sin[cplx, cplxReg]
+                *((double2*) &data[code[pc + 5]]) = sin(*((double2*) &code[pc + 1])); pc += 6;
+                break;
+            case 153: // Sin[cplxReg, cplxReg]
+                *((double2*) &data[code[pc + 2]]) = sin(*((double2*) &data[code[pc + 1]])); pc += 3;
+                break;
+
+            // Sinh with 4 cases
+
+            case 154: // Sinh[real, realReg]
+                *((double*) &data[code[pc + 3]]) = sinh(*((double*) &code[pc + 1])); pc += 4;
+                break;
+            case 155: // Sinh[realReg, realReg]
+                *((double*) &data[code[pc + 2]]) = sinh(*((double*) &data[code[pc + 1]])); pc += 3;
+                break;
+            case 156: // Sinh[cplx, cplxReg]
+                *((double2*) &data[code[pc + 5]]) = sinh(*((double2*) &code[pc + 1])); pc += 6;
+                break;
+            case 157: // Sinh[cplxReg, cplxReg]
+                *((double2*) &data[code[pc + 2]]) = sinh(*((double2*) &data[code[pc + 1]])); pc += 3;
+                break;
+
+            // Sqr with 8 cases
+
+            case 158: // Sqr[integer, integerReg]
+                data[code[pc + 2]] = code[pc + 1] * code[pc + 1]; pc += 3;
+                break;
+            case 159: // Sqr[integerReg, integerReg]
+                data[code[pc + 2]] = data[code[pc + 1]] * data[code[pc + 1]]; pc += 3;
+                break;
+            case 160: // Sqr[real, realReg]
+                *((double*) &data[code[pc + 3]]) = *((double*) &code[pc + 1]) * *((double*) &code[pc + 1]); pc += 4;
+                break;
+            case 161: // Sqr[realReg, realReg]
+                *((double*) &data[code[pc + 2]]) = *((double*) &data[code[pc + 1]]) * *((double*) &data[code[pc + 1]]); pc += 3;
+                break;
+            case 162: // Sqr[cplx, cplxReg]
+                *((double2*) &data[code[pc + 5]]) = mul(*((double2*) &code[pc + 1]), *((double2*) &code[pc + 1])); pc += 6;
+                break;
+            case 163: // Sqr[cplxReg, cplxReg]
+                *((double2*) &data[code[pc + 2]]) = mul(*((double2*) &data[code[pc + 1]]), *((double2*) &data[code[pc + 1]])); pc += 3;
+                break;
+            case 164: // Sqr[quat, quatReg]
+                *((double4*) &data[code[pc + 9]]) = mul(*((double4*) &code[pc + 1]), *((double4*) &code[pc + 1])); pc += 10;
+                break;
+            case 165: // Sqr[quatReg, quatReg]
+                *((double4*) &data[code[pc + 2]]) = mul(*((double4*) &data[code[pc + 1]]), *((double4*) &data[code[pc + 1]])); pc += 3;
+                break;
+
+            // Sqrt with 4 cases
+
+            case 166: // Sqrt[real, realReg]
+                *((double*) &data[code[pc + 3]]) = sqrt(*((double*) &code[pc + 1])); pc += 4;
+                break;
+            case 167: // Sqrt[realReg, realReg]
+                *((double*) &data[code[pc + 2]]) = sqrt(*((double*) &data[code[pc + 1]])); pc += 3;
+                break;
+            case 168: // Sqrt[cplx, cplxReg]
+                *((double2*) &data[code[pc + 5]]) = sqrt(*((double2*) &code[pc + 1])); pc += 6;
+                break;
+            case 169: // Sqrt[cplxReg, cplxReg]
+                *((double2*) &data[code[pc + 2]]) = sqrt(*((double2*) &data[code[pc + 1]])); pc += 3;
+                break;
+
+            // Tan with 4 cases
+
+            case 170: // Tan[real, realReg]
+                *((double*) &data[code[pc + 3]]) = tan(*((double*) &code[pc + 1])); pc += 4;
+                break;
+            case 171: // Tan[realReg, realReg]
+                *((double*) &data[code[pc + 2]]) = tan(*((double*) &data[code[pc + 1]])); pc += 3;
+                break;
+            case 172: // Tan[cplx, cplxReg]
+                *((double2*) &data[code[pc + 5]]) = tan(*((double2*) &code[pc + 1])); pc += 6;
+                break;
+            case 173: // Tan[cplxReg, cplxReg]
+                *((double2*) &data[code[pc + 2]]) = tan(*((double2*) &data[code[pc + 1]])); pc += 3;
+                break;
+
+            // Tanh with 4 cases
+
+            case 174: // Tanh[real, realReg]
+                *((double*) &data[code[pc + 3]]) = tanh(*((double*) &code[pc + 1])); pc += 4;
+                break;
+            case 175: // Tanh[realReg, realReg]
+                *((double*) &data[code[pc + 2]]) = tanh(*((double*) &data[code[pc + 1]])); pc += 3;
+                break;
+            case 176: // Tanh[cplx, cplxReg]
+                *((double2*) &data[code[pc + 5]]) = tanh(*((double2*) &code[pc + 1])); pc += 6;
+                break;
+            case 177: // Tanh[cplxReg, cplxReg]
+                *((double2*) &data[code[pc + 2]]) = tanh(*((double2*) &data[code[pc + 1]])); pc += 3;
+                break;
+
+            // Abs with 8 cases
+
+            case 178: // Abs[integer, integerReg]
+                data[code[pc + 2]] = abs(code[pc + 1]); pc += 3;
+                break;
+            case 179: // Abs[integerReg, integerReg]
+                data[code[pc + 2]] = abs(data[code[pc + 1]]); pc += 3;
+                break;
+            case 180: // Abs[real, realReg]
+                *((double*) &data[code[pc + 3]]) = abs(*((double*) &code[pc + 1])); pc += 4;
+                break;
+            case 181: // Abs[realReg, realReg]
+                *((double*) &data[code[pc + 2]]) = abs(*((double*) &data[code[pc + 1]])); pc += 3;
+                break;
+            case 182: // Abs[cplx, cplxReg]
+                *((double2*) &data[code[pc + 5]]) = abs(*((double2*) &code[pc + 1])); pc += 6;
+                break;
+            case 183: // Abs[cplxReg, cplxReg]
+                *((double2*) &data[code[pc + 2]]) = abs(*((double2*) &data[code[pc + 1]])); pc += 3;
+                break;
+            case 184: // Abs[quat, quatReg]
+                *((double4*) &data[code[pc + 9]]) = abs(*((double4*) &code[pc + 1])); pc += 10;
+                break;
+            case 185: // Abs[quatReg, quatReg]
+                *((double4*) &data[code[pc + 2]]) = abs(*((double4*) &data[code[pc + 1]])); pc += 3;
+                break;
+
+            // Floor with 4 cases
+
+            case 186: // Floor[real, realReg]
+                *((double*) &data[code[pc + 3]]) = floor(*((double*) &code[pc + 1])); pc += 4;
+                break;
+            case 187: // Floor[realReg, realReg]
+                *((double*) &data[code[pc + 2]]) = floor(*((double*) &data[code[pc + 1]])); pc += 3;
+                break;
+            case 188: // Floor[cplx, cplxReg]
+                *((double2*) &data[code[pc + 5]]) = floor(*((double2*) &code[pc + 1])); pc += 6;
+                break;
+            case 189: // Floor[cplxReg, cplxReg]
+                *((double2*) &data[code[pc + 2]]) = floor(*((double2*) &data[code[pc + 1]])); pc += 3;
+                break;
+
+            // Ceil with 4 cases
+
+            case 190: // Ceil[real, realReg]
+                *((double*) &data[code[pc + 3]]) = ceil(*((double*) &code[pc + 1])); pc += 4;
+                break;
+            case 191: // Ceil[realReg, realReg]
+                *((double*) &data[code[pc + 2]]) = ceil(*((double*) &data[code[pc + 1]])); pc += 3;
+                break;
+            case 192: // Ceil[cplx, cplxReg]
+                *((double2*) &data[code[pc + 5]]) = ceil(*((double2*) &code[pc + 1])); pc += 6;
+                break;
+            case 193: // Ceil[cplxReg, cplxReg]
+                *((double2*) &data[code[pc + 2]]) = ceil(*((double2*) &data[code[pc + 1]])); pc += 3;
+                break;
+
+            // Fract with 4 cases
+
+            case 194: // Fract[real, realReg]
+                *((double*) &data[code[pc + 3]]) = fract(*((double*) &code[pc + 1])); pc += 4;
+                break;
+            case 195: // Fract[realReg, realReg]
+                *((double*) &data[code[pc + 2]]) = fract(*((double*) &data[code[pc + 1]])); pc += 3;
+                break;
+            case 196: // Fract[cplx, cplxReg]
+                *((double2*) &data[code[pc + 5]]) = fract(*((double2*) &code[pc + 1])); pc += 6;
+                break;
+            case 197: // Fract[cplxReg, cplxReg]
+                *((double2*) &data[code[pc + 2]]) = fract(*((double2*) &data[code[pc + 1]])); pc += 3;
+                break;
+
+            // Dot with 4 cases
+
+            case 198: // Dot[cplx, cplx, realReg]
+                *((double*) &data[code[pc + 9]]) = dot(*((double2*) &code[pc + 1]), *((double2*) &code[pc + 5])); pc += 10;
+                break;
+            case 199: // Dot[cplx, cplxReg, realReg]
+                *((double*) &data[code[pc + 6]]) = dot(*((double2*) &code[pc + 1]), *((double2*) &data[code[pc + 5]])); pc += 7;
+                break;
+            case 200: // Dot[cplxReg, cplx, realReg]
+                *((double*) &data[code[pc + 6]]) = dot(*((double2*) &data[code[pc + 1]]), *((double2*) &code[pc + 2])); pc += 7;
+                break;
+            case 201: // Dot[cplxReg, cplxReg, realReg]
+                *((double*) &data[code[pc + 3]]) = dot(*((double2*) &data[code[pc + 1]]), *((double2*) &data[code[pc + 2]])); pc += 4;
+                break;
+
+            // CircleFn with 4 cases
+
+            case 202: // CircleFn[real, realReg]
+                *((double*) &data[code[pc + 3]]) = circlefn(*((double*) &code[pc + 1])); pc += 4;
+                break;
+            case 203: // CircleFn[realReg, realReg]
+                *((double*) &data[code[pc + 2]]) = circlefn(*((double*) &data[code[pc + 1]])); pc += 3;
+                break;
+            case 204: // CircleFn[cplx, cplxReg]
+                *((double2*) &data[code[pc + 5]]) = circlefn(*((double2*) &code[pc + 1])); pc += 6;
+                break;
+            case 205: // CircleFn[cplxReg, cplxReg]
+                *((double2*) &data[code[pc + 2]]) = circlefn(*((double2*) &data[code[pc + 1]])); pc += 3;
+                break;
+
+            // ScalarMul with 8 cases
+
+            case 206: // ScalarMul[cplx, cplx, cplxReg]
+                *((double2*) &data[code[pc + 9]]) = *((double2*) &code[pc + 1]) * *((double2*) &code[pc + 5]); pc += 10;
+                break;
+            case 207: // ScalarMul[cplx, cplxReg, cplxReg]
+                *((double2*) &data[code[pc + 6]]) = *((double2*) &code[pc + 1]) * *((double2*) &data[code[pc + 5]]); pc += 7;
+                break;
+            case 208: // ScalarMul[cplxReg, cplx, cplxReg]
+                *((double2*) &data[code[pc + 6]]) = *((double2*) &data[code[pc + 1]]) * *((double2*) &code[pc + 2]); pc += 7;
+                break;
+            case 209: // ScalarMul[cplxReg, cplxReg, cplxReg]
+                *((double2*) &data[code[pc + 3]]) = *((double2*) &data[code[pc + 1]]) * *((double2*) &data[code[pc + 2]]); pc += 4;
+                break;
+            case 210: // ScalarMul[quat, quat, quatReg]
+                *((double4*) &data[code[pc + 17]]) = *((double4*) &code[pc + 1]) * *((double4*) &code[pc + 9]); pc += 18;
+                break;
+            case 211: // ScalarMul[quat, quatReg, quatReg]
+                *((double4*) &data[code[pc + 10]]) = *((double4*) &code[pc + 1]) * *((double4*) &data[code[pc + 9]]); pc += 11;
+                break;
+            case 212: // ScalarMul[quatReg, quat, quatReg]
+                *((double4*) &data[code[pc + 10]]) = *((double4*) &data[code[pc + 1]]) * *((double4*) &code[pc + 2]); pc += 11;
+                break;
+            case 213: // ScalarMul[quatReg, quatReg, quatReg]
+                *((double4*) &data[code[pc + 3]]) = *((double4*) &data[code[pc + 1]]) * *((double4*) &data[code[pc + 2]]); pc += 4;
+                break;
+
+            // Max with 16 cases
+
+            case 214: // Max[integer, integer, integerReg]
+                data[code[pc + 3]] = max(code[pc + 1], code[pc + 2]); pc += 4;
+                break;
+            case 215: // Max[integer, integerReg, integerReg]
+                data[code[pc + 3]] = max(code[pc + 1], data[code[pc + 2]]); pc += 4;
+                break;
+            case 216: // Max[integerReg, integer, integerReg]
+                data[code[pc + 3]] = max(data[code[pc + 1]], code[pc + 2]); pc += 4;
+                break;
+            case 217: // Max[integerReg, integerReg, integerReg]
+                data[code[pc + 3]] = max(data[code[pc + 1]], data[code[pc + 2]]); pc += 4;
+                break;
+            case 218: // Max[real, real, realReg]
+                *((double*) &data[code[pc + 5]]) = max(*((double*) &code[pc + 1]), *((double*) &code[pc + 3])); pc += 6;
+                break;
+            case 219: // Max[real, realReg, realReg]
+                *((double*) &data[code[pc + 4]]) = max(*((double*) &code[pc + 1]), *((double*) &data[code[pc + 3]])); pc += 5;
+                break;
+            case 220: // Max[realReg, real, realReg]
+                *((double*) &data[code[pc + 4]]) = max(*((double*) &data[code[pc + 1]]), *((double*) &code[pc + 2])); pc += 5;
+                break;
+            case 221: // Max[realReg, realReg, realReg]
+                *((double*) &data[code[pc + 3]]) = max(*((double*) &data[code[pc + 1]]), *((double*) &data[code[pc + 2]])); pc += 4;
+                break;
+            case 222: // Max[cplx, cplx, cplxReg]
+                *((double2*) &data[code[pc + 9]]) = max(*((double2*) &code[pc + 1]), *((double2*) &code[pc + 5])); pc += 10;
+                break;
+            case 223: // Max[cplx, cplxReg, cplxReg]
+                *((double2*) &data[code[pc + 6]]) = max(*((double2*) &code[pc + 1]), *((double2*) &data[code[pc + 5]])); pc += 7;
+                break;
+            case 224: // Max[cplxReg, cplx, cplxReg]
+                *((double2*) &data[code[pc + 6]]) = max(*((double2*) &data[code[pc + 1]]), *((double2*) &code[pc + 2])); pc += 7;
+                break;
+            case 225: // Max[cplxReg, cplxReg, cplxReg]
+                *((double2*) &data[code[pc + 3]]) = max(*((double2*) &data[code[pc + 1]]), *((double2*) &data[code[pc + 2]])); pc += 4;
+                break;
+            case 226: // Max[quat, quat, quatReg]
+                *((double4*) &data[code[pc + 17]]) = max(*((double4*) &code[pc + 1]), *((double4*) &code[pc + 9])); pc += 18;
+                break;
+            case 227: // Max[quat, quatReg, quatReg]
+                *((double4*) &data[code[pc + 10]]) = max(*((double4*) &code[pc + 1]), *((double4*) &data[code[pc + 9]])); pc += 11;
+                break;
+            case 228: // Max[quatReg, quat, quatReg]
+                *((double4*) &data[code[pc + 10]]) = max(*((double4*) &data[code[pc + 1]]), *((double4*) &code[pc + 2])); pc += 11;
+                break;
+            case 229: // Max[quatReg, quatReg, quatReg]
+                *((double4*) &data[code[pc + 3]]) = max(*((double4*) &data[code[pc + 1]]), *((double4*) &data[code[pc + 2]])); pc += 4;
+                break;
+
+            // Min with 16 cases
+
+            case 230: // Min[integer, integer, integerReg]
+                data[code[pc + 3]] = min(code[pc + 1], code[pc + 2]); pc += 4;
+                break;
+            case 231: // Min[integer, integerReg, integerReg]
+                data[code[pc + 3]] = min(code[pc + 1], data[code[pc + 2]]); pc += 4;
+                break;
+            case 232: // Min[integerReg, integer, integerReg]
+                data[code[pc + 3]] = min(data[code[pc + 1]], code[pc + 2]); pc += 4;
+                break;
+            case 233: // Min[integerReg, integerReg, integerReg]
+                data[code[pc + 3]] = min(data[code[pc + 1]], data[code[pc + 2]]); pc += 4;
+                break;
+            case 234: // Min[real, real, realReg]
+                *((double*) &data[code[pc + 5]]) = min(*((double*) &code[pc + 1]), *((double*) &code[pc + 3])); pc += 6;
+                break;
+            case 235: // Min[real, realReg, realReg]
+                *((double*) &data[code[pc + 4]]) = min(*((double*) &code[pc + 1]), *((double*) &data[code[pc + 3]])); pc += 5;
+                break;
+            case 236: // Min[realReg, real, realReg]
+                *((double*) &data[code[pc + 4]]) = min(*((double*) &data[code[pc + 1]]), *((double*) &code[pc + 2])); pc += 5;
+                break;
+            case 237: // Min[realReg, realReg, realReg]
+                *((double*) &data[code[pc + 3]]) = min(*((double*) &data[code[pc + 1]]), *((double*) &data[code[pc + 2]])); pc += 4;
+                break;
+            case 238: // Min[cplx, cplx, cplxReg]
+                *((double2*) &data[code[pc + 9]]) = min(*((double2*) &code[pc + 1]), *((double2*) &code[pc + 5])); pc += 10;
+                break;
+            case 239: // Min[cplx, cplxReg, cplxReg]
+                *((double2*) &data[code[pc + 6]]) = min(*((double2*) &code[pc + 1]), *((double2*) &data[code[pc + 5]])); pc += 7;
+                break;
+            case 240: // Min[cplxReg, cplx, cplxReg]
+                *((double2*) &data[code[pc + 6]]) = min(*((double2*) &data[code[pc + 1]]), *((double2*) &code[pc + 2])); pc += 7;
+                break;
+            case 241: // Min[cplxReg, cplxReg, cplxReg]
+                *((double2*) &data[code[pc + 3]]) = min(*((double2*) &data[code[pc + 1]]), *((double2*) &data[code[pc + 2]])); pc += 4;
+                break;
+            case 242: // Min[quat, quat, quatReg]
+                *((double4*) &data[code[pc + 17]]) = min(*((double4*) &code[pc + 1]), *((double4*) &code[pc + 9])); pc += 18;
+                break;
+            case 243: // Min[quat, quatReg, quatReg]
+                *((double4*) &data[code[pc + 10]]) = min(*((double4*) &code[pc + 1]), *((double4*) &data[code[pc + 9]])); pc += 11;
+                break;
+            case 244: // Min[quatReg, quat, quatReg]
+                *((double4*) &data[code[pc + 10]]) = min(*((double4*) &data[code[pc + 1]]), *((double4*) &code[pc + 2])); pc += 11;
+                break;
+            case 245: // Min[quatReg, quatReg, quatReg]
+                *((double4*) &data[code[pc + 3]]) = min(*((double4*) &data[code[pc + 1]]), *((double4*) &data[code[pc + 2]])); pc += 4;
+                break;
+
+            // Conj with 2 cases
+
+            case 246: // Conj[cplx, cplxReg]
+                *((double2*) &data[code[pc + 5]]) = conj(*((double2*) &code[pc + 1])); pc += 6;
+                break;
+            case 247: // Conj[cplxReg, cplxReg]
+                *((double2*) &data[code[pc + 2]]) = conj(*((double2*) &data[code[pc + 1]])); pc += 3;
+                break;
+
+            // Flip with 2 cases
+
+            case 248: // Flip[cplx, cplxReg]
+                *((double2*) &data[code[pc + 5]]) = flip(*((double2*) &code[pc + 1])); pc += 6;
+                break;
+            case 249: // Flip[cplxReg, cplxReg]
+                *((double2*) &data[code[pc + 2]]) = flip(*((double2*) &data[code[pc + 1]])); pc += 3;
+                break;
+
+            // RAbs with 2 cases
+
+            case 250: // RAbs[cplx, cplxReg]
+                *((double2*) &data[code[pc + 5]]) = rabs(*((double2*) &code[pc + 1])); pc += 6;
+                break;
+            case 251: // RAbs[cplxReg, cplxReg]
+                *((double2*) &data[code[pc + 2]]) = rabs(*((double2*) &data[code[pc + 1]])); pc += 3;
+                break;
+
+            // IAbs with 2 cases
+
+            case 252: // IAbs[cplx, cplxReg]
+                *((double2*) &data[code[pc + 5]]) = iabs(*((double2*) &code[pc + 1])); pc += 6;
+                break;
+            case 253: // IAbs[cplxReg, cplxReg]
+                *((double2*) &data[code[pc + 2]]) = iabs(*((double2*) &data[code[pc + 1]])); pc += 3;
+                break;
+
+            // Norm with 2 cases
+
+            case 254: // Norm[cplx, cplxReg]
+                *((double2*) &data[code[pc + 5]]) = norm(*((double2*) &code[pc + 1])); pc += 6;
+                break;
+            case 255: // Norm[cplxReg, cplxReg]
+                *((double2*) &data[code[pc + 2]]) = norm(*((double2*) &data[code[pc + 1]])); pc += 3;
+                break;
+
+            // Polar with 2 cases
+
+            case 256: // Polar[cplx, cplxReg]
+                *((double2*) &data[code[pc + 5]]) = polar(*((double2*) &code[pc + 1])); pc += 6;
+                break;
+            case 257: // Polar[cplxReg, cplxReg]
+                *((double2*) &data[code[pc + 2]]) = polar(*((double2*) &data[code[pc + 1]])); pc += 3;
+                break;
+
+            // Rect with 2 cases
+
+            case 258: // Rect[cplx, cplxReg]
+                *((double2*) &data[code[pc + 5]]) = rect(*((double2*) &code[pc + 1])); pc += 6;
+                break;
+            case 259: // Rect[cplxReg, cplxReg]
+                *((double2*) &data[code[pc + 2]]) = rect(*((double2*) &data[code[pc + 1]])); pc += 3;
+                break;
+
+            // Arc with 2 cases
+
+            case 260: // Arc[cplx, realReg]
+                *((double*) &data[code[pc + 5]]) = arc(*((double2*) &code[pc + 1])); pc += 6;
+                break;
+            case 261: // Arc[cplxReg, realReg]
+                *((double*) &data[code[pc + 2]]) = arc(*((double2*) &data[code[pc + 1]])); pc += 3;
+                break;
+
+            // Arcnorm with 2 cases
+
+            case 262: // Arcnorm[cplx, realReg]
+                *((double*) &data[code[pc + 5]]) = arc(*((double2*) &code[pc + 1])) / M_PI; pc += 6;
+                break;
+            case 263: // Arcnorm[cplxReg, realReg]
+                *((double*) &data[code[pc + 2]]) = arc(*((double2*) &data[code[pc + 1]])) / M_PI; pc += 3;
+                break;
+
+            // Rad with 2 cases
+
+            case 264: // Rad[cplx, realReg]
+                *((double*) &data[code[pc + 5]]) = rad(*((double2*) &code[pc + 1])); pc += 6;
+                break;
+            case 265: // Rad[cplxReg, realReg]
+                *((double*) &data[code[pc + 2]]) = rad(*((double2*) &data[code[pc + 1]])); pc += 3;
+                break;
+
+            // Rad2 with 2 cases
+
+            case 266: // Rad2[cplx, realReg]
+                *((double*) &data[code[pc + 5]]) = rad2(*((double2*) &code[pc + 1])); pc += 6;
+                break;
+            case 267: // Rad2[cplxReg, realReg]
+                *((double*) &data[code[pc + 2]]) = rad2(*((double2*) &data[code[pc + 1]])); pc += 3;
+                break;
+
+            // Dist with 4 cases
+
+            case 268: // Dist[cplx, cplx, realReg]
+                *((double*) &data[code[pc + 9]]) = dist(*((double2*) &code[pc + 1]), *((double2*) &code[pc + 5])); pc += 10;
+                break;
+            case 269: // Dist[cplx, cplxReg, realReg]
+                *((double*) &data[code[pc + 6]]) = dist(*((double2*) &code[pc + 1]), *((double2*) &data[code[pc + 5]])); pc += 7;
+                break;
+            case 270: // Dist[cplxReg, cplx, realReg]
+                *((double*) &data[code[pc + 6]]) = dist(*((double2*) &data[code[pc + 1]]), *((double2*) &code[pc + 2])); pc += 7;
+                break;
+            case 271: // Dist[cplxReg, cplxReg, realReg]
+                *((double*) &data[code[pc + 3]]) = dist(*((double2*) &data[code[pc + 1]]), *((double2*) &data[code[pc + 2]])); pc += 4;
+                break;
+
+            // Dist2 with 4 cases
+
+            case 272: // Dist2[cplx, cplx, realReg]
+                *((double*) &data[code[pc + 9]]) = dist2(*((double2*) &code[pc + 1]), *((double2*) &code[pc + 5])); pc += 10;
+                break;
+            case 273: // Dist2[cplx, cplxReg, realReg]
+                *((double*) &data[code[pc + 6]]) = dist2(*((double2*) &code[pc + 1]), *((double2*) &data[code[pc + 5]])); pc += 7;
+                break;
+            case 274: // Dist2[cplxReg, cplx, realReg]
+                *((double*) &data[code[pc + 6]]) = dist2(*((double2*) &data[code[pc + 1]]), *((double2*) &code[pc + 2])); pc += 7;
+                break;
+            case 275: // Dist2[cplxReg, cplxReg, realReg]
+                *((double*) &data[code[pc + 3]]) = dist2(*((double2*) &data[code[pc + 1]]), *((double2*) &data[code[pc + 2]])); pc += 4;
+                break;
+
+            // Re with 2 cases
+
+            case 276: // Re[cplx, realReg]
+                *((double*) &data[code[pc + 5]]) = ((double2*) &code[pc + 1])->x; pc += 6;
+                break;
+            case 277: // Re[cplxReg, realReg]
+                *((double*) &data[code[pc + 2]]) = ((double2*) &data[code[pc + 1]])->x; pc += 3;
+                break;
+
+            // Im with 2 cases
+
+            case 278: // Im[cplx, realReg]
+                *((double*) &data[code[pc + 5]]) = ((double2*) &code[pc + 1])->y; pc += 6;
+                break;
+            case 279: // Im[cplxReg, realReg]
+                *((double*) &data[code[pc + 2]]) = ((double2*) &data[code[pc + 1]])->y; pc += 3;
+                break;
+
+            // Equal with 8 cases
+
+            case 280: // Equal[integer, integer, integer, integer]
+                pc = code[pc + 1] == code[pc + 2] ? code[pc + 3] : code[pc + 4];
+                break;
+            case 281: // Equal[integer, integerReg, integer, integer]
+                pc = code[pc + 1] == data[code[pc + 2]] ? code[pc + 3] : code[pc + 4];
+                break;
+            case 282: // Equal[integerReg, integer, integer, integer]
+                pc = data[code[pc + 1]] == code[pc + 2] ? code[pc + 3] : code[pc + 4];
+                break;
+            case 283: // Equal[integerReg, integerReg, integer, integer]
+                pc = data[code[pc + 1]] == data[code[pc + 2]] ? code[pc + 3] : code[pc + 4];
+                break;
+            case 284: // Equal[real, real, integer, integer]
+                pc = *((double*) &code[pc + 1]) == *((double*) &code[pc + 3]) ? code[pc + 5] : code[pc + 6];
+                break;
+            case 285: // Equal[real, realReg, integer, integer]
+                pc = *((double*) &code[pc + 1]) == *((double*) &data[code[pc + 3]]) ? code[pc + 4] : code[pc + 5];
+                break;
+            case 286: // Equal[realReg, real, integer, integer]
+                pc = *((double*) &data[code[pc + 1]]) == *((double*) &code[pc + 2]) ? code[pc + 4] : code[pc + 5];
+                break;
+            case 287: // Equal[realReg, realReg, integer, integer]
+                pc = *((double*) &data[code[pc + 1]]) == *((double*) &data[code[pc + 2]]) ? code[pc + 3] : code[pc + 4];
+                break;
+
+            // Less with 8 cases
+
+            case 288: // Less[integer, integer, integer, integer]
+                pc = code[pc + 1] < code[pc + 2] ? code[pc + 3] : code[pc + 4];
+                break;
+            case 289: // Less[integer, integerReg, integer, integer]
+                pc = code[pc + 1] < data[code[pc + 2]] ? code[pc + 3] : code[pc + 4];
+                break;
+            case 290: // Less[integerReg, integer, integer, integer]
+                pc = data[code[pc + 1]] < code[pc + 2] ? code[pc + 3] : code[pc + 4];
+                break;
+            case 291: // Less[integerReg, integerReg, integer, integer]
+                pc = data[code[pc + 1]] < data[code[pc + 2]] ? code[pc + 3] : code[pc + 4];
+                break;
+            case 292: // Less[real, real, integer, integer]
+                pc = *((double*) &code[pc + 1]) < *((double*) &code[pc + 3]) ? code[pc + 5] : code[pc + 6];
+                break;
+            case 293: // Less[real, realReg, integer, integer]
+                pc = *((double*) &code[pc + 1]) < *((double*) &data[code[pc + 3]]) ? code[pc + 4] : code[pc + 5];
+                break;
+            case 294: // Less[realReg, real, integer, integer]
+                pc = *((double*) &data[code[pc + 1]]) < *((double*) &code[pc + 2]) ? code[pc + 4] : code[pc + 5];
+                break;
+            case 295: // Less[realReg, realReg, integer, integer]
+                pc = *((double*) &data[code[pc + 1]]) < *((double*) &data[code[pc + 2]]) ? code[pc + 3] : code[pc + 4];
+                break;
+
+            // Box with 8 cases
+
+            case 296: // Box[cplx, cplx, cplx, realReg]
+                *((double*) &data[code[pc + 13]]) = box(*((double2*) &code[pc + 1]), *((double2*) &code[pc + 5]), *((double2*) &code[pc + 9])); pc += 14;
+                break;
+            case 297: // Box[cplx, cplx, cplxReg, realReg]
+                *((double*) &data[code[pc + 10]]) = box(*((double2*) &code[pc + 1]), *((double2*) &code[pc + 5]), *((double2*) &data[code[pc + 9]])); pc += 11;
+                break;
+            case 298: // Box[cplx, cplxReg, cplx, realReg]
+                *((double*) &data[code[pc + 10]]) = box(*((double2*) &code[pc + 1]), *((double2*) &data[code[pc + 5]]), *((double2*) &code[pc + 6])); pc += 11;
+                break;
+            case 299: // Box[cplx, cplxReg, cplxReg, realReg]
+                *((double*) &data[code[pc + 7]]) = box(*((double2*) &code[pc + 1]), *((double2*) &data[code[pc + 5]]), *((double2*) &data[code[pc + 6]])); pc += 8;
+                break;
+            case 300: // Box[cplxReg, cplx, cplx, realReg]
+                *((double*) &data[code[pc + 10]]) = box(*((double2*) &data[code[pc + 1]]), *((double2*) &code[pc + 2]), *((double2*) &code[pc + 6])); pc += 11;
+                break;
+            case 301: // Box[cplxReg, cplx, cplxReg, realReg]
+                *((double*) &data[code[pc + 7]]) = box(*((double2*) &data[code[pc + 1]]), *((double2*) &code[pc + 2]), *((double2*) &data[code[pc + 6]])); pc += 8;
+                break;
+            case 302: // Box[cplxReg, cplxReg, cplx, realReg]
+                *((double*) &data[code[pc + 7]]) = box(*((double2*) &data[code[pc + 1]]), *((double2*) &data[code[pc + 2]]), *((double2*) &code[pc + 3])); pc += 8;
+                break;
+            case 303: // Box[cplxReg, cplxReg, cplxReg, realReg]
+                *((double*) &data[code[pc + 4]]) = box(*((double2*) &data[code[pc + 1]]), *((double2*) &data[code[pc + 2]]), *((double2*) &data[code[pc + 3]])); pc += 5;
+                break;
+
+            // Circle with 8 cases
+
+            case 304: // Circle[cplx, real, cplx, realReg]
+                *((double*) &data[code[pc + 11]]) = circle(*((double2*) &code[pc + 1]), *((double*) &code[pc + 5]), *((double2*) &code[pc + 7])); pc += 12;
+                break;
+            case 305: // Circle[cplx, real, cplxReg, realReg]
+                *((double*) &data[code[pc + 8]]) = circle(*((double2*) &code[pc + 1]), *((double*) &code[pc + 5]), *((double2*) &data[code[pc + 7]])); pc += 9;
+                break;
+            case 306: // Circle[cplx, realReg, cplx, realReg]
+                *((double*) &data[code[pc + 10]]) = circle(*((double2*) &code[pc + 1]), *((double*) &data[code[pc + 5]]), *((double2*) &code[pc + 6])); pc += 11;
+                break;
+            case 307: // Circle[cplx, realReg, cplxReg, realReg]
+                *((double*) &data[code[pc + 7]]) = circle(*((double2*) &code[pc + 1]), *((double*) &data[code[pc + 5]]), *((double2*) &data[code[pc + 6]])); pc += 8;
+                break;
+            case 308: // Circle[cplxReg, real, cplx, realReg]
+                *((double*) &data[code[pc + 8]]) = circle(*((double2*) &data[code[pc + 1]]), *((double*) &code[pc + 2]), *((double2*) &code[pc + 4])); pc += 9;
+                break;
+            case 309: // Circle[cplxReg, real, cplxReg, realReg]
+                *((double*) &data[code[pc + 5]]) = circle(*((double2*) &data[code[pc + 1]]), *((double*) &code[pc + 2]), *((double2*) &data[code[pc + 4]])); pc += 6;
+                break;
+            case 310: // Circle[cplxReg, realReg, cplx, realReg]
+                *((double*) &data[code[pc + 7]]) = circle(*((double2*) &data[code[pc + 1]]), *((double*) &data[code[pc + 2]]), *((double2*) &code[pc + 3])); pc += 8;
+                break;
+            case 311: // Circle[cplxReg, realReg, cplxReg, realReg]
+                *((double*) &data[code[pc + 4]]) = circle(*((double2*) &data[code[pc + 1]]), *((double*) &data[code[pc + 2]]), *((double2*) &data[code[pc + 3]])); pc += 5;
+                break;
+
+            // Line with 8 cases
+
+            case 312: // Line[cplx, cplx, cplx, realReg]
+                *((double*) &data[code[pc + 13]]) = line(*((double2*) &code[pc + 1]), *((double2*) &code[pc + 5]), *((double2*) &code[pc + 9])); pc += 14;
+                break;
+            case 313: // Line[cplx, cplx, cplxReg, realReg]
+                *((double*) &data[code[pc + 10]]) = line(*((double2*) &code[pc + 1]), *((double2*) &code[pc + 5]), *((double2*) &data[code[pc + 9]])); pc += 11;
+                break;
+            case 314: // Line[cplx, cplxReg, cplx, realReg]
+                *((double*) &data[code[pc + 10]]) = line(*((double2*) &code[pc + 1]), *((double2*) &data[code[pc + 5]]), *((double2*) &code[pc + 6])); pc += 11;
+                break;
+            case 315: // Line[cplx, cplxReg, cplxReg, realReg]
+                *((double*) &data[code[pc + 7]]) = line(*((double2*) &code[pc + 1]), *((double2*) &data[code[pc + 5]]), *((double2*) &data[code[pc + 6]])); pc += 8;
+                break;
+            case 316: // Line[cplxReg, cplx, cplx, realReg]
+                *((double*) &data[code[pc + 10]]) = line(*((double2*) &data[code[pc + 1]]), *((double2*) &code[pc + 2]), *((double2*) &code[pc + 6])); pc += 11;
+                break;
+            case 317: // Line[cplxReg, cplx, cplxReg, realReg]
+                *((double*) &data[code[pc + 7]]) = line(*((double2*) &data[code[pc + 1]]), *((double2*) &code[pc + 2]), *((double2*) &data[code[pc + 6]])); pc += 8;
+                break;
+            case 318: // Line[cplxReg, cplxReg, cplx, realReg]
+                *((double*) &data[code[pc + 7]]) = line(*((double2*) &data[code[pc + 1]]), *((double2*) &data[code[pc + 2]]), *((double2*) &code[pc + 3])); pc += 8;
+                break;
+            case 319: // Line[cplxReg, cplxReg, cplxReg, realReg]
+                *((double*) &data[code[pc + 4]]) = line(*((double2*) &data[code[pc + 1]]), *((double2*) &data[code[pc + 2]]), *((double2*) &data[code[pc + 3]])); pc += 5;
+                break;
+
+            // Segment with 8 cases
+
+            case 320: // Segment[cplx, cplx, cplx, realReg]
+                *((double*) &data[code[pc + 13]]) = segment(*((double2*) &code[pc + 1]), *((double2*) &code[pc + 5]), *((double2*) &code[pc + 9])); pc += 14;
+                break;
+            case 321: // Segment[cplx, cplx, cplxReg, realReg]
+                *((double*) &data[code[pc + 10]]) = segment(*((double2*) &code[pc + 1]), *((double2*) &code[pc + 5]), *((double2*) &data[code[pc + 9]])); pc += 11;
+                break;
+            case 322: // Segment[cplx, cplxReg, cplx, realReg]
+                *((double*) &data[code[pc + 10]]) = segment(*((double2*) &code[pc + 1]), *((double2*) &data[code[pc + 5]]), *((double2*) &code[pc + 6])); pc += 11;
+                break;
+            case 323: // Segment[cplx, cplxReg, cplxReg, realReg]
+                *((double*) &data[code[pc + 7]]) = segment(*((double2*) &code[pc + 1]), *((double2*) &data[code[pc + 5]]), *((double2*) &data[code[pc + 6]])); pc += 8;
+                break;
+            case 324: // Segment[cplxReg, cplx, cplx, realReg]
+                *((double*) &data[code[pc + 10]]) = segment(*((double2*) &data[code[pc + 1]]), *((double2*) &code[pc + 2]), *((double2*) &code[pc + 6])); pc += 11;
+                break;
+            case 325: // Segment[cplxReg, cplx, cplxReg, realReg]
+                *((double*) &data[code[pc + 7]]) = segment(*((double2*) &data[code[pc + 1]]), *((double2*) &code[pc + 2]), *((double2*) &data[code[pc + 6]])); pc += 8;
+                break;
+            case 326: // Segment[cplxReg, cplxReg, cplx, realReg]
+                *((double*) &data[code[pc + 7]]) = segment(*((double2*) &data[code[pc + 1]]), *((double2*) &data[code[pc + 2]]), *((double2*) &code[pc + 3])); pc += 8;
+                break;
+            case 327: // Segment[cplxReg, cplxReg, cplxReg, realReg]
+                *((double*) &data[code[pc + 4]]) = segment(*((double2*) &data[code[pc + 1]]), *((double2*) &data[code[pc + 2]]), *((double2*) &data[code[pc + 3]])); pc += 5;
+                break;
+
+            // Int2Lab with 2 cases
+
+            case 328: // Int2Lab[integer, quatReg]
+                *((double4*) &data[code[pc + 2]]) = int2lab(code[pc + 1]); pc += 3;
+                break;
+            case 329: // Int2Lab[integerReg, quatReg]
+                *((double4*) &data[code[pc + 2]]) = int2lab(data[code[pc + 1]]); pc += 3;
+                break;
+
+            // Int2Rgb with 2 cases
+
+            case 330: // Int2Rgb[integer, quatReg]
+                *((double4*) &data[code[pc + 2]]) = int2rgb(code[pc + 1]); pc += 3;
+                break;
+            case 331: // Int2Rgb[integerReg, quatReg]
+                *((double4*) &data[code[pc + 2]]) = int2rgb(data[code[pc + 1]]); pc += 3;
+                break;
+
+            // Lab2Int with 2 cases
+
+            case 332: // Lab2Int[quat, integerReg]
+                data[code[pc + 9]] = lab2int(*((double4*) &code[pc + 1])); pc += 10;
+                break;
+            case 333: // Lab2Int[quatReg, integerReg]
+                data[code[pc + 2]] = lab2int(*((double4*) &data[code[pc + 1]])); pc += 3;
+                break;
+
+            // Lab2Rgb with 2 cases
+
+            case 334: // Lab2Rgb[quat, quatReg]
+                *((double4*) &data[code[pc + 9]]) = lab2rgb(*((double4*) &code[pc + 1])); pc += 10;
+                break;
+            case 335: // Lab2Rgb[quatReg, quatReg]
+                *((double4*) &data[code[pc + 2]]) = lab2rgb(*((double4*) &data[code[pc + 1]])); pc += 3;
+                break;
+
+            // Rgb2Int with 2 cases
+
+            case 336: // Rgb2Int[quat, integerReg]
+                data[code[pc + 9]] = rgb2int(*((double4*) &code[pc + 1])); pc += 10;
+                break;
+            case 337: // Rgb2Int[quatReg, integerReg]
+                data[code[pc + 2]] = rgb2int(*((double4*) &data[code[pc + 1]])); pc += 3;
+                break;
+
+            // Rgb2Lab with 2 cases
+
+            case 338: // Rgb2Lab[quat, quatReg]
+                *((double4*) &data[code[pc + 9]]) = rgb2lab(*((double4*) &code[pc + 1])); pc += 10;
+                break;
+            case 339: // Rgb2Lab[quatReg, quatReg]
+                *((double4*) &data[code[pc + 2]]) = rgb2lab(*((double4*) &data[code[pc + 1]])); pc += 3;
+                break;
+
+            // Over with 4 cases
+
+            case 340: // Over[quat, quat, quatReg]
+                *((double4*) &data[code[pc + 17]]) = over(*((double4*) &code[pc + 1]), *((double4*) &code[pc + 9])); pc += 18;
+                break;
+            case 341: // Over[quat, quatReg, quatReg]
+                *((double4*) &data[code[pc + 10]]) = over(*((double4*) &code[pc + 1]), *((double4*) &data[code[pc + 9]])); pc += 11;
+                break;
+            case 342: // Over[quatReg, quat, quatReg]
+                *((double4*) &data[code[pc + 10]]) = over(*((double4*) &data[code[pc + 1]]), *((double4*) &code[pc + 2])); pc += 11;
+                break;
+            case 343: // Over[quatReg, quatReg, quatReg]
+                *((double4*) &data[code[pc + 3]]) = over(*((double4*) &data[code[pc + 1]]), *((double4*) &data[code[pc + 2]])); pc += 4;
+                break;
+
+            // DistLess with 8 cases
+
+            case 344: // DistLess[cplx, cplx, real, integer, integer]
+                pc = rad2(*((double2*) &code[pc + 1]) - *((double2*) &code[pc + 5])) < sqr(*((double*) &code[pc + 9])) ? code[pc + 11] : code[pc + 12];
+                break;
+            case 345: // DistLess[cplx, cplx, realReg, integer, integer]
+                pc = rad2(*((double2*) &code[pc + 1]) - *((double2*) &code[pc + 5])) < sqr(*((double*) &data[code[pc + 9]])) ? code[pc + 10] : code[pc + 11];
+                break;
+            case 346: // DistLess[cplx, cplxReg, real, integer, integer]
+                pc = rad2(*((double2*) &code[pc + 1]) - *((double2*) &data[code[pc + 5]])) < sqr(*((double*) &code[pc + 6])) ? code[pc + 8] : code[pc + 9];
+                break;
+            case 347: // DistLess[cplx, cplxReg, realReg, integer, integer]
+                pc = rad2(*((double2*) &code[pc + 1]) - *((double2*) &data[code[pc + 5]])) < sqr(*((double*) &data[code[pc + 6]])) ? code[pc + 7] : code[pc + 8];
+                break;
+            case 348: // DistLess[cplxReg, cplx, real, integer, integer]
+                pc = rad2(*((double2*) &data[code[pc + 1]]) - *((double2*) &code[pc + 2])) < sqr(*((double*) &code[pc + 6])) ? code[pc + 8] : code[pc + 9];
+                break;
+            case 349: // DistLess[cplxReg, cplx, realReg, integer, integer]
+                pc = rad2(*((double2*) &data[code[pc + 1]]) - *((double2*) &code[pc + 2])) < sqr(*((double*) &data[code[pc + 6]])) ? code[pc + 7] : code[pc + 8];
+                break;
+            case 350: // DistLess[cplxReg, cplxReg, real, integer, integer]
+                pc = rad2(*((double2*) &data[code[pc + 1]]) - *((double2*) &data[code[pc + 2]])) < sqr(*((double*) &code[pc + 3])) ? code[pc + 5] : code[pc + 6];
+                break;
+            case 351: // DistLess[cplxReg, cplxReg, realReg, integer, integer]
+                pc = rad2(*((double2*) &data[code[pc + 1]]) - *((double2*) &data[code[pc + 2]])) < sqr(*((double*) &data[code[pc + 3]])) ? code[pc + 4] : code[pc + 5];
+                break;
+
+            // RadLess with 4 cases
+
+            case 352: // RadLess[cplx, real, integer, integer]
+                pc = rad2(*((double2*) &code[pc + 1])) < sqr(*((double*) &code[pc + 5])) ? code[pc + 7] : code[pc + 8];
+                break;
+            case 353: // RadLess[cplx, realReg, integer, integer]
+                pc = rad2(*((double2*) &code[pc + 1])) < sqr(*((double*) &data[code[pc + 5]])) ? code[pc + 6] : code[pc + 7];
+                break;
+            case 354: // RadLess[cplxReg, real, integer, integer]
+                pc = rad2(*((double2*) &data[code[pc + 1]])) < sqr(*((double*) &code[pc + 2])) ? code[pc + 4] : code[pc + 5];
+                break;
+            case 355: // RadLess[cplxReg, realReg, integer, integer]
+                pc = rad2(*((double2*) &data[code[pc + 1]])) < sqr(*((double*) &data[code[pc + 2]])) ? code[pc + 3] : code[pc + 4];
+                break;
+
+            // RadRange with 4 cases
+
+            case 356: // RadRange[cplx, cplx, real, real, integer, integer, integer]
+                pc = radrange(*((double2*) &code[pc + 1]), *((double2*) &code[pc + 5]), *((double*) &code[pc + 9]), *((double*) &code[pc + 11]), code[pc + 13], code[pc + 14], code[pc + 15]);
+                break;
+            case 357: // RadRange[cplxReg, cplx, real, real, integer, integer, integer]
+                pc = radrange(*((double2*) &data[code[pc + 1]]), *((double2*) &code[pc + 2]), *((double*) &code[pc + 6]), *((double*) &code[pc + 8]), code[pc + 10], code[pc + 11], code[pc + 12]);
+                break;
+            case 358: // RadRange[cplx, cplxReg, real, real, integer, integer, integer]
+                pc = radrange(*((double2*) &code[pc + 1]), *((double2*) &data[code[pc + 5]]), *((double*) &code[pc + 6]), *((double*) &code[pc + 8]), code[pc + 10], code[pc + 11], code[pc + 12]);
+                break;
+            case 359: // RadRange[cplxReg, cplxReg, real, real, integer, integer, integer]
+                pc = radrange(*((double2*) &data[code[pc + 1]]), *((double2*) &data[code[pc + 2]]), *((double*) &code[pc + 3]), *((double*) &code[pc + 5]), code[pc + 7], code[pc + 8], code[pc + 9]);
+                break;
+
+            // Smooth with 8 cases
+
+            case 368: // Smooth[cplx, real, real, realReg]
+                *((double*) &data[code[pc + 9]]) = smooth(*((double2*) &code[pc + 1]), *((double*) &code[pc + 5]), *((double*) &code[pc + 7])); pc += 10;
+                break;
+            case 369: // Smooth[cplx, real, realReg, realReg]
+                *((double*) &data[code[pc + 8]]) = smooth(*((double2*) &code[pc + 1]), *((double*) &code[pc + 5]), *((double*) &data[code[pc + 7]])); pc += 9;
+                break;
+            case 370: // Smooth[cplx, realReg, real, realReg]
+                *((double*) &data[code[pc + 8]]) = smooth(*((double2*) &code[pc + 1]), *((double*) &data[code[pc + 5]]), *((double*) &code[pc + 6])); pc += 9;
+                break;
+            case 371: // Smooth[cplx, realReg, realReg, realReg]
+                *((double*) &data[code[pc + 7]]) = smooth(*((double2*) &code[pc + 1]), *((double*) &data[code[pc + 5]]), *((double*) &data[code[pc + 6]])); pc += 8;
+                break;
+            case 372: // Smooth[cplxReg, real, real, realReg]
+                *((double*) &data[code[pc + 6]]) = smooth(*((double2*) &data[code[pc + 1]]), *((double*) &code[pc + 2]), *((double*) &code[pc + 4])); pc += 7;
+                break;
+            case 373: // Smooth[cplxReg, real, realReg, realReg]
+                *((double*) &data[code[pc + 5]]) = smooth(*((double2*) &data[code[pc + 1]]), *((double*) &code[pc + 2]), *((double*) &data[code[pc + 4]])); pc += 6;
+                break;
+            case 374: // Smooth[cplxReg, realReg, real, realReg]
+                *((double*) &data[code[pc + 5]]) = smooth(*((double2*) &data[code[pc + 1]]), *((double*) &data[code[pc + 2]]), *((double*) &code[pc + 3])); pc += 6;
+                break;
+            case 375: // Smooth[cplxReg, realReg, realReg, realReg]
+                *((double*) &data[code[pc + 4]]) = smooth(*((double2*) &data[code[pc + 1]]), *((double*) &data[code[pc + 2]]), *((double*) &data[code[pc + 3]])); pc += 5;
+                break;
+
+            // Mandelbrot with 4 cases
+
+            case 376: // Mandelbrot[cplx, cplx, cplxReg]
+                *((double2*) &data[code[pc + 9]]) = mandelbrot(*((double2*) &code[pc + 1]), *((double2*) &code[pc + 5])); pc += 10;
+                break;
+            case 377: // Mandelbrot[cplx, cplxReg, cplxReg]
+                *((double2*) &data[code[pc + 6]]) = mandelbrot(*((double2*) &code[pc + 1]), *((double2*) &data[code[pc + 5]])); pc += 7;
+                break;
+            case 378: // Mandelbrot[cplxReg, cplx, cplxReg]
+                *((double2*) &data[code[pc + 6]]) = mandelbrot(*((double2*) &data[code[pc + 1]]), *((double2*) &code[pc + 2])); pc += 7;
+                break;
+            case 379: // Mandelbrot[cplxReg, cplxReg, cplxReg]
+                *((double2*) &data[code[pc + 3]]) = mandelbrot(*((double2*) &data[code[pc + 1]]), *((double2*) &data[code[pc + 2]])); pc += 4;
+                break;
+
+            // Next with 2 cases
+
+            case 380: // Next[integerReg, integer, integer, integer]
+                pc = (++data[code[pc + 1]]) < code[pc + 2] ? code[pc + 3] : code[pc + 4];
+                break;
+            case 381: // Next[integerReg, integerReg, integer, integer]
+                pc = (++data[code[pc + 1]]) < data[code[pc + 2]] ? code[pc + 3] : code[pc + 4];
+                break;
+
+            // MapCoordinates with 6 cases
+
+            case 382: // MapCoordinates[real, real, cplxReg]
+                *((double2*) &data[code[pc + 5]]) = mapcoordinates(*((double*) &code[pc + 1]), *((double*) &code[pc + 3])); pc += 6;
+                break;
+            case 383: // MapCoordinates[real, realReg, cplxReg]
+                *((double2*) &data[code[pc + 4]]) = mapcoordinates(*((double*) &code[pc + 1]), *((double*) &data[code[pc + 3]])); pc += 5;
+                break;
+            case 384: // MapCoordinates[realReg, real, cplxReg]
+                *((double2*) &data[code[pc + 4]]) = mapcoordinates(*((double*) &data[code[pc + 1]]), *((double*) &code[pc + 2])); pc += 5;
+                break;
+            case 385: // MapCoordinates[realReg, realReg, cplxReg]
+                *((double2*) &data[code[pc + 3]]) = mapcoordinates(*((double*) &data[code[pc + 1]]), *((double*) &data[code[pc + 2]])); pc += 4;
+                break;
+            case 386: // MapCoordinates[cplx, cplxReg]
+                *((double2*) &data[code[pc + 5]]) = mapcoordinates(*((double2*) &code[pc + 1])); pc += 6;
+                break;
+            case 387: // MapCoordinates[cplxReg, cplxReg]
+                *((double2*) &data[code[pc + 2]]) = mapcoordinates(*((double2*) &data[code[pc + 1]])); pc += 3;
+                break;
+
+            // Mov with 8 cases
+
+            case 388: // Mov[integer, integerReg]
+                data[code[pc + 2]] = code[pc + 1]; pc += 3;
+                break;
+            case 389: // Mov[integerReg, integerReg]
+                data[code[pc + 2]] = data[code[pc + 1]]; pc += 3;
+                break;
+            case 390: // Mov[real, realReg]
+                *((double*) &data[code[pc + 3]]) = *((double*) &code[pc + 1]); pc += 4;
+                break;
+            case 391: // Mov[realReg, realReg]
+                *((double*) &data[code[pc + 2]]) = *((double*) &data[code[pc + 1]]); pc += 3;
+                break;
+            case 392: // Mov[cplx, cplxReg]
+                *((double2*) &data[code[pc + 5]]) = *((double2*) &code[pc + 1]); pc += 6;
+                break;
+            case 393: // Mov[cplxReg, cplxReg]
+                *((double2*) &data[code[pc + 2]]) = *((double2*) &data[code[pc + 1]]); pc += 3;
+                break;
+            case 394: // Mov[quat, quatReg]
+                *((double4*) &data[code[pc + 9]]) = *((double4*) &code[pc + 1]); pc += 10;
+                break;
+            case 395: // Mov[quatReg, quatReg]
+                *((double4*) &data[code[pc + 2]]) = *((double4*) &data[code[pc + 1]]); pc += 3;
+                break;
+
+            // Jump with 1 cases
+
+            case 396: // Jump[integer]
+                pc = code[pc + 1];
+                break;
+
+            // JumpRel with 1 cases
+
+            case 397: // JumpRel[integerReg]
+                pc = code[pc + data[code[pc + 1]] + 2] /* +2 because of instruction and argument */;
+                break;
+
+            // LdPalette with 4 cases
+
+            case 398: // LdPalette[integer, cplx, quatReg]
+                *((double4*) &data[code[pc + 6]]) = palette_lab(code[pc + 1], *((double2*) &code[pc + 2])); pc += 7;
+                break;
+            case 399: // LdPalette[integer, cplxReg, quatReg]
+                *((double4*) &data[code[pc + 3]]) = palette_lab(code[pc + 1], *((double2*) &data[code[pc + 2]])); pc += 4;
+                break;
+            case 400: // LdPalette[integer, cplx, integerReg]
+                data[code[pc + 6]] = palette_int(code[pc + 1], *((double2*) &code[pc + 2])); pc += 7;
+                break;
+            case 401: // LdPalette[integer, cplxReg, integerReg]
+                data[code[pc + 3]] = palette_int(code[pc + 1], *((double2*) &data[code[pc + 2]])); pc += 4;
+                break;
+        }
+    }
 
 	int color = data[2];
 

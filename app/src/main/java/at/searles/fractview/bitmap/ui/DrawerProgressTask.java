@@ -2,6 +2,8 @@ package at.searles.fractview.bitmap.ui;
 
 import android.os.Handler;
 
+import at.searles.fractview.bitmap.FractalCalculator;
+
 /**
  * Class used for updating the view on a regular basis
  */
@@ -9,15 +11,15 @@ class DrawerProgressTask implements Runnable {
 
     private static final long PROGRESS_UPDATE_MILLIS = 500; // TODO move to res. update the progress bar every ... ms.
 
-    private final BitmapFragmentView view;
-    private final BitmapFragmentAccessor accessor;
+    private final FractalCalculatorView view;
+    private final FractalCalculator calculator;
     private final Handler handler;
 
     private boolean disposed;
 
-    DrawerProgressTask(BitmapFragmentView view, BitmapFragmentAccessor accessor) {
+    DrawerProgressTask(FractalCalculatorView view, FractalCalculator calculator) {
         this.view = view;
-        this.accessor = accessor;
+        this.calculator = calculator;
         this.handler = new Handler();
     }
 
@@ -27,10 +29,10 @@ class DrawerProgressTask implements Runnable {
 
     @Override
     public void run() {
-        if(accessor != null) {
-            if (accessor.isRunning()) {
+        if(calculator != null) {
+            if (calculator.isRunning()) {
                 if(!disposed) {
-                    view.setProgress(accessor.progress());
+                    view.setProgress(calculator.progress());
                     handler.postDelayed(this, PROGRESS_UPDATE_MILLIS);
                 }
             } else {
