@@ -23,17 +23,15 @@ import at.searles.meelan.MeelanException;
 public class ExprDialogFragment extends DialogFragment {
 
     private static final String VALUE_KEY = "value";
-    private static final String SOURCE_KEY = "source";
     private static final String TITLE_KEY = "title";
     private static final String ID_KEY = "id";
 
-    public static ExprDialogFragment newInstance(String title, String id, String value, String source) {
+    public static ExprDialogFragment newInstance(String title, String id, String value) {
         Bundle b = new Bundle();
 
         b.putString(TITLE_KEY, title);
         b.putString(ID_KEY, id);
         b.putString(VALUE_KEY, value);
-        b.putString(SOURCE_KEY, source);
 
         ExprDialogFragment fragment = new ExprDialogFragment();
         fragment.setArguments(b);

@@ -2,14 +2,11 @@ package at.searles.fractview.main;
 
 
 import android.app.Fragment;
-import android.app.FragmentManager;
-import android.app.FragmentTransaction;
 import android.app.ProgressDialog;
 import android.os.AsyncTask;
 import android.os.Bundle;
 import android.renderscript.RenderScript;
 import android.support.annotation.Nullable;
-import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -25,7 +22,7 @@ import at.searles.fractview.renderscript.RenderScriptDrawer;
  */
 public class InitializationFragment extends Fragment {
 
-    public static final String TAG = "initFragment";
+    public static final String TAG = "rsFragment";
     private RenderScript rs;
 
     private ScriptC_fillimage fillScript;
@@ -138,17 +135,10 @@ public class InitializationFragment extends Fragment {
     }
 
     private void initializationFinished() {
-        FragmentManager fm = getFragmentManager();
-        FractalFragment fractalFragment = (FractalFragment) fm.findFragmentByTag(FractalFragment.TAG);
+        FractalFragment parent = (FractalFragment) getParentFragment();
 
-        Log.d(getClass().getName(), "init Fractal Fragment: " + fractalFragment);
-
-        if(fractalFragment == null) {
-            fractalFragment = FractalFragment.newInstance();
-
-            FragmentTransaction transaction = fm.beginTransaction();
-            transaction.add(fractalFragment, FractalFragment.TAG);
-            transaction.commit();
+        if(parent != null) {
+            parent.initializationFinished(this);
         }
     }
 
@@ -168,9 +158,5 @@ public class InitializationFragment extends Fragment {
         }
 
         return new RenderScriptDrawer(rs, script, fillScript);
-    }
-
-    public boolean isInitializing() {
-        return isInitializing;
     }
 }

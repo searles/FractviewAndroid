@@ -5,7 +5,7 @@ import android.os.Bundle;
 import android.support.annotation.Nullable;
 import android.util.Log;
 
-import at.searles.fractal.Fractal;
+import at.searles.fractal.FractalExternData;
 import at.searles.fractal.FractalProvider;
 import at.searles.fractal.data.FractalData;
 import at.searles.math.Scale;
@@ -80,8 +80,8 @@ public class SingleFractalFragment extends Fragment {
         return new CallBack() {
             @Override
             public void setScaleRelative(Scale sc) {
-                Scale absoluteScale = ((Scale) provider.get(label).data().value(Fractal.SCALE_LABEL)).relative(sc);
-                provider.set(Fractal.SCALE_KEY, label, absoluteScale);
+                Scale absoluteScale = ((Scale) provider.get(label).data().value(FractalExternData.SCALE_LABEL)).relative(sc);
+                provider.set(FractalExternData.SCALE_KEY, label, absoluteScale);
             }
         };
     }

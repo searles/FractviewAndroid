@@ -3,7 +3,6 @@ package at.searles.fractview.parameters.palettes;
 import android.app.Activity;
 import android.content.Intent;
 import android.os.Bundle;
-import android.util.Log;
 import android.view.Menu;
 import android.view.MenuInflater;
 import android.view.MenuItem;
@@ -12,11 +11,10 @@ import android.widget.Button;
 
 import org.jetbrains.annotations.NotNull;
 
+import at.searles.fractal.gson.Serializers;
 import at.searles.fractview.ClipboardHelper;
 import at.searles.fractview.R;
-import at.searles.fractview.SharedPrefsHelper;
 import at.searles.fractview.fractal.BundleAdapter;
-import at.searles.fractal.gson.Serializers;
 import at.searles.fractview.ui.DialogHelper;
 import at.searles.fractview.ui.MultiScrollView;
 import at.searles.math.color.Palette;
@@ -31,7 +29,7 @@ import at.searles.math.color.Palette;
  *
  * Therefore, it would be better if the view did not hold the model.
  */
-public class PaletteActivity extends Activity implements EditableDialogFragment.Callback {
+public class PaletteActivity extends Activity {
 
 	public static final String PALETTE_LABEL = "palette";
 	public static final String ID_LABEL = "id";
@@ -130,23 +128,26 @@ public class PaletteActivity extends Activity implements EditableDialogFragment.
 		// Handle presses on the action bar items
 		switch (item.getItemId()) {
 			case R.id.action_load_palette: {
+				// TODO:
+				// Start activity!
 				// the fragment needs the name of the prefs as an argument.
 
-				EditableDialogFragment ft = EditableDialogFragment.newInstance(
-						LOAD_PALETTE, "Load Palette", false,
-						EditableDialogFragment.Type.LoadSharedPref);
-
-				ft.show(getFragmentManager(), "dialog");
-				ft.getArguments().putString("prefs_name", PaletteActivity.PREFS_NAME);
+//				EditableDialogFragment ft = EditableDialogFragment.newInstance(
+//						LOAD_PALETTE, "Load Palette", false,
+//						EditableDialogFragment.Type.LoadSharedPref);
+//
+//				ft.show(getFragmentManager(), "dialog");
+//				ft.getArguments().putString("prefs_name", PaletteActivity.PREFS_NAME);
 			} return true;
 			case R.id.action_save_palette: {
-				EditableDialogFragment ft = EditableDialogFragment.newInstance(SAVE_PALETTE,
-						"Save Palette", false, EditableDialogFragment.Type.SaveSharedPref);
-
-				ft.show(getFragmentManager(), "dialog");
-
-				// the fragment needs the name of the prefs as an argument.
-				ft.getArguments().putString("prefs_name", PaletteActivity.PREFS_NAME);
+				// TODO: Show dialog for entering name.
+//				EditableDialogFragment ft = EditableDialogFragment.newInstance(SAVE_PALETTE,
+//						"Save Palette", false, EditableDialogFragment.Type.SaveSharedPref);
+//
+//				ft.show(getFragmentManager(), "dialog");
+//
+//				// the fragment needs the name of the prefs as an argument.
+//				ft.getArguments().putString("prefs_name", PaletteActivity.PREFS_NAME);
 			} return true;
 			case R.id.action_copy_to_clipboard: {
 				// copy
@@ -182,46 +183,46 @@ public class PaletteActivity extends Activity implements EditableDialogFragment.
 		return model;
 	}
 
-	@Override
-	public void apply(int requestCode, Object o) {
-		switch(requestCode) {
-			case LOAD_PALETTE: {
-				String name = (String) o;
-
-				String paletteString = SharedPrefsHelper.loadFromSharedPreferences(this, name, PREFS_NAME);
-
-				Log.d(getClass().getName(), "Palette string is " + paletteString + ", name is " + name);
-
-				if(paletteString != null) {
-					Palette p = Serializers.serializer().fromJson(paletteString, Palette.class);
-
-					if(p != null) {
-						// set the palette.
-						model = new PaletteViewModel(p);
-						PaletteView view = (PaletteView) findViewById(R.id.paletteView);
-						view.invalidate();
-					} else {
-						DialogHelper.error(this, "Could not create palette");
-					}
-				}
-			} break;
-			case SAVE_PALETTE: {
-				String name = (String) o;
-				SharedPrefsHelper.storeInSharedPreferences(this, name, model.createPalette(), PREFS_NAME);
-			} break;
-			default: {
-				// Tag when it is a color are the coordinates
-				int x = requestCode % model.width();
-				int y = requestCode / model.width();
-
-				// todo alpha!
-				model.set(x, y, ((Integer) o) | 0xff000000);
-
-				// redraw palette
-				findViewById(R.id.paletteView).invalidate();
-			}
-		}
-	}
+//	@Override
+//	public void apply(int requestCode, Object o) {
+//		switch(requestCode) {
+//			case LOAD_PALETTE: {
+//				String name = (String) o;
+//
+//				String paletteString = SharedPrefsHelper.loadFromSharedPreferences(this, name, PREFS_NAME);
+//
+//				Log.d(getClass().getName(), "Palette string is " + paletteString + ", name is " + name);
+//
+//				if(paletteString != null) {
+//					Palette p = Serializers.serializer().fromJson(paletteString, Palette.class);
+//
+//					if(p != null) {
+//						// set the palette.
+//						model = new PaletteViewModel(p);
+//						PaletteView view = (PaletteView) findViewById(R.id.paletteView);
+//						view.invalidate();
+//					} else {
+//						DialogHelper.error(this, "Could not create palette");
+//					}
+//				}
+//			} break;
+//			case SAVE_PALETTE: {
+//				String name = (String) o;
+//				SharedPrefsHelper.storeInSharedPreferences(this, name, model.createPalette(), PREFS_NAME);
+//			} break;
+//			default: {
+//				// Tag when it is a color are the coordinates
+//				int x = requestCode % model.width();
+//				int y = requestCode / model.width();
+//
+//				// todo alpha!
+//				model.set(x, y, ((Integer) o) | 0xff000000);
+//
+//				// redraw palette
+//				findViewById(R.id.paletteView).invalidate();
+//			}
+//		}
+//	}
 
 	public void dimensionChanged() {
 		MultiScrollView msView = (MultiScrollView) findViewById(R.id.multiScrollView);

@@ -1,13 +1,9 @@
 package at.searles.fractview.main;
 
 import android.app.Fragment;
-import android.app.FragmentManager;
-import android.app.FragmentTransaction;
-import android.content.Context;
 import android.content.Intent;
 import android.os.Bundle;
 import android.support.annotation.Nullable;
-import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -17,6 +13,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 import at.searles.fractal.Fractal;
+import at.searles.fractal.FractalExternData;
 import at.searles.fractal.FractalProvider;
 import at.searles.fractal.data.FractalData;
 import at.searles.fractal.data.ParameterKey;
@@ -29,8 +26,6 @@ import at.searles.fractview.fractal.BundleAdapter;
 import at.searles.fractview.parameters.palettes.PaletteActivity;
 import at.searles.math.Scale;
 import at.searles.math.color.Palette;
-
-import static at.searles.fractal.Fractal.SCALE_KEY;
 
 /**
  * Central fragment managing renderscriptfragment, bitmapfragments, fractalprovider
@@ -56,7 +51,6 @@ import static at.searles.fractal.Fractal.SCALE_KEY;
 public class FractalFragment extends Fragment {
 
     private static final String FRACTAL_KEY = "fractal";
-    private static final String RENDERSCRIPT_FRAGMENT_TAG = "rsFragment";
 
     private static final int WIDTH = 640;
     private static final int HEIGHT = 640;
@@ -68,9 +62,11 @@ public class FractalFragment extends Fragment {
     private Map<String, FractalCalculator> fractalCalculators;
     private Map<String, FractalCalculatorView> fractalCalculatorViews;
 
-    public static FractalFragment newInstance() {
+    public static FractalFragment newInstance(FractalData fractal) {
         // assertion: fractal must be valid!
         Bundle args = new Bundle();
+
+        args.putBundle(FRACTAL_KEY, BundleAdapter.toBundle(fractal));
 
         FractalFragment fractalFragment = new FractalFragment();
         fractalFragment.setArguments(args);
@@ -85,25 +81,21 @@ public class FractalFragment extends Fragment {
         initProvider(savedInstanceState);
         initRenderscript();
 
-        initFractalCalculator();
-    }
+        FractviewActivity activity = (FractviewActivity) getActivity();
 
-    private void initRenderscript() {
-        FragmentManager fm = getFragmentManager();
-        InitializationFragment initializationFragment = (InitializationFragment) fm.findFragmentByTag(RENDERSCRIPT_FRAGMENT_TAG);
-
-        Log.d(getClass().getName(), "init Renderscript Fragment: " + initializationFragment);
-
-        if(initializationFragment == null) {
-            initializationFragment = InitializationFragment.newInstance();
-
-            FragmentTransaction transaction = fm.beginTransaction();
-            transaction.add(initializationFragment, RENDERSCRIPT_FRAGMENT_TAG);
-            transaction.commit();
+        if(activity != null) {
+            // otherwise call will happen later.
+            activity.fractalFragmentInitializeCallback(this);
         }
     }
 
+    private void initRenderscript() {
+        InitializationFragment initializationFragment = InitializationFragment.newInstance();
+        getChildFragmentManager().beginTransaction().add(initializationFragment, InitializationFragment.TAG).commit();
+    }
+
     private void initProvider(Bundle savedInstanceState) {
+        // TODO what is the proper way?
         FractalData fractal;
 
         if(savedInstanceState != null) {
@@ -115,28 +107,19 @@ public class FractalFragment extends Fragment {
         this.provider = FractalProvider.singleFractal(fractal);
     }
 
-    @Override
-    public void onAttach(Context context) {
-        super.onAttach(context);
-        ((FractviewActivity) context).registerFractalFragment(this);
-    }
-
-    @Override
-    public void onDetach() {
-        super.onDetach();
-    }
-
-    private void initFractalCalculator() {
+    public void initializationFinished(InitializationFragment initializer) {
         fractalCalculators = new HashMap<>();
 
         for(int i = 0; i < provider.fractalsCount(); ++i) {
             String label = provider.label(i);
 
-            InitializationFragment initFragment = (InitializationFragment) getFragmentManager().findFragmentByTag(InitializationFragment.TAG);
-
-            FractalCalculator fc = new FractalCalculator(WIDTH, HEIGHT, provider.get(label), initFragment);
+            FractalCalculator fc = new FractalCalculator(WIDTH, HEIGHT, provider.get(label), initializer);
 
             fractalCalculators.put(label, fc);
+
+            FractalCalculatorView bv = fractalCalculatorViews.get(label);
+            FractalCalculator bf = fractalCalculators.get(label);
+            bf.addBitmapFragmentListener(bv);
         }
     }
 
@@ -156,11 +139,9 @@ public class FractalFragment extends Fragment {
 
         for(int i = 0; i < provider.fractalsCount(); ++i) {
             String label = provider.label(i);
-            FractalCalculator bf = fractalCalculators.get(label);
 
             FractalCalculatorView bv = new FractalCalculatorView(getContext(), null);
 
-            bf.addBitmapFragmentListener(bv);
             bv.scaleableImageView().setListener(new ImageViewListener(label));
 
             layout.addView(bv, i);
@@ -225,7 +206,7 @@ public class FractalFragment extends Fragment {
         @Override
         public void scaleRelative(Scale relativeScale) {
             Scale absoluteScale = provider.get(label).scale().relative(relativeScale);
-            provider.set(SCALE_KEY, label, absoluteScale);
+            provider.set(FractalExternData.SCALE_KEY, label, absoluteScale);
         }
     }
 }
