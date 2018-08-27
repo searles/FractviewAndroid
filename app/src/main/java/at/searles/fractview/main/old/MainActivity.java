@@ -137,7 +137,7 @@ public class MainActivity /* extends Activity
 //		// initialize the view
 //		FractalCalculatorListener viewListener = imageView.createListener();
 //
-//		fractalCalculator.addBitmapFragmentListener(viewListener);
+//		fractalCalculator.addListener(viewListener);
 //
 //		if(fractalCalculator.isRunning()) {
 //			// show progress bar
@@ -147,7 +147,7 @@ public class MainActivity /* extends Activity
 //		destroyTasks.add(new Runnable() {
 //			@Override
 //			public void run() {
-//				fractalCalculator.removeBitmapFragmentListener(viewListener);
+//				fractalCalculator.removeListener(viewListener);
 //			}
 //		});
 //

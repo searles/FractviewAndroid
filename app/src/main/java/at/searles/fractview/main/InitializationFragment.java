@@ -138,7 +138,7 @@ public class InitializationFragment extends Fragment {
         FractalFragment parent = (FractalFragment) getParentFragment();
 
         if(parent != null) {
-            parent.initializationFinished(this);
+            parent.createCalculators(this);
         }
     }
 

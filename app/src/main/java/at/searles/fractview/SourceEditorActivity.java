@@ -43,7 +43,7 @@ public class SourceEditorActivity extends Activity {
 		this.acceptedSource = getIntent().getStringExtra(SOURCE_LABEL);
 
 		editor = (EditText) findViewById(R.id.programEditText);
-		editor.setHorizontallyScrolling(true); // fixme Android Bug: the attribute in the xml is ignored
+		editor.setHorizontallyScrolling(true); // XXX Android Bug: the attribute in the xml is ignored
 
 		// set text in editor
 		editor.setText(this.acceptedSource);

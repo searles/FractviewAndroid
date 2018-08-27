@@ -2,20 +2,11 @@ package at.searles.fractview.main;
 
 import android.app.Activity;
 import android.app.FragmentManager;
-import android.app.FragmentTransaction;
-import android.content.res.AssetManager;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.WindowManager;
 
-import java.io.BufferedReader;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.InputStreamReader;
-import java.util.stream.Collectors;
-
-import at.searles.fractal.data.FractalData;
-import at.searles.fractal.data.Parameters;
+import at.searles.fractview.R;
 
 
 // Activity is the glue between FractalCalculator and Views.
@@ -30,21 +21,17 @@ public class FractviewActivity extends Activity {
 		// First, take care of the view.
 		getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON); // make sure that screen stays awake
 
-		initialize();
+		setContentView(R.layout.fractview_layout); // will create fragment
+
+		initializeFractalFragment();
 	}
 	
-	private void initialize() {
+	private void initializeFractalFragment() {
 		FragmentManager fm = getFragmentManager();
-		FractalFragment fractalFragment = (FractalFragment) fm.findFragmentByTag(InitializationFragment.TAG);
+		FractalFragment fractalFragment = (FractalFragment) fm.findFragmentById(R.id.fractal_fragment);
 
 		if(fractalFragment == null) {
-			fractalFragment = FractalFragment.newInstance(defaultFractal());
-
-			FragmentTransaction transaction = fm.beginTransaction();
-			transaction.add(fractalFragment, FractalFragment.TAG);
-			transaction.commit();
-
-			// init menu will happen by callback.
+			throw new IllegalArgumentException("fragment is part of view. it should have been created.");
 		} else {
 			// init menu according to existing fragment
 			fractalFragmentInitializeCallback(fractalFragment);
@@ -53,18 +40,25 @@ public class FractviewActivity extends Activity {
 
 	public void fractalFragmentInitializeCallback(FractalFragment src) {
     	// TODO init menu
-	}
 
-	private FractalData defaultFractal() {
-		// TODO: Move to assets
-		AssetManager am = getAssets();
-		try(InputStream is = am.open("sources/Default.fv")) {
-			BufferedReader br = new BufferedReader(new InputStreamReader(is));
-
-			String source = br.lines().collect(Collectors.joining("\n"));
-			return new FractalData(source, new Parameters());
-		} catch (IOException e) {
-			throw new IllegalArgumentException(e);
-		}
+		/*
+		 * Edit (opens swipe-in from left)
+		 *   -> FractalProviderEditor
+		 * Settings (opens swipe-in from right)
+		 *   -> Scroll-Lock (no edits)
+		 *   -> Rotation-Lock
+		 *   -> Keep centered
+		 *   -> Edit points - opens dialog with all editable (cplx and expr).
+		 *                    Warn if an expr is reset to 0:0 because it is not a number.
+		 *   -> Show grid
+		 *   -> Resolution
+		 * Demos -> opens AssetsActivity.
+		 * Direct Save/Share
+		 * Favorites (opens favorites activity)
+		 * Add #name to Favorites (opens test dialog) (multiple times)
+		 * (conditional) Split view -> opens dialog for all extern bools. Bool is fixed, scale is not shared.
+		 * (conditional) Show only #name
+		 * Render at different resolution - opens dialog with resolution (option 'keep ratio') and Supersampling.
+		 */
 	}
 }

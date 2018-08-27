@@ -394,12 +394,12 @@ public class FractalCalculator implements DrawerListener, FractalProvider.Listen
 	// ====== Manage listener    ===================================
 	// =============================================================
 
-	public void addBitmapFragmentListener(FractalCalculatorListener listener) {
+	public void addListener(FractalCalculatorListener listener) {
 		Log.d(getClass().getName(), "adding listener " + listener);
 		listeners.add(listener);
 	}
 
-	public void removeBitmapFragmentListener(FractalCalculatorListener listener) {
+	public void removeListener(FractalCalculatorListener listener) {
 		Log.d(getClass().getName(), "removing listener " + listener);
 
 		if(!listeners.remove(listener)) {

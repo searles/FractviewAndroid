@@ -2,15 +2,22 @@ package at.searles.fractview.main;
 
 import android.app.Fragment;
 import android.content.Intent;
+import android.content.res.AssetManager;
 import android.os.Bundle;
 import android.support.annotation.Nullable;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.LinearLayout;
 
+import java.io.BufferedReader;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 import at.searles.fractal.Fractal;
 import at.searles.fractal.FractalExternData;
@@ -18,6 +25,7 @@ import at.searles.fractal.FractalProvider;
 import at.searles.fractal.data.FractalData;
 import at.searles.fractal.data.ParameterKey;
 import at.searles.fractal.data.ParameterType;
+import at.searles.fractal.data.Parameters;
 import at.searles.fractview.R;
 import at.searles.fractview.bitmap.FractalCalculator;
 import at.searles.fractview.bitmap.ui.FractalCalculatorView;
@@ -62,23 +70,24 @@ public class FractalFragment extends Fragment {
     private Map<String, FractalCalculator> fractalCalculators;
     private Map<String, FractalCalculatorView> fractalCalculatorViews;
 
-    public static FractalFragment newInstance(FractalData fractal) {
-        // assertion: fractal must be valid!
-        Bundle args = new Bundle();
+    private FractalData defaultFractal() {
+        // TODO: Move to assets
+        AssetManager am = getActivity().getAssets();
+        try(InputStream is = am.open("sources/Default.fv")) {
+            BufferedReader br = new BufferedReader(new InputStreamReader(is));
 
-        args.putBundle(FRACTAL_KEY, BundleAdapter.toBundle(fractal));
-
-        FractalFragment fractalFragment = new FractalFragment();
-        fractalFragment.setArguments(args);
-
-        return fractalFragment;
+            String source = br.lines().collect(Collectors.joining("\n"));
+            return new FractalData(source, new Parameters());
+        } catch (IOException e) {
+            throw new IllegalArgumentException(e);
+        }
     }
 
     @Override
     public void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
-        initProvider(savedInstanceState);
+        initProvider();
         initRenderscript();
 
         FractviewActivity activity = (FractviewActivity) getActivity();
@@ -90,37 +99,43 @@ public class FractalFragment extends Fragment {
     }
 
     private void initRenderscript() {
-        InitializationFragment initializationFragment = InitializationFragment.newInstance();
-        getChildFragmentManager().beginTransaction().add(initializationFragment, InitializationFragment.TAG).commit();
+        InitializationFragment initializationFragment = (InitializationFragment) getChildFragmentManager().findFragmentByTag(InitializationFragment.TAG);
+
+        if(initializationFragment == null) {
+            Log.d(TAG, "creating new initFragment");
+            initializationFragment = InitializationFragment.newInstance();
+            getChildFragmentManager().beginTransaction().add(initializationFragment, InitializationFragment.TAG).commit();
+        } else {
+            Log.e(TAG, "init fragment already exists");
+        }
     }
 
-    private void initProvider(Bundle savedInstanceState) {
-        // TODO what is the proper way?
-        FractalData fractal;
-
-        if(savedInstanceState != null) {
-            fractal = BundleAdapter.fractalFromBundle(savedInstanceState.getBundle(FRACTAL_KEY));
-        } else {
-            fractal = BundleAdapter.fractalFromBundle(getArguments().getBundle(FRACTAL_KEY));
-        }
-
+    private void initProvider() {
+        Log.d(TAG, "initializing provider");
+        FractalData fractal = defaultFractal();
         this.provider = FractalProvider.singleFractal(fractal);
     }
 
-    public void initializationFinished(InitializationFragment initializer) {
+    public void createCalculators(InitializationFragment initializer) {
+        // this is called indirectly via the initializationFragment.
+        // TODO: Do not call when this fragment was scheduled for destruction!
+
+        Log.d(TAG, "initializing providers");
+
+        // creates fractal calculators.
         fractalCalculators = new HashMap<>();
 
         for(int i = 0; i < provider.fractalsCount(); ++i) {
             String label = provider.label(i);
 
+            Log.d(TAG, "initializing provider " + label);
+
             FractalCalculator fc = new FractalCalculator(WIDTH, HEIGHT, provider.get(label), initializer);
 
             fractalCalculators.put(label, fc);
-
-            FractalCalculatorView bv = fractalCalculatorViews.get(label);
-            FractalCalculator bf = fractalCalculators.get(label);
-            bf.addBitmapFragmentListener(bv);
         }
+
+        checkConnectViewsAndCalculators();
     }
 
     public Fractal registerListener(String label, FractalProvider.Listener l) {
@@ -128,26 +143,57 @@ public class FractalFragment extends Fragment {
         return provider.get(label);
     }
 
+    private void checkConnectViewsAndCalculators() {
+        if(fractalCalculatorViews == null || fractalCalculators == null) {
+            Log.d(TAG, "cannot connect calculators and views yet");
+            return;
+        }
+
+        for(int i = 0; i < provider.fractalsCount(); ++i) {
+            String label = provider.label(i);
+
+            Log.d(TAG, "connecting " + label);
+
+            FractalCalculatorView bv = fractalCalculatorViews.get(label);
+            FractalCalculator bf = fractalCalculators.get(label);
+            bf.addListener(bv);
+
+            bv.newBitmapCreated(bf);
+        }
+    }
+
     @Nullable
     @Override
     public View onCreateView(LayoutInflater inflater, @Nullable ViewGroup container, Bundle savedInstanceState) {
+        if(fractalCalculatorViews != null) {
+            Log.e(TAG, "fractalCalculatorViews is not null!");
+        }
+
+        Log.d(TAG, "create new view");
         fractalCalculatorViews = new HashMap<>();
 
         View view = inflater.inflate(R.layout.fractalview_layout, container);
 
         LinearLayout layout = (LinearLayout) view.findViewById(R.id.fractalview_layout);
 
+        layout.setBackgroundColor(0xff00ff00); // todo remove this
+
         for(int i = 0; i < provider.fractalsCount(); ++i) {
             String label = provider.label(i);
 
+            Log.d(TAG, "create view: " + label);
+
             FractalCalculatorView bv = new FractalCalculatorView(getContext(), null);
 
-            bv.scaleableImageView().setListener(new ImageViewListener(label));
+            bv.setBackgroundColor(0xffff00ff);
 
-            layout.addView(bv, i);
+            bv.scaleableImageView().setListener(new ImageViewListener(label));
+            layout.addView(bv); // fixme
 
             fractalCalculatorViews.put(label, bv);
         }
+
+        checkConnectViewsAndCalculators();
 
         return view;
     }
@@ -156,12 +202,16 @@ public class FractalFragment extends Fragment {
     public void onDestroyView() {
         super.onDestroyView();
 
+        Log.d(TAG, "destroying view");
+
         for(int i = 0; i < provider.fractalsCount(); ++i) {
             String label = provider.label(i);
             FractalCalculator bf = fractalCalculators.get(label);
             FractalCalculatorView bv = fractalCalculatorViews.get(label);
-            bf.removeBitmapFragmentListener(bv);
+            bf.removeListener(bv);
         }
+
+        fractalCalculatorViews = null;
     }
 
     @Override
@@ -172,7 +222,7 @@ public class FractalFragment extends Fragment {
             calc.dispose();
         }
 
-        fractalCalculators.clear();
+        fractalCalculators = null;
     }
 
     public FractalProvider provider() {
