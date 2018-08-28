@@ -89,13 +89,6 @@ public class FractalFragment extends Fragment {
 
         initProvider();
         initRenderscript();
-
-        FractviewActivity activity = (FractviewActivity) getActivity();
-
-        if(activity != null) {
-            // otherwise call will happen later.
-            activity.fractalFragmentInitializeCallback(this);
-        }
     }
 
     private void initRenderscript() {
@@ -133,6 +126,8 @@ public class FractalFragment extends Fragment {
             FractalCalculator fc = new FractalCalculator(WIDTH, HEIGHT, provider.get(label), initializer);
 
             fractalCalculators.put(label, fc);
+
+            this.provider.addListener(label, fc);
         }
 
         checkConnectViewsAndCalculators();
@@ -156,6 +151,7 @@ public class FractalFragment extends Fragment {
 
             FractalCalculatorView bv = fractalCalculatorViews.get(label);
             FractalCalculator bf = fractalCalculators.get(label);
+
             bf.addListener(bv);
 
             bv.newBitmapCreated(bf);
@@ -255,6 +251,8 @@ public class FractalFragment extends Fragment {
 
         @Override
         public void scaleRelative(Scale relativeScale) {
+            Log.d(getClass().getName(), "setting relative scale");
+
             Scale absoluteScale = provider.get(label).scale().relative(relativeScale);
             provider.set(FractalExternData.SCALE_KEY, label, absoluteScale);
         }

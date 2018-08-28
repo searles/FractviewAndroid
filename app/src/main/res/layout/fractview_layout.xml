@@ -1,10 +1,18 @@
 <?xml version="1.0" encoding="utf-8"?>
-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
-              android:orientation="horizontal"
+<android.support.v4.widget.DrawerLayout xmlns:android="http://schemas.android.com/apk/res/android"
+              android:id="@+id/drawer_layout"
               android:layout_width="match_parent"
               android:layout_height="match_parent">
+
     <fragment android:name="at.searles.fractview.main.FractalFragment"
               android:id="@+id/fractal_fragment"
               android:layout_width="match_parent"
               android:layout_height="match_parent" />
-</LinearLayout>
+
+        <ListView
+            android:id="@+id/nav_list_view"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:layout_gravity="start"
+        />
+</android.support.v4.widget.DrawerLayout>

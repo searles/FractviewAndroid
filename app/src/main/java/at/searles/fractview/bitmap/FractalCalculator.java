@@ -174,7 +174,7 @@ public class FractalCalculator implements DrawerListener, FractalProvider.Listen
 	 * fetches a job from the job queue
 	 */
 	private void executeNextJob() {
-		Log.d(getClass().getName(), "executeNextJob");
+		Log.d(getClass().getName(), "checking for next job");
 
 		// in ui thread.
 		if(status != Status.IDLE) {
@@ -182,6 +182,8 @@ public class FractalCalculator implements DrawerListener, FractalProvider.Listen
 		}
 
 		if(jobQueue.isEmpty()) {
+			Log.d(getClass().getName(), "no further jobs, will trigger redraw: " + triggerStart);
+
 			if(triggerStart) {
 				triggerStart = false;
 				startBackgroundTask();
@@ -190,27 +192,35 @@ public class FractalCalculator implements DrawerListener, FractalProvider.Listen
 			return;
 		}
 
+		Log.d(getClass().getName(), "fetching next job");
+
 		IdleJob job = jobQueue.removeFirst();
 
 		triggerStart |= job.restartDrawing();
 
 		if(job.isFinished()) {
-			Log.d(getClass().getName(), "job was already finished: " + job);
+			Log.d(getClass().getName(), "job is already finished: " + job);
 			executeNextJob();
 			return;
 		}
+
+		Log.d(getClass().getName(), "setting callback for job " + job);
 
 		// job seems to be doing some work in the background. We tell
 		// it to call the next job when it is finished.
 		job.setCallback(new IdleJob.Callback() {
 			@Override
 			public void jobIsFinished(IdleJob job) {
+				Log.d(job.toString(), "Job is finally finished");
 				executeNextJob();
 			}
 		});
 
 		if(job.isPending()) {
+			Log.d(getClass().getName(), "Starting job");
 			job.startJob(); // might immediately recursively call handleJobs.
+		} else {
+			Log.d(getClass().getName(), "Job was already started");
 		}
 	}
 
@@ -265,7 +275,7 @@ public class FractalCalculator implements DrawerListener, FractalProvider.Listen
 		new Handler(Looper.getMainLooper()).post(new Runnable() {
 			@Override
 			public void run() {
-				Log.d(getClass().getName(), "status to idle");
+				Log.d(getClass().getName(), "setting status to idle and notifying listeners");
 
 				status = Status.IDLE;
 

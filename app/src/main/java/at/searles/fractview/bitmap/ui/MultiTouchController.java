@@ -186,15 +186,17 @@ public class MultiTouchController {
 		}
 	}
 
-	public PointF removePoint(int pointerId) {
+	public void removePoint(int pointerId) {
 		if(!points.containsKey(pointerId)) {
 			throw new IllegalArgumentException("trying to remove non-existent index");
 		} else {
 			commit(); // commit overrides points
 			Pair<PointF, PointF> p = points.remove(pointerId);
 			// after commit hence juliaAddend.first == juliaAddend.second.
-			if(p == null) throw new AssertionError("remove returned null");
-			return p.second;
+
+			if(p == null) {
+				throw new IllegalArgumentException("remove returned null");
+			}
 		}
 	}
 
@@ -203,11 +205,12 @@ public class MultiTouchController {
 	}
 
 	public String toString() {
-		String s = "";
+		StringBuilder sb = new StringBuilder();
+
 		for(Pair<PointF, PointF> pair : points.values()) {
-			s += pair.first + " -> " + pair.second + "; ";
+			sb.append(pair.first).append(" -> ").append(pair.second).append("; ");
 		}
 
-		return s;
+		return sb.toString();
 	}
 }

@@ -5,8 +5,12 @@ import android.app.FragmentManager;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.WindowManager;
+import android.widget.ListView;
 
 import at.searles.fractview.R;
+import at.searles.fractview.parameters.ParameterAdapter;
+import at.searles.fractview.parameters.ParameterLongSelectListener;
+import at.searles.fractview.parameters.ParameterSelectListener;
 
 
 // Activity is the glue between FractalCalculator and Views.
@@ -30,18 +34,26 @@ public class FractviewActivity extends Activity {
 		FragmentManager fm = getFragmentManager();
 		FractalFragment fractalFragment = (FractalFragment) fm.findFragmentById(R.id.fractal_fragment);
 
-		if(fractalFragment == null) {
-			throw new IllegalArgumentException("fragment is part of view. it should have been created.");
-		} else {
-			// init menu according to existing fragment
-			fractalFragmentInitializeCallback(fractalFragment);
-		}
+		// init menu according to existing fragment
+		initProviderMenu(fractalFragment);
 	}
 
-	public void fractalFragmentInitializeCallback(FractalFragment src) {
-    	// TODO init menu
+	private void initProviderMenu(FractalFragment fragment) {
+		ParameterAdapter adapter = new ParameterAdapter(this, fragment.provider());
 
+		ListView listView = (ListView) findViewById(R.id.nav_list_view);
+
+		listView.setAdapter(adapter);
+
+		listView.setOnItemClickListener(new ParameterSelectListener(fragment));
+
+		listView.setOnItemLongClickListener(new ParameterLongSelectListener(fragment.provider()));
+	}
+
+	private void initMenu() {
+    	// TODO
 		/*
+		 * [X] Hide top bar
 		 * Edit (opens swipe-in from left)
 		 *   -> FractalProviderEditor
 		 * Settings (opens swipe-in from right)

@@ -19,11 +19,11 @@ import at.searles.math.Cplx;
 import at.searles.math.Scale;
 import at.searles.math.color.Palette;
 
-class ParameterSelectListener implements AdapterView.OnItemClickListener {
+public class ParameterSelectListener implements AdapterView.OnItemClickListener {
 
     private final FractalFragment fragment;
 
-    ParameterSelectListener(FractalFragment fragment) {
+    public ParameterSelectListener(FractalFragment fragment) {
         this.fragment = fragment;
     }
 

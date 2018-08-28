@@ -8,11 +8,11 @@ import android.widget.AdapterView;
 import at.searles.fractal.FractalProvider;
 import at.searles.fractview.ui.DialogHelper;
 
-class ParameterLongSelectListener implements AdapterView.OnItemLongClickListener {
+public class ParameterLongSelectListener implements AdapterView.OnItemLongClickListener {
 
     private final FractalProvider provider;
 
-    ParameterLongSelectListener(FractalProvider provider) {
+    public ParameterLongSelectListener(FractalProvider provider) {
         this.provider = provider;
     }
 

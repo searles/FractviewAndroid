@@ -2,7 +2,6 @@ package at.searles.fractview.parameters;
 
 import android.app.Activity;
 import android.graphics.Typeface;
-import android.util.Log;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.BaseAdapter;
@@ -11,6 +10,7 @@ import android.widget.ListAdapter;
 import android.widget.TextView;
 
 import at.searles.fractal.FractalProvider;
+import at.searles.fractal.data.ParameterType;
 
 public class ParameterAdapter extends BaseAdapter implements ListAdapter {
 
@@ -92,35 +92,33 @@ public class ParameterAdapter extends BaseAdapter implements ListAdapter {
                 text1.setText(entry.description);
 
                 TextView text2 = (TextView) view.findViewById(android.R.id.text2);
-                switch (entry.key.type) {
-                    case Expr:
-                        text2.setText("Expression");
-                        break;
-                    case Int:
-                        text2.setText("Integer Number");
-                        break;
-                    case Real:
-                        text2.setText("Real Number");
-                        break;
-                    case Cplx:
-                        text2.setText("Complex Number");
-                        break;
-                    case Color:
-                        text2.setText("Color");
-                        break;
-                    case Palette:
-                        text2.setText("Palette");
-                        break;
-                    case Scale:
-                        text2.setText("Scale");
-                        break;
-                    default:
-                        Log.e(getClass().getName(), "missing label for " + entry.key.type);
-                }
+
+                text2.setText(getLabelForType(entry.key.type));
             }
             break;
         }
 
         return view;
+    }
+
+    private String getLabelForType(ParameterType type) {
+        switch (type) {
+            case Expr:
+                return "Expression";
+            case Int:
+                return "Integer Number";
+            case Real:
+                return "Real Number";
+            case Cplx:
+                return "Complex Number";
+            case Color:
+                return "Color";
+            case Palette:
+                return "Palette";
+            case Scale:
+                return "Scale";
+            default:
+                throw new IllegalArgumentException("missing label for " + type);
+        }
     }
 }

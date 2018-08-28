@@ -362,11 +362,13 @@ public class ScaleableImageView extends View {
 		float bh = bitmap.getHeight();
 
 		if(vw > vh) {
+			// fixme use matrices
 			// if width of view is bigger, match longer side to it
 			RectF viewRect = new RectF(0f, 0f, vw, vh);
 			RectF bitmapRect = new RectF(0f, 0f, Math.max(bw, bh), Math.min(bw, bh));
 			bitmap2view.setRectToRect(bitmapRect, viewRect, Matrix.ScaleToFit.CENTER);
 		} else {
+			// fixme use matrices
 			RectF viewRect = new RectF(0f, 0f, vw, vh);
 			RectF bitmapRect = new RectF(0f, 0f, Math.min(bw, bh), Math.max(bw, bh));
 			bitmap2view.setRectToRect(bitmapRect, viewRect, Matrix.ScaleToFit.CENTER);
@@ -518,8 +520,6 @@ public class ScaleableImageView extends View {
 	void initTouch() {
 		this.detector = new GestureDetector(getContext(), gestureListener);
 		this.multitouch = new MultiTouch();
-
-		// and I need a touchevent
 	}
 
 	@Override
@@ -744,6 +744,7 @@ public class ScaleableImageView extends View {
 		}
 
 		boolean confirm() {
+			Log.d(getClass().getName(), "confirming touch event");
 			if(controller == null) {
 				return false;
 			}
