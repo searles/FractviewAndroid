@@ -17,7 +17,7 @@ public class PaletteViewModel {
 
     private ArrayList<ArrayList<Integer>> table;
 
-    public PaletteViewModel(Palette p) {
+    PaletteViewModel(Palette p) {
         this.w = p.width();
         this.h = p.height();
 
@@ -42,7 +42,7 @@ public class PaletteViewModel {
         table.get(y).set(x, color);
     }
 
-    public Palette createPalette() {
+    Palette createPalette() {
         int colors[] = new int[h * w];
 
         for (int y = 0; y < h; ++y) {
@@ -103,15 +103,12 @@ public class PaletteViewModel {
         }
     };
 
-    public int randomColor() {
+    int randomColor() {
         return randomColorStream.next();
     }
 
     /**
-     * Set Width adds columns. Missing ones are filled up with random
-     * colors
-     * @param width
-     * @return
+     * Set Width adds columns. If a color is missing, a random color is picked.
      */
     public PaletteViewModel setWidth(int width) {
         // fill up all rows if necessary
@@ -163,7 +160,7 @@ public class PaletteViewModel {
         return h;
     }
 
-    public void rotateAll(int dx, int dy) {
+    void rotateAll(int dx, int dy) {
         // shift colors
         for(int x = 0; x < width(); ++x) {
             // rotate all columns
@@ -188,7 +185,7 @@ public class PaletteViewModel {
         }
     }
 
-    public void rotateUp(int x) {
+    void rotateUp(int x) {
         int i = get(x, 0);
 
         for(int y = 1; y < height(); ++y) {
@@ -198,7 +195,7 @@ public class PaletteViewModel {
         set(x, height() - 1, i);
     }
 
-    public void rotateDown(int x) {
+    void rotateDown(int x) {
         int i = get(x, height() - 1);
 
         for(int y = height() - 2; y >= 0; --y) {
@@ -208,7 +205,7 @@ public class PaletteViewModel {
         set(x, 0, i);
     }
 
-    public void rotateLeft(int y) {
+    void rotateLeft(int y) {
         int i = get(0, y);
 
         for(int x = 1; x < width(); ++x) {
@@ -218,7 +215,7 @@ public class PaletteViewModel {
         set(width() - 1, y, i);
     }
 
-    public void rotateRight(int y) {
+    void rotateRight(int y) {
         int i = get(width() - 1, y);
 
         for(int x = width() - 2; x >= 0; --x) {
@@ -228,7 +225,7 @@ public class PaletteViewModel {
         set(0, y, i);
     }
 
-    public void moveDown(int y) {
+    void moveDown(int y) {
         if(height() == 1 || y >= height() - 1 || y < 0) return;
 
         for(int x = 0; x < width(); ++x) {
@@ -238,11 +235,11 @@ public class PaletteViewModel {
         }
     }
 
-    public void moveUp(int y) {
+    void moveUp(int y) {
         moveDown(y - 1);
     }
 
-    public void moveRight(int x) {
+    void moveRight(int x) {
         if(width() == 1 || x >= width() - 1 || x < 0) return;
 
         for(int y = 0; y < height(); ++y) {
@@ -252,18 +249,18 @@ public class PaletteViewModel {
         }
     }
 
-    public void moveLeft(int colIndex) {
+    void moveLeft(int colIndex) {
         moveRight(colIndex - 1);
     }
 
-    public void duplicateColumn(int x) {
+    void duplicateColumn(int x) {
         for(ArrayList<Integer> row : table) {
             row.add(x, row.get(x));
         }
         this.w++;
     }
 
-    public void duplicateRow(int y) {
+    void duplicateRow(int y) {
         ArrayList<Integer> newRow = new ArrayList<>(table.get(0).size());
 
         for(int x = 0; x < table.get(0).size(); ++x) {
@@ -274,7 +271,7 @@ public class PaletteViewModel {
         this.h++;
     }
 
-    public void removeColumn(int x) {
+    void removeColumn(int x) {
         for(ArrayList<Integer> row : table) {
             row.remove(x);
         }
@@ -282,7 +279,7 @@ public class PaletteViewModel {
         this.w--;
     }
 
-    public void removeRow(int y) {
+    void removeRow(int y) {
         table.remove(y);
         this.h--;
     }

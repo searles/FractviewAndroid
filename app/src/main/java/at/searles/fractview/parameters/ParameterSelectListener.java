@@ -44,32 +44,32 @@ public class ParameterSelectListener implements AdapterView.OnItemClickListener 
             }
             case Int: {
                 IntegerDialogFragment ft = IntegerDialogFragment.newInstance("Edit integer number " + id, item.key.id, (Integer) item.value);
-                fragment.getFragmentManager().beginTransaction().add(ft, "editor").commit();
+                fragment.getChildFragmentManager().beginTransaction().add(ft, "editor").commit();
             }
             return;
             case Real: {
                 RealDialogFragment ft = RealDialogFragment.newInstance("Edit decimal number " + id, item.key.id, (Double) item.value);
-                fragment.getFragmentManager().beginTransaction().add(ft, "editor").commit();
+                fragment.getChildFragmentManager().beginTransaction().add(ft, "editor").commit();
             }
             return;
             case Cplx: {
                 CplxDialogFragment ft = CplxDialogFragment.newInstance("Edit complex number " + id, item.key.id, (Cplx) item.value);
-                fragment.getFragmentManager().beginTransaction().add(ft, "editor").commit();
+                fragment.getChildFragmentManager().beginTransaction().add(ft, "editor").commit();
             }
             return;
             case Expr: {
                 ExprDialogFragment ft = ExprDialogFragment.newInstance("Edit expression " + id, item.key.id, (String) item.value);
-                fragment.getFragmentManager().beginTransaction().add(ft, "editor").commit();
+                fragment.getChildFragmentManager().beginTransaction().add(ft, "editor").commit();
             }
             return;
             case Scale: {
                 ScaleDialogFragment ft = ScaleDialogFragment.newInstance("Edit scale " + id, item.key.id, (Scale) item.value);
-                fragment.getFragmentManager().beginTransaction().add(ft, "editor").commit();
+                fragment.getChildFragmentManager().beginTransaction().add(ft, "editor").commit();
             }
             return;
             case Color: {
                 ColorDialogFragment ft = ColorDialogFragment.newInstance("Edit color " + id, item.key.id, (Integer) item.value);
-                fragment.getFragmentManager().beginTransaction().add(ft, "editor").commit();
+                fragment.getChildFragmentManager().beginTransaction().add(ft, "editor").commit();
             }
             return;
             case Palette: {

@@ -39,7 +39,7 @@ public class FractalCalculatorView extends FrameLayout implements FractalCalcula
     }
 
     private void initView(Context context) {
-        inflate(context, R.layout.bitmapfragment_layout, this);
+        inflate(context, R.layout.view_fractal_calculator, this);
 
         imageView = (ScaleableImageView) findViewById(R.id.scaleableImageView);
 
@@ -81,6 +81,8 @@ public class FractalCalculatorView extends FrameLayout implements FractalCalcula
     public ScaleableImageView scaleableImageView() {
         return imageView;
     }
+
+
 
     @Override
     public void bitmapUpdated(FractalCalculator src) {

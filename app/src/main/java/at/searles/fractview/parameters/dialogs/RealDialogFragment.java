@@ -50,7 +50,7 @@ public class RealDialogFragment extends DialogFragment {
 
         // null is ok in this context.
         @SuppressLint("InflateParams")
-        View view = getActivity().getLayoutInflater().inflate(R.layout.real_editor, null);
+        View view = getActivity().getLayoutInflater().inflate(R.layout.editor_real, null);
 
         builder.setView(view);
 
@@ -122,6 +122,7 @@ public class RealDialogFragment extends DialogFragment {
         } catch (NumberFormatException e) {
             msgTextView.setText(e.getMessage());
             msgTextView.setVisibility(View.VISIBLE);
+            editor.requestFocus();
             okButton.setEnabled(false);
             return false;
         }

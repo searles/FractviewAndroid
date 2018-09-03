@@ -49,7 +49,7 @@ public class IntegerDialogFragment extends DialogFragment {
 
         // null is ok in this context.
         @SuppressLint("InflateParams")
-        View view = getActivity().getLayoutInflater().inflate(R.layout.int_editor, null);
+        View view = getActivity().getLayoutInflater().inflate(R.layout.editor_int, null);
 
         builder.setView(view);
 

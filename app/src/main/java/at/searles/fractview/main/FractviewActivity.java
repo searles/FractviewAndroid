@@ -27,6 +27,11 @@ public class FractviewActivity extends Activity {
 
 		setContentView(R.layout.fractview_layout); // will create fragment
 
+		ListView navListView = (ListView) findViewById(R.id.nav_list_view);
+
+		// TODO Background dependant on theme!
+		navListView.setBackgroundColor(0x80ffffff);
+
 		initializeFractalFragment();
 	}
 	

@@ -20,7 +20,7 @@ public class BundleAdapter {
     // for palette
     private static final String WIDTH_LABEL = "width";
     private static final String HEIGHT_LABEL = "height";
-    private static final String PALETTE_LABEL = "height";
+    private static final String PALETTE_LABEL = "palette";
 
     // for parameters
     private static final String TYPE_LABEL = "TYPE";

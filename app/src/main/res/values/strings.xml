@@ -72,5 +72,6 @@
     <string name="action_import_collection">Import Collection</string>
     <string name="action_edit_prefix">Edit common prefix</string>
     <string name="action_select_prefix">Select all with common prefix</string>
+    <string name="error_invalid_real_number">Invalid real number</string>
 
 </resources>

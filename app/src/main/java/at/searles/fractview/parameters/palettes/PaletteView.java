@@ -1,5 +1,7 @@
 package at.searles.fractview.parameters.palettes;
 
+// TODO: RequestLayout not working?
+
 import android.app.Activity;
 import android.app.AlertDialog;
 import android.content.Context;
@@ -43,19 +45,19 @@ import static at.searles.fractview.parameters.palettes.PaletteView.SelectionType
 public class PaletteView extends View implements MultiScrollView.InternalView {
 
     // some arguments
-    int margin; // space at borders
-    int padding; // space between items
-    int iconSize; // size of icons.
+    private int margin; // space at borders
+    private int padding; // space between items
+    private int iconSize; // size of icons.
 
-    Paint framePaint;
-    Paint fillPaint;
+    private Paint framePaint;
+    private Paint fillPaint;
 
     // done with constants.
     
     /**
      * For scrolling, shift in coordinates.
      */
-    int left = 0, top = 0;
+    private int left = 0, top = 0;
 
     /**
      * When dragging there are three points of importance.
@@ -242,7 +244,7 @@ public class PaletteView extends View implements MultiScrollView.InternalView {
                 iconSize = 48; // compromise
         }*/
 
-        Log.d("NPV", metrics.density + " dpi");
+        Log.d("PaletteView", "dpi metics density: " + metrics.density);
 
         iconSize = (int) (metrics.density * 48);
 
@@ -287,7 +289,7 @@ public class PaletteView extends View implements MultiScrollView.InternalView {
             case Color: {
                 // color dialog
                 ColorDialogFragment ft = ColorDialogFragment.newInstance(
-                        "Select Color", String.valueOf(s.initX + s.initY * model().width()),
+                        "Select Color", s.initX, s.initY,
                         model().get(s.initX, s.initY));
 
                 ft.show(((Activity) getContext()).getFragmentManager(), "dialog");
@@ -319,7 +321,7 @@ public class PaletteView extends View implements MultiScrollView.InternalView {
                                     model().duplicateRow(s.initY);
                                 }
 
-                                invalidate();
+                                requestLayout();
                             }
                             break;
                             case 1: {// randomize
@@ -343,7 +345,7 @@ public class PaletteView extends View implements MultiScrollView.InternalView {
                                     model().removeRow(s.initY);
                                 }
 
-                                invalidate();
+                                requestLayout();
                             }
                             break;
                             default:
@@ -396,7 +398,7 @@ public class PaletteView extends View implements MultiScrollView.InternalView {
                                             }
                                         }
 
-                                        invalidate();
+                                        requestLayout();
                                     }
                                     break;
                                     case 1: {// randomize
@@ -418,7 +420,7 @@ public class PaletteView extends View implements MultiScrollView.InternalView {
                                             model().removeRow(model().height() - 1);
                                         }
 
-                                        invalidate();
+                                        requestLayout();
                                     }
                                     break;
                                     default:
@@ -426,8 +428,8 @@ public class PaletteView extends View implements MultiScrollView.InternalView {
                                 }
                             }
                         });
-                builder.setCancelable(true);
 
+                builder.setCancelable(true);
                 builder.show();
             } return true;
         }

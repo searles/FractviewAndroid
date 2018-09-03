@@ -52,7 +52,7 @@ public class ScaleDialogFragment extends DialogFragment {
 
         // null is ok in this context.
         @SuppressLint("InflateParams")
-        View view = getActivity().getLayoutInflater().inflate(R.layout.scale_editor, null);
+        View view = getActivity().getLayoutInflater().inflate(R.layout.editor_scale, null);
 
         builder.setView(view);
 
@@ -106,7 +106,7 @@ public class ScaleDialogFragment extends DialogFragment {
 
             FractalFragment fractalFragment = (FractalFragment) getParentFragment();
             String id = getArguments().getString(ID_KEY);
-            fractalFragment.provider().set(new ParameterKey(id, ParameterType.Real), value);
+            fractalFragment.provider().set(new ParameterKey(id, ParameterType.Scale), value);
 
             return true;
         } catch (NumberFormatException e) {

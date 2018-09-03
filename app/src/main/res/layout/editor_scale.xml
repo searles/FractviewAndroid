@@ -99,12 +99,15 @@
             android:layout_weight="1" />
     </LinearLayout>
 
-    <LinearLayout
-        android:layout_width="fill_parent"
+    <TextView
+        android:id="@+id/msgTextView"
+        android:layout_width="0dp"
         android:layout_height="wrap_content"
-        android:gravity="center|bottom"
-        android:orientation="horizontal" >
-
-    </LinearLayout>
+        android:layout_marginEnd="8dp"
+        android:layout_marginStart="8dp"
+        android:layout_marginTop="8dp"
+        android:text=""
+        android:visibility="invisible"
+        />
 
 </LinearLayout>

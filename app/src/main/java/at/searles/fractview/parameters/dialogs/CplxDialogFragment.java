@@ -53,7 +53,7 @@ public class CplxDialogFragment extends DialogFragment {
 
         // null is ok in this context.
         @SuppressLint("InflateParams")
-        View view = getActivity().getLayoutInflater().inflate(R.layout.cplx_editor, null);
+        View view = getActivity().getLayoutInflater().inflate(R.layout.editor_cplx, null);
 
         builder.setView(view);
 
@@ -129,10 +129,29 @@ public class CplxDialogFragment extends DialogFragment {
     }
 
     private boolean onOkClick(Button okButton, EditText reEditor, EditText imEditor, TextView msgTextView) {
-        try {
-            // TODO add check to indicate whether it is the real or imaginary part.
-            double reValue = Double.parseDouble(reEditor.getText().toString());
-            double imValue = Double.parseDouble(imEditor.getText().toString());
+            double reValue;
+
+            try {
+                reValue = Double.parseDouble(reEditor.getText().toString());
+            } catch (NumberFormatException e) {
+                msgTextView.setText(R.string.error_invalid_real_number);
+                msgTextView.setVisibility(View.VISIBLE);
+                okButton.setEnabled(false);
+                reEditor.requestFocus(); // todo is this the correct one?
+                return false;
+            }
+
+            double imValue;
+
+            try {
+                imValue = Double.parseDouble(imEditor.getText().toString());
+            } catch (NumberFormatException e) {
+                msgTextView.setText(R.string.error_invalid_real_number);
+                msgTextView.setVisibility(View.VISIBLE);
+                okButton.setEnabled(false);
+                imEditor.requestFocus(); // todo
+                return false;
+            }
 
             Cplx value = new Cplx(reValue, imValue);
             // success
@@ -142,11 +161,5 @@ public class CplxDialogFragment extends DialogFragment {
             fractalFragment.provider().set(new ParameterKey(id, ParameterType.Cplx), value);
 
             return true;
-        } catch (NumberFormatException e) {
-            msgTextView.setText(e.getMessage());
-            msgTextView.setVisibility(View.VISIBLE);
-            okButton.setEnabled(false);
-            return false;
-        }
     }
 }

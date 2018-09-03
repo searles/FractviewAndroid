@@ -86,6 +86,9 @@ public class FractalFragment extends Fragment {
     @Override
     public void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        setRetainInstance(true);
+
+        Log.d(TAG, "onCreate called");
 
         initProvider();
         initRenderscript();
@@ -99,7 +102,7 @@ public class FractalFragment extends Fragment {
             initializationFragment = InitializationFragment.newInstance();
             getChildFragmentManager().beginTransaction().add(initializationFragment, InitializationFragment.TAG).commit();
         } else {
-            Log.e(TAG, "init fragment already exists");
+            Log.d(TAG, "init fragment already exists");
         }
     }
 
@@ -214,6 +217,8 @@ public class FractalFragment extends Fragment {
     public void onDestroy() {
         super.onDestroy();
         // stop all fractalcalculators
+        Log.d(TAG, "onDestroy called");
+
         for(FractalCalculator calc : fractalCalculators.values()) {
             calc.dispose();
         }

@@ -51,7 +51,7 @@ public class ExprDialogFragment extends DialogFragment {
 
         // null is ok in this context.
         @SuppressLint("InflateParams")
-        View view = getActivity().getLayoutInflater().inflate(R.layout.string_editor, null);
+        View view = getActivity().getLayoutInflater().inflate(R.layout.editor_string, null);
 
         builder.setView(view);
 
@@ -117,7 +117,7 @@ public class ExprDialogFragment extends DialogFragment {
             String id = getArguments().getString(ID_KEY);
 
             // the next line will throw in case of an error.
-            fractalFragment.provider().set(new ParameterKey(id, ParameterType.Expr), value);
+             fractalFragment.provider().set(new ParameterKey(id, ParameterType.Expr), value);
 
             return true;
         } catch (MeelanException e) {

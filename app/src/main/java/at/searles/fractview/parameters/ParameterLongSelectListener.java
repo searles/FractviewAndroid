@@ -1,6 +1,5 @@
 package at.searles.fractview.parameters;
 
-import android.content.Context;
 import android.content.DialogInterface;
 import android.view.View;
 import android.widget.AdapterView;
@@ -16,11 +15,12 @@ public class ParameterLongSelectListener implements AdapterView.OnItemLongClickL
         this.provider = provider;
     }
 
-    private <A extends Action> void edit(A[] actions, FractalProvider.ParameterEntry item, Context context, String dialogTitle) {
-        DialogHelper.showOptionsDialog(context, dialogTitle, descriptions(actions), true, new DialogInterface.OnClickListener() {
+    private <A extends Action> void edit(A[] actions, FractalProvider.ParameterEntry item, AdapterView parent, String dialogTitle) {
+        DialogHelper.showOptionsDialog(parent.getContext(), dialogTitle, descriptions(actions), true, new DialogInterface.OnClickListener() {
             @Override
             public void onClick(DialogInterface dialogInterface, int which) {
                 actions[which].apply(provider, item);
+                parent.invalidate(); // FIXME is this the right place?
             }
         });
     }
@@ -35,15 +35,15 @@ public class ParameterLongSelectListener implements AdapterView.OnItemLongClickL
 
         switch (item.key.type) {
             case Scale: {
-                edit(ScaleOptions.values(), item, parent.getContext(), dialogTitle);
+                edit(ScaleOptions.values(), item, parent, dialogTitle);
                 return true;
             }
             case Expr: {
-                edit(ExprOptions.values(), item, parent.getContext(), dialogTitle);
+                edit(ExprOptions.values(), item, parent, dialogTitle);
                 return true;
             }
             case Cplx: {
-                edit(CplxOptions.values(), item, parent.getContext(), dialogTitle);
+                edit(CplxOptions.values(), item, parent, dialogTitle);
                 return true;
             }
             case Int:
@@ -51,7 +51,7 @@ public class ParameterLongSelectListener implements AdapterView.OnItemLongClickL
             case Bool:
             case Color:
             case Palette: {
-                edit(DefaultOnlyOptions.values(), item, parent.getContext(), dialogTitle);
+                edit(DefaultOnlyOptions.values(), item, parent, dialogTitle);
                 return true;
             }
         }
