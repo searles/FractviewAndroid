@@ -21,9 +21,9 @@ import at.searles.fractview.bitmap.FractalCalculatorListener;
  * In the future it will also host the interactive view.
  */
 
-// FractalFragment contains the fractal.
-// FractalCalculatorView must call back to FractalFragment about relative scale.
-// Then FractalFragment tells FractalCalculator that there is a new fractal.
+// FractalProviderFragment contains the fractal.
+// FractalCalculatorView must call back to FractalProviderFragment about relative scale.
+// Then FractalProviderFragment tells FractalCalculator that there is a new fractal.
 // Then, FractalCalculator calls FractalCalculatorView.
 
 public class FractalCalculatorView extends FrameLayout implements FractalCalculatorListener {
@@ -41,10 +41,8 @@ public class FractalCalculatorView extends FrameLayout implements FractalCalcula
     private void initView(Context context) {
         inflate(context, R.layout.view_fractal_calculator, this);
 
-        imageView = (ScaleableImageView) findViewById(R.id.scaleableImageView);
-
-        drawerProgressBar = (ProgressBar) findViewById(R.id.drawerProgressBar);
-
+        imageView = findViewById(R.id.scaleableImageView);
+        drawerProgressBar = findViewById(R.id.drawerProgressBar);
         drawerProgressBar.setVisibility(View.INVISIBLE); // will be shown maybe later
     }
 
@@ -74,6 +72,7 @@ public class FractalCalculatorView extends FrameLayout implements FractalCalcula
     public void dispose() {
         // dispose progress task if running
         if(progressTask != null) {
+            // TODO: Move this to fractalcalculatorfragment
             progressTask.dispose();
         }
     }

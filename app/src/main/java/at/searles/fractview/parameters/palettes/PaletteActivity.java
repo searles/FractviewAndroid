@@ -33,6 +33,7 @@ public class PaletteActivity extends Activity {
 
 	public static final String PALETTE_LABEL = "palette";
 	public static final String ID_LABEL = "id";
+	public static final String OWNER_LABEL = "owner";
 
 	public static final String PREFS_NAME = "SavedPalettes";
 
@@ -81,8 +82,8 @@ public class PaletteActivity extends Activity {
 
 		// the paletteview is embedded into a multiscrollview
 
-		Button okButton = (Button) findViewById(R.id.okButton);
-		Button cancelButton = (Button) findViewById(R.id.cancelButton);
+		Button okButton = findViewById(R.id.okButton);
+		Button cancelButton = findViewById(R.id.cancelButton);
 
 		cancelButton.setOnClickListener(new View.OnClickListener() {
 			@Override
@@ -164,7 +165,7 @@ public class PaletteActivity extends Activity {
 					if (p != null) {
 						model = new PaletteViewModel(p);
 
-						PaletteView view = (PaletteView) findViewById(R.id.paletteView);
+						PaletteView view = findViewById(R.id.paletteView);
 
 						view.invalidate();
 					} else {
@@ -225,7 +226,7 @@ public class PaletteActivity extends Activity {
 //	}
 
 	public void dimensionChanged() {
-		MultiScrollView msView = (MultiScrollView) findViewById(R.id.multiScrollView);
+		MultiScrollView msView = findViewById(R.id.multiScrollView);
 		msView.updateSize();
 	}
 }

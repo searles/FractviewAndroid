@@ -1,4 +1,4 @@
-package at.searles.fractview.parameters.dialogs;
+package at.searles.fractview.favorites;
 
 import android.annotation.SuppressLint;
 import android.app.AlertDialog;
@@ -13,27 +13,21 @@ import android.widget.Button;
 import android.widget.EditText;
 import android.widget.TextView;
 
-import at.searles.fractal.data.ParameterKey;
-import at.searles.fractal.data.ParameterType;
+import at.searles.fractal.data.FractalData;
 import at.searles.fractview.R;
 import at.searles.fractview.main.FractalProviderFragment;
 
-public class IntegerDialogFragment extends DialogFragment {
+// This is practically the same as the IntDialogFragment, except for the parser...
+public class AddFavoritesDialogFragment extends DialogFragment {
 
-    private static final String VALUE_KEY = "value";
-    private static final String TITLE_KEY = "title";
-    private static final String ID_KEY = "id";
-    private static final String OWNER_KEY = "owner";
+    private static final String INDEX_KEY = "index";
 
-    public static IntegerDialogFragment newInstance(String title, String id, String owner, int value) {
+    public static AddFavoritesDialogFragment newInstance(int index) {
         Bundle b = new Bundle();
 
-        b.putString(TITLE_KEY, title);
-        b.putString(ID_KEY, id);
-        b.putString(OWNER_KEY, owner);
-        b.putInt(VALUE_KEY, value);
+        b.putInt(INDEX_KEY, index);
 
-        IntegerDialogFragment fragment = new IntegerDialogFragment();
+        AddFavoritesDialogFragment fragment = new AddFavoritesDialogFragment();
         fragment.setArguments(b);
 
         return fragment;
@@ -42,16 +36,13 @@ public class IntegerDialogFragment extends DialogFragment {
     @Override
     public Dialog onCreateDialog(Bundle savedInstanceState) {
 
-        String title = getArguments().getString(TITLE_KEY);
         AlertDialog.Builder builder = new AlertDialog.Builder(getActivity());
 
-        if(title != null) {
-            builder.setTitle(title);
-        }
+        builder.setTitle("Add to Favorites");
 
         // null is ok in this context.
         @SuppressLint("InflateParams")
-        View view = getActivity().getLayoutInflater().inflate(R.layout.editor_int, null);
+        View view = getActivity().getLayoutInflater().inflate(R.layout.editor_string, null);
 
         builder.setView(view);
 
@@ -72,8 +63,8 @@ public class IntegerDialogFragment extends DialogFragment {
         dialog.show();
 
         Button okButton = dialog.getButton(DialogInterface.BUTTON_POSITIVE);
-        EditText editor = view.findViewById(R.id.intEditText);
-        TextView msgTextView = view.findViewById(R.id.msgTextView);
+        EditText editor = ((EditText) view.findViewById(R.id.editText));
+        TextView msgTextView = (TextView) view.findViewById(R.id.msgTextView);
 
         okButton.setOnClickListener(
                 new View.OnClickListener() {
@@ -100,32 +91,21 @@ public class IntegerDialogFragment extends DialogFragment {
             }
         });
 
-        // init values in view of dialog
-        if(savedInstanceState == null) {
-            int value = getArguments().getInt(VALUE_KEY);
-            editor.setText(String.valueOf(value));
-        }
-
         return dialog;
     }
 
     private boolean onOkClick(Button okButton, EditText editor, TextView msgTextView) {
-        try {
-            int value = Integer.parseInt(editor.getText().toString());
+        String value = editor.getText().toString();
 
-            // success
+        FractalProviderFragment fractalProviderFragment = (FractalProviderFragment) getParentFragment();
 
-            FractalProviderFragment fractalProviderFragment = (FractalProviderFragment) getParentFragment();
-            String id = getArguments().getString(ID_KEY);
-            String owner = getArguments().getString(OWNER_KEY);
-            fractalProviderFragment.provider().set(new ParameterKey(id, ParameterType.Int), owner, value);
+        int index = getArguments().getInt(INDEX_KEY);
 
-            return true;
-        } catch (NumberFormatException e) {
-            msgTextView.setText(e.getMessage());
-            msgTextView.setVisibility(View.VISIBLE);
-            okButton.setEnabled(false);
-            return false;
-        }
+        String label = fractalProviderFragment.provider().label(index);
+        FractalData fractal = fractalProviderFragment.provider().get(label).toData();
+
+        // TODO: now, store it.
+
+        return true;
     }
 }

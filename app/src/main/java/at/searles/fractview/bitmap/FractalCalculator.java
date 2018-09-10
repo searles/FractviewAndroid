@@ -12,7 +12,6 @@ import at.searles.fractal.Fractal;
 import at.searles.fractal.FractalProvider;
 import at.searles.fractview.fractal.Drawer;
 import at.searles.fractview.fractal.DrawerListener;
-import at.searles.fractview.main.InitializationFragment;
 
 /**
  * This class is the glue maintaining all parameters for drawing the fractal
@@ -46,8 +45,8 @@ import at.searles.fractview.main.InitializationFragment;
  */
 public class FractalCalculator implements DrawerListener, FractalProvider.Listener {
 
-	private static final int DEFAULT_WIDTH = 640;
-	private static final int DEFAULT_HEIGHT = 480;
+	private static final int DEFAULT_WIDTH = 1920;
+	private static final int DEFAULT_HEIGHT = 1080;
 
 	/**
 	 * Basic parameters
@@ -93,29 +92,19 @@ public class FractalCalculator implements DrawerListener, FractalProvider.Listen
 		IDLE          // waiting for IdleJobs
 	}
 
-	public FractalCalculator(int width, int height, Fractal fractal, InitializationFragment initFragment) {
+	public FractalCalculator(int width, int height) {
 		this.status = Status.IDLE;
 
 		this.width = width;
 		this.height = height;
-
-		initializeDrawer(initFragment);
-
-		drawer.setFractal(fractal);
-
-		// Initialization is finished.
-		startBackgroundTask();
 	}
-
-
 
 	// =============================================================
 	// ====== Managing the drawer ==================================
 	// =============================================================
 
-	private void initializeDrawer(InitializationFragment fragment) {
-
-		this.drawer = fragment.createDrawer();
+	public void setDrawer(Drawer drawer) {
+		this.drawer = drawer;
 		this.drawer.init();
 		this.drawer.setListener(this);
 
@@ -128,6 +117,8 @@ public class FractalCalculator implements DrawerListener, FractalProvider.Listen
 		}
 
 		applyNewSize();
+
+		startBackgroundTask();
 	}
 
 	public float progress() {
@@ -241,7 +232,6 @@ public class FractalCalculator implements DrawerListener, FractalProvider.Listen
 
 		drawer.start();
 	}
-
 
 	public void dispose() {
 		if (drawer != null) {

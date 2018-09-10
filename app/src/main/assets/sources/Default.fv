@@ -6,24 +6,30 @@ var x int, y int, color int;
 
 extern maxdepth int = 120;
 
-// some further arguments
-extern juliaset bool = false;
-extern juliapoint cplx = -0.8:0.16;
 
 // c: coordinates, breakcondition: a function whether we should stop, 
 // value: a real variable to return some kind of value
 //        used in 3d-types for the height.
 // returns a quat representing the color
 func escapetime(c, breakcondition) {
+    // some further arguments
+    extern juliaset bool = false;
+
     var i int = 0,
-        p cplx = juliapoint if juliaset else c,
         zlast cplx = 0,
         z cplx,
-        znext cplx = 0;
+        znext cplx = 0,
+        p cplx;
 
-    extern mandelinit expr = "0";
-
-    z = c if juliaset else mandelinit;
+    if juliaset then {
+        z = c;
+        extern juliapoint cplx = -0.8:0.16;
+        p = juliapoint;
+    } else {
+        extern mandelinit expr = "0";
+        z = mandelinit;
+        p = c
+    }
 
     extern function expr = "mandelbrot(z, p)";
 

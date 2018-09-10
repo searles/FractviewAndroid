@@ -11,7 +11,7 @@
         android:icon="@mipmap/ic_launcher"
         android:label="@string/app_name"
         android:supportsRtl="true">
-        <activity android:name=".main.FractviewActivity">
+        <activity android:name=".main.FractviewActivity" android:theme="@style/Theme.AppCompat.Light">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN"/>
 
@@ -20,7 +20,6 @@
         </activity>
         <activity android:name=".FavoritesListActivity" />
         <activity android:name=".parameters.palettes.PaletteActivity"/>
-        <activity android:name=".parameters.ParameterEditorActivity"/>
         <activity android:name=".assets.SourcesListActivity"/>
         <activity android:name=".assets.SelectAssetActivity"/>
         <activity android:name=".SourceEditorActivity"/>

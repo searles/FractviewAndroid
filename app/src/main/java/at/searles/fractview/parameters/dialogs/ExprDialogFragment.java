@@ -16,7 +16,7 @@ import android.widget.TextView;
 import at.searles.fractal.data.ParameterKey;
 import at.searles.fractal.data.ParameterType;
 import at.searles.fractview.R;
-import at.searles.fractview.main.FractalFragment;
+import at.searles.fractview.main.FractalProviderFragment;
 import at.searles.meelan.MeelanException;
 
 // This is practically the same as the IntDialogFragment, except for the parser...
@@ -25,12 +25,16 @@ public class ExprDialogFragment extends DialogFragment {
     private static final String VALUE_KEY = "value";
     private static final String TITLE_KEY = "title";
     private static final String ID_KEY = "id";
+    private static final String OWNER_KEY = "owner";
 
-    public static ExprDialogFragment newInstance(String title, String id, String value) {
+    public static ExprDialogFragment newInstance(String title, String id, String owner, String value) {
         Bundle b = new Bundle();
 
         b.putString(TITLE_KEY, title);
         b.putString(ID_KEY, id);
+
+        b.putString(OWNER_KEY, owner);
+
         b.putString(VALUE_KEY, value);
 
         ExprDialogFragment fragment = new ExprDialogFragment();
@@ -72,8 +76,8 @@ public class ExprDialogFragment extends DialogFragment {
         dialog.show();
 
         Button okButton = dialog.getButton(DialogInterface.BUTTON_POSITIVE);
-        EditText editor = ((EditText) view.findViewById(R.id.editText));
-        TextView msgTextView = (TextView) view.findViewById(R.id.msgTextView);
+        EditText editor = view.findViewById(R.id.editText);
+        TextView msgTextView = view.findViewById(R.id.msgTextView);
 
         okButton.setOnClickListener(
                 new View.OnClickListener() {
@@ -113,11 +117,13 @@ public class ExprDialogFragment extends DialogFragment {
         try {
             String value = editor.getText().toString();
 
-            FractalFragment fractalFragment = (FractalFragment) getParentFragment();
+            FractalProviderFragment fractalProviderFragment = (FractalProviderFragment) getParentFragment();
+
             String id = getArguments().getString(ID_KEY);
+            String owner = getArguments().getString(OWNER_KEY);
 
             // the next line will throw in case of an error.
-             fractalFragment.provider().set(new ParameterKey(id, ParameterType.Expr), value);
+             fractalProviderFragment.provider().set(new ParameterKey(id, ParameterType.Expr), owner, value);
 
             return true;
         } catch (MeelanException e) {

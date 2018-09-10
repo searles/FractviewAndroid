@@ -12,7 +12,7 @@ import android.widget.EditText;
 import at.searles.fractal.data.ParameterKey;
 import at.searles.fractal.data.ParameterType;
 import at.searles.fractview.R;
-import at.searles.fractview.main.FractalFragment;
+import at.searles.fractview.main.FractalProviderFragment;
 import at.searles.fractview.parameters.ColorView;
 import at.searles.fractview.parameters.palettes.PaletteActivity;
 import at.searles.fractview.parameters.palettes.PaletteView;
@@ -24,7 +24,10 @@ public class ColorDialogFragment extends DialogFragment {
 
     private static final String VALUE_KEY = "value";
     private static final String TITLE_KEY = "title";
+
     private static final String ID_KEY = "id";
+    private static final String OWNER_KEY = "owner";
+
     private static final String X_KEY = "x";
     private static final String Y_KEY = "y";
 
@@ -48,11 +51,16 @@ public class ColorDialogFragment extends DialogFragment {
     /**
      * This is called from ParameterEditor
      */
-    public static ColorDialogFragment newInstance(String title, String id, int value) {
+    public static ColorDialogFragment newInstance(String title, String id, String owner, int value) {
         Bundle b = new Bundle();
 
         b.putString(TITLE_KEY, title);
         b.putString(ID_KEY, id);
+
+        if(owner != null) {
+            b.putString(OWNER_KEY, owner);
+        }
+
         b.putInt(VALUE_KEY, value);
 
         ColorDialogFragment fragment = new ColorDialogFragment();
@@ -76,8 +84,8 @@ public class ColorDialogFragment extends DialogFragment {
         View view = getActivity().getLayoutInflater().inflate(R.layout.editor_color, null);
 
         // I initialize the view here.
-        ColorView colorView = (ColorView) view.findViewById(R.id.colorView);
-        EditText webcolorEditor = (EditText) view.findViewById(R.id.webcolorEditText);
+        ColorView colorView = view.findViewById(R.id.colorView);
+        EditText webcolorEditor = view.findViewById(R.id.webcolorEditText);
 
         // FIXME Text does not fit
 
@@ -115,12 +123,13 @@ public class ColorDialogFragment extends DialogFragment {
     private void onOkClick(ColorView view) {
         int value = view.getColor();
 
-        FractalFragment fractalFragment = (FractalFragment) getParentFragment();
+        FractalProviderFragment fractalProviderFragment = (FractalProviderFragment) getParentFragment();
 
-        if(fractalFragment != null) {
+        if(fractalProviderFragment != null) {
             // color dialog fragments are also called from the palette activity.
             String id = getArguments().getString(ID_KEY);
-            fractalFragment.provider().set(new ParameterKey(id, ParameterType.Color), value);
+            String owner = getArguments().getString(OWNER_KEY); // null if it does not exist.
+            fractalProviderFragment.provider().set(new ParameterKey(id, ParameterType.Color), owner, value);
 
             return;
         }
@@ -132,7 +141,7 @@ public class ColorDialogFragment extends DialogFragment {
         int y = getArguments().getInt(Y_KEY);
 
         activity.model().set(x, y, value);
-        PaletteView paletteView = (PaletteView) activity.findViewById(R.id.paletteView);
+        PaletteView paletteView = activity.findViewById(R.id.paletteView);
         paletteView.invalidate();
     }
 }

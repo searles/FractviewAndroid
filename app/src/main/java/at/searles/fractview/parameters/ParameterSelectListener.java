@@ -7,7 +7,7 @@ import android.widget.CheckedTextView;
 
 import at.searles.fractal.FractalProvider;
 import at.searles.fractview.fractal.BundleAdapter;
-import at.searles.fractview.main.FractalFragment;
+import at.searles.fractview.main.FractalProviderFragment;
 import at.searles.fractview.parameters.dialogs.ColorDialogFragment;
 import at.searles.fractview.parameters.dialogs.CplxDialogFragment;
 import at.searles.fractview.parameters.dialogs.ExprDialogFragment;
@@ -21,9 +21,9 @@ import at.searles.math.color.Palette;
 
 public class ParameterSelectListener implements AdapterView.OnItemClickListener {
 
-    private final FractalFragment fragment;
+    private final FractalProviderFragment fragment;
 
-    public ParameterSelectListener(FractalFragment fragment) {
+    public ParameterSelectListener(FractalProviderFragment fragment) {
         this.fragment = fragment;
     }
 
@@ -35,7 +35,9 @@ public class ParameterSelectListener implements AdapterView.OnItemClickListener 
             case Bool: {
                 boolean newValue = !(Boolean) item.value;
 
-                fragment.provider().set(item.key, newValue);
+                // in the case of non-individual parameters, owner may be null
+                // but it is never accessed.
+                fragment.provider().set(item.key, item.owner, newValue);
                 ((CheckedTextView) view).setChecked(newValue);
 
                 ((ParameterAdapter) parent.getAdapter()).notifyDataSetChanged();
@@ -43,32 +45,32 @@ public class ParameterSelectListener implements AdapterView.OnItemClickListener 
                 return;
             }
             case Int: {
-                IntegerDialogFragment ft = IntegerDialogFragment.newInstance("Edit integer number " + id, item.key.id, (Integer) item.value);
+                IntegerDialogFragment ft = IntegerDialogFragment.newInstance("Edit integer number " + id, item.key.id, item.owner, (Integer) item.value);
                 fragment.getChildFragmentManager().beginTransaction().add(ft, "editor").commit();
             }
             return;
             case Real: {
-                RealDialogFragment ft = RealDialogFragment.newInstance("Edit decimal number " + id, item.key.id, (Double) item.value);
+                RealDialogFragment ft = RealDialogFragment.newInstance("Edit decimal number " + id, item.key.id, item.owner, (Double) item.value);
                 fragment.getChildFragmentManager().beginTransaction().add(ft, "editor").commit();
             }
             return;
             case Cplx: {
-                CplxDialogFragment ft = CplxDialogFragment.newInstance("Edit complex number " + id, item.key.id, (Cplx) item.value);
+                CplxDialogFragment ft = CplxDialogFragment.newInstance("Edit complex number " + id, item.key.id, item.owner, (Cplx) item.value);
                 fragment.getChildFragmentManager().beginTransaction().add(ft, "editor").commit();
             }
             return;
             case Expr: {
-                ExprDialogFragment ft = ExprDialogFragment.newInstance("Edit expression " + id, item.key.id, (String) item.value);
+                ExprDialogFragment ft = ExprDialogFragment.newInstance("Edit expression " + id, item.key.id, item.owner, (String) item.value);
                 fragment.getChildFragmentManager().beginTransaction().add(ft, "editor").commit();
             }
             return;
             case Scale: {
-                ScaleDialogFragment ft = ScaleDialogFragment.newInstance("Edit scale " + id, item.key.id, (Scale) item.value);
+                ScaleDialogFragment ft = ScaleDialogFragment.newInstance("Edit scale " + id, item.key.id, item.owner, (Scale) item.value);
                 fragment.getChildFragmentManager().beginTransaction().add(ft, "editor").commit();
             }
             return;
             case Color: {
-                ColorDialogFragment ft = ColorDialogFragment.newInstance("Edit color " + id, item.key.id, (Integer) item.value);
+                ColorDialogFragment ft = ColorDialogFragment.newInstance("Edit color " + id, item.key.id, item.owner, (Integer) item.value);
                 fragment.getChildFragmentManager().beginTransaction().add(ft, "editor").commit();
             }
             return;
@@ -80,6 +82,10 @@ public class ParameterSelectListener implements AdapterView.OnItemClickListener 
 
                 i.putExtra(PaletteActivity.PALETTE_LABEL, BundleAdapter.toBundle(value));
                 i.putExtra(PaletteActivity.ID_LABEL, item.key.id); // label should also be in here.
+
+                if(item.owner != null) {
+                    i.putExtra(PaletteActivity.OWNER_LABEL, item.owner); // label should also be in here.
+                }
 
                 fragment.startActivityForResult(i, PaletteActivity.PALETTE_ACTIVITY_RETURN);
             }

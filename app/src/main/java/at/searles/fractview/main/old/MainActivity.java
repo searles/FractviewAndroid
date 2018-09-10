@@ -59,18 +59,18 @@ public class MainActivity /* extends Activity
 //
 //	private void initRenderScriptFragment() {
 //		FragmentManager fm = getFragmentManager();
-//		InitializationFragment initializationFragment = (InitializationFragment) fm.findFragmentByTag(RENDERSCRIPT_FRAGMENT_TAG);
+//		FractalCalculatorFragment initializationFragment = (FractalCalculatorFragment) fm.findFragmentByTag(RENDERSCRIPT_FRAGMENT_TAG);
 //
 //		if(initializationFragment == null) {
-//			Log.d(getClass().getName(), "creating InitializationFragment");
+//			Log.d(getClass().getName(), "creating FractalCalculatorFragment");
 //
-//			initializationFragment = InitializationFragment.newInstance();
+//			initializationFragment = FractalCalculatorFragment.newInstance();
 //
 //			FragmentTransaction transaction = fm.beginTransaction();
 //			transaction.add(initializationFragment, RENDERSCRIPT_FRAGMENT_TAG);
 //			transaction.commit();
 //		} else {
-//			Log.d(getClass().getName(), "InitializationFragment already exists");
+//			Log.d(getClass().getName(), "FractalCalculatorFragment already exists");
 //		}
 //	}
 //
@@ -90,9 +90,9 @@ public class MainActivity /* extends Activity
 //			transaction.add(fractalFragment, FRACTAL_FRAGMENT_TAG);
 //			transaction.commitAllowingStateLoss(); // Question: Why should there be a stateloss?
 //
-//			Log.d(getClass().getName(), "creating FractalFragment");
+//			Log.d(getClass().getName(), "creating FractalProviderFragment");
 //		} else {
-//			Log.d(getClass().getName(), "FractalFragment already exists");
+//			Log.d(getClass().getName(), "FractalProviderFragment already exists");
 //		}
 //	}
 //
@@ -181,78 +181,6 @@ public class MainActivity /* extends Activity
 //	public static final int SAVE_TO_MEDIA_PERMISSIONS = 105;
 //	public static final int WALLPAPER_PERMISSIONS = 106;
 //
-//	@Override
-//    public boolean onOptionsItemSelected(MenuItem item) {
-//        // Handle presses on the action bar items
-//        switch (item.getItemId()) {
-//			case R.id.action_size: {
-//				openChangeImageSizeDialog();
-//
-//			} return true;
-//
-//			case R.id.action_add_favorite: {
-//				DialogHelper.inputText(this, "Add Favorite", "", new Commons.KeyAction() {
-//					@Override
-//					public void apply(String key) {
-//						saveFavorite(key);
-//					}
-//				});
-//			} return true;
-//
-//			case R.id.action_parameters: {
-//				// FIXME Replace this case by swipe-in menu
-//				Intent i = new Intent(MainActivity.this, ParameterEditorActivity.class);
-//				i.putExtra(SourcesListActivity.FRACTAL_INDENT_LABEL, BundleAdapter.fractalToBundle(fractalFragment.fractal()));
-//				startActivityForResult(i, PARAMETER_ACTIVITY_RETURN);
-//			} return true;
-//
-//			case R.id.action_favorites: {
-//				// show new activity
-//				Intent i = new Intent(MainActivity.this, FavoritesListActivity.class);
-//				startActivityForResult(i, BOOKMARK_ACTIVITY_RETURN);
-//			} return true;
-//
-//			case R.id.action_demos: {
-//				// show new activity
-//				Intent i = new Intent(MainActivity.this, SourcesListActivity.class);
-//				i.putExtra(SourcesListActivity.FRACTAL_INDENT_LABEL, BundleAdapter.fractalToBundle(fractalFragment.fractal()));
-//				startActivityForResult(i, PRESETS_ACTIVITY_RETURN);
-//			} return true;
-//
-//			case R.id.action_paste_from_clipboard: {
-//				// paste from clipboard
-//				Fractal newFractal = ClipboardHelper.pasteFractal(this);
-//
-//				if(newFractal != null) {
-//					fractalFragment.setFractal(newFractal);
-//					// otherwise a message was already shown
-//				}
-//			} return true;
-//
-//			case R.id.action_copy_to_clipboard: {
-//				// copy to clipboard
-//				ClipboardHelper.copyFractal(this, fractalFragment.fractal());
-//			} return true;
-//
-//			case R.id.action_gui_settings: {
-//				// FIXME replace by swipe-in
-//				openUiSettingsDialog();
-//			} return true;
-//
-//			case R.id.action_share: {
-//				openShareDialog();
-//			} return true;
-//
-//			case R.id.action_tutorial: {
-//				// show new activity
-//				Intent i = new Intent(MainActivity.this, TutorialActivity.class);
-//				startActivity(i);
-//			} return true;
-//
-//            default:
-//                return super.onOptionsItemSelected(item);
-//        }
-//    }
 //
 //	// ===================================================================
 //

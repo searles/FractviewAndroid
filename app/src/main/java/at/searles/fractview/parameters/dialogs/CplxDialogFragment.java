@@ -16,7 +16,7 @@ import android.widget.TextView;
 import at.searles.fractal.data.ParameterKey;
 import at.searles.fractal.data.ParameterType;
 import at.searles.fractview.R;
-import at.searles.fractview.main.FractalFragment;
+import at.searles.fractview.main.FractalProviderFragment;
 import at.searles.math.Cplx;
 
 // This is practically the same as the IntDialogFragment, except for the parser...
@@ -26,12 +26,16 @@ public class CplxDialogFragment extends DialogFragment {
     private static final String IM_VALUE_KEY = "im_value";
     private static final String TITLE_KEY = "title";
     private static final String ID_KEY = "id";
+    private static final String OWNER_KEY = "owner";
 
-    public static CplxDialogFragment newInstance(String title, String id, Cplx value) {
+    public static CplxDialogFragment newInstance(String title, String id, String owner, Cplx value) {
         Bundle b = new Bundle();
 
         b.putString(TITLE_KEY, title);
         b.putString(ID_KEY, id);
+
+        b.putString(OWNER_KEY, owner);
+
         b.putDouble(RE_VALUE_KEY, value.re());
         b.putDouble(IM_VALUE_KEY, value.im());
 
@@ -74,9 +78,9 @@ public class CplxDialogFragment extends DialogFragment {
         dialog.show();
 
         Button okButton = dialog.getButton(DialogInterface.BUTTON_POSITIVE);
-        EditText reEditor = ((EditText) view.findViewById(R.id.reEditText));
-        EditText imEditor = ((EditText) view.findViewById(R.id.imEditText));
-        TextView msgTextView = (TextView) view.findViewById(R.id.msgTextView);
+        EditText reEditor = view.findViewById(R.id.reEditText);
+        EditText imEditor = view.findViewById(R.id.imEditText);
+        TextView msgTextView = view.findViewById(R.id.msgTextView);
 
         okButton.setOnClickListener(
                 new View.OnClickListener() {
@@ -156,9 +160,10 @@ public class CplxDialogFragment extends DialogFragment {
             Cplx value = new Cplx(reValue, imValue);
             // success
 
-            FractalFragment fractalFragment = (FractalFragment) getParentFragment();
+            FractalProviderFragment fractalProviderFragment = (FractalProviderFragment) getParentFragment();
             String id = getArguments().getString(ID_KEY);
-            fractalFragment.provider().set(new ParameterKey(id, ParameterType.Cplx), value);
+            String owner = getArguments().getString(OWNER_KEY);
+            fractalProviderFragment.provider().set(new ParameterKey(id, ParameterType.Cplx), owner, value);
 
             return true;
     }

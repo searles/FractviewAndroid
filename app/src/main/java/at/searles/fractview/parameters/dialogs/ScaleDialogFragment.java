@@ -17,7 +17,7 @@ import at.searles.fractal.data.ParameterKey;
 import at.searles.fractal.data.ParameterType;
 import at.searles.fractview.R;
 import at.searles.fractview.fractal.BundleAdapter;
-import at.searles.fractview.main.FractalFragment;
+import at.searles.fractview.main.FractalProviderFragment;
 import at.searles.math.Scale;
 
 // This is practically the same as the IntDialogFragment, except for the parser...
@@ -26,12 +26,17 @@ public class ScaleDialogFragment extends DialogFragment {
     private static final String VALUE_KEY = "value";
     private static final String TITLE_KEY = "title";
     private static final String ID_KEY = "id";
+    private static final String OWNER_KEY = "owner";
 
-    public static ScaleDialogFragment newInstance(String title, String id, Scale value) {
+    public static ScaleDialogFragment newInstance(String title, String id, String owner, Scale value) {
         Bundle b = new Bundle();
 
         b.putString(TITLE_KEY, title);
+
         b.putString(ID_KEY, id);
+
+        b.putString(OWNER_KEY, owner);
+
         b.putDoubleArray(VALUE_KEY, BundleAdapter.toArray(value));
 
         ScaleDialogFragment fragment = new ScaleDialogFragment();
@@ -74,7 +79,7 @@ public class ScaleDialogFragment extends DialogFragment {
         dialog.show();
 
         Button okButton = dialog.getButton(DialogInterface.BUTTON_POSITIVE);
-        TextView msgTextView = (TextView) view.findViewById(R.id.msgTextView);
+        TextView msgTextView = view.findViewById(R.id.msgTextView);
 
         okButton.setOnClickListener(
                 new View.OnClickListener() {
@@ -104,9 +109,10 @@ public class ScaleDialogFragment extends DialogFragment {
 
             // success
 
-            FractalFragment fractalFragment = (FractalFragment) getParentFragment();
+            FractalProviderFragment fractalProviderFragment = (FractalProviderFragment) getParentFragment();
             String id = getArguments().getString(ID_KEY);
-            fractalFragment.provider().set(new ParameterKey(id, ParameterType.Scale), value);
+            String owner = getArguments().getString(OWNER_KEY);
+            fractalProviderFragment.provider().set(new ParameterKey(id, ParameterType.Scale), owner, value);
 
             return true;
         } catch (NumberFormatException e) {
@@ -118,12 +124,12 @@ public class ScaleDialogFragment extends DialogFragment {
     }
 
     private void initEditorWatchers(View view, Button okButton, TextView msgTextView) {
-        EditText editorXX = (EditText) view.findViewById(R.id.xxEditText);
-        EditText editorXY = (EditText) view.findViewById(R.id.xyEditText);
-        EditText editorYX = (EditText) view.findViewById(R.id.yxEditText);
-        EditText editorYY = (EditText) view.findViewById(R.id.yyEditText);
-        EditText editorCX = (EditText) view.findViewById(R.id.cxEditText);
-        EditText editorCY = (EditText) view.findViewById(R.id.cyEditText);
+        EditText editorXX = view.findViewById(R.id.xxEditText);
+        EditText editorXY = view.findViewById(R.id.xyEditText);
+        EditText editorYX = view.findViewById(R.id.yxEditText);
+        EditText editorYY = view.findViewById(R.id.yyEditText);
+        EditText editorCX = view.findViewById(R.id.cxEditText);
+        EditText editorCY = view.findViewById(R.id.cyEditText);
 
         TextWatcher watcher = new TextWatcher() {
             @Override
@@ -150,12 +156,12 @@ public class ScaleDialogFragment extends DialogFragment {
     }
 
     private void setValue(Scale sc, View view) {
-        EditText editorXX = (EditText) view.findViewById(R.id.xxEditText);
-        EditText editorXY = (EditText) view.findViewById(R.id.xyEditText);
-        EditText editorYX = (EditText) view.findViewById(R.id.yxEditText);
-        EditText editorYY = (EditText) view.findViewById(R.id.yyEditText);
-        EditText editorCX = (EditText) view.findViewById(R.id.cxEditText);
-        EditText editorCY = (EditText) view.findViewById(R.id.cyEditText);
+        EditText editorXX = view.findViewById(R.id.xxEditText);
+        EditText editorXY = view.findViewById(R.id.xyEditText);
+        EditText editorYX = view.findViewById(R.id.yxEditText);
+        EditText editorYY = view.findViewById(R.id.yyEditText);
+        EditText editorCX = view.findViewById(R.id.cxEditText);
+        EditText editorCY = view.findViewById(R.id.cyEditText);
 
         editorXX.setText(String.valueOf(sc.xx));
         editorXY.setText(String.valueOf(sc.xy));
@@ -166,12 +172,12 @@ public class ScaleDialogFragment extends DialogFragment {
     }
 
     private Scale getValue(View view) {
-        EditText editorXX = (EditText) view.findViewById(R.id.xxEditText);
-        EditText editorXY = (EditText) view.findViewById(R.id.xyEditText);
-        EditText editorYX = (EditText) view.findViewById(R.id.yxEditText);
-        EditText editorYY = (EditText) view.findViewById(R.id.yyEditText);
-        EditText editorCX = (EditText) view.findViewById(R.id.cxEditText);
-        EditText editorCY = (EditText) view.findViewById(R.id.cyEditText);
+        EditText editorXX = view.findViewById(R.id.xxEditText);
+        EditText editorXY = view.findViewById(R.id.xyEditText);
+        EditText editorYX = view.findViewById(R.id.yxEditText);
+        EditText editorYY = view.findViewById(R.id.yyEditText);
+        EditText editorCX = view.findViewById(R.id.cxEditText);
+        EditText editorCY = view.findViewById(R.id.cyEditText);
 
         double xx = Double.parseDouble(editorXX.getText().toString());
         double xy = Double.parseDouble(editorXY.getText().toString());

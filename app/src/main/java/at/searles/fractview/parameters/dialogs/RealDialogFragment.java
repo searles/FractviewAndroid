@@ -16,7 +16,7 @@ import android.widget.TextView;
 import at.searles.fractal.data.ParameterKey;
 import at.searles.fractal.data.ParameterType;
 import at.searles.fractview.R;
-import at.searles.fractview.main.FractalFragment;
+import at.searles.fractview.main.FractalProviderFragment;
 
 // This is practically the same as the IntDialogFragment, except for the parser...
 public class RealDialogFragment extends DialogFragment {
@@ -24,12 +24,15 @@ public class RealDialogFragment extends DialogFragment {
     private static final String VALUE_KEY = "value";
     private static final String TITLE_KEY = "title";
     private static final String ID_KEY = "id";
+    private static final String OWNER_KEY = "owner";
 
-    public static RealDialogFragment newInstance(String title, String id, double value) {
+    public static RealDialogFragment newInstance(String title, String id, String owner, double value) {
         Bundle b = new Bundle();
 
         b.putString(TITLE_KEY, title);
         b.putString(ID_KEY, id);
+
+        b.putString(OWNER_KEY, owner);
         b.putDouble(VALUE_KEY, value);
 
         RealDialogFragment fragment = new RealDialogFragment();
@@ -71,8 +74,8 @@ public class RealDialogFragment extends DialogFragment {
         dialog.show();
 
         Button okButton = dialog.getButton(DialogInterface.BUTTON_POSITIVE);
-        EditText editor = ((EditText) view.findViewById(R.id.realEditText));
-        TextView msgTextView = (TextView) view.findViewById(R.id.msgTextView);
+        EditText editor = view.findViewById(R.id.realEditText);
+        TextView msgTextView = view.findViewById(R.id.msgTextView);
 
         okButton.setOnClickListener(
                 new View.OnClickListener() {
@@ -114,9 +117,10 @@ public class RealDialogFragment extends DialogFragment {
 
             // success
 
-            FractalFragment fractalFragment = (FractalFragment) getParentFragment();
+            FractalProviderFragment fractalProviderFragment = (FractalProviderFragment) getParentFragment();
             String id = getArguments().getString(ID_KEY);
-            fractalFragment.provider().set(new ParameterKey(id, ParameterType.Real), value);
+            String owner = getArguments().getString(OWNER_KEY);
+            fractalProviderFragment.provider().set(new ParameterKey(id, ParameterType.Real), owner, value);
 
             return true;
         } catch (NumberFormatException e) {
