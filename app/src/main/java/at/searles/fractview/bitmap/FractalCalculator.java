@@ -45,7 +45,7 @@ import at.searles.fractview.fractal.DrawerListener;
  */
 public class FractalCalculator implements DrawerListener, FractalProvider.Listener {
 
-	private static final int DEFAULT_WIDTH = 1920;
+	private static final int DEFAULT_WIDTH = 1800;
 	private static final int DEFAULT_HEIGHT = 1080;
 
 	/**

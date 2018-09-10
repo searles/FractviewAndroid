@@ -184,6 +184,7 @@ public class RenderScriptDrawer implements Drawer {
 	public void start() {
 		// in ui-thread.
 		isCancelled = false;
+		this.progress = 0;
 
 		new Thread(
 				new Runnable() {
