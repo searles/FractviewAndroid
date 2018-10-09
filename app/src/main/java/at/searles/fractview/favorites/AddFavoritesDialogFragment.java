@@ -20,12 +20,12 @@ import at.searles.fractview.main.FractalProviderFragment;
 // This is practically the same as the IntDialogFragment, except for the parser...
 public class AddFavoritesDialogFragment extends DialogFragment {
 
-    private static final String INDEX_KEY = "index";
+    private static final String FRAGMENT_INDEX_KEY = "index";
 
-    public static AddFavoritesDialogFragment newInstance(int index) {
+    public static AddFavoritesDialogFragment newInstance(int fragmentIndex) {
         Bundle b = new Bundle();
 
-        b.putInt(INDEX_KEY, index);
+        b.putInt(FRAGMENT_INDEX_KEY, fragmentIndex);
 
         AddFavoritesDialogFragment fragment = new AddFavoritesDialogFragment();
         fragment.setArguments(b);
@@ -63,8 +63,8 @@ public class AddFavoritesDialogFragment extends DialogFragment {
         dialog.show();
 
         Button okButton = dialog.getButton(DialogInterface.BUTTON_POSITIVE);
-        EditText editor = ((EditText) view.findViewById(R.id.editText));
-        TextView msgTextView = (TextView) view.findViewById(R.id.msgTextView);
+        EditText editor = view.findViewById(R.id.editText);
+        TextView msgTextView = view.findViewById(R.id.msgTextView);
 
         okButton.setOnClickListener(
                 new View.OnClickListener() {
@@ -99,12 +99,25 @@ public class AddFavoritesDialogFragment extends DialogFragment {
 
         FractalProviderFragment fractalProviderFragment = (FractalProviderFragment) getParentFragment();
 
-        int index = getArguments().getInt(INDEX_KEY);
+        int index = getArguments().getInt(FRAGMENT_INDEX_KEY);
 
-        String label = fractalProviderFragment.provider().label(index);
-        FractalData fractal = fractalProviderFragment.provider().get(label).toData();
+        FractalData fractal = fractalProviderFragment.getFractalByFragmentIndex(index).toData();
 
         // TODO: now, store it.
+
+        //		if(name.isEmpty()) {
+//			Toast.makeText(MainActivity.this, "ERROR: Name must not be empty", Toast.LENGTH_LONG).show();
+//			return;
+//		}
+//
+//		Fractal fractal = fractalFragment.fractal();
+//
+//		// create icon out of bitmap
+//		Bitmap icon = Commons.createIcon(fractalCalculator.bitmap(), FAVORITES_ICON_SIZE);
+//
+//		FavoriteEntry fav = new FavoriteEntry(icon, fractal, Commons.fancyTimestamp());
+//
+//		SharedPrefsHelper.storeInSharedPreferences(this, name, fav, FavoritesListActivity.FAVORITES_SHARED_PREF);
 
         return true;
     }

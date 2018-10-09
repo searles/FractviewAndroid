@@ -125,7 +125,8 @@ extern light bool = false;
 func drawpixel_2d(x, y) { 
     var c cplx = map(x, y);
     var value real;
-    get_color(c, value) // value is not used
+    var color = get_color(c, value); // value is not used
+    0.5 (color + color)
 }
 
 // drawpixel for 3D

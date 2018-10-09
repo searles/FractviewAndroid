@@ -1,6 +1,7 @@
 package at.searles.fractview.bitmap.ui;
 
 import android.content.Context;
+import android.graphics.PointF;
 import android.support.annotation.Nullable;
 import android.util.AttributeSet;
 import android.util.Log;
@@ -11,6 +12,7 @@ import android.widget.ProgressBar;
 import at.searles.fractview.R;
 import at.searles.fractview.bitmap.FractalCalculator;
 import at.searles.fractview.bitmap.FractalCalculatorListener;
+import at.searles.fractview.main.CalculatorFragment;
 
 /**
  * This view allows to dynamically interact with a bitmap fragment.
@@ -26,24 +28,57 @@ import at.searles.fractview.bitmap.FractalCalculatorListener;
 // Then FractalProviderFragment tells FractalCalculator that there is a new fractal.
 // Then, FractalCalculator calls FractalCalculatorView.
 
-public class FractalCalculatorView extends FrameLayout implements FractalCalculatorListener {
+public class CalculatorView extends FrameLayout implements FractalCalculatorListener {
 
+    private CalculatorFragment fragment;
     private DrawerProgressTask progressTask;
     private ProgressBar drawerProgressBar;
 
-    private ScaleableImageView imageView;
+    private InteractiveView interactiveView;
+    private ScalableImageView imageView;
 
-    public FractalCalculatorView(Context context, @Nullable AttributeSet attrs) {
+    public CalculatorView(Context context, @Nullable AttributeSet attrs) {
         super(context, attrs);
         initView(context);
+    }
+
+    public void setFragment(CalculatorFragment fragment) {
+        this.fragment = fragment;
     }
 
     private void initView(Context context) {
         inflate(context, R.layout.view_fractal_calculator, this);
 
+        interactiveView = findViewById(R.id.interactiveView);
         imageView = findViewById(R.id.scaleableImageView);
+
+
+
         drawerProgressBar = findViewById(R.id.drawerProgressBar);
         drawerProgressBar.setVisibility(View.INVISIBLE); // will be shown maybe later
+    }
+
+    public void addPoint(String key, String description, PointF normalizedPoint) {
+        PointF screenPoint = imageView.normalizedToScreen(normalizedPoint);
+
+        // Step 2: Set point
+        interactiveView.addPoint(key, description, screenPoint.x, screenPoint.y,
+                new InteractiveView.PointListener() {
+                    @Override
+                    public void pointMoved(String key, float screenX, float screenY) {
+                        PointF normalizedPoint = imageView.screenToNormalized(new PointF(screenX, screenY));
+                        fragment.moveParameterToNormalized(key, normalizedPoint);
+                    }
+                });
+    }
+
+    public void removePoint(String key) {
+        interactiveView.removePoint(key);
+    }
+
+    public void updatePoint(String key, PointF normalizedPoint) {
+        PointF screenPoint = imageView.normalizedToScreen(normalizedPoint);
+        interactiveView.movePointTo(key, screenPoint.x, screenPoint.y);
     }
 
     void setProgress(float progress) {
@@ -57,8 +92,7 @@ public class FractalCalculatorView extends FrameLayout implements FractalCalcula
     }
 
     public boolean backButtonAction() {
-        // TODO Can't I register for this?
-        // in here there might be more stuff...
+        // FIXME
         return imageView.backButtonAction();
     }
 
@@ -72,16 +106,14 @@ public class FractalCalculatorView extends FrameLayout implements FractalCalcula
     public void dispose() {
         // dispose progress task if running
         if(progressTask != null) {
-            // TODO: Move this to fractalcalculatorfragment
+            // TODO: Move this to fractalcalculatorfragment?
             progressTask.dispose();
         }
     }
 
-    public ScaleableImageView scaleableImageView() {
+    public ScalableImageView scaleableImageView() {
         return imageView;
     }
-
-
 
     @Override
     public void bitmapUpdated(FractalCalculator src) {

@@ -13,8 +13,6 @@ import android.widget.Button;
 import android.widget.EditText;
 import android.widget.TextView;
 
-import at.searles.fractal.data.ParameterKey;
-import at.searles.fractal.data.ParameterType;
 import at.searles.fractview.R;
 import at.searles.fractview.main.FractalProviderFragment;
 import at.searles.meelan.MeelanException;
@@ -27,13 +25,13 @@ public class ExprDialogFragment extends DialogFragment {
     private static final String ID_KEY = "id";
     private static final String OWNER_KEY = "owner";
 
-    public static ExprDialogFragment newInstance(String title, String id, String owner, String value) {
+    public static ExprDialogFragment newInstance(String title, String id, int owner, String value) {
         Bundle b = new Bundle();
 
         b.putString(TITLE_KEY, title);
         b.putString(ID_KEY, id);
 
-        b.putString(OWNER_KEY, owner);
+        b.putInt(OWNER_KEY, owner);
 
         b.putString(VALUE_KEY, value);
 
@@ -120,10 +118,10 @@ public class ExprDialogFragment extends DialogFragment {
             FractalProviderFragment fractalProviderFragment = (FractalProviderFragment) getParentFragment();
 
             String id = getArguments().getString(ID_KEY);
-            String owner = getArguments().getString(OWNER_KEY);
+            int owner = getArguments().getInt(OWNER_KEY);
 
             // the next line will throw in case of an error.
-             fractalProviderFragment.provider().set(new ParameterKey(id, ParameterType.Expr), owner, value);
+             fractalProviderFragment.setParameter(id, owner, value);
 
             return true;
         } catch (MeelanException e) {

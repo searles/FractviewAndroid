@@ -1,6 +1,7 @@
 package at.searles.fractview.bitmap;
 
 import android.graphics.Bitmap;
+import android.graphics.PointF;
 import android.os.Handler;
 import android.os.Looper;
 import android.util.Log;
@@ -43,7 +44,7 @@ import at.searles.fractview.fractal.DrawerListener;
  *
  * An Editor
  */
-public class FractalCalculator implements DrawerListener, FractalProvider.Listener {
+public class FractalCalculator implements DrawerListener, FractalProvider.FractalListener {
 
 	private static final int DEFAULT_WIDTH = 1800;
 	private static final int DEFAULT_HEIGHT = 1080;
@@ -102,6 +103,10 @@ public class FractalCalculator implements DrawerListener, FractalProvider.Listen
 	// =============================================================
 	// ====== Managing the drawer ==================================
 	// =============================================================
+
+	public double[] translate(PointF norm) {
+		return drawer.translate(norm);
+	}
 
 	public void setDrawer(Drawer drawer) {
 		this.drawer = drawer;

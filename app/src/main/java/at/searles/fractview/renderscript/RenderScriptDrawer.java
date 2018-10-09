@@ -36,6 +36,8 @@ public class RenderScriptDrawer implements Drawer {
 	private int width;
 	private int height;
 
+	private Scale scale;
+
 	private RenderScript rs;
 	private Allocation rsBitmap = null;
 
@@ -81,7 +83,13 @@ public class RenderScriptDrawer implements Drawer {
 
 	@Deprecated
 	public void setScale(Scale sc) {
+		this.scale = sc;
 		updateScale(sc);
+	}
+
+	@Override
+	public Scale getScale() {
+		return this.scale;
 	}
 
 	@Override
@@ -184,7 +192,6 @@ public class RenderScriptDrawer implements Drawer {
 	public void start() {
 		// in ui-thread.
 		isCancelled = false;
-		this.progress = 0;
 
 		new Thread(
 				new Runnable() {

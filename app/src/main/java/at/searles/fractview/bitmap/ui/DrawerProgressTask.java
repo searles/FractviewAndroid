@@ -11,13 +11,13 @@ class DrawerProgressTask implements Runnable {
 
     private static final long PROGRESS_UPDATE_MILLIS = 500; // TODO move to res. update the progress bar every ... ms.
 
-    private final FractalCalculatorView view;
+    private final CalculatorView view;
     private final FractalCalculator calculator;
     private final Handler handler;
 
     private boolean disposed;
 
-    DrawerProgressTask(FractalCalculatorView view, FractalCalculator calculator) {
+    DrawerProgressTask(CalculatorView view, FractalCalculator calculator) {
         this.view = view;
         this.calculator = calculator;
         this.handler = new Handler();

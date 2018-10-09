@@ -12,11 +12,11 @@ import at.searles.fractview.renderscript.RenderScriptDrawer;
  */
 public class CreateDrawerTask extends AsyncTask<Void, Void, Void> {
 
-    private final FractalCalculatorFragment parent; // FIXME longrunning op
+    private final CalculatorFragment parent; // FIXME longrunning op
     private final RenderScript renderScript;
     private RenderScriptDrawer drawer;
 
-    CreateDrawerTask(RenderScript renderScript, FractalCalculatorFragment parent) {
+    CreateDrawerTask(RenderScript renderScript, CalculatorFragment parent) {
         this.renderScript = renderScript;
         this.parent = parent;
     }

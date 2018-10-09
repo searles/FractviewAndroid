@@ -11,18 +11,21 @@ import android.widget.TextView;
 
 import at.searles.fractal.FractalProvider;
 import at.searles.fractal.data.ParameterType;
+import at.searles.fractview.main.FractalProviderFragment;
 
-public class ParameterAdapter extends BaseAdapter implements ListAdapter {
+public class ParameterAdapter extends BaseAdapter implements ListAdapter, FractalProvider.ParameterMapListener {
 
     private static final int BOOL = 0;
     private static final int ELEMENT = 1;
 
     private final Activity activity;
-    private final FractalProvider provider;
+    private final FractalProviderFragment parent;
 
-    public ParameterAdapter(Activity activity, FractalProvider provider) {
+    public ParameterAdapter(Activity activity, FractalProviderFragment parent) {
         this.activity = activity;
-        this.provider = provider;
+        this.parent = parent;
+
+        parent.addParameterMapListener(this);
     }
 
     @Override
@@ -32,12 +35,12 @@ public class ParameterAdapter extends BaseAdapter implements ListAdapter {
 
     @Override
     public int getCount() {
-        return provider.parameterCount();
+        return parent.parameterCount();
     }
 
     @Override
     public FractalProvider.ParameterEntry getItem(int position) {
-        return provider.getParameter(position);
+        return parent.getParameterByIndex(position);
     }
 
     @Override
@@ -54,7 +57,7 @@ public class ParameterAdapter extends BaseAdapter implements ListAdapter {
 
     @Override
     public int getItemViewType(int position) {
-        switch(getItem(position).key.type) {
+        switch(getItem(position).type) {
             case Bool:
                 return BOOL;
             default:
@@ -73,7 +76,7 @@ public class ParameterAdapter extends BaseAdapter implements ListAdapter {
                 if (view == null)
                     view = activity.getLayoutInflater().inflate(android.R.layout.simple_list_item_checked, parent, false);
 
-                CheckedTextView text1 = (CheckedTextView) view.findViewById(android.R.id.text1);
+                CheckedTextView text1 = view.findViewById(android.R.id.text1);
 
                 text1.setTypeface(entry.isDefault ? Typeface.DEFAULT : Typeface.DEFAULT_BOLD);
 
@@ -86,14 +89,20 @@ public class ParameterAdapter extends BaseAdapter implements ListAdapter {
                     view = activity.getLayoutInflater().inflate(android.R.layout.simple_list_item_2, parent, false);
                 }
 
-                TextView text1 = (TextView) view.findViewById(android.R.id.text1);
+                TextView text1 = view.findViewById(android.R.id.text1);
                 text1.setTypeface(entry.isDefault ? Typeface.DEFAULT : Typeface.DEFAULT_BOLD);
 
-                text1.setText(entry.description);
+                String description = entry.description;
 
-                TextView text2 = (TextView) view.findViewById(android.R.id.text2);
+                if(entry.owner >= 0) {
+                    description += " (" + (entry.owner + 1) + ")";
+                }
 
-                text2.setText(getLabelForType(entry.key.type));
+                text1.setText(description);
+
+                TextView text2 = view.findViewById(android.R.id.text2);
+
+                text2.setText(getLabelForType(entry.type));
             }
             break;
         }
@@ -120,5 +129,10 @@ public class ParameterAdapter extends BaseAdapter implements ListAdapter {
             default:
                 throw new IllegalArgumentException("missing label for " + type);
         }
+    }
+
+    @Override
+    public void parameterMapModified(FractalProvider src) {
+        notifyDataSetChanged();
     }
 }

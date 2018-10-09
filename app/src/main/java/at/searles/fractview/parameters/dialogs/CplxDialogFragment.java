@@ -13,8 +13,6 @@ import android.widget.Button;
 import android.widget.EditText;
 import android.widget.TextView;
 
-import at.searles.fractal.data.ParameterKey;
-import at.searles.fractal.data.ParameterType;
 import at.searles.fractview.R;
 import at.searles.fractview.main.FractalProviderFragment;
 import at.searles.math.Cplx;
@@ -28,13 +26,13 @@ public class CplxDialogFragment extends DialogFragment {
     private static final String ID_KEY = "id";
     private static final String OWNER_KEY = "owner";
 
-    public static CplxDialogFragment newInstance(String title, String id, String owner, Cplx value) {
+    public static CplxDialogFragment newInstance(String title, String id, int owner, Cplx value) {
         Bundle b = new Bundle();
 
         b.putString(TITLE_KEY, title);
         b.putString(ID_KEY, id);
 
-        b.putString(OWNER_KEY, owner);
+        b.putInt(OWNER_KEY, owner);
 
         b.putDouble(RE_VALUE_KEY, value.re());
         b.putDouble(IM_VALUE_KEY, value.im());
@@ -153,7 +151,7 @@ public class CplxDialogFragment extends DialogFragment {
                 msgTextView.setText(R.string.error_invalid_real_number);
                 msgTextView.setVisibility(View.VISIBLE);
                 okButton.setEnabled(false);
-                imEditor.requestFocus(); // todo
+                imEditor.requestFocus(); // todo is this the correct call?
                 return false;
             }
 
@@ -162,8 +160,8 @@ public class CplxDialogFragment extends DialogFragment {
 
             FractalProviderFragment fractalProviderFragment = (FractalProviderFragment) getParentFragment();
             String id = getArguments().getString(ID_KEY);
-            String owner = getArguments().getString(OWNER_KEY);
-            fractalProviderFragment.provider().set(new ParameterKey(id, ParameterType.Cplx), owner, value);
+            int owner = getArguments().getInt(OWNER_KEY);
+            fractalProviderFragment.setParameter(id, owner, value);
 
             return true;
     }

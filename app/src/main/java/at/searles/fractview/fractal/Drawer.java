@@ -1,6 +1,7 @@
 package at.searles.fractview.fractal;
 
 import android.graphics.Bitmap;
+import android.graphics.PointF;
 
 import at.searles.fractal.Fractal;
 import at.searles.math.Scale;
@@ -34,6 +35,17 @@ public interface Drawer {
 	public void updateBitmap(Bitmap bm);
 
 	public void setScale(Scale sc);
+
+	public Scale getScale();
+
+	public default double[] translate(PointF normPoint) {
+		return getScale().scale(normPoint.x, normPoint.y);
+	}
+
+	public default PointF invert(double x, double y) {
+		float[] point = getScale().invScale(x, y);
+		return new PointF(point[0], point[1]);
+	}
 
 	public void setFractal(Fractal f);
 

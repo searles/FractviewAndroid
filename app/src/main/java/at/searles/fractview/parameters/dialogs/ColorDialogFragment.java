@@ -9,8 +9,6 @@ import android.os.Bundle;
 import android.view.View;
 import android.widget.EditText;
 
-import at.searles.fractal.data.ParameterKey;
-import at.searles.fractal.data.ParameterType;
 import at.searles.fractview.R;
 import at.searles.fractview.main.FractalProviderFragment;
 import at.searles.fractview.parameters.ColorView;
@@ -51,15 +49,13 @@ public class ColorDialogFragment extends DialogFragment {
     /**
      * This is called from ParameterEditor
      */
-    public static ColorDialogFragment newInstance(String title, String id, String owner, int value) {
+    public static ColorDialogFragment newInstance(String title, String id, int owner, int value) {
         Bundle b = new Bundle();
 
         b.putString(TITLE_KEY, title);
         b.putString(ID_KEY, id);
 
-        if(owner != null) {
-            b.putString(OWNER_KEY, owner);
-        }
+        b.putInt(OWNER_KEY, owner);
 
         b.putInt(VALUE_KEY, value);
 
@@ -128,8 +124,8 @@ public class ColorDialogFragment extends DialogFragment {
         if(fractalProviderFragment != null) {
             // color dialog fragments are also called from the palette activity.
             String id = getArguments().getString(ID_KEY);
-            String owner = getArguments().getString(OWNER_KEY); // null if it does not exist.
-            fractalProviderFragment.provider().set(new ParameterKey(id, ParameterType.Color), owner, value);
+            int owner = getArguments().getInt(OWNER_KEY); // null if it does not exist.
+            fractalProviderFragment.setParameter(id, owner, value);
 
             return;
         }

@@ -59,18 +59,18 @@ public class MainActivity /* extends Activity
 //
 //	private void initRenderScriptFragment() {
 //		FragmentManager fm = getFragmentManager();
-//		FractalCalculatorFragment initializationFragment = (FractalCalculatorFragment) fm.findFragmentByTag(RENDERSCRIPT_FRAGMENT_TAG);
+//		CalculatorFragment initializationFragment = (CalculatorFragment) fm.findFragmentByTag(RENDERSCRIPT_FRAGMENT_TAG);
 //
 //		if(initializationFragment == null) {
-//			Log.d(getClass().getName(), "creating FractalCalculatorFragment");
+//			Log.d(getClass().getName(), "creating CalculatorFragment");
 //
-//			initializationFragment = FractalCalculatorFragment.newInstance();
+//			initializationFragment = CalculatorFragment.newInstance();
 //
 //			FragmentTransaction transaction = fm.beginTransaction();
 //			transaction.add(initializationFragment, RENDERSCRIPT_FRAGMENT_TAG);
 //			transaction.commit();
 //		} else {
-//			Log.d(getClass().getName(), "FractalCalculatorFragment already exists");
+//			Log.d(getClass().getName(), "CalculatorFragment already exists");
 //		}
 //	}
 //

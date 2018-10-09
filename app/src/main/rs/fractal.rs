@@ -336,7 +336,7 @@ static int __attribute__((overloadable)) div(int a, int b) { return a / b; }
 static double __attribute__((overloadable)) div(double a, double b) { return a / b; }
 static double2 __attribute__((overloadable)) div(double2 a, double2 b) { double r = b.x * b.x + b.y * b.y; return (double2){ (a.x * b.x + a.y * b.y) / r, (-a.x * b.y + a.y * b.x) / r }; }
 static double4 __attribute__((overloadable)) div(double4 a, double4 b) {
-	double det = b.s0 * b.s0 + b.s1 * b.s1 + b.s2 * b.s2 + b.s3 * b.s3;
+	double det = b.s0 * b.s0 + b.s1 * b.s1 + b.s2 * b.s2 + b.s3 * b.s3; // FIXME seriously?
 	return (double4) {
 		(b.s0 * a.s0 + b.s1 * a.s1 + b.s2 * a.s2 + b.s3 * a.s3) / det,
 		(b.s0 * a.s1 - b.s1 * a.s0 - b.s2 * a.s3 + b.s3 * a.s2) / det,

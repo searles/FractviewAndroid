@@ -22,7 +22,7 @@ import java.util.LinkedList;
 import at.searles.fractview.Commons;
 import at.searles.math.Scale;
 
-public class ScaleableImageView extends View {
+public class ScalableImageView extends View {
 
 	private static final int SHOW_GRID_MASK = 0x01;
 	private static final int ROTATION_LOCK_MASK = 0x02;
@@ -34,12 +34,6 @@ public class ScaleableImageView extends View {
 	 */
 	public static final float SCALE_ON_DOUBLE_TAB = 3f;
 
-	public static final float LEFT_UP_INDICATOR_LENGTH = 40f;
-
-	/**
-	 * The grid is painted from two kinds of lines. These are the paints
-	 */
-	private static final Paint[] GRID_PAINTS = new Paint[]{new Paint(), new Paint(), new Paint()};
 	private static final Paint BOUNDS_PAINT = new Paint();
 	private static final Paint TEXT_PAINT = new Paint(); // for error messages
 
@@ -49,18 +43,6 @@ public class ScaleableImageView extends View {
 		IMAGE_PAINT.setAntiAlias(false);
 		IMAGE_PAINT.setFilterBitmap(false);
 		IMAGE_PAINT.setDither(false);
-
-		GRID_PAINTS[0].setColor(0xffffffff);
-		GRID_PAINTS[0].setStyle(Paint.Style.STROKE);
-		GRID_PAINTS[0].setStrokeWidth(5f);
-
-		GRID_PAINTS[1].setColor(0xff000000);
-		GRID_PAINTS[1].setStyle(Paint.Style.STROKE);
-		GRID_PAINTS[1].setStrokeWidth(3f);
-
-		GRID_PAINTS[2].setColor(0xffffffff);
-		GRID_PAINTS[2].setStyle(Paint.Style.STROKE);
-		GRID_PAINTS[2].setStrokeWidth(1f);
 
 		BOUNDS_PAINT.setColor(0xaa000000); // semi-transparent black
 		BOUNDS_PAINT.setStyle(Paint.Style.FILL_AND_STROKE);
@@ -125,7 +107,7 @@ public class ScaleableImageView extends View {
 		};
 	}
 
-	public static interface Listener {
+	public interface Listener {
 		void scaleRelative(Scale m);
 	}
 
@@ -163,19 +145,12 @@ public class ScaleableImageView extends View {
 
 	/**
 	 * Image matrix. This one is modified according to the selection.
-	 * @param context
-	 * @param attrs
      */
 	private Matrix imageMatrix;
 
 	private Bitmap bitmap;
 
-	/**
-	 *
-	 * @param context
-	 * @param attrs
-     */
-	public ScaleableImageView(Context context, AttributeSet attrs) {
+	public ScalableImageView(Context context, AttributeSet attrs) {
 		super(context, attrs);
 		initTouch();
 	}
@@ -283,11 +258,8 @@ public class ScaleableImageView extends View {
 	/**
 	 * If the view measurements are the ones in the arguments, what would be the width?
 	 * In case the image is flipped then this one returns the scaled height.
-	 * @param viewWidth
-	 * @param viewHeight
-     * @return
      */
-	private float scaledBitmapWidth(float viewWidth, float viewHeight) {
+	public float scaledBitmapWidth(float viewWidth, float viewHeight) {
 		if(bitmap == null) return viewWidth;
 
 		float bitmapWidth = bitmap.getWidth();
@@ -307,7 +279,7 @@ public class ScaleableImageView extends View {
 		}
 	}
 
-	private float scaledBitmapHeight(float viewWidth, float viewHeight) {
+	public float scaledBitmapHeight(float viewWidth, float viewHeight) {
 		if(bitmap == null) return viewHeight;
 
 		float bitmapWidth = bitmap.getWidth();
@@ -323,13 +295,10 @@ public class ScaleableImageView extends View {
 	}
 
 	/**
-	 * Should the bitmap be rotated by 90 degrees to maximize
-	 * the filled fractal area?
-	 * @param viewWidth
-	 * @param viewHeight
-     * @return
+	 * Returns true if the bitmap should be rotated by 90 degrees to maximize
+	 * the filled fractal area.
      */
-	private boolean flipBitmap(float viewWidth, float viewHeight) {
+	public boolean flipBitmap(float viewWidth, float viewHeight) {
 		if(bitmap == null) return false;
 
 		float bitmapWidth = bitmap.getWidth();
@@ -395,6 +364,13 @@ public class ScaleableImageView extends View {
 		Log.d("SIV", "dimensions are " + width + " x " + height + ", matrices are " + bitmap2view + ", " + view2bitmap);
 
 		setMeasuredDimension(width, height);
+
+		// FIXME: must update interactive view points!
+		// For this, scalableImageView should allow plugins that overlay
+		// this view! Then, I don't need a special view component and
+		// there are way less listeners.
+		// plugins are controlled by the calculatorfragment and may show a scale,
+		// interactive points, orbits, etc...
 	}
 
 	@Override
@@ -414,41 +390,11 @@ public class ScaleableImageView extends View {
 		// remove bounds
 		float w = getWidth(), h = getHeight();
 
-		float bw = scaledBitmapWidth(getWidth(), getHeight());
-		float bh = scaledBitmapHeight(getWidth(), getHeight());
-
 		float cx = w / 2.f;
 		float cy = h / 2.f;
 
-		if(showGrid) {
-			float minlen = Math.min(bw, bh) / 2.f;
-
-			for (int i = 0; i < GRID_PAINTS.length; ++i) {
-				Paint gridPaint = GRID_PAINTS[i];
-
-				// outside grid
-				canvas.drawLine(0, cy - minlen, w, cy - minlen, gridPaint);
-				canvas.drawLine(0, cy + minlen, w, cy + minlen, gridPaint);
-				canvas.drawLine(cx - minlen, 0, cx - minlen, h, gridPaint);
-				canvas.drawLine(cx + minlen, 0, cx + minlen, h, gridPaint);
-
-				// inside cross
-				canvas.drawLine(0, h / 2.f, w, h / 2.f, gridPaint);
-				canvas.drawLine(w / 2.f, 0, w / 2.f, h, gridPaint);
-
-				// and a circle inside
-				canvas.drawCircle(w / 2.f, h / 2.f, minlen, gridPaint);
-
-				// and also draw quaters with thinner lines
-				if(i != 0) {
-					canvas.drawLine(0, cy - minlen / 2.f, w, cy - minlen / 2.f, gridPaint);
-					canvas.drawLine(0, cy + minlen / 2.f, w, cy + minlen / 2.f, gridPaint);
-					canvas.drawLine(cx - minlen / 2.f, 0, cx - minlen / 2.f, h, gridPaint);
-					canvas.drawLine(cx + minlen / 2.f, 0, cx + minlen / 2.f, h, gridPaint);
-
-				}
-			}
-		}
+		float bw = scaledBitmapWidth(getWidth(), getHeight());
+		float bh = scaledBitmapHeight(getWidth(), getHeight());
 
 		// draw in total 4 transparent rectangles to indicate the drawing area
 		canvas.drawRect(-1, -1, w, cy - bh / 2.f, BOUNDS_PAINT); // top
@@ -456,30 +402,6 @@ public class ScaleableImageView extends View {
 		canvas.drawRect(-1, cy + bh / 2.f, w, h, BOUNDS_PAINT);  // bottom
 		canvas.drawRect(cx + bw / 2.f, -1, w, h, BOUNDS_PAINT);  // right
 
-		if(flipBitmap(w, h)) {
-			// draw an indicator in the left upper corner of the bitmap
-			// which is in this case
-			for (Paint gridPaint : GRID_PAINTS) {
-				// three lines in total
-				canvas.drawLine(
-						w - LEFT_UP_INDICATOR_LENGTH * 0.5f, LEFT_UP_INDICATOR_LENGTH * 0.5f,
-						w - LEFT_UP_INDICATOR_LENGTH * 0.5f, LEFT_UP_INDICATOR_LENGTH * 1.5f,
-						gridPaint
-				);
-
-				canvas.drawLine(
-						w - LEFT_UP_INDICATOR_LENGTH * 0.5f, LEFT_UP_INDICATOR_LENGTH * 0.5f,
-						w - LEFT_UP_INDICATOR_LENGTH * 1.5f, LEFT_UP_INDICATOR_LENGTH * 0.5f,
-						gridPaint
-				);
-
-				canvas.drawLine(
-						w - LEFT_UP_INDICATOR_LENGTH * 1.5f, LEFT_UP_INDICATOR_LENGTH * 0.5f,
-						w - LEFT_UP_INDICATOR_LENGTH * 0.5f, LEFT_UP_INDICATOR_LENGTH * 1.5f,
-						gridPaint
-				);
-			}
-		}
 	}
 
 	/**
@@ -491,7 +413,7 @@ public class ScaleableImageView extends View {
 	public void removeLastScale() {
 		Log.d("SIV", "remove last scale");
 		if(!lastScale.isEmpty()) {
-			Matrix l = lastScale.removeLast();
+			Matrix l = lastScale.removeLast(); // FIXME what is this?
 			// update the viewMatrix.
 			setImageMatrix(multitouch.viewMatrix());
 			invalidate();
@@ -547,15 +469,25 @@ public class ScaleableImageView extends View {
 	}
 
 	/**
-	 * Map point from view coordinates to norm
+	 * Map point from view coordinates to screenToNormalized
 	 * @param p Immutable point to modify
 	 * @return returns the mapped point.
 	 */
-	PointF norm(PointF p) {
+	public PointF screenToNormalized(PointF p) {
 		float[] pts = new float[]{p.x, p.y};
 
 		view2bitmap.mapPoints(pts);
 		Commons.bitmap2norm(bitmap.getWidth(), bitmap.getHeight()).mapPoints(pts);
+
+		return new PointF(pts[0], pts[1]);
+	}
+
+	public PointF normalizedToScreen(PointF p) {
+		float[] pts = new float[]{p.x, p.y};
+
+		Commons.norm2bitmap(bitmap.getWidth(), bitmap.getHeight()).mapPoints(pts);
+		bitmap2view.mapPoints(pts);
+
 		return new PointF(pts[0], pts[1]);
 	}
 
@@ -566,7 +498,7 @@ public class ScaleableImageView extends View {
 	void addScale(Matrix n) {
 		Log.d("SIV", "Adding a new scale: " + n);
 		// and use it for lastScale.
-		lastScale.addFirst(n); // add at the end (?)
+		lastScale.addFirst(n);
 
 		// the inverted one will be applied to the current scale
 		Matrix m = new Matrix();
@@ -583,7 +515,7 @@ public class ScaleableImageView extends View {
 		// If there are multiple scales pending, then
 		// we combine them into one. This is important for the preview.
 		// In the preview-listener-method, the last scale is removed anyways.
-		combineLastScales();
+		combineLastScales(); // FIXME shouldn't this happen before scaleRelative???
 	}
 
 	final GestureDetector.SimpleOnGestureListener gestureListener = new GestureDetector.SimpleOnGestureListener() {
@@ -606,7 +538,7 @@ public class ScaleableImageView extends View {
 
 			int index = event.getActionIndex();
 
-			final PointF p = norm(new PointF(event.getX(index), event.getY(index)));
+			final PointF p = screenToNormalized(new PointF(event.getX(index), event.getY(index)));
 
 			Matrix m = new Matrix();
 			m.setValues(new float[]{
@@ -650,7 +582,6 @@ public class ScaleableImageView extends View {
 
 		/**
 		 * returns the current view-matrix
-		 * @return
 		 */
 		Matrix viewMatrix() {
 			Matrix m;
@@ -692,7 +623,6 @@ public class ScaleableImageView extends View {
 
 		/**
 		 * Call this on the first finger-down.
-		 * @param event
 		 */
 		void initDown(MotionEvent event) {
 			if(controller == null) {
@@ -711,16 +641,10 @@ public class ScaleableImageView extends View {
 				int id = event.getPointerId(index);
 
 				PointF p = new PointF(event.getX(index), event.getY(index));
-				controller.addPoint(id, norm(p));
+				controller.addPoint(id, screenToNormalized(p));
 			}
 		}
 
-
-		/**
-		 *
-		 * @param event
-		 * @return
-		 */
 		void finalUp(MotionEvent event) {
 			if(!isScrollEvent) {
 				cancel();
@@ -743,10 +667,11 @@ public class ScaleableImageView extends View {
 			}
 		}
 
-		boolean confirm() {
+		void confirm() {
 			Log.d(getClass().getName(), "confirming touch event");
+
 			if(controller == null) {
-				return false;
+				return;
 			}
 
 			if(!controller.isDone()) {
@@ -774,7 +699,6 @@ public class ScaleableImageView extends View {
 			// it will be reset later when the first preview has been generated.
 			setImageMatrix(viewMatrix());
 
-			return true;
 		}
 
 		void scroll(MotionEvent event) {
@@ -785,11 +709,11 @@ public class ScaleableImageView extends View {
 					PointF pos = new PointF(event.getX(index), event.getY(index));
 					int id = event.getPointerId(index);
 
-					controller.movePoint(id, norm(pos));
+					controller.movePoint(id, screenToNormalized(pos));
 				}
 
-				ScaleableImageView.this.imageMatrix = viewMatrix();
-				ScaleableImageView.this.invalidate();
+				ScalableImageView.this.imageMatrix = viewMatrix();
+				ScalableImageView.this.invalidate();
 			}
 		}
 	}

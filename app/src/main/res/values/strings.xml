@@ -75,5 +75,11 @@
     <string name="error_invalid_real_number">Invalid real number</string>
     <string name="nav_header_title">Fractview</string>
     <string name="parameters_header_title">Parameters</string>
+    <string name="reset">Reset to Default</string>
+    <string name="copy">Copy to Clipboard</string>
+    <string name="paste">Copy to Clipboard</string>
+    <string name="set_value_to_center">Set to Center</string>
+    <string name="set_center_to_origin">Set Center to 0::0</string>
+    <string name="orthogonalize">Orthogonalize</string>
 
 </resources>

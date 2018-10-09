@@ -1,24 +1,33 @@
 <?xml version="1.0" encoding="utf-8"?>
+<!-- TODO -->
 <menu xmlns:android="http://schemas.android.com/apk/res/android">
+    <item android:id="@+id/action_add_fractal"
+          android:title="Add Fractal View"
+        />
+    <item android:id="@+id/action_remove_fractal_1"
+          android:title="Remove Fractal View 1"
+        />
+    <item android:id="@+id/action_remove_fractal_2"
+          android:title="Remove Fractal View 2"
+        />
+    <item android:id="@+id/action_add_point"
+          android:title="Edit Point interactively"
+        />
     <item android:id="@+id/action_share"
           android:title="@string/action_share"
           android:icon="@drawable/ic_share_white_24dp"
-          android:showAsAction="ifRoom"
         />
     <item android:id="@+id/action_demos"
           android:title="@string/action_demos"
           android:icon="@drawable/ic_collections_white_24dp"
-          android:showAsAction="ifRoom"
         />
-    <item android:id="@+id/action_parameters"
+    <item android:id="@+id/action_edit_source"
           android:title="@string/action_parameters"
           android:icon="@drawable/ic_mode_edit_white_24dp"
-          android:showAsAction="ifRoom"
         />
     <item android:id="@+id/action_add_favorite"
           android:title="@string/action_add_bookmark"
           android:icon="@drawable/ic_add_to_photos_white_24dp"
-          android:showAsAction="ifRoom"
         />
     <item android:id="@+id/action_favorites"
         android:icon="@drawable/ic_collections_bookmark_white_24dp"
