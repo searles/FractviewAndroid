@@ -12,6 +12,7 @@ import android.widget.ProgressBar;
 import at.searles.fractview.R;
 import at.searles.fractview.bitmap.FractalCalculator;
 import at.searles.fractview.bitmap.FractalCalculatorListener;
+import at.searles.fractview.bitmap.ui.imageview.InteractivePointsPlugin;
 import at.searles.fractview.main.CalculatorFragment;
 
 /**
@@ -34,8 +35,9 @@ public class CalculatorView extends FrameLayout implements FractalCalculatorList
     private DrawerProgressTask progressTask;
     private ProgressBar drawerProgressBar;
 
-    private InteractiveView interactiveView;
     private ScalableImageView imageView;
+
+    private InteractivePointsPlugin interactivePointsPlugin;
 
     public CalculatorView(Context context, @Nullable AttributeSet attrs) {
         super(context, attrs);
@@ -49,10 +51,9 @@ public class CalculatorView extends FrameLayout implements FractalCalculatorList
     private void initView(Context context) {
         inflate(context, R.layout.view_fractal_calculator, this);
 
-        interactiveView = findViewById(R.id.interactiveView);
         imageView = findViewById(R.id.scaleableImageView);
-
-
+        interactivePointsPlugin = new InteractivePointsPlugin(imageView);
+        imageView.addPlugin(interactivePointsPlugin);
 
         drawerProgressBar = findViewById(R.id.drawerProgressBar);
         drawerProgressBar.setVisibility(View.INVISIBLE); // will be shown maybe later
@@ -62,10 +63,11 @@ public class CalculatorView extends FrameLayout implements FractalCalculatorList
         PointF screenPoint = imageView.normalizedToScreen(normalizedPoint);
 
         // Step 2: Set point
-        interactiveView.addPoint(key, description, screenPoint.x, screenPoint.y,
-                new InteractiveView.PointListener() {
+        interactivePointsPlugin.addPoint(key, description, screenPoint.x, screenPoint.y,
+                new InteractivePointsPlugin.PointListener() {
                     @Override
                     public void pointMoved(String key, float screenX, float screenY) {
+                        // FIXME normalized should be done in here.
                         PointF normalizedPoint = imageView.screenToNormalized(new PointF(screenX, screenY));
                         fragment.moveParameterToNormalized(key, normalizedPoint);
                     }
@@ -73,12 +75,12 @@ public class CalculatorView extends FrameLayout implements FractalCalculatorList
     }
 
     public void removePoint(String key) {
-        interactiveView.removePoint(key);
+        interactivePointsPlugin.removePoint(key);
     }
 
     public void updatePoint(String key, PointF normalizedPoint) {
         PointF screenPoint = imageView.normalizedToScreen(normalizedPoint);
-        interactiveView.movePointTo(key, screenPoint.x, screenPoint.y);
+        interactivePointsPlugin.movePointTo(key, screenPoint.x, screenPoint.y);
     }
 
     void setProgress(float progress) {

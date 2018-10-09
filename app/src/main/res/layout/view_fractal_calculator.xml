@@ -16,12 +16,6 @@
         android:keepScreenOn="true"
         android:scaleType="matrix"/>
 
-    <at.searles.fractview.bitmap.ui.InteractiveView
-        android:id="@+id/interactiveView"
-        android:layout_width="fill_parent"
-        android:layout_height="fill_parent"
-        android:gravity="center|center_vertical"/>
-
     <ProgressBar
         android:id="@+id/drawerProgressBar"
         style="?android:attr/progressBarStyleHorizontal"

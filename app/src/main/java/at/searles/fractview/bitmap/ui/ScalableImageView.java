@@ -18,8 +18,10 @@ import android.view.View;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.LinkedList;
+import java.util.List;
 
 import at.searles.fractview.Commons;
+import at.searles.fractview.bitmap.ui.imageview.Plugin;
 import at.searles.math.Scale;
 
 public class ScalableImageView extends View {
@@ -34,21 +36,30 @@ public class ScalableImageView extends View {
 	 */
 	public static final float SCALE_ON_DOUBLE_TAB = 3f;
 
-	private static final Paint BOUNDS_PAINT = new Paint();
-	private static final Paint TEXT_PAINT = new Paint(); // for error messages
+	private static final Paint BOUNDS_PAINT = boundsPaint();
+	private static final Paint TEXT_PAINT = textPaint(); // for error messages
+	private static final Paint IMAGE_PAINT = imagePaint();
 
-	private static final Paint IMAGE_PAINT = new Paint();
+	private static Paint boundsPaint() {
+		Paint boundsPaint = new Paint();
+		boundsPaint.setColor(0xaa000000); // semi-transparent black
+		boundsPaint.setStyle(Paint.Style.FILL_AND_STROKE);
+		return boundsPaint;
+	}
 
-	static {
-		IMAGE_PAINT.setAntiAlias(false);
-		IMAGE_PAINT.setFilterBitmap(false);
-		IMAGE_PAINT.setDither(false);
+	private static Paint imagePaint() {
+		Paint imagePaint = new Paint();
+		imagePaint.setAntiAlias(false);
+		imagePaint.setFilterBitmap(false);
+		imagePaint.setDither(false);
+		return imagePaint;
+	}
 
-		BOUNDS_PAINT.setColor(0xaa000000); // semi-transparent black
-		BOUNDS_PAINT.setStyle(Paint.Style.FILL_AND_STROKE);
-
-		TEXT_PAINT.setTextAlign(Paint.Align.CENTER);
-		TEXT_PAINT.setTextSize(96); // fixme hardcoded...
+	private static Paint textPaint() {
+		Paint textPaint = new Paint();
+		textPaint.setTextAlign(Paint.Align.CENTER);
+		textPaint.setTextSize(96); // fixme hardcoded...
+		return textPaint;
 	}
 
 	/**
@@ -127,6 +138,8 @@ public class ScalableImageView extends View {
 
 	private Listener listener;
 
+	private List<Plugin> plugins;
+
 	/**
 	 * We use this one to store the last transformation
 	 * to also apply it to the picture if it was not updated yet.
@@ -152,7 +165,12 @@ public class ScalableImageView extends View {
 
 	public ScalableImageView(Context context, AttributeSet attrs) {
 		super(context, attrs);
+		this.plugins = new LinkedList<>();
 		initTouch();
+	}
+
+	public void addPlugin(Plugin plugin) {
+		plugins.add(plugin);
 	}
 
 	private void setImageMatrix(Matrix matrix) {
@@ -168,7 +186,6 @@ public class ScalableImageView extends View {
 		this.bitmap = bitmap;
 		requestLayout();
 	}
-
 
 	/**
 	 * Toggle show-grid flag
@@ -402,6 +419,11 @@ public class ScalableImageView extends View {
 		canvas.drawRect(-1, cy + bh / 2.f, w, h, BOUNDS_PAINT);  // bottom
 		canvas.drawRect(cx + bw / 2.f, -1, w, h, BOUNDS_PAINT);  // right
 
+		// finally the plugins
+		// XXX consider using reverse order
+		for(Plugin plugin : plugins) {
+			plugin.onDraw(canvas);
+		}
 	}
 
 	/**
@@ -446,6 +468,12 @@ public class ScalableImageView extends View {
 
 	@Override
 	public boolean onTouchEvent(@NotNull MotionEvent event) {
+		for(Plugin plugin : plugins) {
+			if(plugin.onTouchEvent(event)) {
+				return true;
+			}
+		}
+
 		// gesture detector handles scroll
 		// no action without bitmap fragment.
 		// or if deactivateZoom is set.
