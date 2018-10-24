@@ -27,22 +27,22 @@ public class SourceEditorActivity extends Activity {
 	static private final int LOAD_PROGRAM = -1;
 	static private final int SAVE_PROGRAM = -2;
 	public static final int SOURCE_EDITOR_ACTIVITY_RETURN = 98;
+    public static final String OWNER_LABEL = "owner";
 
-	private EditText editor;
+    private EditText editor;
     
 	private String acceptedSource;
-
 
 	@Override
 	public void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
 
-		setContentView(R.layout.program_layout);
+		setContentView(R.layout.source_editor);
 
 		// fetch program from intent
 		this.acceptedSource = getIntent().getStringExtra(SOURCE_LABEL);
 
-		editor = (EditText) findViewById(R.id.programEditText);
+		editor = findViewById(R.id.sourceEditText);
 		editor.setHorizontallyScrolling(true); // XXX Android Bug: the attribute in the xml is ignored
 
 		// set text in editor
@@ -62,8 +62,8 @@ public class SourceEditorActivity extends Activity {
 			}
 		});
 
-		Button okButton = (Button) findViewById(R.id.okButton);
-		Button cancelButton = (Button) findViewById(R.id.cancelButton);
+		Button okButton = findViewById(R.id.okButton);
+		Button cancelButton = findViewById(R.id.cancelButton);
 
 		cancelButton.setOnClickListener(new View.OnClickListener() {
 			@Override

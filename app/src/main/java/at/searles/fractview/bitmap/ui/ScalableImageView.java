@@ -26,7 +26,6 @@ import at.searles.math.Scale;
 
 public class ScalableImageView extends View {
 
-	private static final int SHOW_GRID_MASK = 0x01;
 	private static final int ROTATION_LOCK_MASK = 0x02;
 	private static final int CONFIRM_ZOOM_MASK = 0x04;
 	private static final int DEACTIVATE_ZOOM_MASK = 0x08;
@@ -37,8 +36,6 @@ public class ScalableImageView extends View {
 	public static final float SCALE_ON_DOUBLE_TAB = 3f;
 
 	private static final Paint BOUNDS_PAINT = boundsPaint();
-	private static final Paint TEXT_PAINT = textPaint(); // for error messages
-	private static final Paint IMAGE_PAINT = imagePaint();
 
 	private static Paint boundsPaint() {
 		Paint boundsPaint = new Paint();
@@ -47,31 +44,16 @@ public class ScalableImageView extends View {
 		return boundsPaint;
 	}
 
-	private static Paint imagePaint() {
-		Paint imagePaint = new Paint();
-		imagePaint.setAntiAlias(false);
-		imagePaint.setFilterBitmap(false);
-		imagePaint.setDither(false);
-		return imagePaint;
-	}
-
-	private static Paint textPaint() {
-		Paint textPaint = new Paint();
-		textPaint.setTextAlign(Paint.Align.CENTER);
-		textPaint.setTextSize(96); // fixme hardcoded...
-		return textPaint;
-	}
-
 	/**
 	 * To save the state of this view over rotation etc...
 	 */
 	static class ViewState extends BaseSavedState {
 
+		// FIXME use a key-value pair, also to store data of plugins.
 
 		/**
 		 * Should the grid be shown or not?
 		 */
-		boolean showGrid = false;
 		boolean rotationLock = false;
 		boolean confirmZoom = false;
 		boolean deactivateZoom = false;
@@ -85,7 +67,6 @@ public class ScalableImageView extends View {
 
 			int masked = in.readInt();
 
-			this.showGrid = (masked & SHOW_GRID_MASK) != 0;
 			this.rotationLock = (masked & ROTATION_LOCK_MASK) != 0;
 			this.confirmZoom = (masked & CONFIRM_ZOOM_MASK) != 0;
 			this.deactivateZoom = (masked & DEACTIVATE_ZOOM_MASK) != 0;
@@ -97,7 +78,6 @@ public class ScalableImageView extends View {
 
 			int masked = 0;
 
-			masked |= showGrid ? SHOW_GRID_MASK : 0;
 			masked |= rotationLock ? ROTATION_LOCK_MASK : 0;
 			masked |= confirmZoom ? CONFIRM_ZOOM_MASK : 0;
 			masked |= deactivateZoom ? DEACTIVATE_ZOOM_MASK : 0;
@@ -122,7 +102,6 @@ public class ScalableImageView extends View {
 		void scaleRelative(Scale m);
 	}
 
-	private boolean showGrid;
 	private boolean rotationLock;
 	private boolean confirmZoom;
 	private boolean deactivateZoom;
@@ -157,7 +136,8 @@ public class ScalableImageView extends View {
 	private MultiTouch multitouch;
 
 	/**
-	 * Image matrix. This one is modified according to the selection.
+	 * Image matrix. This one is modified according to the selection. Use this to convert
+	 * Points from image to view.
      */
 	private Matrix imageMatrix;
 
@@ -173,10 +153,6 @@ public class ScalableImageView extends View {
 		plugins.add(plugin);
 	}
 
-	private void setImageMatrix(Matrix matrix) {
-		this.imageMatrix = matrix;
-	}
-
 	public void setListener(Listener listener) {
 		this.listener = listener;
 	}
@@ -185,19 +161,6 @@ public class ScalableImageView extends View {
 		multitouch.cancel();
 		this.bitmap = bitmap;
 		requestLayout();
-	}
-
-	/**
-	 * Toggle show-grid flag
-	 * @param showGrid if true, the grid will be shown.
-     */
-	public void setShowGrid(boolean showGrid) {
-		this.showGrid = showGrid;
-		invalidate();
-	}
-
-	public boolean getShowGrid() {
-		return showGrid;
 	}
 
 	public void setRotationLock(boolean rotationLock) {
@@ -246,7 +209,6 @@ public class ScalableImageView extends View {
 		// TODO Read https://trickyandroid.com/saving-android-view-state-correctly/
 
 		ViewState vs = new ViewState(superState);
-		vs.showGrid = this.showGrid;
 		vs.rotationLock = this.rotationLock;
 		vs.confirmZoom = this.confirmZoom;
 		vs.deactivateZoom = this.deactivateZoom;
@@ -266,7 +228,6 @@ public class ScalableImageView extends View {
 		super.onRestoreInstanceState(vs.getSuperState());
 		//end
 
-		setShowGrid(vs.showGrid);
 		setRotationLock(vs.rotationLock);
 		setConfirmZoom(vs.confirmZoom);
 		setDeactivateZoom(vs.deactivateZoom);
@@ -333,9 +294,6 @@ public class ScalableImageView extends View {
 	protected void onMeasure(int widthMeasureSpec, int heightMeasureSpec) {
 		Log.d("SIV", "onMeasure called now");
 
-		int width;
-		int height;
-
 		float vw = MeasureSpec.getSize(widthMeasureSpec);
 		float vh = MeasureSpec.getSize(heightMeasureSpec);
 
@@ -373,21 +331,9 @@ public class ScalableImageView extends View {
 
 		bitmap2view.invert(view2bitmap);
 
-		setImageMatrix(multitouch.viewMatrix());
+		this.imageMatrix = multitouch.createViewMatrix();
 
-		width = (int) vw;
-		height = (int) vh;
-
-		Log.d("SIV", "dimensions are " + width + " x " + height + ", matrices are " + bitmap2view + ", " + view2bitmap);
-
-		setMeasuredDimension(width, height);
-
-		// FIXME: must update interactive view points!
-		// For this, scalableImageView should allow plugins that overlay
-		// this view! Then, I don't need a special view component and
-		// there are way less listeners.
-		// plugins are controlled by the calculatorfragment and may show a scale,
-		// interactive points, orbits, etc...
+		setMeasuredDimension((int) vw, (int) vh);
 	}
 
 	@Override
@@ -436,8 +382,8 @@ public class ScalableImageView extends View {
 		Log.d("SIV", "remove last scale");
 		if(!lastScale.isEmpty()) {
 			Matrix l = lastScale.removeLast(); // FIXME what is this?
-			// update the viewMatrix.
-			setImageMatrix(multitouch.viewMatrix());
+			// update the createViewMatrix.
+			this.imageMatrix = multitouch.createViewMatrix();
 			invalidate();
 		}
 	}
@@ -502,9 +448,10 @@ public class ScalableImageView extends View {
 	 * @return returns the mapped point.
 	 */
 	public PointF screenToNormalized(PointF p) {
+		// FIXME this is a bit overkill...
 		float[] pts = new float[]{p.x, p.y};
 
-		view2bitmap.mapPoints(pts);
+		view2bitmap.mapPoints(pts); // fixme
 		Commons.bitmap2norm(bitmap.getWidth(), bitmap.getHeight()).mapPoints(pts);
 
 		return new PointF(pts[0], pts[1]);
@@ -514,7 +461,7 @@ public class ScalableImageView extends View {
 		float[] pts = new float[]{p.x, p.y};
 
 		Commons.norm2bitmap(bitmap.getWidth(), bitmap.getHeight()).mapPoints(pts);
-		bitmap2view.mapPoints(pts);
+		bitmap2view.mapPoints(pts); // FIXME replace
 
 		return new PointF(pts[0], pts[1]);
 	}
@@ -600,10 +547,7 @@ public class ScalableImageView extends View {
 
 
 	class MultiTouch {
-		/**
-		 * Controller for the image. It is possible to use only one, I guess,
-		 * but scaling and everything is rather difficult.
-		 */
+
 		MultiTouchController controller = null;
 
 		boolean isScrollEvent = false;
@@ -611,7 +555,7 @@ public class ScalableImageView extends View {
 		/**
 		 * returns the current view-matrix
 		 */
-		Matrix viewMatrix() {
+		Matrix createViewMatrix() {
 			Matrix m;
 
 			if(isScrollEvent) {
@@ -644,7 +588,7 @@ public class ScalableImageView extends View {
 
 			if(isScrollEvent) {
 				isScrollEvent = false;
-				setImageMatrix(viewMatrix());
+				ScalableImageView.this.imageMatrix = createViewMatrix();
 				invalidate();
 			}
 		}
@@ -725,7 +669,7 @@ public class ScalableImageView extends View {
 
 			// for now, we will set the latest view matrix.
 			// it will be reset later when the first preview has been generated.
-			setImageMatrix(viewMatrix());
+			ScalableImageView.this.imageMatrix = createViewMatrix();
 
 		}
 
@@ -740,7 +684,7 @@ public class ScalableImageView extends View {
 					controller.movePoint(id, screenToNormalized(pos));
 				}
 
-				ScalableImageView.this.imageMatrix = viewMatrix();
+				ScalableImageView.this.imageMatrix = createViewMatrix();
 				ScalableImageView.this.invalidate();
 			}
 		}

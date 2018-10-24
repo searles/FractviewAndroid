@@ -71,7 +71,8 @@ public class CalculatorFragment extends Fragment {
 
         this.interactivePointKeys = new ArrayList<>(2);
 
-        this.calculator = new FractalCalculator(1024, 640);
+        // FIXME image size
+        this.calculator = new FractalCalculator(1024, 600); // FIXME!!!
 
         // connect
         parent.addListener(fragmentIndex, calculator);

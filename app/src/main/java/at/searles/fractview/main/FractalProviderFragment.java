@@ -27,6 +27,7 @@ import at.searles.fractal.data.ParameterKey;
 import at.searles.fractal.data.ParameterType;
 import at.searles.fractal.data.Parameters;
 import at.searles.fractview.R;
+import at.searles.fractview.SourceEditorActivity;
 import at.searles.fractview.bitmap.ui.CalculatorView;
 import at.searles.fractview.bitmap.ui.ScalableImageView;
 import at.searles.fractview.fractal.BundleAdapter;
@@ -145,6 +146,14 @@ public class FractalProviderFragment extends Fragment {
                     provider.setParameter(id, owner, palette);
                 }
                 return;
+            case SourceEditorActivity.SOURCE_EDITOR_ACTIVITY_RETURN:
+                if(resultCode == PaletteActivity.OK_RESULT) {
+                    int owner = data.getIntExtra(SourceEditorActivity.OWNER_LABEL, -1);
+
+                    String source = data.getStringExtra(SourceEditorActivity.SOURCE_LABEL);
+                    provider.setParameter(FractalExternData.SOURCE_LABEL, owner, source);
+                }
+                return;
             default:
         }
 
@@ -165,7 +174,7 @@ public class FractalProviderFragment extends Fragment {
 
         int fragmentIndex = nextFragmentIndex();
 
-        boolean value = (Boolean) provider.getParameter(booleanKey, originalIndex).value;
+        boolean value = (Boolean) provider.getParameter(booleanKey, originalIndex);
 
         FractalData splitData = provider.getFractal(originalIndex).toData();
         splitData.data.add(new ParameterKey(booleanKey, ParameterType.Bool), !value);
@@ -217,16 +226,15 @@ public class FractalProviderFragment extends Fragment {
         }
 
         // provider will handle the case that key/owner is not exclusive.
-        return provider.getParameter(key, owner); // FIXME change method name in provider
+        return provider.getParameterEntry(key, owner);
     }
 
     public FractalProvider.ParameterEntry getParameterEntry(String key, int owner) {
-        return provider.getParameter(key, owner); // FIXME Change method name in provider.
+        return provider.getParameterEntry(key, owner);
     }
 
     public Object getParameter(String key, int owner) {
-        FractalProvider.ParameterEntry entry = getParameterEntry(key, owner);
-        return entry != null ? entry.value : null;
+        return provider.getParameter(key, owner);
     }
 
     public void setParameterByFragmentIndex(String key, int fragmentIndex, Object newValue) {
@@ -260,11 +268,19 @@ public class FractalProviderFragment extends Fragment {
         return provider.removeParameterMapListener(l);
     }
 
-    public void addInteractivePoint(String key, int owner) {
+    public void addInteractivePoint(String key) {
         for(int fragmentIndex : fragmentIndices) {
             CalculatorFragment fragment = (CalculatorFragment) getChildFragmentManager().findFragmentByTag(fractalCalculatorLabel(fragmentIndex));
             fragment.addInteractivePoint(key);
         }
+    }
+
+    public String getSourceByOwner(int owner) {
+        if(owner == -1) {
+            owner = 0;
+        }
+
+        return provider.getFractal(owner).sourceCode();
     }
 
     private class ImageViewListener implements ScalableImageView.Listener {
@@ -278,7 +294,7 @@ public class FractalProviderFragment extends Fragment {
         @Override
         public void scaleRelative(Scale relativeScale) {
             int providerIndex = fragmentIndices.indexOf(fragmentIndex);
-            Scale originalScale = ((Scale) provider.getParameter(FractalExternData.SCALE_LABEL, providerIndex).value);
+            Scale originalScale = ((Scale) provider.getParameter(FractalExternData.SCALE_LABEL, providerIndex));
 
             Scale absoluteScale = originalScale.relative(relativeScale);
             provider.setParameter(FractalExternData.SCALE_LABEL, providerIndex, absoluteScale);

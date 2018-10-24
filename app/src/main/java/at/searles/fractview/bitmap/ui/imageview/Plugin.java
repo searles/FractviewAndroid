@@ -17,5 +17,4 @@ public abstract class Plugin {
     public abstract void onDraw(@NotNull Canvas canvas);
 
     public abstract boolean onTouchEvent(@NotNull MotionEvent event);
-
 }

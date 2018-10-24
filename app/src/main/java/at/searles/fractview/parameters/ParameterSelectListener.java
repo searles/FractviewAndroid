@@ -6,6 +6,7 @@ import android.widget.AdapterView;
 import android.widget.CheckedTextView;
 
 import at.searles.fractal.FractalProvider;
+import at.searles.fractview.SourceEditorActivity;
 import at.searles.fractview.fractal.BundleAdapter;
 import at.searles.fractview.main.FractalProviderFragment;
 import at.searles.fractview.parameters.dialogs.ColorDialogFragment;
@@ -87,6 +88,21 @@ public class ParameterSelectListener implements AdapterView.OnItemClickListener 
                 i.putExtra(PaletteActivity.OWNER_LABEL, item.owner);
 
                 fragment.startActivityForResult(i, PaletteActivity.PALETTE_ACTIVITY_RETURN);
+            }
+            return;
+            case Source: {
+                // Source must be read from fractal
+                String source = fragment.getSourceByOwner(item.owner);
+
+                Intent i = new Intent(parent.getContext(), SourceEditorActivity.class);
+
+                i.putExtra(SourceEditorActivity.SOURCE_LABEL, source);
+
+                // add information which source it is.
+                // key is of no use because there is only one.
+                i.putExtra(SourceEditorActivity.OWNER_LABEL, item.owner);
+
+                fragment.startActivityForResult(i, SourceEditorActivity.SOURCE_EDITOR_ACTIVITY_RETURN);
             }
             return;
             default:

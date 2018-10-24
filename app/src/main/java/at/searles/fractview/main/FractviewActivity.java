@@ -12,7 +12,9 @@ import android.view.MenuItem;
 import android.view.WindowManager;
 import android.widget.ListView;
 
+import at.searles.fractal.FractalExternData;
 import at.searles.fractview.R;
+import at.searles.fractview.SourceEditorActivity;
 import at.searles.fractview.favorites.AddFavoritesDialogFragment;
 import at.searles.fractview.favorites.FavoritesListActivity;
 import at.searles.fractview.parameters.ParameterAdapter;
@@ -26,6 +28,7 @@ public class FractviewActivity extends Activity {
 
 	private static final String ADD_FRAGMENT_TAG = "add_fragment";
 	private static final int FAVORITES_RETURN = 213;
+	private static final int SOURCE_ACTIVITY_RETURN = 631;
 	private ParameterAdapter adapter;
 	private FractalProviderFragment fractalProviderFragment;
 
@@ -75,10 +78,10 @@ public class FractviewActivity extends Activity {
 	private void initializeFractalFragment() {
 		FragmentManager fm = getFragmentManager();
 		this.fractalProviderFragment = (FractalProviderFragment) fm.findFragmentById(R.id.fractal_fragment);
-		initProviderMenu();
+		initParameterMenu();
 	}
 
-	private void initProviderMenu() {
+	private void initParameterMenu() {
 		this.adapter = new ParameterAdapter(this, fractalProviderFragment);
 
 		ListView listView = findViewById(R.id.nav_list_view);
@@ -89,57 +92,64 @@ public class FractviewActivity extends Activity {
 		fractalProviderFragment.addParameterMapListener(adapter);
 	}
 
+	@Override
+	protected void onActivityResult(int requestCode, int resultCode, Intent data) {
+		super.onActivityResult(requestCode, resultCode, data);
+
+		if(data != null) {
+			if (requestCode == SOURCE_ACTIVITY_RETURN) {
+				if (resultCode == 1) { // = "Ok"
+					int owner = data.getIntExtra(SourceEditorActivity.OWNER_LABEL, -1);
+					String source = data.getStringExtra(SourceEditorActivity.SOURCE_LABEL);
+					fractalProviderFragment.setParameter(FractalExternData.SOURCE_LABEL, owner, source);
+				}
+			}
+//			else if (requestCode == BOOKMARK_ACTIVITY_RETURN) {
+//				if (resultCode == 1) { // = "a fractal was selected"
+//					Fractal newFractal = BundleAdapter.bundleToFractal(data.getBundleExtra(SourcesListActivity.FRACTAL_INDENT_LABEL));
+//					fractalFragment.setFractal(newFractal);
+//				}
+//			} else if (requestCode == PRESETS_ACTIVITY_RETURN) {
+//				if (resultCode == 1) {
+//					Fractal newFractal = BundleAdapter.bundleToFractal(data.getBundleExtra(SourcesListActivity.FRACTAL_INDENT_LABEL));
+//					fractalFragment.setFractal(newFractal);
+//				}
+//			}
+		}
+	}
+
 	private void selectMenuItem(MenuItem menuItem) {
 		switch(menuItem.getItemId()) {
 			case R.id.action_add_fractal:
 				addFractal("juliaset"); // FIXME: allow selection of boolean keys
 				return;
 			case R.id.action_remove_fractal_1:
-				removeFractal(0);
+				removeFractal(0); // FIXME dynamically
 				return;
 			case R.id.action_remove_fractal_2:
-				removeFractal(1);
+				removeFractal(1); // FIXME dynamically
 				return;
-			case R.id.action_add_point:
+			case R.id.action_add_point: // FIXME allow setting from parameter menu
 				// get provider view
-				fractalProviderFragment.addInteractivePoint("juliapoint", -1);
+				fractalProviderFragment.addInteractivePoint("juliapoint");
 				return;
-//			case R.id.action_edit_source:
-//			{
-//				// show new activity
-//				Intent i = new Intent(FractviewActivity.this, SelectAssetActivity.class);
-//				i.putExtra(SourceEditorActivity.FRACTAL_INDENT_LABEL, BundleAdapter.fractalToBundle(fractalFragment.fractal()));
-//				startActivityForResult(i, PRESETS_ACTIVITY_RETURN);
-//			}
 			case R.id.action_tutorial:
 				startActivity(new Intent(this, TutorialActivity.class));
 				return;
 			case R.id.action_favorites:
 				startActivityForResult(new Intent(this, FavoritesListActivity.class), FAVORITES_RETURN);
 				return;
-//			return;
 //			case R.id.action_demos:
 //				{
 //					// show new activity
 //					Intent i = new Intent(FractviewActivity.this, SelectAssetActivity.class);
-//					i.putExtra(SelectAssetActivity.FRACTAL_INDENT_LABEL, BundleAdapter.fractalToBundle(fractalFragment.fractal()));
+//					i.putExtra(SelectAssetActivity.FRACTAL_INDENT_LABEL, BundleAdapter.toBundle(fractalFragment.fractal()));
 //					startActivityForResult(i, PRESETS_ACTIVITY_RETURN);
 //				}
 //			return;
 //			case R.id.action_size:
 //				openChangeImageSizeDialog();
 //				return;
-//
-//
-//			case R.id.action_parameters: {
-//				// FIXME Replace this case by swipe-in menu
-//				Intent i = new Intent(MainActivity.this, ParameterEditorActivity.class);
-//				i.putExtra(SourcesListActivity.FRACTAL_INDENT_LABEL, BundleAdapter.fractalToBundle(fractalFragment.fractal()));
-//				startActivityForResult(i, PARAMETER_ACTIVITY_RETURN);
-//			} return true;
-//
-//
-//
 //			case R.id.action_paste_from_clipboard: {
 //				// paste from clipboard
 //				Fractal newFractal = ClipboardHelper.pasteFractal(this);
@@ -154,15 +164,15 @@ public class FractviewActivity extends Activity {
 //				// copy to clipboard
 //				ClipboardHelper.copyFractal(this, fractalFragment.fractal());
 //			} return true;
+//			case R.id.action_share: {
+//				openShareDialog();
+//			} return true;
 //
 //			case R.id.action_gui_settings: {
 //				// FIXME replace by swipe-in
 //				openUiSettingsDialog();
 //			} return true;
 //
-//			case R.id.action_share: {
-//				openShareDialog();
-//			} return true;
 //
 //
 //            default:
@@ -338,29 +348,6 @@ public class FractviewActivity extends Activity {
 //		SharedPrefsHelper.storeInSharedPreferences(this, name, fav, FavoritesListActivity.FAVORITES_SHARED_PREF);
 //	}
 //
-//	@Override
-//	protected void onActivityResult(int requestCode, int resultCode, Intent data) {
-//		super.onActivityResult(requestCode, resultCode, data);
-//
-//		if(data != null) {
-//			if (requestCode == PARAMETER_ACTIVITY_RETURN) {
-//				if (resultCode == 1) { // = "Ok"
-//					Fractal newFractal = BundleAdapter.bundleToFractal(data.getBundleExtra(SourcesListActivity.FRACTAL_INDENT_LABEL));
-//					fractalFragment.setFractal(newFractal);
-//				}
-//			} else if (requestCode == BOOKMARK_ACTIVITY_RETURN) {
-//				if (resultCode == 1) { // = "a fractal was selected"
-//					Fractal newFractal = BundleAdapter.bundleToFractal(data.getBundleExtra(SourcesListActivity.FRACTAL_INDENT_LABEL));
-//					fractalFragment.setFractal(newFractal);
-//				}
-//			} else if (requestCode == PRESETS_ACTIVITY_RETURN) {
-//				if (resultCode == 1) {
-//					Fractal newFractal = BundleAdapter.bundleToFractal(data.getBundleExtra(SourcesListActivity.FRACTAL_INDENT_LABEL));
-//					fractalFragment.setFractal(newFractal);
-//				}
-//			}
-//		}
-//	}
 //
 //
 ////	// =======================================================================

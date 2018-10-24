@@ -9,7 +9,7 @@
         android:inputType="textMultiLine|textNoSuggestions"
         android:ems="10"
         android:scrollHorizontally="true"
-        android:id="@+id/programEditText"
+        android:id="@+id/sourceEditText"
         android:layout_gravity="center_horizontal"
         android:editable="false"
         android:typeface="monospace" />

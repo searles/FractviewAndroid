@@ -1,6 +1,8 @@
 #pragma version(1)
 #pragma rs java_package_name(at.searles.fractview)
 
+#include "rs_debug.rsh"
+
 rs_script gScript;
 rs_allocation gOut;
 rs_allocation gTileOut;

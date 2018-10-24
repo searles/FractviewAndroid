@@ -111,6 +111,7 @@ public class ParameterAdapter extends BaseAdapter implements ListAdapter, Fracta
     }
 
     private String getLabelForType(ParameterType type) {
+        // FIXME move.
         switch (type) {
             case Expr:
                 return "Expression";
@@ -126,6 +127,8 @@ public class ParameterAdapter extends BaseAdapter implements ListAdapter, Fracta
                 return "Palette";
             case Scale:
                 return "Scale";
+            case Source:
+                return "Source";
             default:
                 throw new IllegalArgumentException("missing label for " + type);
         }

@@ -1,0 +1,56 @@
+var x int, y int, color int;
+
+func get_color(c) {
+    // some further arguments
+    var i int = 0,
+        zlast cplx = 0,
+        z cplx,
+        znext cplx = 0,
+        p cplx;
+
+    extern mandelinit expr = "0";
+    z = mandelinit;
+    p = c
+
+    extern function expr = "mandelbrot(z, p)";
+
+    var color quat = 0;
+
+    extern bailoutpalette palette = [
+            [#006, #26c, #fff, #fa0, #303]];
+
+    extern maxdepth int = 120;
+
+    while {
+        znext = function;
+
+        { color = bailoutpalette log (i + 1); false } if rad z > 4
+        else { next(i, maxdepth) }
+    } do {
+        // advance to next values
+        zlast = z;
+        z = znext;
+    }
+
+    color
+}
+
+func drawpixel(x, y) {
+    var c cplx = map(x, y);
+    get_color(c)
+}
+
+func do_pixel(x, y) {
+    func testbug(x, y) {
+        (
+            drawpixel(x, y) +
+            drawpixel(x, y) +
+            drawpixel(x, y)
+        ) / 3;
+    }
+
+    color = lab2int testbug(x, y)
+}
+
+// and finally call the draing procedure
+do_pixel(x, y)
