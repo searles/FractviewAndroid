@@ -13,6 +13,7 @@ import android.view.View;
 import android.view.ViewGroup;
 
 import java.util.ArrayList;
+import java.util.LinkedList;
 import java.util.List;
 
 import at.searles.fractal.Fractal;
@@ -101,10 +102,22 @@ public class CalculatorFragment extends Fragment {
 
     public void updateInteractivePoints() {
         // Scale might have changed or the point itself
+        List<String> clearList = new LinkedList<>();
+
         for(String pointKey : interactivePointKeys) {
             Cplx value = interactivePointValue(pointKey);
-            PointF normalizedPoint = valueToNormalizedPoint(value);
-            view.updatePoint(pointKey, normalizedPoint);
+
+            if(value == null) {
+                // does not exist anymore. Remove it.
+                clearList.add(pointKey);
+            } else {
+                PointF normalizedPoint = valueToNormalizedPoint(value);
+                view.updatePoint(pointKey, normalizedPoint);
+            }
+        }
+
+        for(String pointKey : clearList) {
+            removeInteractivePoint(pointKey);
         }
     }
 
@@ -112,6 +125,11 @@ public class CalculatorFragment extends Fragment {
         Scale scale = parent.getFractalByFragmentIndex(fragmentIndex).scale();
         float[] pt = scale.invScale(value.re(), value.im());
         return new PointF(pt[0], pt[1]);
+    }
+
+    public void removeInteractivePoint(String key) {
+        view.removePoint(key);
+        interactivePointKeys.remove(key);
     }
 
     public void addInteractivePoint(String key) {

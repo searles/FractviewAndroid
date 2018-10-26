@@ -192,16 +192,17 @@ public class FractalProviderFragment extends Fragment {
     }
 
     public void removeFractal(int providerIndex) {
-        // remove fragment
+        // remove fragment and owner.
         int fragmentIndex = fragmentIndices.get(providerIndex);
         String label = fractalCalculatorLabel(fragmentIndex);
 
         CalculatorFragment fragment = (CalculatorFragment) getChildFragmentManager().findFragmentByTag(label);
         getChildFragmentManager().beginTransaction().remove(fragment).commit();
 
+        fragmentIndices.remove(providerIndex);
+
         // remove from provider
         provider.removeFractal(providerIndex);
-        fragmentIndices.remove(providerIndex);
 
         if(fractalContainer != null) {
             fractalContainer.removeViewAt(providerIndex);
@@ -218,11 +219,14 @@ public class FractalProviderFragment extends Fragment {
         return provider.getFractal(providerIndex);
     }
 
+    /**
+     * @return null if the parameter does not exist.
+     */
     public FractalProvider.ParameterEntry getParameterEntryByFragmentIndex(String key, int fragmentIndex) {
         int owner = fragmentIndices.indexOf(fragmentIndex);
 
         if(owner == -1) {
-            throw new IllegalArgumentException("no such fragment index");
+            return null;
         }
 
         // provider will handle the case that key/owner is not exclusive.
