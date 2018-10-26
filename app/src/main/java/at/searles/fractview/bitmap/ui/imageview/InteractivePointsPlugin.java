@@ -16,6 +16,14 @@ import at.searles.fractview.bitmap.ui.ScalableImageView;
 
 public class InteractivePointsPlugin extends Plugin {
 
+    // This one must be agnostic towards view coordinates.
+    // Therefore, it should either store bitmap coordinates
+    // or normalized coordinates.
+
+    // Convert normalized to view:
+    // parent.screenToNormalized (does this consider current selection?)
+    // parent.normalizedToScreen
+
     private static final float RAD = 50.f;
 
     private final List<ViewPoint> points;
@@ -58,15 +66,19 @@ public class InteractivePointsPlugin extends Plugin {
     @Override
     public void onDraw(@NotNull Canvas canvas) {
         for(ViewPoint point : points) {
+            point.updateViewPoint();
 
             // FIXME: Show label
 
+            float x = point.viewX();
+            float y = point.viewY();
+
             if(draggedPoint == point) {
-                canvas.drawCircle(point.x, point.y, RAD * 0.75f + 4, selectedPaintFill);
-                canvas.drawCircle(point.x, point.y, RAD * 0.75f, selectedPaintStroke);
+                canvas.drawCircle(x, y, RAD * 0.75f + 4, selectedPaintFill);
+                canvas.drawCircle(x, y, RAD * 0.75f, selectedPaintStroke);
             } else {
-                canvas.drawCircle(point.x, point.y, RAD * 0.5f + 2, unselectedPaintFill);
-                canvas.drawCircle(point.x, point.y, RAD * 0.5f, unselectedPaintStroke);
+                canvas.drawCircle(x, y, RAD * 0.5f + 2, unselectedPaintFill);
+                canvas.drawCircle(x, y, RAD * 0.5f, unselectedPaintStroke);
             }
         }
     }
@@ -97,44 +109,6 @@ public class InteractivePointsPlugin extends Plugin {
         }
     }
 
-    private class ViewPoint {
-        final String key;
-
-        final String label;
-        final List<PointListener> listeners;
-
-        float x;
-        float y;
-
-        private ViewPoint(String key, String label, float x, float y) {
-            this.key = key;
-            this.label = label;
-            this.listeners = new LinkedList<>();
-            this.x = x;
-            this.y = y;
-        }
-
-        private void setScreenPosition(float x, float y) {
-            this.x = x;
-            this.y = y;
-            parent.invalidate();
-        }
-
-        void firePointMovedEvent() {
-            for(PointListener listener : listeners) {
-                listener.pointMoved(key, x, y);
-            }
-        }
-
-        void addListener(PointListener listener) {
-            this.listeners.add(listener);
-        }
-
-        boolean is(String key) {
-            return key.equals(this.key);
-        }
-    }
-
     private ViewPoint findEntry(String key) {
         // XXX if there are ever more than 3 points, consider using a map.
         for(ViewPoint point : points) {
@@ -146,17 +120,21 @@ public class InteractivePointsPlugin extends Plugin {
         throw new IllegalArgumentException("no such entry: " + key);
     }
 
-    public void movePointTo(String key, float x, float y) {
+    public void moveViewPointTo(String key, float viewX, float viewY) {
         ViewPoint point = findEntry(key);
-
-        point.x = x;
-        point.y = y;
-
+        point.moveViewPointTo(viewX, viewY);
         parent.invalidate();
     }
 
-    public void addPoint(String key, String label, float x, float y, PointListener... listeners) {
-        ViewPoint point = new ViewPoint(key, label, x, y);
+    public void moveBitmapPointTo(String key, float bitmapX, float bitmapY) {
+        ViewPoint point = findEntry(key);
+        point.moveBitmapPointTo(bitmapX, bitmapY);
+        parent.invalidate();
+    }
+
+    public void addPoint(String key, String label, float viewX, float viewY, PointListener... listeners) {
+        ViewPoint point = new ViewPoint(key, label, new float[2]);
+        point.moveViewPointTo(viewX, viewY);
 
         for(PointListener l : listeners) {
             point.addListener(l);
@@ -192,8 +170,8 @@ public class InteractivePointsPlugin extends Plugin {
         float closestDistance = Float.MAX_VALUE;
 
         for(ViewPoint point : points) {
-            float dx = point.x - x;
-            float dy = point.y - y;
+            float dx = point.viewX() - x;
+            float dy = point.viewY() - y;
 
             float d = dx * dx + dy * dy;
 
@@ -230,7 +208,7 @@ public class InteractivePointsPlugin extends Plugin {
 
     private boolean movePoint(float x, float y) {
         if(draggedPoint != null) {
-            draggedPoint.setScreenPosition(x + dx, y + dy);
+            draggedPoint.moveViewPointTo(x + dx, y + dy);
             parent.invalidate();
             return true;
         }
@@ -243,6 +221,69 @@ public class InteractivePointsPlugin extends Plugin {
     }
 
     public interface PointListener {
-        void pointMoved(String key, float screenX, float screenY);
+        void pointMoved(String key, float normX, float normY);
+    }
+
+
+    private class ViewPoint {
+        final String key;
+
+        final String label;
+        final List<PointListener> listeners;
+
+        float bitmapPoint[];
+
+        transient float viewPoint[]; // updated when needed.
+
+        private ViewPoint(String key, String label, float bitmapPoint[]) {
+            this.key = key;
+            this.label = label;
+            this.listeners = new LinkedList<>();
+            this.bitmapPoint = bitmapPoint;
+
+            this.viewPoint = new float[2];
+        }
+
+        void firePointMovedEvent() {
+            for(PointListener listener : listeners) {
+                listener.pointMoved(key, viewPoint[0], viewPoint[1]);
+            }
+        }
+
+        void addListener(PointListener listener) {
+            this.listeners.add(listener);
+        }
+
+        boolean is(String key) {
+            return key.equals(this.key);
+        }
+
+        void updateViewPoint() {
+            // this is called from the onDraw method.
+            viewPoint[0] = bitmapPoint[0];
+            viewPoint[1] = bitmapPoint[1];
+
+            parent.bitmapToView(viewPoint);
+        }
+
+        void moveViewPointTo(float viewX, float viewY) {
+            bitmapPoint[0] = viewPoint[0] = viewX;
+            bitmapPoint[1] = viewPoint[1] = viewY;
+
+            parent.viewToBitmap(bitmapPoint);
+        }
+
+        public void moveBitmapPointTo(float bitmapX, float bitmapY) {
+            bitmapPoint[0] = bitmapX;
+            bitmapPoint[1] = bitmapY;
+        }
+
+        float viewX() {
+            return viewPoint[0];
+        }
+
+        float viewY() {
+            return viewPoint[1];
+        }
     }
 }

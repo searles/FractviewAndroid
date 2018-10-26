@@ -44,64 +44,6 @@ public class ScalableImageView extends View {
 		return boundsPaint;
 	}
 
-	/**
-	 * To save the state of this view over rotation etc...
-	 */
-	static class ViewState extends BaseSavedState {
-
-		// FIXME use a key-value pair, also to store data of plugins.
-
-		/**
-		 * Should the grid be shown or not?
-		 */
-		boolean rotationLock = false;
-		boolean confirmZoom = false;
-		boolean deactivateZoom = false;
-
-		ViewState(Parcelable in) {
-			super(in);
-		}
-
-		private ViewState(Parcel in) {
-			super(in);
-
-			int masked = in.readInt();
-
-			this.rotationLock = (masked & ROTATION_LOCK_MASK) != 0;
-			this.confirmZoom = (masked & CONFIRM_ZOOM_MASK) != 0;
-			this.deactivateZoom = (masked & DEACTIVATE_ZOOM_MASK) != 0;
-		}
-
-		@Override
-		public void writeToParcel(Parcel dest, int flags) {
-			super.writeToParcel(dest, flags);
-
-			int masked = 0;
-
-			masked |= rotationLock ? ROTATION_LOCK_MASK : 0;
-			masked |= confirmZoom ? CONFIRM_ZOOM_MASK : 0;
-			masked |= deactivateZoom ? DEACTIVATE_ZOOM_MASK : 0;
-
-			dest.writeInt(masked);
-		}
-
-		public static final Creator<ViewState> CREATOR = new Creator<ViewState>() {
-			@Override
-			public ViewState createFromParcel(Parcel in) {
-				return new ViewState(in);
-			}
-
-			@Override
-			public ViewState[] newArray(int size) {
-				return new ViewState[size];
-			}
-		};
-	}
-
-	public interface Listener {
-		void scaleRelative(Scale m);
-	}
-
 	private boolean rotationLock;
 	private boolean confirmZoom;
 	private boolean deactivateZoom;
@@ -141,12 +83,27 @@ public class ScalableImageView extends View {
      */
 	private Matrix imageMatrix;
 
+	/**
+	 * Inverse of it.
+	 */
+	private Matrix inverseImageMatrix;
+
 	private Bitmap bitmap;
 
 	public ScalableImageView(Context context, AttributeSet attrs) {
 		super(context, attrs);
 		this.plugins = new LinkedList<>();
 		initTouch();
+	}
+
+	public float[] viewToBitmap(float[] screenPoint) {
+		inverseImageMatrix.mapPoints(screenPoint);
+		return screenPoint;
+	}
+
+	public float[] bitmapToView(float[] viewPoint) {
+		imageMatrix.mapPoints(viewPoint);
+		return viewPoint;
 	}
 
 	public void addPlugin(Plugin plugin) {
@@ -331,9 +288,24 @@ public class ScalableImageView extends View {
 
 		bitmap2view.invert(view2bitmap);
 
-		this.imageMatrix = multitouch.createViewMatrix();
+		setImageMatrix(multitouch.createViewMatrix());
 
 		setMeasuredDimension((int) vw, (int) vh);
+	}
+
+	private void setImageMatrix(Matrix newImageMatrix) {
+		if(this.inverseImageMatrix == null) {
+			this.inverseImageMatrix = new Matrix();
+		}
+
+		if(!newImageMatrix.invert(this.inverseImageMatrix)) {
+			// in this case, it is better to keep the old one.
+			Log.e(getClass().getName(), "could not invert image matrix");
+			return;
+		}
+
+		this.imageMatrix = newImageMatrix;
+		invalidate();
 	}
 
 	@Override
@@ -383,8 +355,7 @@ public class ScalableImageView extends View {
 		if(!lastScale.isEmpty()) {
 			Matrix l = lastScale.removeLast(); // FIXME what is this?
 			// update the createViewMatrix.
-			this.imageMatrix = multitouch.createViewMatrix();
-			invalidate();
+			setImageMatrix(multitouch.createViewMatrix());
 		}
 	}
 
@@ -462,6 +433,15 @@ public class ScalableImageView extends View {
 
 		Commons.norm2bitmap(bitmap.getWidth(), bitmap.getHeight()).mapPoints(pts);
 		bitmap2view.mapPoints(pts); // FIXME replace
+
+		return new PointF(pts[0], pts[1]);
+	}
+
+	public PointF normalizedToBitmap(PointF p) {
+		// FIXME overkill.
+		float[] pts = new float[]{p.x, p.y};
+
+		Commons.norm2bitmap(bitmap.getWidth(), bitmap.getHeight()).mapPoints(pts);
 
 		return new PointF(pts[0], pts[1]);
 	}
@@ -588,8 +568,7 @@ public class ScalableImageView extends View {
 
 			if(isScrollEvent) {
 				isScrollEvent = false;
-				ScalableImageView.this.imageMatrix = createViewMatrix();
-				invalidate();
+				ScalableImageView.this.setImageMatrix(createViewMatrix());
 			}
 		}
 
@@ -669,8 +648,7 @@ public class ScalableImageView extends View {
 
 			// for now, we will set the latest view matrix.
 			// it will be reset later when the first preview has been generated.
-			ScalableImageView.this.imageMatrix = createViewMatrix();
-
+			ScalableImageView.this.setImageMatrix(createViewMatrix());
 		}
 
 		void scroll(MotionEvent event) {
@@ -684,9 +662,67 @@ public class ScalableImageView extends View {
 					controller.movePoint(id, screenToNormalized(pos));
 				}
 
-				ScalableImageView.this.imageMatrix = createViewMatrix();
-				ScalableImageView.this.invalidate();
+				ScalableImageView.this.setImageMatrix(createViewMatrix());
 			}
 		}
 	}
+
+	/**
+	 * To save the state of this view over rotation etc...
+	 */
+	static class ViewState extends BaseSavedState {
+
+		// FIXME use a key-value pair, also to store data of plugins.
+
+		/**
+		 * Should the grid be shown or not?
+		 */
+		boolean rotationLock = false;
+		boolean confirmZoom = false;
+		boolean deactivateZoom = false;
+
+		ViewState(Parcelable in) {
+			super(in);
+		}
+
+		private ViewState(Parcel in) {
+			super(in);
+
+			int masked = in.readInt();
+
+			this.rotationLock = (masked & ROTATION_LOCK_MASK) != 0;
+			this.confirmZoom = (masked & CONFIRM_ZOOM_MASK) != 0;
+			this.deactivateZoom = (masked & DEACTIVATE_ZOOM_MASK) != 0;
+		}
+
+		@Override
+		public void writeToParcel(Parcel dest, int flags) {
+			super.writeToParcel(dest, flags);
+
+			int masked = 0;
+
+			masked |= rotationLock ? ROTATION_LOCK_MASK : 0;
+			masked |= confirmZoom ? CONFIRM_ZOOM_MASK : 0;
+			masked |= deactivateZoom ? DEACTIVATE_ZOOM_MASK : 0;
+
+			dest.writeInt(masked);
+		}
+
+		public static final Creator<ViewState> CREATOR = new Creator<ViewState>() {
+			@Override
+			public ViewState createFromParcel(Parcel in) {
+				return new ViewState(in);
+			}
+
+			@Override
+			public ViewState[] newArray(int size) {
+				return new ViewState[size];
+			}
+		};
+	}
+
+	public interface Listener {
+		void scaleRelative(Scale m);
+	}
+
 }

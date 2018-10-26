@@ -79,8 +79,9 @@ public class CalculatorView extends FrameLayout implements FractalCalculatorList
     }
 
     public void updatePoint(String key, PointF normalizedPoint) {
-        PointF screenPoint = imageView.normalizedToScreen(normalizedPoint);
-        interactivePointsPlugin.movePointTo(key, screenPoint.x, screenPoint.y);
+        // cannot use normalizedToScreen because it uses a different conversion.
+        PointF bitmapPoint = scaleableImageView().normalizedToBitmap(normalizedPoint);
+        interactivePointsPlugin.moveBitmapPointTo(key, bitmapPoint.x, bitmapPoint.y);
     }
 
     void setProgress(float progress) {
@@ -127,6 +128,10 @@ public class CalculatorView extends FrameLayout implements FractalCalculatorList
         // can be called from outside the UI-thread!
         Log.d(getClass().getName(), "preview generated");
         this.scaleableImageView().removeLastScale();
+
+        // Tell interactivePointPlugin to update its point.
+        // FIXME interactivePointsPlugin.movePointTo();
+
         this.invalidate();
     }
 
