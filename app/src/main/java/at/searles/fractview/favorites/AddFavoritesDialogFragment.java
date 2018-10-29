@@ -5,6 +5,7 @@ import android.app.AlertDialog;
 import android.app.Dialog;
 import android.app.DialogFragment;
 import android.content.DialogInterface;
+import android.graphics.Bitmap;
 import android.os.Bundle;
 import android.text.Editable;
 import android.text.TextWatcher;
@@ -14,13 +15,17 @@ import android.widget.EditText;
 import android.widget.TextView;
 
 import at.searles.fractal.data.FractalData;
+import at.searles.fractal.entries.FavoriteEntry;
+import at.searles.fractview.Commons;
 import at.searles.fractview.R;
+import at.searles.fractview.SharedPrefsHelper;
 import at.searles.fractview.main.FractalProviderFragment;
 
 // This is practically the same as the IntDialogFragment, except for the parser...
 public class AddFavoritesDialogFragment extends DialogFragment {
 
     private static final String FRAGMENT_INDEX_KEY = "index";
+    private static final int FAVORITES_ICON_SIZE = 64;
 
     public static AddFavoritesDialogFragment newInstance(int fragmentIndex) {
         Bundle b = new Bundle();
@@ -95,29 +100,26 @@ public class AddFavoritesDialogFragment extends DialogFragment {
     }
 
     private boolean onOkClick(Button okButton, EditText editor, TextView msgTextView) {
-        String value = editor.getText().toString();
+        String key = editor.getText().toString();
+
+        if(key.isEmpty()) {
+            msgTextView.setText("Name must not be empty");
+            return false;
+        }
 
         FractalProviderFragment fractalProviderFragment = (FractalProviderFragment) getParentFragment();
 
         int index = getArguments().getInt(FRAGMENT_INDEX_KEY);
 
         FractalData fractal = fractalProviderFragment.getFractalByFragmentIndex(index).toData();
+        Bitmap icon = Commons.createIcon(fractalProviderFragment.getBitmapByFragmentIndex(index), FAVORITES_ICON_SIZE);
 
-        // TODO: now, store it.
+		// create icon out of bitmap
+        byte[] iconData = Commons.toPNG(icon);
 
-        //		if(name.isEmpty()) {
-//			Toast.makeText(MainActivity.this, "ERROR: Name must not be empty", Toast.LENGTH_LONG).show();
-//			return;
-//		}
-//
-//		Fractal fractal = fractalFragment.fractal();
-//
-//		// create icon out of bitmap
-//		Bitmap icon = Commons.createIcon(fractalCalculator.bitmap(), FAVORITES_ICON_SIZE);
-//
-//		FavoriteEntry fav = new FavoriteEntry(icon, fractal, Commons.fancyTimestamp());
-//
-//		SharedPrefsHelper.storeInSharedPreferences(this, name, fav, FavoritesListActivity.FAVORITES_SHARED_PREF);
+        FavoriteEntry fav = new FavoriteEntry(iconData, fractal, Commons.fancyTimestamp());
+
+		SharedPrefsHelper.putWithUniqueKey(getContext(), key, fav, FavoritesAccessor.FAVORITES_SHARED_PREF);
 
         return true;
     }

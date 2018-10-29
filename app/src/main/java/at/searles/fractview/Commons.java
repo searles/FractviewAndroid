@@ -155,7 +155,6 @@ public class Commons {
     }
 
     public static Bitmap fromPNG(byte[] data) {
-        ByteArrayOutputStream byteArrayBitmapStream = new ByteArrayOutputStream();
         return BitmapFactory.decodeByteArray(data, 0, data.length);
     }
 

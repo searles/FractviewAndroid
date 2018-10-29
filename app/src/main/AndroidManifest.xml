@@ -25,6 +25,8 @@
         <activity android:name=".SourceEditorActivity"/>
         <activity android:name="at.searles.tutorial.TutorialActivity">
         </activity>
+        <activity android:name=".favorites.FavoritesActivity"/>
+
         <provider
             android:name="android.support.v4.content.FileProvider"
             android:authorities="at.searles.fractview.fileprovider"

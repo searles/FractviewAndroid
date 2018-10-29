@@ -25,7 +25,7 @@ public class PalettesListActivity extends Activity {
 //            @Override
 //            public void onClick(View view) {
 //                // end this activity.
-//                FavoritesListActivity.this.finish();
+//                FavoritesActivity.this.finish();
 //            }
 //        });
 //    }
@@ -60,7 +60,7 @@ public class PalettesListActivity extends Activity {
 //                    setResult(1, data);
 //                    finish();
 //                } else {
-//                    DialogHelper.error(FavoritesListActivity.this, "not available. If you think it should be, please provide feedback.");
+//                    DialogHelper.error(FavoritesActivity.this, "not available. If you think it should be, please provide feedback.");
 //                }
 //            }
 //        });
@@ -114,10 +114,10 @@ public class PalettesListActivity extends Activity {
 //
 //                        String key = keys.iterator().next();
 //
-//                        DialogHelper.inputText(FavoritesListActivity.this, "Rename " + key, key, new Commons.KeyAction() {
+//                        DialogHelper.inputText(FavoritesActivity.this, "Rename " + key, key, new Commons.KeyAction() {
 //                            @Override
 //                            public void apply(String newKey) {
-//                                newKey = SharedPrefsHelper.renameKey(FavoritesListActivity.this, key, newKey, adapter.prefs);
+//                                newKey = SharedPrefsHelper.renameKey(FavoritesActivity.this, key, newKey, adapter.prefs);
 //
 //                                if (newKey != null) {
 //                                    adapter.initializeAdapter();
@@ -131,13 +131,13 @@ public class PalettesListActivity extends Activity {
 //                    case R.id.action_delete: {
 //                        Iterable<String> keys = extractKeys(selected());
 //
-//                        DialogHelper.confirm(FavoritesListActivity.this, "Delete",
+//                        DialogHelper.confirm(FavoritesActivity.this, "Delete",
 //                                "Delete all selected favorites?",
 //                                new Runnable() {
 //                                    @Override
 //                                    public void run() {
 //                                        for (String key : keys) {
-//                                            SharedPrefsHelper.removeEntry(FavoritesListActivity.this, key, adapter.prefs);
+//                                            SharedPrefsHelper.removeEntry(FavoritesActivity.this, key, adapter.prefs);
 //                                        }
 //                                        adapter.initializeAdapter();
 //                                        mode.finish();
@@ -156,10 +156,10 @@ public class PalettesListActivity extends Activity {
 //                        selectPrefixRange(prefix);
 //
 //                        if (prefix.length() == 0) {
-//                            DialogHelper.info(FavoritesListActivity.this, "No common prefix - selecting all");
+//                            DialogHelper.info(FavoritesActivity.this, "No common prefix - selecting all");
 //                        } else {
 //                            final int MAX_TITLE_LENGTH = 24;
-//                            DialogHelper.info(FavoritesListActivity.this, "Selecting all entries starting with \"" + CharUtil.shorten(prefix, MAX_TITLE_LENGTH) + "\"");
+//                            DialogHelper.info(FavoritesActivity.this, "Selecting all entries starting with \"" + CharUtil.shorten(prefix, MAX_TITLE_LENGTH) + "\"");
 //                        }
 //                    }
 //                    return true;
@@ -168,7 +168,7 @@ public class PalettesListActivity extends Activity {
 //
 //                        String title = oldPrefix.isEmpty() ? "Create common prefix" : "Change common prefix";
 //
-//                        DialogHelper.inputText(FavoritesListActivity.this, title, oldPrefix,
+//                        DialogHelper.inputText(FavoritesActivity.this, title, oldPrefix,
 //                                new Commons.KeyAction() {
 //                                    @Override
 //                                    public void apply(String newPrefix) {
@@ -177,7 +177,7 @@ public class PalettesListActivity extends Activity {
 //                                        for (String oldKey : extractKeys(selected())) {
 //                                            String newKey = newPrefix + oldKey.substring(oldPrefix.length());
 //
-//                                            newKeys.add(SharedPrefsHelper.renameKey(FavoritesListActivity.this, oldKey, newKey, adapter.prefs));
+//                                            newKeys.add(SharedPrefsHelper.renameKey(FavoritesActivity.this, oldKey, newKey, adapter.prefs));
 //                                        }
 //
 //                                        // unselect all
@@ -340,7 +340,7 @@ public class PalettesListActivity extends Activity {
 //
 //    public void importEntries(FavoriteEntry.Collection newEntries) {
 //        if (newEntries == null) {
-//            DialogHelper.error(FavoritesListActivity.this, "Could not read file!");
+//            DialogHelper.error(FavoritesActivity.this, "Could not read file!");
 //            return;
 //        }
 //

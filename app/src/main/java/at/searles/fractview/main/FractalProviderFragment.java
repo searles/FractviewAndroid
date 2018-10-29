@@ -3,6 +3,7 @@ package at.searles.fractview.main;
 import android.app.Fragment;
 import android.content.Intent;
 import android.content.res.AssetManager;
+import android.graphics.Bitmap;
 import android.os.Bundle;
 import android.support.annotation.Nullable;
 import android.util.Log;
@@ -218,6 +219,13 @@ public class FractalProviderFragment extends Fragment {
         int providerIndex = fragmentIndices.indexOf(fragmentIndex);
         return provider.getFractal(providerIndex);
     }
+
+    public Bitmap getBitmapByFragmentIndex(int fragmentIndex) {
+        String label = fractalCalculatorLabel(fragmentIndex);
+        CalculatorFragment fragment = (CalculatorFragment) getChildFragmentManager().findFragmentByTag(label);
+        return fragment.bitmap();
+    }
+
 
     /**
      * @return null if the parameter does not exist.

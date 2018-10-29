@@ -147,22 +147,6 @@ public class CharUtil {
     }
 
     /**
-     * Case insensitive string comparison (uses charCmp)
-     * @param a
-     * @param b
-     * @return
-     */
-    public static int stringCmp(String a, String b) {
-        for(int i = 0;;++i) {
-            if(i < a.length() && i < b.length()) {
-
-            } else {
-
-            }
-        }
-    }
-
-    /**
      * Comparison
      * -1: str is before prefix, 0: prefix is a prefix of str, 1: str comes after elements with this prefix
      * @param str

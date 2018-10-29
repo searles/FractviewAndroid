@@ -1,85 +1,38 @@
 package at.searles.fractview.favorites;
 
-import android.app.Activity;
+import android.graphics.Bitmap;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.BaseAdapter;
-
-import java.util.HashMap;
-import java.util.Map;
+import android.widget.ImageView;
+import android.widget.TextView;
 
 import at.searles.fractal.entries.FavoriteEntry;
+import at.searles.fractview.Commons;
+import at.searles.fractview.R;
 
+/**
+ * This adapter manages all fractal entries. The main item is a
+ * TreeMap that represents all Favorite entries.
+ */
 public class FavoritesListAdapter extends BaseAdapter {
 
-    private final Activity activity;
+    private final FavoritesActivity activity;
+    private final FavoritesAccessor accessor;
 
-//    final SharedPreferences prefs;
-//
-//    private IndexedKeyMap<String> jsonEntries;
-    private Map<String, FavoriteEntry> entries;
-
-    public FavoritesListAdapter(Activity activity) {
+    FavoritesListAdapter(FavoritesActivity activity, FavoritesAccessor accessor) {
         this.activity = activity;
-
-//        // Fetch shared preferences
-//        this.prefs = activity.getSharedPreferences(
-//                FAVORITES_SHARED_PREF,
-//                Context.MODE_PRIVATE);
-//
-//        this.jsonEntries = new IndexedKeyMap<>();
-        this.entries = new HashMap<>();
-
-//        initializeAdapter();
+        this.accessor = accessor;
     }
-
-//    protected void initializeAdapter() {
-//        this.entries.clear();
-//        this.jsonEntries.clear();
-//
-//        for (String key : this.prefs.getAll().keySet()) {
-//            String value = this.prefs.getString(key, null);
-//
-//            if (value != null) {
-//                this.jsonEntries.add(key, value);
-//            } else {
-//                Log.e(getClass().getName(), "Value for key " + key + " was null!");
-//            }
-//        }
-//
-//        this.jsonEntries.sort();
-//        notifyDataSetChanged();
-//    }
 
     @Override
     public int getCount() {
-        return 0;// jsonEntries.size();
-    }
-
-    public int getKeyIndex(String key) {
-        return 0;//jsonEntries.indexAt(key);
+        return accessor.entriesCount();
     }
 
     @Override
     public FavoriteEntry getItem(int position) {
-//        String key = jsonEntries.keyAt(position);
-//
-//        FavoriteEntry entry = this.entries.get(key);
-//
-//        if (entry == null) {
-//            String json = jsonEntries.valueAt(position);
-//
-//            try {
-//                entry = Serializers.serializer().fromJson(json, FavoriteEntry.class);
-//                entry.setKey(key);
-//                this.entries.put(key, entry);
-//            } catch (Throwable th) {
-//                entry = null;
-//            }
-//        }
-//
-//        return entry;
-        return null;
+        return accessor.valueAt(position);
     }
 
     @Override
@@ -89,6 +42,27 @@ public class FavoritesListAdapter extends BaseAdapter {
 
     @Override
     public View getView(int position, View convertView, ViewGroup parent) {
-        return null;
+        if (convertView == null) {
+            // fixme avoid passing null
+            convertView = activity.getLayoutInflater().inflate(R.layout.list_entry_with_icon, null);
+        }
+
+        ImageView iconView = convertView.findViewById(R.id.iconView);
+        TextView titleView = convertView.findViewById(R.id.titleView);
+        TextView descriptionView = convertView.findViewById(R.id.descriptionView);
+
+        String key = accessor.keyAt(position);
+        FavoriteEntry entry = accessor.value(key);
+
+        Bitmap icon = Commons.fromPNG(entry.icon);
+
+        iconView.setImageBitmap(icon);
+
+        titleView.setText(key);
+        descriptionView.setText(entry.description);
+
+        convertView.invalidate();
+
+        return convertView;
     }
 }

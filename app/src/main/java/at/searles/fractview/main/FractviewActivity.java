@@ -16,7 +16,7 @@ import at.searles.fractal.FractalExternData;
 import at.searles.fractview.R;
 import at.searles.fractview.SourceEditorActivity;
 import at.searles.fractview.favorites.AddFavoritesDialogFragment;
-import at.searles.fractview.favorites.FavoritesListActivity;
+import at.searles.fractview.favorites.FavoritesActivity;
 import at.searles.fractview.parameters.ParameterAdapter;
 import at.searles.fractview.parameters.ParameterLongSelectListener;
 import at.searles.fractview.parameters.ParameterSelectListener;
@@ -137,7 +137,10 @@ public class FractviewActivity extends Activity {
 				startActivity(new Intent(this, TutorialActivity.class));
 				return;
 			case R.id.action_favorites:
-				startActivityForResult(new Intent(this, FavoritesListActivity.class), FAVORITES_RETURN);
+				startActivityForResult(new Intent(this, FavoritesActivity.class), FAVORITES_RETURN);
+				return;
+			case R.id.action_add_favorite:
+				addToFavorites();
 				return;
 //			case R.id.action_demos:
 //				{
@@ -345,7 +348,7 @@ public class FractviewActivity extends Activity {
 //
 //		FavoriteEntry fav = new FavoriteEntry(icon, fractal, Commons.fancyTimestamp());
 //
-//		SharedPrefsHelper.storeInSharedPreferences(this, name, fav, FavoritesListActivity.FAVORITES_SHARED_PREF);
+//		SharedPrefsHelper.storeInSharedPreferences(this, name, fav, FavoritesActivity.FAVORITES_SHARED_PREF);
 //	}
 //
 //

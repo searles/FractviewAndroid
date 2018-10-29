@@ -321,7 +321,7 @@ public class MainActivity /* extends Activity
 //
 //		FavoriteEntry fav = new FavoriteEntry(icon, fractal, Commons.fancyTimestamp());
 //
-//		SharedPrefsHelper.storeInSharedPreferences(this, name, fav, FavoritesListActivity.FAVORITES_SHARED_PREF);
+//		SharedPrefsHelper.storeInSharedPreferences(this, name, fav, FavoritesActivity.FAVORITES_SHARED_PREF);
 //	}
 //
 //	@Override

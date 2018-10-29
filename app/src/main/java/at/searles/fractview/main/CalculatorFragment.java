@@ -3,6 +3,7 @@ package at.searles.fractview.main;
 
 import android.app.Fragment;
 import android.app.ProgressDialog;
+import android.graphics.Bitmap;
 import android.graphics.PointF;
 import android.os.Bundle;
 import android.renderscript.RenderScript;
@@ -179,6 +180,10 @@ public class CalculatorFragment extends Fragment {
         }
 
         return null;
+    }
+
+    public Bitmap bitmap() {
+        return calculator.bitmap();
     }
 
     @Override
