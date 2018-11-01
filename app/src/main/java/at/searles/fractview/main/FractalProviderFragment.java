@@ -31,6 +31,7 @@ import at.searles.fractview.R;
 import at.searles.fractview.SourceEditorActivity;
 import at.searles.fractview.bitmap.ui.CalculatorView;
 import at.searles.fractview.bitmap.ui.ScalableImageView;
+import at.searles.fractview.favorites.AddFavoritesDialogFragment;
 import at.searles.fractview.fractal.BundleAdapter;
 import at.searles.fractview.parameters.palettes.PaletteActivity;
 import at.searles.math.Scale;
@@ -58,6 +59,8 @@ import at.searles.math.color.Palette;
  * Editors directly access FractalProviderFragment which accesses fractalprovider.
  */
 public class FractalProviderFragment extends Fragment {
+
+    private static final String ADD_FRAGMENT_TAG = "add_fragment";
 
     private static final String FRACTAL_KEY = "fractal";
 
@@ -188,11 +191,22 @@ public class FractalProviderFragment extends Fragment {
         fragmentIndices.add(fragmentIndex);
     }
 
+    public void addFractal(FractalData data) {
+        int fragmentIndex = nextFragmentIndex();
+
+        provider.addFractal(data);
+
+        CalculatorFragment calculatorFragment = CalculatorFragment.newInstance(fragmentIndex);
+        getChildFragmentManager().beginTransaction().add(calculatorFragment, fractalCalculatorLabel(fragmentIndex)).commit();
+
+        fragmentIndices.add(fragmentIndex);
+    }
+
     private int nextFragmentIndex() {
         return fragmentCounter++;
     }
 
-    public void removeFractal(int providerIndex) {
+    public void removeFractal(int providerIndex) { // shouldn't I use fragmentIndex?
         // remove fragment and owner.
         int fragmentIndex = fragmentIndices.get(providerIndex);
         String label = fractalCalculatorLabel(fragmentIndex);
@@ -293,6 +307,20 @@ public class FractalProviderFragment extends Fragment {
         }
 
         return provider.getFractal(owner).sourceCode();
+    }
+
+    public void addToFavorites(int fragmentIndex) {
+        AddFavoritesDialogFragment fragment = AddFavoritesDialogFragment.newInstance(0); // fixme index!
+        fragment.show(getChildFragmentManager(), ADD_FRAGMENT_TAG);
+    }
+
+    public void setSingleFractal(FractalData newFractal) {
+        // delete all fractal fragments so far and create a new one.
+        while(fragmentIndices.size() > 1) {
+            removeFractal(1);
+        }
+
+        provider.setFractal(0, newFractal);
     }
 
     private class ImageViewListener implements ScalableImageView.Listener {

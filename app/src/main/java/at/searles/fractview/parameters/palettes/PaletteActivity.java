@@ -31,9 +31,12 @@ import at.searles.math.color.Palette;
  */
 public class PaletteActivity extends Activity {
 
+	// FIXME shouldn't there be some title?
+
 	public static final String PALETTE_LABEL = "palette";
 	public static final String ID_LABEL = "id";
 	public static final String OWNER_LABEL = "owner";
+	public static final String DESCRIPTION_LABEL = "description";
 
 	public static final String PREFS_NAME = "SavedPalettes";
 
@@ -45,7 +48,7 @@ public class PaletteActivity extends Activity {
 	private static final int SAVE_PALETTE = -1; // because positive numbers are for indices
 	private static final int LOAD_PALETTE = -2; // because positive numbers are for indices
 
-	private PaletteViewModel model = null;
+    private PaletteViewModel model = null;
 
 	private String id;
 

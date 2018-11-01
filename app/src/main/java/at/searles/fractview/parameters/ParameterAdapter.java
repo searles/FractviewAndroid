@@ -92,13 +92,7 @@ public class ParameterAdapter extends BaseAdapter implements ListAdapter, Fracta
                 TextView text1 = view.findViewById(android.R.id.text1);
                 text1.setTypeface(entry.isDefault ? Typeface.DEFAULT : Typeface.DEFAULT_BOLD);
 
-                String description = entry.description;
-
-                if(entry.owner >= 0) {
-                    description += " (" + (entry.owner + 1) + ")";
-                }
-
-                text1.setText(description);
+                text1.setText(entry.description);
 
                 TextView text2 = view.findViewById(android.R.id.text2);
 

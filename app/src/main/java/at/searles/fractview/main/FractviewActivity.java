@@ -13,10 +13,11 @@ import android.view.WindowManager;
 import android.widget.ListView;
 
 import at.searles.fractal.FractalExternData;
+import at.searles.fractal.data.FractalData;
 import at.searles.fractview.R;
 import at.searles.fractview.SourceEditorActivity;
-import at.searles.fractview.favorites.AddFavoritesDialogFragment;
 import at.searles.fractview.favorites.FavoritesActivity;
+import at.searles.fractview.fractal.BundleAdapter;
 import at.searles.fractview.parameters.ParameterAdapter;
 import at.searles.fractview.parameters.ParameterLongSelectListener;
 import at.searles.fractview.parameters.ParameterSelectListener;
@@ -26,7 +27,6 @@ import at.searles.tutorial.TutorialActivity;
 // Activity is the glue between FractalCalculator and Views.
 public class FractviewActivity extends Activity {
 
-	private static final String ADD_FRAGMENT_TAG = "add_fragment";
 	private static final int FAVORITES_RETURN = 213;
 	private static final int SOURCE_ACTIVITY_RETURN = 631;
 	private ParameterAdapter adapter;
@@ -104,12 +104,12 @@ public class FractviewActivity extends Activity {
 					fractalProviderFragment.setParameter(FractalExternData.SOURCE_LABEL, owner, source);
 				}
 			}
-//			else if (requestCode == BOOKMARK_ACTIVITY_RETURN) {
-//				if (resultCode == 1) { // = "a fractal was selected"
-//					Fractal newFractal = BundleAdapter.bundleToFractal(data.getBundleExtra(SourcesListActivity.FRACTAL_INDENT_LABEL));
-//					fractalFragment.setFractal(newFractal);
-//				}
-//			} else if (requestCode == PRESETS_ACTIVITY_RETURN) {
+			else if (requestCode == FAVORITES_RETURN) {
+				if (resultCode == 1) { // = "a fractal was selected"
+					FractalData newFractal = BundleAdapter.fractalFromBundle(data.getBundleExtra(FavoritesActivity.FRACTAL_INDENT_LABEL));
+					fractalProviderFragment.setSingleFractal(newFractal);
+				}
+			} // else if (requestCode == PRESETS_ACTIVITY_RETURN) {
 //				if (resultCode == 1) {
 //					Fractal newFractal = BundleAdapter.bundleToFractal(data.getBundleExtra(SourcesListActivity.FRACTAL_INDENT_LABEL));
 //					fractalFragment.setFractal(newFractal);
@@ -183,7 +183,8 @@ public class FractviewActivity extends Activity {
         }
     }
 
-	private void addFractal(String booleanKey) {
+
+		private void addFractal(String booleanKey) {
 		FractalProviderFragment fragment = (FractalProviderFragment) getFragmentManager().findFragmentById(R.id.fractal_fragment);
 		fragment.addFractal(booleanKey, "Scale", booleanKey);
 
@@ -200,8 +201,8 @@ public class FractviewActivity extends Activity {
 	 * Opens a dialog to add the index-th fractal of the provider to favorites.
 	 */
 	private void addToFavorites() {
-		AddFavoritesDialogFragment fragment = AddFavoritesDialogFragment.newInstance(0); // fixme index!
-		fragment.show(getFragmentManager(), ADD_FRAGMENT_TAG);
+		// FIXME index
+		fractalProviderFragment.addToFavorites(0);
 	}
 
 

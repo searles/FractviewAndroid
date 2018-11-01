@@ -1801,10 +1801,10 @@ static uchar4 calc(int x, int y) {
             // Arcnorm with 2 cases
 
             case 262: // Arcnorm[cplx, realReg]
-                *((double*) &data[code[pc + 5]]) = arc(*((double2*) &code[pc + 1])) / M_PI; pc += 6;
+                *((double*) &data[code[pc + 5]]) = arc(*((double2*) &code[pc + 1])) / (2 * M_PI); pc += 6;
                 break;
             case 263: // Arcnorm[cplxReg, realReg]
-                *((double*) &data[code[pc + 2]]) = arc(*((double2*) &data[code[pc + 1]])) / M_PI; pc += 3;
+                *((double*) &data[code[pc + 2]]) = arc(*((double2*) &data[code[pc + 1]])) / (2 * M_PI); pc += 3;
                 break;
 
             // Rad with 2 cases
@@ -1858,19 +1858,19 @@ static uchar4 calc(int x, int y) {
             // Re with 2 cases
 
             case 276: // Re[cplx, realReg]
-                *((double*) &data[code[pc + 5]]) = ((double2*) &code[pc + 1])->x; pc += 6;
+                *((double*) &data[code[pc + 5]]) = (*((double2*) &code[pc + 1])).x; pc += 6;
                 break;
             case 277: // Re[cplxReg, realReg]
-                *((double*) &data[code[pc + 2]]) = ((double2*) &data[code[pc + 1]])->x; pc += 3;
+                *((double*) &data[code[pc + 2]]) = (*((double2*) &data[code[pc + 1]])).x; pc += 3;
                 break;
 
             // Im with 2 cases
 
             case 278: // Im[cplx, realReg]
-                *((double*) &data[code[pc + 5]]) = ((double2*) &code[pc + 1])->y; pc += 6;
+                *((double*) &data[code[pc + 5]]) = (*((double2*) &code[pc + 1])).y; pc += 6;
                 break;
             case 279: // Im[cplxReg, realReg]
-                *((double*) &data[code[pc + 2]]) = ((double2*) &data[code[pc + 1]])->y; pc += 3;
+                *((double*) &data[code[pc + 2]]) = (*((double2*) &data[code[pc + 1]])).y; pc += 3;
                 break;
 
             // Equal with 8 cases
