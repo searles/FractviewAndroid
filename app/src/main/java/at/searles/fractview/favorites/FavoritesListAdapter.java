@@ -18,9 +18,9 @@ import at.searles.fractview.R;
 public class FavoritesListAdapter extends BaseAdapter {
 
     private final FavoritesActivity activity;
-    private final FavoritesAccessor accessor;
+    private final FractalAccessor accessor;
 
-    FavoritesListAdapter(FavoritesActivity activity, FavoritesAccessor accessor) {
+    FavoritesListAdapter(FavoritesActivity activity, FractalAccessor accessor) {
         this.activity = activity;
         this.accessor = accessor;
     }

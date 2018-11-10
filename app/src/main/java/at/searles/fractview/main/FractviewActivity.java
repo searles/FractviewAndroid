@@ -16,6 +16,7 @@ import at.searles.fractal.FractalExternData;
 import at.searles.fractal.data.FractalData;
 import at.searles.fractview.R;
 import at.searles.fractview.SourceEditorActivity;
+import at.searles.fractview.assets.SelectAssetActivity;
 import at.searles.fractview.favorites.FavoritesActivity;
 import at.searles.fractview.fractal.BundleAdapter;
 import at.searles.fractview.parameters.ParameterAdapter;
@@ -27,7 +28,7 @@ import at.searles.tutorial.TutorialActivity;
 // Activity is the glue between FractalCalculator and Views.
 public class FractviewActivity extends Activity {
 
-	private static final int FAVORITES_RETURN = 213;
+	private static final int FRACTAL_RETURN = 213;
 	private static final int SOURCE_ACTIVITY_RETURN = 631;
 	private ParameterAdapter adapter;
 	private FractalProviderFragment fractalProviderFragment;
@@ -104,17 +105,12 @@ public class FractviewActivity extends Activity {
 					fractalProviderFragment.setParameter(FractalExternData.SOURCE_LABEL, owner, source);
 				}
 			}
-			else if (requestCode == FAVORITES_RETURN) {
+			else if (requestCode == FRACTAL_RETURN) {
 				if (resultCode == 1) { // = "a fractal was selected"
 					FractalData newFractal = BundleAdapter.fractalFromBundle(data.getBundleExtra(FavoritesActivity.FRACTAL_INDENT_LABEL));
 					fractalProviderFragment.setSingleFractal(newFractal);
 				}
-			} // else if (requestCode == PRESETS_ACTIVITY_RETURN) {
-//				if (resultCode == 1) {
-//					Fractal newFractal = BundleAdapter.bundleToFractal(data.getBundleExtra(SourcesListActivity.FRACTAL_INDENT_LABEL));
-//					fractalFragment.setFractal(newFractal);
-//				}
-//			}
+			}
 		}
 	}
 
@@ -137,19 +133,19 @@ public class FractviewActivity extends Activity {
 				startActivity(new Intent(this, TutorialActivity.class));
 				return;
 			case R.id.action_favorites:
-				startActivityForResult(new Intent(this, FavoritesActivity.class), FAVORITES_RETURN);
+				startActivityForResult(new Intent(this, FavoritesActivity.class), FRACTAL_RETURN);
 				return;
 			case R.id.action_add_favorite:
 				addToFavorites();
 				return;
-//			case R.id.action_demos:
-//				{
-//					// show new activity
-//					Intent i = new Intent(FractviewActivity.this, SelectAssetActivity.class);
-//					i.putExtra(SelectAssetActivity.FRACTAL_INDENT_LABEL, BundleAdapter.toBundle(fractalFragment.fractal()));
-//					startActivityForResult(i, PRESETS_ACTIVITY_RETURN);
-//				}
-//			return;
+			case R.id.action_demos:
+				{
+					// show new activity
+					Intent i = new Intent(FractviewActivity.this, SelectAssetActivity.class);
+					i.putExtra(SelectAssetActivity.IN_FRACTAL_LABEL, BundleAdapter.toBundle(fractalProviderFragment.getKeyFractal()));
+					startActivityForResult(i, FRACTAL_RETURN); // return is a fractal
+				}
+			return;
 //			case R.id.action_size:
 //				openChangeImageSizeDialog();
 //				return;
@@ -385,7 +381,7 @@ public class FractviewActivity extends Activity {
 //		if(dim.x < dim.y) {
 //			//noinspection SuspiciousNameCombination
 //			dim.set(dim.y, dim.x);
-//		}
+//		}e
 //
 //		return dim;
 //	}

@@ -3,12 +3,12 @@ package at.searles.fractview.assets;
 import android.content.res.AssetManager;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
-import android.util.Log;
 
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.util.stream.Collectors;
 
 /**
  * Created by searles on 24.01.17.
@@ -18,41 +18,19 @@ public class AssetsHelper {
     /**
      * Try to read content of assets-folder
      * @param am The asset manager that should be used
-     * @param filename The filename to be read
+     * @param title The filename to be read (+ .fv extension)
      * @return The content of the file as a string, null in case of an error
      */
-    public static String readSourcecode(AssetManager am, String filename) {
+    public static String readSourcecode(AssetManager am, String title) {
         BufferedReader reader = null;
         String program = null;
 
-        try {
-            reader = new BufferedReader(
-                    new InputStreamReader(am.open(filename)));
-
-            StringBuilder sb = new StringBuilder();
-
-            String mLine;
-            while ((mLine = reader.readLine()) != null) {
-                //process line
-                sb.append(mLine).append("\n");
-            }
-
-            program = sb.toString();
-        } catch(IOException e) {
-            e.printStackTrace();
-        } finally {
-            if (reader != null) {
-                try {
-                    reader.close();
-                } catch (IOException e) {
-                    //log the exception
-                    Log.e("PF", "close failed!");
-                    e.printStackTrace();
-                }
-            }
+        try(InputStream is = am.open(String.format("sources/%s.fv", title))) {
+            BufferedReader br = new BufferedReader(new InputStreamReader(is));
+            return br.lines().collect(Collectors.joining("\n"));
+        } catch (IOException e) {
+            throw new IllegalArgumentException(e);
         }
-
-        return program;
     }
 
     /**
@@ -64,27 +42,11 @@ public class AssetsHelper {
     public static Bitmap readIcon(AssetManager am, String iconFilename) {
         if(iconFilename == null) return null;
 
-        Bitmap icon = null;
-        InputStream is = null;
-
-        try {
-            is = am.open("icons/" + iconFilename);
-            icon = BitmapFactory.decodeStream(is);
+        try(InputStream is = am.open("icons/" + iconFilename)) {
+            return BitmapFactory.decodeStream(is);
         } catch (IOException e) {
             e.printStackTrace();
-            //Toast.makeText(this, "Could not read icon", Toast.LENGTH_LONG).show();
-        } finally {
-            if(is != null) {
-                try {
-                    is.close();
-                } catch(IOException e) {
-                    e.printStackTrace();
-                }
-            }
+            return null;
         }
-
-        return icon;
     }
-
-
 }

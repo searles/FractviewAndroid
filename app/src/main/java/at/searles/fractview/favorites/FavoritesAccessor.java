@@ -29,7 +29,7 @@ import at.searles.fractview.utils.SharedPrefsHelperException;
 /**
  * Common purpose class to access shared preferences
  */
-public class FavoritesAccessor {
+public class FavoritesAccessor implements FractalAccessor {
 
     private static final String FILE_PROVIDER = "at.searles.fractview.fileprovider";
     private final SharedPreferences prefs;

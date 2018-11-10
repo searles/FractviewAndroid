@@ -16,6 +16,7 @@ import java.util.Map;
 import at.searles.fractal.entries.SourceEntry;
 import at.searles.fractview.R;
 
+@Deprecated
 public class SourceListAdapter extends BaseAdapter {
 
     private final Activity activity;

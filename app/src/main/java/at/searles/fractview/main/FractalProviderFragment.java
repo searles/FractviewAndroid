@@ -323,6 +323,10 @@ public class FractalProviderFragment extends Fragment {
         provider.setFractal(0, newFractal);
     }
 
+    public FractalData getKeyFractal() {
+        return provider.getFractal(0).toData();
+    }
+
     private class ImageViewListener implements ScalableImageView.Listener {
 
         final int fragmentIndex;

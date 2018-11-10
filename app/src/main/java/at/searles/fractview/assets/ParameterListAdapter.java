@@ -14,7 +14,7 @@ import at.searles.fractal.data.ParameterKey;
 import at.searles.fractal.data.Parameters;
 import at.searles.fractal.entries.ParametersEntry;
 import at.searles.meelan.compiler.Ast;
-
+@Deprecated
 class ParameterListAdapter extends BaseAdapter {
 
     private final Activity activity;
@@ -30,11 +30,11 @@ class ParameterListAdapter extends BaseAdapter {
         this.allEntries = new ArrayList<>();
         this.activeEntries = new ArrayList<>();
 
-        ParametersEntry empty = new ParametersEntry("Default", "Default values", new Parameters());
-        ParametersEntry current = new ParametersEntry("Current", "Current parameters", parameters);
+        //ParametersEntry empty = new ParametersEntry("Default", "Default values", new Parameters());
+        //ParametersEntry current = new ParametersEntry("Current", "Current parameters", parameters);
 
-        this.allEntries.add(empty);
-        this.allEntries.add(current);
+        //this.allEntries.add(empty);
+        //this.allEntries.add(current);
 
         // TODO: Read
 //
