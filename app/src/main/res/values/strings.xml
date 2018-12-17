@@ -77,9 +77,10 @@
     <string name="parameters_header_title">Parameters</string>
     <string name="reset">Reset to Default</string>
     <string name="copy">Copy to Clipboard</string>
-    <string name="paste">Copy to Clipboard</string>
+    <string name="paste">Paste from Clipboard</string>
     <string name="set_value_to_center">Set to Center</string>
-    <string name="set_center_to_origin">Set Center to 0::0</string>
+    <string name="set_center_to_origin">Set Center to Origin (0:0)</string>
     <string name="orthogonalize">Orthogonalize</string>
+    <string name="closeDialog">Close</string>
 
 </resources>

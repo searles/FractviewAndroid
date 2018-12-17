@@ -10,10 +10,6 @@ import android.widget.Toast;
 
 import at.searles.fractview.Commons;
 
-/**
- * Created by searles on 10.06.17.
- */
-
 public class DialogHelper {
 
     public static interface DialogFunction {

@@ -1,17 +1,11 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!-- TODO -->
 <menu xmlns:android="http://schemas.android.com/apk/res/android">
-    <item android:id="@+id/action_add_fractal"
+    <item android:id="@+id/action_add_fractal_view"
           android:title="Add Fractal View"
         />
-    <item android:id="@+id/action_remove_fractal_1"
+    <item android:id="@+id/action_remove_fractal_view"
           android:title="Remove Fractal View 1"
-        />
-    <item android:id="@+id/action_remove_fractal_2"
-          android:title="Remove Fractal View 2"
-        />
-    <item android:id="@+id/action_add_point"
-          android:title="Edit Point interactively"
         />
     <item android:id="@+id/action_share"
           android:title="@string/action_share"

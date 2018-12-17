@@ -1,7 +1,6 @@
 package at.searles.fractview.bitmap;
 
 import android.graphics.Bitmap;
-import android.graphics.PointF;
 import android.os.Handler;
 import android.os.Looper;
 import android.util.Log;
@@ -10,8 +9,7 @@ import java.util.LinkedList;
 import java.util.List;
 
 import at.searles.fractal.Fractal;
-import at.searles.fractal.FractalProvider;
-import at.searles.fractview.fractal.Drawer;
+import at.searles.fractview.fractal.DrawerContext;
 import at.searles.fractview.fractal.DrawerListener;
 
 /**
@@ -34,36 +32,29 @@ import at.searles.fractview.fractal.DrawerListener;
  *         do-bg: Fetch lock, wait for termination and do edit. At end of it, decrement cancel and release lock.
  *         post-exec: check cancel-counter and if necessary start drawing.
  *
- *     * Communication Drawer <=> BMF:
- *         BMF fetches progress from drawer
- *         BMF sends cancel-request to drawer
- *         BMF can check whether Drawer is finished
- *         BMF can block thread until drawer is finished (for edit)
+ *     * Communication DrawerContext <=> BMF:
+ *         BMF fetches progress from drawerContext
+ *         BMF sends cancel-request to drawerContext
+ *         BMF can check whether DrawerContext is finished
+ *         BMF can block thread until drawerContext is finished (for edit)
  *
  *
  *
  * An Editor
  */
-public class FractalCalculator implements DrawerListener, FractalProvider.FractalListener {
-
-	private static final int DEFAULT_WIDTH = 1800;
-	private static final int DEFAULT_HEIGHT = 1080;
+public class FractalCalculator implements DrawerListener, Fractal.Listener {
 
 	/**
 	 * Basic parameters
 	 */
 	private int height, width;
 
-	private Bitmap bitmap;
-	/**
-	 * If a new bitmap is created, it is first stored here.
-	 */
-	private Bitmap newBitmap;
+	//private Bitmap bitmap;
 
 	/**
-	 * The drawer does the actual drawing operation
+	 * The drawerContext does the actual drawing operation
 	 */
-	private Drawer drawer;
+	private DrawerContext drawerContext;
 
 	/**
 	 * The state of the FractalCalculator
@@ -76,7 +67,7 @@ public class FractalCalculator implements DrawerListener, FractalProvider.Fracta
 	private LinkedList<IdleJob> jobQueue = new LinkedList<>();
 
 	/**
-	 * Set by IdleJob. If true, then the drawer will restart after
+	 * Set by IdleJob. If true, then the drawerContext will restart after
 	 * finishing the job queue.
 	 */
 	private boolean triggerStart = false;
@@ -86,48 +77,59 @@ public class FractalCalculator implements DrawerListener, FractalProvider.Fracta
 	 */
 	private List<FractalCalculatorListener> listeners = new LinkedList<>();
 
-	// if true, the drawing is currently running and the drawer should
+	public void initializeFractal(Fractal fractal) {
+		this.drawerContext.setFractal(fractal);
+		fractal.addListener(this);
+	}
+
+	// if true, the drawing is currently running and the drawerContext should
 	// not be modified. Only modified in UI thread
 	public enum Status {
-		RUNNING,      // drawer is running
+		RUNNING,      // drawerContext is running
 		IDLE          // waiting for IdleJobs
 	}
 
-	public FractalCalculator(int width, int height) {
+	public FractalCalculator() {
 		this.status = Status.IDLE;
-
-		this.width = width;
-		this.height = height;
 	}
 
 	// =============================================================
-	// ====== Managing the drawer ==================================
+	// ====== Managing the drawerContext ==================================
 	// =============================================================
 
-	public double[] translate(PointF norm) {
-		return drawer.translate(norm);
-	}
-
-	public void setDrawer(Drawer drawer) {
-		this.drawer = drawer;
-		this.drawer.init();
-		this.drawer.setListener(this);
+	public void setDrawerContext(int width, int height, DrawerContext drawerContext) {
+		this.drawerContext = drawerContext;
+		this.drawerContext.init();
+		this.drawerContext.setListener(this);
 
 		// create bitmap
-		if(!prepareSetSize(this.width, this.height)) {
-			if(!prepareSetSize(DEFAULT_WIDTH, DEFAULT_HEIGHT)) {
-				// crash on purpose
-				throw new IllegalArgumentException("Cannot set minimum image size");
-			}
+		DrawerContext.Alloc bitmapAlloc = createBitmapAlloc(width, height);
+
+		while (bitmapAlloc == null) {
+			width /= 2;
+			height /= 2;
+
+			bitmapAlloc = createBitmapAlloc(width, height);
 		}
 
-		applyNewSize();
+		setBitmapAlloc(bitmapAlloc);
+	}
 
+	public void initializeRunLoop() {
+		// first call.
 		startBackgroundTask();
 	}
 
+	public void translate(float normX, float normY, double[] dst) {
+		drawerContext.translate(normX, normY, dst);
+	}
+
+	public void invert(double x, double y, float[] dst) {
+		drawerContext.invert(x, y, dst);
+	}
+
 	public float progress() {
-		return drawer.progress();
+		return drawerContext.progress();
 	}
 
 	public boolean isRunning() {
@@ -156,7 +158,7 @@ public class FractalCalculator implements DrawerListener, FractalProvider.Fracta
 		if(status == Status.IDLE) {
 			executeNextJob();
 		} else if(status == Status.RUNNING && cancelRunning) {
-			drawer.cancel();
+			drawerContext.cancel();
 			// drawerFinished will execute the job queue.
 		}
 
@@ -235,13 +237,13 @@ public class FractalCalculator implements DrawerListener, FractalProvider.Fracta
 			listener.drawerStarted(this);
 		}
 
-		drawer.start();
+		drawerContext.start();
 	}
 
 	public void dispose() {
-		if (drawer != null) {
-			drawer.cancel();
-			drawer = null;
+		if (drawerContext != null) {
+			drawerContext.cancel();
+			drawerContext = null;
 		}
 	}
 
@@ -292,8 +294,8 @@ public class FractalCalculator implements DrawerListener, FractalProvider.Fracta
 		addIdleJob(IdleJob.editor(
 				new Runnable() {
 					public void run() {
-						// drawer needs to know
-						drawer.setFractal(fractal);
+						// drawerContext needs to know
+						drawerContext.setFractal(fractal);
 					}
 				}
 		), false, true);
@@ -313,7 +315,9 @@ public class FractalCalculator implements DrawerListener, FractalProvider.Fracta
 	 * enough memory)
 	 */
 	public boolean setSize(int width, int height) {
-		if(!prepareSetSize(width, height)) {
+		DrawerContext.Alloc bitmapAlloc = createBitmapAlloc(width, height);
+
+		if(bitmapAlloc == null) {
 			return false;
 		}
 
@@ -321,7 +325,7 @@ public class FractalCalculator implements DrawerListener, FractalProvider.Fracta
 				new Runnable() {
 					@Override
 					public void run() {
-						FractalCalculator.this.applyNewSize();
+						FractalCalculator.this.setBitmapAlloc(bitmapAlloc);
 					}
 				}), true, true);
 
@@ -333,47 +337,30 @@ public class FractalCalculator implements DrawerListener, FractalProvider.Fracta
 	 * the next calculation is started.
 	 * @param width The new width
 	 * @param height The new height
-	 * @return true if creating the new bitmap was successful.
+	 * @return null if out of mem
 	 */
-	private boolean prepareSetSize(int width, int height) {
+	private DrawerContext.Alloc createBitmapAlloc(int width, int height) {
 		try {
-			newBitmap = Bitmap.createBitmap(width, height, Bitmap.Config.ARGB_8888);
-
-			if(!drawer.prepareSetSize(newBitmap)) {
-				// clean up, drawer failed
-				newBitmap = null;
-				return false;
-			}
-
-			return true;
+			Bitmap newBitmap = Bitmap.createBitmap(width, height, Bitmap.Config.ARGB_8888);
+			return drawerContext.createBitmapAlloc(newBitmap);
 		} catch(OutOfMemoryError e) {
-			e.printStackTrace();
-			return false;
+			return null;
 		}
 	}
 
-	private void applyNewSize() {
-		if(newBitmap != null) {
-			Log.d(getClass().getName(), "new bitmap: " + newBitmap);
+	private void setBitmapAlloc(DrawerContext.Alloc alloc) {
+		// there might very theoretically be multiple
+		// calls before the calculation stops,
+		// therefore check for null.
+		drawerContext.setBitmapAlloc(alloc);
 
-			// there might very theoretically be multiple
-			// calls before the calculation stops,
-			// therefore check for null.
-			this.bitmap = this.newBitmap;
-			this.newBitmap = null;
+		this.width = alloc.bitmap.getWidth();
+		this.height = alloc.bitmap.getHeight();
 
-			drawer.applyNewSize();
-
-			this.width = bitmap.getWidth();
-			this.height = bitmap.getHeight();
-
-			for(FractalCalculatorListener l : listeners) {
-				l.newBitmapCreated(FractalCalculator.this);
-			}
+		for(FractalCalculatorListener l : listeners) {
+			l.newBitmapCreated(FractalCalculator.this);
 		}
 	}
-
-
 
 	// =============================================================
 	// ====== Some get functions ===================================
@@ -384,7 +371,7 @@ public class FractalCalculator implements DrawerListener, FractalProvider.Fracta
 	 * bitmap has been generated yet.
 	 */
     public Bitmap bitmap() {
-        return bitmap;
+        return drawerContext.bitmap();
     }
 
     public int width() {
@@ -411,6 +398,4 @@ public class FractalCalculator implements DrawerListener, FractalProvider.Fracta
 			Log.e(getClass().getName(), "Trying to remove a non-existing listener: " + listener);
 		}
 	}
-
-
 }

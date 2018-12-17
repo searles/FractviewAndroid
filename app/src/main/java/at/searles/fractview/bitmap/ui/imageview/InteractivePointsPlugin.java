@@ -8,11 +8,11 @@ import android.view.MotionEvent;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
-import java.util.Iterator;
-import java.util.LinkedList;
 import java.util.List;
 
+import at.searles.fractview.bitmap.ui.CalculatorView;
 import at.searles.fractview.bitmap.ui.ScalableImageView;
+import at.searles.fractview.main.InteractivePoint;
 
 public class InteractivePointsPlugin extends Plugin {
 
@@ -36,6 +36,7 @@ public class InteractivePointsPlugin extends Plugin {
 
     private final Paint selectedPaintStroke;
     private final Paint selectedPaintFill;
+    private boolean enabled;
 
     public InteractivePointsPlugin(ScalableImageView parent) {
         super(parent);
@@ -65,10 +66,10 @@ public class InteractivePointsPlugin extends Plugin {
 
     @Override
     public void onDraw(@NotNull Canvas canvas) {
+        if(!enabled) return;
+
         for(ViewPoint point : points) {
             point.updateViewPoint();
-
-            // FIXME: Show label
 
             float x = point.viewX();
             float y = point.viewY();
@@ -85,6 +86,8 @@ public class InteractivePointsPlugin extends Plugin {
 
     @Override
     public boolean onTouchEvent(@NotNull MotionEvent event) {
+        if(!enabled) return false;
+
         int action = event.getActionMasked();
 
         switch(action) {
@@ -109,55 +112,23 @@ public class InteractivePointsPlugin extends Plugin {
         }
     }
 
-    private ViewPoint findEntry(String key) {
-        // XXX if there are ever more than 3 points, consider using a map.
-        for(ViewPoint point : points) {
-            if(point.is(key)) {
-                return point;
-            }
-        }
+//    public void moveViewPointTo(InteractivePoint pt, float viewX, float viewY) {
+//        ViewPoint point = findEntry(key);
+//        point.moveViewPointTo(viewX, viewY);
+//        parent.invalidate();
+//    }
+//
+//    public void moveBitmapPointTo(String key, float bitmapX, float bitmapY) {
+//        ViewPoint point = findEntry(key);
+//        point.moveBitmapPointTo(bitmapX, bitmapY);
+//        parent.invalidate();
+//    }
 
-        throw new IllegalArgumentException("no such entry: " + key);
-    }
-
-    public void moveViewPointTo(String key, float viewX, float viewY) {
-        ViewPoint point = findEntry(key);
-        point.moveViewPointTo(viewX, viewY);
-        parent.invalidate();
-    }
-
-    public void moveBitmapPointTo(String key, float bitmapX, float bitmapY) {
-        ViewPoint point = findEntry(key);
-        point.moveBitmapPointTo(bitmapX, bitmapY);
-        parent.invalidate();
-    }
-
-    public void addPoint(String key, String label, float viewX, float viewY, PointListener... listeners) {
-        ViewPoint point = new ViewPoint(key, label, new float[2]);
-        point.moveViewPointTo(viewX, viewY);
-
-        for(PointListener l : listeners) {
-            point.addListener(l);
-        }
+    public void addPoint(InteractivePoint pt, float viewX, float viewY, CalculatorView parent) {
+        ViewPoint point = new ViewPoint(parent, pt, viewX, viewY);
 
         points.add(point);
-
         parent.invalidate();
-    }
-
-    public void removePoint(String key) {
-        Iterator<ViewPoint> it = points.iterator();
-
-        while(it.hasNext()) {
-            ViewPoint point = it.next();
-
-            if(point.is(key)) {
-                it.remove();
-                return;
-            }
-        }
-
-        throw new IllegalArgumentException("not found " + key);
     }
 
     private boolean trySelectPoint(float x, float y) {
@@ -220,42 +191,38 @@ public class InteractivePointsPlugin extends Plugin {
         points.clear();
     }
 
-    public interface PointListener {
-        void pointMoved(String key, float normX, float normY);
+    public void setEnabled(boolean enabled) {
+        this.enabled = enabled;
     }
 
-
     private class ViewPoint {
-        final String key;
+        /**
+         * This one stores listeners to events for the given point in addition to
+         * the point projected onto the bitmap (which is the ground truth) and
+         * the point projected onto the view. The bitmap point is translated via
+         * the imageMatrix into the viewPoint, hence it takes current selections
+         * into consideration.
+         */
 
-        final String label;
-        final List<PointListener> listeners;
+        final InteractivePoint pt;
+        private final CalculatorView parent;
 
         float bitmapPoint[];
 
         transient float viewPoint[]; // updated when needed.
 
-        private ViewPoint(String key, String label, float bitmapPoint[]) {
-            this.key = key;
-            this.label = label;
-            this.listeners = new LinkedList<>();
-            this.bitmapPoint = bitmapPoint;
+        private ViewPoint(CalculatorView parent, InteractivePoint pt, float viewX, float viewY) {
+            this.pt = pt;
+            this.parent = parent;
 
+            this.bitmapPoint = new float[2];
             this.viewPoint = new float[2];
+
+            moveViewPointTo(viewX, viewY);
         }
 
         void firePointMovedEvent() {
-            for(PointListener listener : listeners) {
-                listener.pointMoved(key, viewPoint[0], viewPoint[1]);
-            }
-        }
-
-        void addListener(PointListener listener) {
-            this.listeners.add(listener);
-        }
-
-        boolean is(String key) {
-            return key.equals(this.key);
+            parent.interactivePointMoved(pt, viewPoint[0], viewPoint[1]);
         }
 
         void updateViewPoint() {
@@ -263,20 +230,20 @@ public class InteractivePointsPlugin extends Plugin {
             viewPoint[0] = bitmapPoint[0];
             viewPoint[1] = bitmapPoint[1];
 
-            parent.bitmapToView(viewPoint);
+            InteractivePointsPlugin.this.parent.bitmapToView(viewPoint);
         }
 
         void moveViewPointTo(float viewX, float viewY) {
             bitmapPoint[0] = viewPoint[0] = viewX;
             bitmapPoint[1] = viewPoint[1] = viewY;
 
-            parent.viewToBitmap(bitmapPoint);
+            InteractivePointsPlugin.this.parent.viewToBitmap(bitmapPoint);
         }
 
-        public void moveBitmapPointTo(float bitmapX, float bitmapY) {
-            bitmapPoint[0] = bitmapX;
-            bitmapPoint[1] = bitmapY;
-        }
+//        public void moveBitmapPointTo(float bitmapX, float bitmapY) {
+//            bitmapPoint[0] = bitmapX;
+//            bitmapPoint[1] = bitmapY;
+//        }
 
         float viewX() {
             return viewPoint[0];

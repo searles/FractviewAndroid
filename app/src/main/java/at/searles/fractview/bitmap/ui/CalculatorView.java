@@ -1,10 +1,8 @@
 package at.searles.fractview.bitmap.ui;
 
 import android.content.Context;
-import android.graphics.PointF;
 import android.support.annotation.Nullable;
 import android.util.AttributeSet;
-import android.util.Log;
 import android.view.View;
 import android.widget.FrameLayout;
 import android.widget.ProgressBar;
@@ -13,7 +11,8 @@ import at.searles.fractview.R;
 import at.searles.fractview.bitmap.FractalCalculator;
 import at.searles.fractview.bitmap.FractalCalculatorListener;
 import at.searles.fractview.bitmap.ui.imageview.InteractivePointsPlugin;
-import at.searles.fractview.main.CalculatorFragment;
+import at.searles.fractview.main.CalculatorWrapper;
+import at.searles.fractview.main.InteractivePoint;
 
 /**
  * This view allows to dynamically interact with a bitmap fragment.
@@ -31,7 +30,7 @@ import at.searles.fractview.main.CalculatorFragment;
 
 public class CalculatorView extends FrameLayout implements FractalCalculatorListener {
 
-    private CalculatorFragment fragment;
+    private CalculatorWrapper wrapper;
     private DrawerProgressTask progressTask;
     private ProgressBar drawerProgressBar;
 
@@ -44,10 +43,6 @@ public class CalculatorView extends FrameLayout implements FractalCalculatorList
         initView(context);
     }
 
-    public void setFragment(CalculatorFragment fragment) {
-        this.fragment = fragment;
-    }
-
     private void initView(Context context) {
         inflate(context, R.layout.view_fractal_calculator, this);
 
@@ -57,32 +52,48 @@ public class CalculatorView extends FrameLayout implements FractalCalculatorList
 
         drawerProgressBar = findViewById(R.id.drawerProgressBar);
         drawerProgressBar.setVisibility(View.INVISIBLE); // will be shown maybe later
+
+        imageView.setListener(scale -> wrapper.scaleRelative(scale));
     }
 
-    public void addPoint(String key, String description, PointF normalizedPoint) {
-        PointF screenPoint = imageView.normalizedToScreen(normalizedPoint);
+    public void setWrapper(CalculatorWrapper wrapper) {
+        this.wrapper = wrapper;
+    }
+
+    // interactive points section.
+
+    public void addPoint(InteractivePoint pt, float normX, float normY) {
+        float[] screenPt = new float[2];
+        imageView.normalizedToScreen(normX, normY, screenPt);
 
         // Step 2: Set point
-        interactivePointsPlugin.addPoint(key, description, screenPoint.x, screenPoint.y,
-                new InteractivePointsPlugin.PointListener() {
-                    @Override
-                    public void pointMoved(String key, float screenX, float screenY) {
-                        // FIXME normalized should be done in here.
-                        PointF normalizedPoint = imageView.screenToNormalized(new PointF(screenX, screenY));
-                        fragment.moveParameterToNormalized(key, normalizedPoint);
-                    }
-                });
+        interactivePointsPlugin.addPoint(pt, screenPt[0], screenPt[1], this);
     }
 
-    public void removePoint(String key) {
-        interactivePointsPlugin.removePoint(key);
+    public void interactivePointMoved(InteractivePoint pt, float screenX, float screenY) {
+        float[] normPt = new float[2];
+        double[] value = new double[2];
+
+        imageView.screenToNormalized(screenX, screenY, normPt);
+        wrapper.normToValue(normPt[0], normPt[1], value);
+        pt.updateValue(value);
     }
 
-    public void updatePoint(String key, PointF normalizedPoint) {
-        // cannot use normalizedToScreen because it uses a different conversion.
-        PointF bitmapPoint = scaleableImageView().normalizedToBitmap(normalizedPoint);
-        interactivePointsPlugin.moveBitmapPointTo(key, bitmapPoint.x, bitmapPoint.y);
+//    public void removePoint(String key) {
+//        interactivePointsPlugin.removePoint(key);
+//    }
+//
+//    public void updatePoint(String key, float normX, float normY) {
+//        // cannot use normalizedToScreen because it uses a different conversion.
+//        float[] bitmapPoint = scaleableImageView().normalizedToBitmap(normX, normY);
+//        interactivePointsPlugin.moveBitmapPointTo(key, bitmapPoint[0], bitmapPoint[1]);
+//    }
+
+    public void clearPoints() {
+        interactivePointsPlugin.clear();
     }
+
+    // ================
 
     void setProgress(float progress) {
         drawerProgressBar.setVisibility(VISIBLE);
@@ -106,6 +117,9 @@ public class CalculatorView extends FrameLayout implements FractalCalculatorList
         progressTask.run();
     }
 
+    /**
+     * Called when the view should be destroyed asap (eg if the screen was rotated)
+     */
     public void dispose() {
         // dispose progress task if running
         if(progressTask != null) {
@@ -126,11 +140,9 @@ public class CalculatorView extends FrameLayout implements FractalCalculatorList
     @Override
     public void previewGenerated(FractalCalculator src) {
         // can be called from outside the UI-thread!
-        Log.d(getClass().getName(), "preview generated");
         this.scaleableImageView().removeLastScale();
 
-        // Tell interactivePointPlugin to update its point.
-        // FIXME interactivePointsPlugin.movePointTo();
+        interactivePointsPlugin.setEnabled(true);
 
         this.invalidate();
     }
@@ -138,6 +150,9 @@ public class CalculatorView extends FrameLayout implements FractalCalculatorList
     @Override
     public void drawerStarted(FractalCalculator src) {
         this.startShowProgress(src);
+
+        // wait until preview is shown
+        interactivePointsPlugin.setEnabled(false);
     }
 
     @Override
@@ -150,4 +165,5 @@ public class CalculatorView extends FrameLayout implements FractalCalculatorList
         this.scaleableImageView().setBitmap(src.bitmap());
         this.requestLayout();
     }
+
 }

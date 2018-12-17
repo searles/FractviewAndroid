@@ -10,6 +10,8 @@ import java.util.TreeMap;
 
 public class MultiTouchController {
 
+	// fixme replace pointf by float[]
+
 	private Matrix matrix;
 	private Map<Integer, Pair<PointF, PointF>> points;
 	private boolean rotationLock; // the matrix should not rotate the image.

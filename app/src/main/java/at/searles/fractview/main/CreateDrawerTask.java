@@ -5,18 +5,18 @@ import android.renderscript.RenderScript;
 
 import at.searles.fractview.ScriptC_fillimage;
 import at.searles.fractview.ScriptC_fractal;
-import at.searles.fractview.renderscript.RenderScriptDrawer;
+import at.searles.fractview.renderscript.RenderScriptDrawerContext;
 
 /**
  * Task that creates a new drawer
  */
 public class CreateDrawerTask extends AsyncTask<Void, Void, Void> {
 
-    private final CalculatorFragment parent; // FIXME longrunning op
+    private final CalculatorWrapper parent; // FIXME longrunning op
     private final RenderScript renderScript;
-    private RenderScriptDrawer drawer;
+    private RenderScriptDrawerContext drawer;
 
-    CreateDrawerTask(RenderScript renderScript, CalculatorFragment parent) {
+    CreateDrawerTask(RenderScript renderScript, CalculatorWrapper parent) {
         this.renderScript = renderScript;
         this.parent = parent;
     }
@@ -31,7 +31,7 @@ public class CreateDrawerTask extends AsyncTask<Void, Void, Void> {
         ScriptC_fillimage fillScript = new ScriptC_fillimage(renderScript);
         fillScript.set_gScript(fillScript);
 
-        this.drawer = new RenderScriptDrawer(renderScript, script, fillScript);
+        this.drawer = new RenderScriptDrawerContext(renderScript, script, fillScript);
         
         return null;
     }
@@ -39,7 +39,7 @@ public class CreateDrawerTask extends AsyncTask<Void, Void, Void> {
     @Override
     protected void onPostExecute(Void aVoid) {
         if(!isCancelled()) {
-            parent.createDrawerTaskCallback(drawer);
+            parent.drawerInitializationFinished(drawer);
         }
     }
 }

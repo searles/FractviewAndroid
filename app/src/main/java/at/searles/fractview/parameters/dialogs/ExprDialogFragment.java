@@ -121,7 +121,7 @@ public class ExprDialogFragment extends DialogFragment {
             int owner = getArguments().getInt(OWNER_KEY);
 
             // the next line will throw in case of an error.
-             fractalProviderFragment.setParameter(id, owner, value);
+             fractalProviderFragment.setParameterValue(id, owner, value);
 
             return true;
         } catch (MeelanException e) {

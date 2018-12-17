@@ -118,7 +118,7 @@ public class RealDialogFragment extends DialogFragment {
             FractalProviderFragment fractalProviderFragment = (FractalProviderFragment) getParentFragment();
             String id = getArguments().getString(ID_KEY);
             int owner = getArguments().getInt(OWNER_KEY);
-            fractalProviderFragment.setParameter(id, owner, value);
+            fractalProviderFragment.setParameterValue(id, owner, value);
 
             return true;
         } catch (NumberFormatException e) {

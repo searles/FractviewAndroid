@@ -111,8 +111,8 @@ public class AddFavoritesDialogFragment extends DialogFragment {
 
         int index = getArguments().getInt(FRAGMENT_INDEX_KEY);
 
-        FractalData fractal = fractalProviderFragment.getFractalByFragmentIndex(index).toData();
-        Bitmap icon = Commons.createIcon(fractalProviderFragment.getBitmapByFragmentIndex(index), FAVORITES_ICON_SIZE);
+        FractalData fractal = fractalProviderFragment.getFractal(index).data();
+        Bitmap icon = Commons.createIcon(fractalProviderFragment.getBitmap(index), FAVORITES_ICON_SIZE);
 
 		// create icon out of bitmap
         byte[] iconData = Commons.toPNG(icon);

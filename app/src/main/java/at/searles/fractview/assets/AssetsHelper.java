@@ -3,18 +3,37 @@ package at.searles.fractview.assets;
 import android.content.res.AssetManager;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
+import android.view.ContextThemeWrapper;
 
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.util.Collections;
 import java.util.stream.Collectors;
+
+import at.searles.fractal.data.FractalData;
 
 /**
  * Created by searles on 24.01.17.
  */
 
 public class AssetsHelper {
+
+    public static FractalData defaultFractal(ContextThemeWrapper context) {
+        AssetManager am = context.getAssets();
+        try(InputStream is = am.open("sources/Default.fv")) {
+            BufferedReader br = new BufferedReader(new InputStreamReader(is));
+
+            String source = br.lines().collect(Collectors.joining("\n"));
+            return new FractalData(source, Collections.emptyMap());
+        } catch (IOException e) {
+            throw new IllegalArgumentException(e);
+        }
+    }
+
+
+
     /**
      * Try to read content of assets-folder
      * @param am The asset manager that should be used

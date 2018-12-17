@@ -2,10 +2,11 @@ package at.searles.fractview.fractal;
 
 import android.os.Bundle;
 
+import java.util.HashMap;
+import java.util.Map;
+
 import at.searles.fractal.data.FractalData;
-import at.searles.fractal.data.ParameterKey;
 import at.searles.fractal.data.ParameterType;
-import at.searles.fractal.data.Parameters;
 import at.searles.math.Cplx;
 import at.searles.math.Scale;
 import at.searles.math.color.Palette;
@@ -34,28 +35,28 @@ public class BundleAdapter {
         Bundle bundle = new Bundle();
 
         bundle.putString(SOURCE_LABEL, fractal.source);
-        bundle.putBundle(PARAMETERS_LABEL, toBundle(fractal.data));
+        bundle.putBundle(PARAMETERS_LABEL, toBundle(fractal.parameters));
 
         return bundle;
     }
 
     public static FractalData fractalFromBundle(Bundle bundle) {
         String source = bundle.getString(SOURCE_LABEL);
-        Parameters parameters = parametersFromBundle(bundle.getBundle(PARAMETERS_LABEL));
+        Map<String, FractalData.Parameter> parameters = parametersFromBundle(bundle.getBundle(PARAMETERS_LABEL));
 
         return new FractalData(source, parameters);
     }
 
-    public static Bundle toBundle(Parameters data) {
+    public static Bundle toBundle(Map<String, FractalData.Parameter> data) {
         Bundle bundle = new Bundle();
 
-        for(ParameterKey key : data) {
+        for(Map.Entry<String, FractalData.Parameter> entry : data.entrySet()) {
             Bundle parameter = new Bundle();
-            parameter.putInt(TYPE_LABEL, key.type.ordinal());
+            parameter.putInt(TYPE_LABEL, entry.getValue().type.ordinal());
 
-            Object value = data.get(key);
+            Object value = data.get(entry.getKey());
 
-            switch(key.type) {
+            switch(entry.getValue().type) {
                 case Int:
                     parameter.putInt(VALUE_LABEL, ((Number) value).intValue());
                     break;
@@ -82,14 +83,14 @@ public class BundleAdapter {
                     break;
             }
 
-            bundle.putBundle(key.id, parameter);
+            bundle.putBundle(entry.getKey(), parameter);
         }
 
         return bundle;
     }
 
-    public static Parameters parametersFromBundle(Bundle bundle) {
-        Parameters parameters = new Parameters();
+    public static Map<String, FractalData.Parameter> parametersFromBundle(Bundle bundle) {
+        Map<String, FractalData.Parameter> parameters = new HashMap<>();
 
         for(String id : bundle.keySet()) {
             Bundle parameter = bundle.getBundle(id);
@@ -133,7 +134,7 @@ public class BundleAdapter {
                     throw new IllegalArgumentException();
             }
 
-            parameters.add(new ParameterKey(id, type), value);
+            parameters.put(id, new FractalData.Parameter(type, value));
         }
 
         return parameters;

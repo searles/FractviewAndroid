@@ -13,7 +13,7 @@ import at.searles.fractal.FractalProvider;
 import at.searles.fractal.data.ParameterType;
 import at.searles.fractview.main.FractalProviderFragment;
 
-public class ParameterAdapter extends BaseAdapter implements ListAdapter, FractalProvider.ParameterMapListener {
+public class ParameterAdapter extends BaseAdapter implements ListAdapter, FractalProvider.Listener {
 
     private static final int BOOL = 0;
     private static final int ELEMENT = 1;
@@ -25,7 +25,7 @@ public class ParameterAdapter extends BaseAdapter implements ListAdapter, Fracta
         this.activity = activity;
         this.parent = parent;
 
-        parent.addParameterMapListener(this);
+        parent.addListener(this);
     }
 
     @Override
@@ -40,7 +40,7 @@ public class ParameterAdapter extends BaseAdapter implements ListAdapter, Fracta
 
     @Override
     public FractalProvider.ParameterEntry getItem(int position) {
-        return parent.getParameterByIndex(position);
+        return parent.getParameterEntryByIndex(position);
     }
 
     @Override
@@ -57,11 +57,19 @@ public class ParameterAdapter extends BaseAdapter implements ListAdapter, Fracta
 
     @Override
     public int getItemViewType(int position) {
-        switch(getItem(position).type) {
+        switch(getItem(position).parameter.type) {
             case Bool:
                 return BOOL;
             default:
                 return ELEMENT;
+        }
+    }
+
+    private String description(FractalProvider.ParameterEntry entry) {
+        if(entry.owner == -1) {
+            return entry.parameter.description;
+        } else {
+            return entry.parameter.description + " (" + entry.owner + ")";
         }
     }
 
@@ -73,15 +81,16 @@ public class ParameterAdapter extends BaseAdapter implements ListAdapter, Fracta
 
         switch (viewType) {
             case BOOL: {
-                if (view == null)
+                if (view == null) {
                     view = activity.getLayoutInflater().inflate(android.R.layout.simple_list_item_checked, parent, false);
+                }
 
                 CheckedTextView text1 = view.findViewById(android.R.id.text1);
 
-                text1.setTypeface(entry.isDefault ? Typeface.DEFAULT : Typeface.DEFAULT_BOLD);
+                text1.setTypeface(entry.parameter.isDefault ? Typeface.DEFAULT : Typeface.DEFAULT_BOLD);
 
-                text1.setText(entry.description);
-                text1.setChecked((Boolean) entry.value);
+                text1.setText(description(entry));
+                text1.setChecked((Boolean) entry.parameter.value);
             }
             break;
             case ELEMENT: {
@@ -90,13 +99,13 @@ public class ParameterAdapter extends BaseAdapter implements ListAdapter, Fracta
                 }
 
                 TextView text1 = view.findViewById(android.R.id.text1);
-                text1.setTypeface(entry.isDefault ? Typeface.DEFAULT : Typeface.DEFAULT_BOLD);
+                text1.setTypeface(entry.parameter.isDefault ? Typeface.DEFAULT : Typeface.DEFAULT_BOLD);
 
-                text1.setText(entry.description);
+                text1.setText(description(entry));
 
                 TextView text2 = view.findViewById(android.R.id.text2);
 
-                text2.setText(getLabelForType(entry.type));
+                text2.setText(getLabelForType(entry.parameter.type));
             }
             break;
         }
@@ -129,7 +138,7 @@ public class ParameterAdapter extends BaseAdapter implements ListAdapter, Fracta
     }
 
     @Override
-    public void parameterMapModified(FractalProvider src) {
+    public void parameterMapUpdated(FractalProvider src) {
         notifyDataSetChanged();
     }
 }

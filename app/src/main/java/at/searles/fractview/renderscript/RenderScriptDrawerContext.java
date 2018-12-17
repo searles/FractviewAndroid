@@ -14,17 +14,17 @@ import android.util.Log;
 import java.util.LinkedList;
 import java.util.List;
 
-import at.searles.fractview.fractal.Drawer;
-import at.searles.fractview.fractal.DrawerListener;
 import at.searles.fractal.Fractal;
 import at.searles.fractview.ScriptC_fillimage;
 import at.searles.fractview.ScriptC_fractal;
 import at.searles.fractview.ScriptField_lab_surface;
 import at.searles.fractview.ScriptField_palette;
+import at.searles.fractview.fractal.DrawerContext;
+import at.searles.fractview.fractal.DrawerListener;
 import at.searles.math.Scale;
 import at.searles.math.color.Palette;
 
-public class RenderScriptDrawer implements Drawer {
+public class RenderScriptDrawerContext implements DrawerContext {
 	// Renderscript-Part
 	private static final int parallelPixs = 10240; // fixme do some experiments
 	public static final int factor = 2; // 2^INIT_PIX_SIZE = 16
@@ -33,16 +33,10 @@ public class RenderScriptDrawer implements Drawer {
 
 	private Bitmap bitmap;
 
-	private int width;
-	private int height;
-
 	private Scale scale;
 
 	private RenderScript rs;
 	private Allocation rsBitmap = null;
-
-	private Allocation newRSBitmap;
-	private Bitmap newBitmap;
 
 	private ScriptC_fillimage fillScript;
 	private ScriptC_fractal script;
@@ -59,7 +53,7 @@ public class RenderScriptDrawer implements Drawer {
 	private volatile int progress;
 	private boolean isCancelled;
 
-	public RenderScriptDrawer(RenderScript rs, ScriptC_fractal script, ScriptC_fillimage fillScript) {
+	public RenderScriptDrawerContext(RenderScript rs, ScriptC_fractal script, ScriptC_fillimage fillScript) {
 		this.rs = rs;
 		this.script = script;
 		this.fillScript = fillScript;
@@ -125,53 +119,40 @@ public class RenderScriptDrawer implements Drawer {
 
 		// scale in script depends on image size
 		this.bitmap = bm;
-
-		this.width = bm.getWidth();
-		this.height = bm.getHeight();
+//
+//		this.width = bm.getWidth();
+//		this.height = bm.getHeight();
 	}
 
 	@Override
-	public boolean prepareSetSize(Bitmap newBitmap) {
+	public Alloc createBitmapAlloc(Bitmap newBitmap) {
 		try {
-			this.newBitmap = newBitmap;
-			newRSBitmap = Allocation.createFromBitmap(rs, newBitmap);
-			return true;
+			Allocation newRSBitmap = Allocation.createFromBitmap(rs, newBitmap);
+			return new RSAlloc(newBitmap, newRSBitmap);
 		} catch(RSRuntimeException e) {
 			e.printStackTrace();
-			return false;
+			return null;
 		}
 	}
 
 	@Override
-	public void applyNewSize() {
+	public void setBitmapAlloc(Alloc a) {
 		// in ui thread
-
-		if(newRSBitmap == null) {
-			Log.w(getClass().getName(), "applyNewSize should not run here because of check in BF");
-			return;
-		}
-
 		if (rsBitmap != null) {
 			// clean up
 			rsBitmap.destroy();
 			rsBitmap = null;
 		}
 
-		this.rsBitmap = newRSBitmap;
-		this.newRSBitmap = null;
-
-		this.bitmap = this.newBitmap;
-		this.newBitmap = null;
-
-		this.width = this.bitmap.getWidth();
-		this.height = this.bitmap.getHeight();
+		this.rsBitmap = ((RSAlloc) a).alloc;
+		this.bitmap = a.bitmap;
 
 		script.set_gOut(rsBitmap);
-		script.set_width(this.width);
-		script.set_height(this.height);
+		script.set_width(this.bitmap.getWidth());
+		script.set_height(this.bitmap.getHeight());
 
-		fillScript.set_width(this.width);
-		fillScript.set_height(this.height);
+		fillScript.set_width(this.bitmap.getWidth());
+		fillScript.set_height(this.bitmap.getHeight());
 		fillScript.set_gOut(rsBitmap);
 	}
 
@@ -203,8 +184,14 @@ public class RenderScriptDrawer implements Drawer {
 		).start();
 	}
 
+	@Override
+	public Bitmap bitmap() {
+		return bitmap;
+	}
+
 	private void backgroundRenderer() {
-		Log.d(getClass().getName(), "backgroundRenderer()");
+		int width = bitmap.getWidth();
+		int height = bitmap.getHeight();
 
 		script.set_factor(0); // factor is 0 in beginning.
 
@@ -397,4 +384,12 @@ public class RenderScriptDrawer implements Drawer {
 		script.set_tt(c);
 	}
 
+	private class RSAlloc extends Alloc {
+		final Allocation alloc;
+
+		RSAlloc(Bitmap bitmap, Allocation alloc) {
+			super(bitmap);
+			this.alloc = alloc;
+		}
+	}
 }

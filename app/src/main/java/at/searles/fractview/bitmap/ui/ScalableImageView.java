@@ -96,14 +96,12 @@ public class ScalableImageView extends View {
 		initTouch();
 	}
 
-	public float[] viewToBitmap(float[] screenPoint) {
+	public void viewToBitmap(float[] screenPoint) {
 		inverseImageMatrix.mapPoints(screenPoint);
-		return screenPoint;
 	}
 
-	public float[] bitmapToView(float[] viewPoint) {
+	public void bitmapToView(float[] viewPoint) {
 		imageMatrix.mapPoints(viewPoint);
-		return viewPoint;
 	}
 
 	public void addPlugin(Plugin plugin) {
@@ -351,7 +349,6 @@ public class ScalableImageView extends View {
 	 * pending change.
 	 */
 	public void removeLastScale() {
-		Log.d("SIV", "remove last scale");
 		if(!lastScale.isEmpty()) {
 			Matrix l = lastScale.removeLast(); // FIXME what is this?
 			// update the createViewMatrix.
@@ -415,40 +412,32 @@ public class ScalableImageView extends View {
 
 	/**
 	 * Map point from view coordinates to screenToNormalized
-	 * @param p Immutable point to modify
-	 * @return returns the mapped point.
 	 */
-	public PointF screenToNormalized(PointF p) {
-		// FIXME this is a bit overkill...
-		float[] pts = new float[]{p.x, p.y};
+	public void screenToNormalized(float viewX, float viewY, float[] normPt) {
+		normPt[0] = viewX;
+		normPt[1] = viewY;
 
-		view2bitmap.mapPoints(pts); // fixme
-		Commons.bitmap2norm(bitmap.getWidth(), bitmap.getHeight()).mapPoints(pts);
-
-		return new PointF(pts[0], pts[1]);
+		view2bitmap.mapPoints(normPt);
+		Commons.bitmap2norm(bitmap.getWidth(), bitmap.getHeight()).mapPoints(normPt);
 	}
 
-	public PointF normalizedToScreen(PointF p) {
-		float[] pts = new float[]{p.x, p.y};
+	public void normalizedToScreen(float normX, float normY, float[] screenPt) {
+		screenPt[0] = normX;
+		screenPt[1] = normY;
 
-		Commons.norm2bitmap(bitmap.getWidth(), bitmap.getHeight()).mapPoints(pts);
-		bitmap2view.mapPoints(pts); // FIXME replace
-
-		return new PointF(pts[0], pts[1]);
+		Commons.norm2bitmap(bitmap.getWidth(), bitmap.getHeight()).mapPoints(screenPt);
+		bitmap2view.mapPoints(screenPt);
 	}
 
-	public PointF normalizedToBitmap(PointF p) {
-		// FIXME overkill.
-		float[] pts = new float[]{p.x, p.y};
+	public void normalizedToBitmap(float normX, float normY, float[] bitmapPt) {
+		bitmapPt[0] = normX;
+		bitmapPt[1] = normY;
 
-		Commons.norm2bitmap(bitmap.getWidth(), bitmap.getHeight()).mapPoints(pts);
-
-		return new PointF(pts[0], pts[1]);
+		Commons.norm2bitmap(bitmap.getWidth(), bitmap.getHeight()).mapPoints(bitmapPt);
 	}
 
 	/**
 	 * Transform the image using matrix n
-	 * @param n
 	 */
 	void addScale(Matrix n) {
 		Log.d("SIV", "Adding a new scale: " + n);
@@ -493,12 +482,13 @@ public class ScalableImageView extends View {
 
 			int index = event.getActionIndex();
 
-			final PointF p = screenToNormalized(new PointF(event.getX(index), event.getY(index)));
+			final float[] p = new float[2];
+			screenToNormalized(event.getX(index), event.getY(index), p);
 
 			Matrix m = new Matrix();
 			m.setValues(new float[]{
-					SCALE_ON_DOUBLE_TAB, 0, p.x * (1 - SCALE_ON_DOUBLE_TAB),
-					0, SCALE_ON_DOUBLE_TAB, p.y * (1 - SCALE_ON_DOUBLE_TAB),
+					SCALE_ON_DOUBLE_TAB, 0, p[0] * (1 - SCALE_ON_DOUBLE_TAB),
+					0, SCALE_ON_DOUBLE_TAB, p[1] * (1 - SCALE_ON_DOUBLE_TAB),
 					0, 0, 1
 			});
 
@@ -591,8 +581,10 @@ public class ScalableImageView extends View {
 				int index = event.getActionIndex();
 				int id = event.getPointerId(index);
 
-				PointF p = new PointF(event.getX(index), event.getY(index));
-				controller.addPoint(id, screenToNormalized(p));
+				float[] pt = new float[2];
+				screenToNormalized(event.getX(index), event.getY(index), pt);
+
+				controller.addPoint(id, new PointF(pt[0], pt[1]));
 			}
 		}
 
@@ -656,10 +648,11 @@ public class ScalableImageView extends View {
 
 			if(isScrollEvent) {
 				for (int index = 0; index < event.getPointerCount(); ++index) {
-					PointF pos = new PointF(event.getX(index), event.getY(index));
+					float[] pt = new float[2];
+					screenToNormalized(event.getX(index), event.getY(index), pt);
 					int id = event.getPointerId(index);
 
-					controller.movePoint(id, screenToNormalized(pos));
+					controller.movePoint(id, new PointF(pt[0], pt[1]));
 				}
 
 				ScalableImageView.this.setImageMatrix(createViewMatrix());

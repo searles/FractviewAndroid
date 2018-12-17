@@ -12,7 +12,7 @@ import android.view.MenuItem;
 import android.view.WindowManager;
 import android.widget.ListView;
 
-import at.searles.fractal.FractalExternData;
+import at.searles.fractal.Fractal;
 import at.searles.fractal.data.FractalData;
 import at.searles.fractview.R;
 import at.searles.fractview.SourceEditorActivity;
@@ -71,7 +71,7 @@ public class FractviewActivity extends Activity {
 	@Override
 	protected void onDestroy() {
 		// remove adapter from listener
-		fractalProviderFragment.removeParameterMapListener(adapter);
+		fractalProviderFragment.removeListener(adapter);
 
 		super.onDestroy();
 	}
@@ -90,7 +90,7 @@ public class FractviewActivity extends Activity {
 		listView.setOnItemClickListener(new ParameterSelectListener(fractalProviderFragment));
 		listView.setOnItemLongClickListener(new ParameterLongSelectListener(fractalProviderFragment));
 
-		fractalProviderFragment.addParameterMapListener(adapter);
+		fractalProviderFragment.addListener(adapter);
 	}
 
 	@Override
@@ -102,13 +102,15 @@ public class FractviewActivity extends Activity {
 				if (resultCode == 1) { // = "Ok"
 					int owner = data.getIntExtra(SourceEditorActivity.OWNER_LABEL, -1);
 					String source = data.getStringExtra(SourceEditorActivity.SOURCE_LABEL);
-					fractalProviderFragment.setParameter(FractalExternData.SOURCE_LABEL, owner, source);
+					fractalProviderFragment.setParameterValue(Fractal.SOURCE_LABEL, owner, source);
 				}
 			}
 			else if (requestCode == FRACTAL_RETURN) {
 				if (resultCode == 1) { // = "a fractal was selected"
 					FractalData newFractal = BundleAdapter.fractalFromBundle(data.getBundleExtra(FavoritesActivity.FRACTAL_INDENT_LABEL));
-					fractalProviderFragment.setSingleFractal(newFractal);
+
+
+					// FIXME fractalProviderFragment.setSingleFractal(newFractal);
 				}
 			}
 		}
@@ -116,18 +118,11 @@ public class FractviewActivity extends Activity {
 
 	private void selectMenuItem(MenuItem menuItem) {
 		switch(menuItem.getItemId()) {
-			case R.id.action_add_fractal:
-				addFractal("juliaset"); // FIXME: allow selection of boolean keys
+			case R.id.action_add_fractal_view:
+				addFractalView(0);
 				return;
-			case R.id.action_remove_fractal_1:
-				removeFractal(0); // FIXME dynamically
-				return;
-			case R.id.action_remove_fractal_2:
-				removeFractal(1); // FIXME dynamically
-				return;
-			case R.id.action_add_point: // FIXME allow setting from parameter menu
-				// get provider view
-				fractalProviderFragment.addInteractivePoint("juliapoint");
+			case R.id.action_remove_fractal_view:
+				removeFractalView(0);
 				return;
 			case R.id.action_tutorial:
 				startActivity(new Intent(this, TutorialActivity.class));
@@ -179,15 +174,13 @@ public class FractviewActivity extends Activity {
         }
     }
 
-
-		private void addFractal(String booleanKey) {
-		FractalProviderFragment fragment = (FractalProviderFragment) getFragmentManager().findFragmentById(R.id.fractal_fragment);
-		fragment.addFractal(booleanKey, "Scale", booleanKey);
+	private void addFractalView(int index) {
+		fractalProviderFragment.addFractal(index);
 
 		// TODO: update menu
 	}
 
-	private void removeFractal(int index) {
+	private void removeFractalView(int index) {
 		fractalProviderFragment.removeFractal(index);
 
 		// TODO: update menu

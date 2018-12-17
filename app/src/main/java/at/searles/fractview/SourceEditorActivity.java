@@ -11,8 +11,10 @@ import android.view.View;
 import android.widget.Button;
 import android.widget.EditText;
 
+import java.util.Collections;
+
 import at.searles.fractal.Fractal;
-import at.searles.fractal.data.Parameters;
+import at.searles.fractal.data.FractalData;
 import at.searles.fractview.ui.DialogHelper;
 
 public class SourceEditorActivity extends Activity {
@@ -91,9 +93,7 @@ public class SourceEditorActivity extends Activity {
 		String source = currentSource();
 
 		try {
-			Fractal fractal = Fractal.fromData(source, new Parameters());
-			fractal.compile(); // Also checks default-values for external data.
-
+			Fractal.fromData(new FractalData(source, Collections.emptyMap()));
 			acceptedSource = source;
 
 			return true;

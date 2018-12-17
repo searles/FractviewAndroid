@@ -1,40 +1,32 @@
 package at.searles.fractview.main;
 
+import android.annotation.SuppressLint;
 import android.app.Fragment;
 import android.content.Intent;
-import android.content.res.AssetManager;
 import android.graphics.Bitmap;
 import android.os.Bundle;
 import android.support.annotation.Nullable;
-import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.LinearLayout;
 
-import java.io.BufferedReader;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.InputStreamReader;
 import java.util.ArrayList;
+import java.util.Iterator;
+import java.util.LinkedList;
 import java.util.List;
-import java.util.stream.Collectors;
+import java.util.Queue;
 
 import at.searles.fractal.Fractal;
-import at.searles.fractal.FractalExternData;
 import at.searles.fractal.FractalProvider;
 import at.searles.fractal.data.FractalData;
-import at.searles.fractal.data.ParameterKey;
 import at.searles.fractal.data.ParameterType;
-import at.searles.fractal.data.Parameters;
 import at.searles.fractview.R;
 import at.searles.fractview.SourceEditorActivity;
-import at.searles.fractview.bitmap.ui.CalculatorView;
-import at.searles.fractview.bitmap.ui.ScalableImageView;
+import at.searles.fractview.assets.AssetsHelper;
 import at.searles.fractview.favorites.AddFavoritesDialogFragment;
 import at.searles.fractview.fractal.BundleAdapter;
 import at.searles.fractview.parameters.palettes.PaletteActivity;
-import at.searles.math.Scale;
 import at.searles.math.color.Palette;
 
 /**
@@ -62,36 +54,19 @@ public class FractalProviderFragment extends Fragment {
 
     private static final String ADD_FRAGMENT_TAG = "add_fragment";
 
-    private static final String FRACTAL_KEY = "fractal";
-
-    private static final int WIDTH = 1920; // todo
+    private static final int WIDTH = 1920; // FIXME Change to smaller items
     private static final int HEIGHT = 1080;
 
-//    public static final String TAG = "FractalProviderFragment";
-    private static final String FRACTAL_CALCULATOR_LABEL_PREFIX = "fclp";
-
     private FractalProvider provider;
+    private Queue<FractalData> fractalDataQueue;
+    private List<CalculatorWrapper> calculatorWrappers;
+    private List<InteractivePoint> interactivePoints;
+    private LinearLayout containerView;
 
-    private List<Integer> fragmentIndices; // this is a mapping from provider index to fragment index.
-    private int fragmentCounter; // to generate unique and persistent fragment indices.
-
-    private LinearLayout fractalContainer;
-
-    private FractalData defaultFractal() {
-        // TODO: Move to assets
-        AssetManager am = getActivity().getAssets();
-        try(InputStream is = am.open("sources/Default.fv")) {
-            BufferedReader br = new BufferedReader(new InputStreamReader(is));
-
-            String source = br.lines().collect(Collectors.joining("\n"));
-            return new FractalData(source, new Parameters());
-        } catch (IOException e) {
-            throw new IllegalArgumentException(e);
-        }
-    }
-
-    private String fractalCalculatorLabel(int index) {
-        return FRACTAL_CALCULATOR_LABEL_PREFIX + index;
+    public FractalProviderFragment() {
+        this.calculatorWrappers = new ArrayList<>(2);
+        this.fractalDataQueue = new LinkedList<>();
+        this.interactivePoints = new ArrayList<>(5); // arraylist because they can remove themselves
     }
 
     @Override
@@ -99,42 +74,173 @@ public class FractalProviderFragment extends Fragment {
         super.onCreate(savedInstanceState);
         setRetainInstance(true);
 
-        this.fragmentIndices = new ArrayList<>();
-
-        Log.d(getClass().getName(), "onCreate called");
-
-        initProvider();
-
-        for(int i = 0; i < provider.fractalCount(); ++i) {
-            int fragmentIndex = nextFragmentIndex();
-            fragmentIndices.add(fragmentIndex);
-
-            CalculatorFragment calculatorFragment = CalculatorFragment.newInstance(fragmentIndex);
-            getChildFragmentManager().beginTransaction().add(calculatorFragment, fractalCalculatorLabel(i)).commit();
-        }
-    }
-
-    private void initProvider() {
-        Log.d(getClass().getName(), "initializing provider");
+        // FIXME read wrt savedInstance
 
         this.provider = new FractalProvider();
 
-        FractalData fractal = defaultFractal();
-        this.provider.addFractal(fractal);
+        this.provider.addExclusiveParameter(Fractal.SCALE_LABEL);
+
+        FractalData defaultFractal = AssetsHelper.defaultFractal(getActivity());
+
+        lazyAppendFractal(defaultFractal);
+    }
+
+    public void addFractal(int index, String exclusiveParameterId, Object newValue) {
+        Fractal src = provider.getFractal(index);
+
+        FractalData originalData = src.data();
+        ParameterType type = src.getParameter(exclusiveParameterId).type;
+        FractalData newData = originalData.newSetParameter(exclusiveParameterId, type, newValue);
+
+        addExclusiveParameter(exclusiveParameterId);
+
+        lazyAppendFractal(newData);
+    }
+
+    public void addFractal(int index) {
+        Fractal src = provider.getFractal(index);
+        lazyAppendFractal(src.data());
+    }
+
+    // Handle exclusive parameter ids.
+
+    public void addExclusiveParameter(String id) {
+        provider.addExclusiveParameter(id);
+    }
+
+    public boolean isExclusiveParameter(String id) {
+        return provider.isExclusiveParameter(id);
+    }
+
+    public void removeExclusiveParameter(String id) {
+        provider.removeExclusiveParameter(id);
+    }
+
+    public void addInteractivePoint(String id, int owner) {
+        interactivePoints.add(new InteractivePoint(this, id, owner));
+        containerView.invalidate();
+
+        for(CalculatorWrapper wrapper : calculatorWrappers) {
+            wrapper.updateInteractivePointsInView();
+        }
+    }
+
+    // ============= Interactive Points ================
+
+    public boolean isInteractivePoint(String id, int owner) {
+        for(InteractivePoint pt : interactivePoints) {
+            if(pt.is(id, owner)) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    public void removeInteractivePoint(String id, int owner) {
+        for(Iterator<InteractivePoint> it = interactivePoints.iterator(); it.hasNext(); ) {
+            InteractivePoint pt = it.next();
+
+            if(pt.is(id, owner)) {
+                it.remove();
+
+                for(CalculatorWrapper wrapper : calculatorWrappers) {
+                    wrapper.updateInteractivePointsInView();
+                }
+
+                return;
+            }
+        }
+    }
+
+    public Iterable<InteractivePoint> interactivePoints() {
+        return interactivePoints;
+    }
+
+    // ===============================
+
+    private void lazyAppendFractal(FractalData fractal) {
+        // Use this one to add a fractal
+        CalculatorWrapper calculatorWrapper = new CalculatorWrapper(this, getWidth(), getHeight());
+        fractalDataQueue.offer(fractal);
+        calculatorWrapper.startInitialization();
+    }
+
+    @SuppressLint("DefaultLocale")
+    void appendInitializedWrapper(CalculatorWrapper wrapper) {
+        // this method informs this parent that a new wrapper has been created and is ready to use.
+        int index = provider.addFractal(fractalDataQueue.poll());
+
+        if(index != calculatorWrappers.size() || index != containerView.getChildCount()) {
+            throw new IllegalArgumentException(String.format("unexpected race condition. this is a bug. index=%d, wrappers=%d, views=%d",
+                    index,  calculatorWrappers.size(), containerView.getChildCount()));
+        }
+
+        calculatorWrappers.add(wrapper);
+        wrapper.setIndex(index);
+
+        wrapper.startDrawerContextExecution(provider.getFractal(index));
+
+        if(containerView != null) {
+            containerView.addView(wrapper.createCalculatorView(), index);
+        }
+    }
+
+    public void removeFractal(int index) {
+        this.provider.removeFractal(index);
+        CalculatorWrapper removedWrapper = this.calculatorWrappers.remove(index);
+        removedWrapper.dispose();
+
+        if(containerView != null) {
+            containerView.removeViewAt(index);
+        }
+
+        for(int i = index; i < calculatorWrappers.size(); ++i) {
+            // update indices
+            calculatorWrappers.get(i).setIndex(i);
+        }
+
+        for(int i = interactivePoints.size() - 1; i >= 0; --i) {
+            InteractivePoint pt = interactivePoints.get(i);
+
+            if(pt.owner == index) {
+                interactivePoints.remove(i);
+            }
+
+            if(pt.owner > index) {
+                pt.owner --;
+            }
+        }
+    }
+
+    private int getWidth() {
+        return WIDTH; // FIXME
+    }
+
+    private int getHeight() {
+        return HEIGHT; // FIXME
     }
 
     @Nullable
     @Override
     public View onCreateView(LayoutInflater inflater, @Nullable ViewGroup container, Bundle savedInstanceState) {
-        Log.d(getClass().getName(), "on create view");
+        containerView = (LinearLayout) inflater.inflate(R.layout.fractalview_layout, container);
 
-        this.fractalContainer = (LinearLayout) inflater.inflate(R.layout.fractalview_layout, container);
-        return fractalContainer;
+        for(int i = 0; i < calculatorWrappers.size(); ++i) {
+            CalculatorWrapper wrapper = calculatorWrappers.get(i);
+            containerView.addView(wrapper.createCalculatorView(), i);
+        }
+
+        return this.containerView;
     }
 
     @Override
     public void onDestroyView() {
-        this.fractalContainer = null;
+        for(int i = provider.fractalCount() - 1; i >= 0; --i) {
+            calculatorWrappers.get(i).destroyView();
+        }
+
+        this.containerView = null;
         super.onDestroyView();
     }
 
@@ -147,7 +253,7 @@ public class FractalProviderFragment extends Fragment {
                     int owner = data.getIntExtra(PaletteActivity.OWNER_LABEL, -1);
 
                     Palette palette = BundleAdapter.paletteFromBundle(data.getBundleExtra(PaletteActivity.PALETTE_LABEL));
-                    provider.setParameter(id, owner, palette);
+                    provider.setParameterValue(id, owner, palette);
                 }
                 return;
             case SourceEditorActivity.SOURCE_EDITOR_ACTIVITY_RETURN:
@@ -155,7 +261,7 @@ public class FractalProviderFragment extends Fragment {
                     int owner = data.getIntExtra(SourceEditorActivity.OWNER_LABEL, -1);
 
                     String source = data.getStringExtra(SourceEditorActivity.SOURCE_LABEL);
-                    provider.setParameter(FractalExternData.SOURCE_LABEL, owner, source);
+                    provider.setParameterValue(Fractal.SOURCE_LABEL, owner, source);
                 }
                 return;
             default:
@@ -164,141 +270,31 @@ public class FractalProviderFragment extends Fragment {
         super.onActivityResult(requestCode, resultCode, data);
     }
 
-    public void addFractalCalculatorView(int fragmentIndex, CalculatorView view) {
-        view.scaleableImageView().setListener(new ImageViewListener(fragmentIndex));
-
-        ViewGroup.LayoutParams layoutParams = new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT, 1f);
-        view.setLayoutParams(layoutParams);
-
-        fractalContainer.addView(view);
-    }
-
-    public void addFractal(String booleanKey, String...exclusiveParameters) {
-        int originalIndex = 0;
-
-        int fragmentIndex = nextFragmentIndex();
-
-        boolean value = (Boolean) provider.getParameter(booleanKey, originalIndex);
-
-        FractalData splitData = provider.getFractal(originalIndex).toData();
-        splitData.data.add(new ParameterKey(booleanKey, ParameterType.Bool), !value);
-
-        provider.addFractal(splitData, exclusiveParameters);
-
-        CalculatorFragment calculatorFragment = CalculatorFragment.newInstance(fragmentIndex);
-        getChildFragmentManager().beginTransaction().add(calculatorFragment, fractalCalculatorLabel(fragmentIndex)).commit();
-
-        fragmentIndices.add(fragmentIndex);
-    }
-
-    public void addFractal(FractalData data) {
-        int fragmentIndex = nextFragmentIndex();
-
-        provider.addFractal(data);
-
-        CalculatorFragment calculatorFragment = CalculatorFragment.newInstance(fragmentIndex);
-        getChildFragmentManager().beginTransaction().add(calculatorFragment, fractalCalculatorLabel(fragmentIndex)).commit();
-
-        fragmentIndices.add(fragmentIndex);
-    }
-
-    private int nextFragmentIndex() {
-        return fragmentCounter++;
-    }
-
-    public void removeFractal(int providerIndex) { // shouldn't I use fragmentIndex?
-        // remove fragment and owner.
-        int fragmentIndex = fragmentIndices.get(providerIndex);
-        String label = fractalCalculatorLabel(fragmentIndex);
-
-        CalculatorFragment fragment = (CalculatorFragment) getChildFragmentManager().findFragmentByTag(label);
-        getChildFragmentManager().beginTransaction().remove(fragment).commit();
-
-        fragmentIndices.remove(providerIndex);
-
-        // remove from provider
-        provider.removeFractal(providerIndex);
-
-        if(fractalContainer != null) {
-            fractalContainer.removeViewAt(providerIndex);
+    private void invalidatePoints() {
+        for(InteractivePoint pt : interactivePoints) {
+            pt.invalidate();
         }
     }
 
-    public void addListener(int fragmentIndex, FractalProvider.FractalListener listener) {
-        int providerIndex = fragmentIndices.indexOf(fragmentIndex);
-        provider.addFractalListener(providerIndex, listener);
-    }
-
-    public Fractal getFractalByFragmentIndex(int fragmentIndex) {
-        int providerIndex = fragmentIndices.indexOf(fragmentIndex);
-        return provider.getFractal(providerIndex);
-    }
-
-    public Bitmap getBitmapByFragmentIndex(int fragmentIndex) {
-        String label = fractalCalculatorLabel(fragmentIndex);
-        CalculatorFragment fragment = (CalculatorFragment) getChildFragmentManager().findFragmentByTag(label);
-        return fragment.bitmap();
-    }
-
-
-    /**
-     * @return null if the parameter does not exist.
-     */
-    public FractalProvider.ParameterEntry getParameterEntryByFragmentIndex(String key, int fragmentIndex) {
-        int owner = fragmentIndices.indexOf(fragmentIndex);
-
-        if(owner == -1) {
-            return null;
-        }
-
-        // provider will handle the case that key/owner is not exclusive.
-        return provider.getParameterEntry(key, owner);
-    }
-
-    public FractalProvider.ParameterEntry getParameterEntry(String key, int owner) {
-        return provider.getParameterEntry(key, owner);
-    }
-
-    public Object getParameter(String key, int owner) {
-        return provider.getParameter(key, owner);
-    }
-
-    public void setParameterByFragmentIndex(String key, int fragmentIndex, Object newValue) {
-        int owner = fragmentIndices.indexOf(fragmentIndex);
-
-        if(owner == -1) {
-            throw new IllegalArgumentException("no such fragment index");
-        }
-
-        // provider will handle the case that key/owner is not exclusive.
-        provider.setParameter(key, owner, newValue);
-    }
-
-    public void setParameter(String key, int owner, Object newValue) {
-        provider.setParameter(key, owner, newValue);
+    public void setParameterValue(String key, int owner, Object newValue) {
+        provider.setParameterValue(key, owner, newValue);
+        invalidatePoints();
     }
 
     public int parameterCount() {
         return provider.parameterCount();
     }
 
-    public FractalProvider.ParameterEntry getParameterByIndex(int position) {
-        return provider.getParameterByIndex(position);
+    public FractalProvider.ParameterEntry getParameterEntryByIndex(int position) {
+        return provider.getParameterEntryByIndex(position);
     }
 
-    public void addParameterMapListener(FractalProvider.ParameterMapListener l) {
-        provider.addParameterMapListener(l);
+    public void addListener(FractalProvider.Listener l) {
+        provider.addListener(l);
     }
 
-    public boolean removeParameterMapListener(FractalProvider.ParameterMapListener l) {
-        return provider.removeParameterMapListener(l);
-    }
-
-    public void addInteractivePoint(String key) {
-        for(int fragmentIndex : fragmentIndices) {
-            CalculatorFragment fragment = (CalculatorFragment) getChildFragmentManager().findFragmentByTag(fractalCalculatorLabel(fragmentIndex));
-            fragment.addInteractivePoint(key);
-        }
+    public boolean removeListener(FractalProvider.Listener l) {
+        return provider.removeListener(l);
     }
 
     public String getSourceByOwner(int owner) {
@@ -306,42 +302,33 @@ public class FractalProviderFragment extends Fragment {
             owner = 0;
         }
 
-        return provider.getFractal(owner).sourceCode();
+        return provider.getFractal(owner).source();
     }
 
-    public void addToFavorites(int fragmentIndex) {
-        AddFavoritesDialogFragment fragment = AddFavoritesDialogFragment.newInstance(0); // fixme index!
+    public void addToFavorites(int index) {
+        AddFavoritesDialogFragment fragment = AddFavoritesDialogFragment.newInstance(index);
         fragment.show(getChildFragmentManager(), ADD_FRAGMENT_TAG);
     }
 
-    public void setSingleFractal(FractalData newFractal) {
-        // delete all fractal fragments so far and create a new one.
-        while(fragmentIndices.size() > 1) {
-            removeFractal(1);
-        }
 
-        provider.setFractal(0, newFractal);
+    void removeInteractivePoint(InteractivePoint pt) {
+        interactivePoints.remove(pt);
     }
 
     public FractalData getKeyFractal() {
-        return provider.getFractal(0).toData();
+        return provider.getFractal(0).data();
     }
 
-    private class ImageViewListener implements ScalableImageView.Listener {
-
-        final int fragmentIndex;
-
-        ImageViewListener(int fragmentIndex) {
-            this.fragmentIndex = fragmentIndex;
-        }
-
-        @Override
-        public void scaleRelative(Scale relativeScale) {
-            int providerIndex = fragmentIndices.indexOf(fragmentIndex);
-            Scale originalScale = ((Scale) provider.getParameter(FractalExternData.SCALE_LABEL, providerIndex));
-
-            Scale absoluteScale = originalScale.relative(relativeScale);
-            provider.setParameter(FractalExternData.SCALE_LABEL, providerIndex, absoluteScale);
-        }
+    public Object getParameterValue(String key, int index) {
+        return provider.getParameterValue(key, index);
     }
+
+    public Fractal getFractal(int index) {
+        return provider.getFractal(index);
+    }
+
+    public Bitmap getBitmap(int index) {
+        return calculatorWrappers.get(index).bitmap();
+    }
+
 }

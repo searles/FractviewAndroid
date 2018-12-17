@@ -125,7 +125,7 @@ public class ColorDialogFragment extends DialogFragment {
             // color dialog fragments are also called from the palette activity.
             String id = getArguments().getString(ID_KEY);
             int owner = getArguments().getInt(OWNER_KEY); // null if it does not exist.
-            fractalProviderFragment.setParameter(id, owner, value);
+            fractalProviderFragment.setParameterValue(id, owner, value);
 
             return;
         }

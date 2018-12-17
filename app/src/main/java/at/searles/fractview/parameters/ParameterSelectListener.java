@@ -32,13 +32,13 @@ public class ParameterSelectListener implements AdapterView.OnItemClickListener 
     public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
         FractalProvider.ParameterEntry item = ((ParameterAdapter) parent.getAdapter()).getItem(position);
 
-        switch (item.type) {
+        switch (item.parameter.type) {
             case Bool: {
-                boolean newValue = !(Boolean) item.value;
+                boolean newValue = !(Boolean) item.parameter.value;
 
                 // in the case of non-individual parameters, owner may be null
                 // but it is never accessed.
-                fragment.setParameter(item.key, item.owner, newValue);
+                fragment.setParameterValue(item.key, item.owner, newValue);
                 ((CheckedTextView) view).setChecked(newValue);
 
                 ((ParameterAdapter) parent.getAdapter()).notifyDataSetChanged();
@@ -46,38 +46,38 @@ public class ParameterSelectListener implements AdapterView.OnItemClickListener 
                 return;
             }
             case Int: {
-                IntegerDialogFragment ft = IntegerDialogFragment.newInstance("Edit integer number " + item.description, item.key, item.owner, (Integer) item.value);
+                IntegerDialogFragment ft = IntegerDialogFragment.newInstance("Edit integer number " + item.parameter.description, item.key, item.owner, (Integer) item.parameter.value);
                 fragment.getChildFragmentManager().beginTransaction().add(ft, "editor").commit();
             }
             return;
             case Real: {
-                RealDialogFragment ft = RealDialogFragment.newInstance("Edit decimal number " + item.description, item.key, item.owner, (Double) item.value);
+                RealDialogFragment ft = RealDialogFragment.newInstance("Edit decimal number " + item.parameter.description, item.key, item.owner, (Double) item.parameter.value);
                 fragment.getChildFragmentManager().beginTransaction().add(ft, "editor").commit();
             }
             return;
             case Cplx: {
-                CplxDialogFragment ft = CplxDialogFragment.newInstance("Edit complex number " + item.description, item.key, item.owner, (Cplx) item.value);
+                CplxDialogFragment ft = CplxDialogFragment.newInstance("Edit complex number " + item.parameter.description, item.key, item.owner, (Cplx) item.parameter.value);
                 fragment.getChildFragmentManager().beginTransaction().add(ft, "editor").commit();
             }
             return;
             case Expr: {
-                ExprDialogFragment ft = ExprDialogFragment.newInstance("Edit expression " + item.description, item.key, item.owner, (String) item.value);
+                ExprDialogFragment ft = ExprDialogFragment.newInstance("Edit expression " + item.parameter.description, item.key, item.owner, (String) item.parameter.value);
                 fragment.getChildFragmentManager().beginTransaction().add(ft, "editor").commit();
             }
             return;
             case Scale: {
-                ScaleDialogFragment ft = ScaleDialogFragment.newInstance("Edit scale " + item.description, item.key, item.owner, (Scale) item.value);
+                ScaleDialogFragment ft = ScaleDialogFragment.newInstance("Edit scale " + item.parameter.description, item.key, item.owner, (Scale) item.parameter.value);
                 fragment.getChildFragmentManager().beginTransaction().add(ft, "editor").commit();
             }
             return;
             case Color: {
-                ColorDialogFragment ft = ColorDialogFragment.newInstance("Edit color " + item.description, item.key, item.owner, (Integer) item.value);
+                ColorDialogFragment ft = ColorDialogFragment.newInstance("Edit color " + item.parameter.description, item.key, item.owner, (Integer) item.parameter.value);
                 fragment.getChildFragmentManager().beginTransaction().add(ft, "editor").commit();
             }
             return;
             case Palette: {
                 // start new activity
-                Palette value = (Palette) item.value;
+                Palette value = (Palette) item.parameter.value;
 
                 Intent i = new Intent(parent.getContext(), PaletteActivity.class);
 
@@ -85,7 +85,7 @@ public class ParameterSelectListener implements AdapterView.OnItemClickListener 
 
                 // add information which palette it actually is.
                 i.putExtra(PaletteActivity.ID_LABEL, item.key);
-                i.putExtra(PaletteActivity.DESCRIPTION_LABEL, item.description);
+                i.putExtra(PaletteActivity.DESCRIPTION_LABEL, item.parameter.description);
                 i.putExtra(PaletteActivity.OWNER_LABEL, item.owner);
 
                 fragment.startActivityForResult(i, PaletteActivity.PALETTE_ACTIVITY_RETURN);

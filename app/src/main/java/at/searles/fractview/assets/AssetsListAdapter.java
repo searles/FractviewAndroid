@@ -15,14 +15,13 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
 import at.searles.fractal.data.FractalData;
-import at.searles.fractal.data.Parameters;
-import at.searles.fractal.entries.SourceEntry;
 import at.searles.fractview.R;
 import at.searles.meelan.compiler.Ast;
 
@@ -180,7 +179,7 @@ public class AssetsListAdapter extends RecyclerView.Adapter {
         // fetch fresh.
         List<Param> list = new ArrayList<>();
 
-        list.add(new Param("Default", "Default values of this source", new Parameters(), null));
+        list.add(new Param("Default", "Default values of this source", Collections.emptyMap(), null));
 
         // FIXME add others
 
@@ -253,6 +252,7 @@ public class AssetsListAdapter extends RecyclerView.Adapter {
 
 
     class ItemClickedListener {
+        // FIXME
         public void onClick(View v, int position) {
         }
     }
@@ -275,14 +275,14 @@ public class AssetsListAdapter extends RecyclerView.Adapter {
     class Param {
         final String title;
         final String description;
-        final Parameters data;
+        final Map<String, FractalData.Parameter> data;
         final Bitmap icon;
         FractalData fractal;
 
-        Param(String title, String description, Parameters data, Bitmap icon) {
+        Param(String title, String description, Map<String, FractalData.Parameter> parameters, Bitmap icon) {
             this.title = title;
             this.description = description;
-            this.data = data;
+            this.data = parameters;
             this.icon = icon;
         }
     }

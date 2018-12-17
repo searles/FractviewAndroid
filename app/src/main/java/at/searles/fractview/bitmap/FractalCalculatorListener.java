@@ -15,7 +15,6 @@ public interface FractalCalculatorListener {
     /**
      * The view should be updated and the view matrices reset
      * because a first preview was generated in the bitmap.
-     * TODO: Maybe merge this one with drawingUpdated?
      */
     void previewGenerated(FractalCalculator src);
 
