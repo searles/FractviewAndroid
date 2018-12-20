@@ -12,12 +12,15 @@ public class MultiTouchController {
 
 	// fixme replace pointf by float[]
 
-	private Matrix matrix;
+	private final Matrix matrix;
 	private Map<Integer, Pair<PointF, PointF>> points;
 	private boolean rotationLock; // the matrix should not rotate the image.
 
+	private final Matrix currentMatrix;
+
 	public MultiTouchController(boolean rotationLock) {
 		points = new TreeMap<>();
+		currentMatrix = new Matrix();
 		matrix = new Matrix(); // identity matrix
 		this.rotationLock = rotationLock;
 	}
@@ -73,9 +76,8 @@ public class MultiTouchController {
 				b = c = 0.f;
 			}
 
-			Matrix m = new Matrix();
-			m.setValues(new float[]{a, b, tx, c, d, ty, 0.f, 0.f, 1.f});
-			return m;
+			currentMatrix.setValues(new float[]{a, b, tx, c, d, ty, 0.f, 0.f, 1.f});
+			return currentMatrix;
 		} else if(points.size() == 2) {
 			// Get the matrix
 			// ( r string tx )
@@ -124,9 +126,8 @@ public class MultiTouchController {
 				}
 			}
 
-			Matrix m = new Matrix();
-			m.setValues(new float[]{r, s, tx, -s, r, ty, 0.f, 0.f, 1.f});
-			return m;
+			currentMatrix.setValues(new float[]{r, s, tx, -s, r, ty, 0.f, 0.f, 1.f});
+			return currentMatrix;
 		} else if(points.size() == 1) {
 			Pair<PointF, PointF> pq = points.values().iterator().next(); // fixme what is the best way?
 
@@ -140,11 +141,11 @@ public class MultiTouchController {
 			float tx = pq.second.x - pq.first.x;
 			float ty = pq.second.y - pq.first.y;
 
-			Matrix m = new Matrix();
-			m.setValues(new float[]{1.f, 0.f, tx, 0.f, 1.f, ty, 0.f, 0.f, 1.f});
-			return m;
+			currentMatrix.setValues(new float[]{1.f, 0.f, tx, 0.f, 1.f, ty, 0.f, 0.f, 1.f});
+			return currentMatrix;
 		} else {
-			return new Matrix();
+			currentMatrix.reset();
+			return currentMatrix;
 		}
 	}
 
@@ -159,7 +160,7 @@ public class MultiTouchController {
 
 	private void commit() {
 		// commit current changes.
-		this.matrix = getMatrix();
+		this.matrix.set(getMatrix());
 
 		// reset points
 		for(Map.Entry<Integer, Pair<PointF, PointF>> p : points.entrySet()) {

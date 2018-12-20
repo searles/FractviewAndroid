@@ -32,8 +32,6 @@ public interface DrawerContext {
 	@Deprecated
 	void updateBitmap(Bitmap bm);
 
-	void setScale(Scale sc);
-
 	Scale getScale();
 
 	default void translate(float normX, float normY, double[] dst) {

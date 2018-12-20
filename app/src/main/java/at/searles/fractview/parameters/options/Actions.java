@@ -137,7 +137,7 @@ public enum Actions implements ParameterLongSelectListener.Action {
         public void apply(FractalProviderFragment provider, FractalProvider.ParameterEntry item) {
             String id = item.key;
             Boolean value = (Boolean) item.parameter.value;
-            provider.addFractal(0, id, !value); // FIXME index = 0?
+            provider.addFractalFromKey(id, !value);
         }
 
         @Override

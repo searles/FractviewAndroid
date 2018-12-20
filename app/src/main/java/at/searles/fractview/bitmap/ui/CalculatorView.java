@@ -68,6 +68,8 @@ public class CalculatorView extends FrameLayout implements FractalCalculatorList
 
         // Step 2: Set point
         interactivePointsPlugin.addPoint(pt, screenPt[0], screenPt[1], this);
+
+        scaleableImageView().invalidate();
     }
 
     public void interactivePointMoved(InteractivePoint pt, float screenX, float screenY) {
@@ -78,16 +80,6 @@ public class CalculatorView extends FrameLayout implements FractalCalculatorList
         wrapper.normToValue(normPt[0], normPt[1], value);
         pt.updateValue(value);
     }
-
-//    public void removePoint(String key) {
-//        interactivePointsPlugin.removePoint(key);
-//    }
-//
-//    public void updatePoint(String key, float normX, float normY) {
-//        // cannot use normalizedToScreen because it uses a different conversion.
-//        float[] bitmapPoint = scaleableImageView().normalizedToBitmap(normX, normY);
-//        interactivePointsPlugin.moveBitmapPointTo(key, bitmapPoint[0], bitmapPoint[1]);
-//    }
 
     public void clearPoints() {
         interactivePointsPlugin.clear();
@@ -141,9 +133,8 @@ public class CalculatorView extends FrameLayout implements FractalCalculatorList
     public void previewGenerated(FractalCalculator src) {
         // can be called from outside the UI-thread!
         this.scaleableImageView().removeLastScale();
-
         interactivePointsPlugin.setEnabled(true);
-
+        wrapper.invalidateInteractivePoints(); // because image matrix changed.
         this.invalidate();
     }
 

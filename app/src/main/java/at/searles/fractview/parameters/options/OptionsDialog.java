@@ -6,6 +6,7 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.BaseAdapter;
 import android.widget.CheckedTextView;
+import android.widget.TextView;
 
 import java.util.Arrays;
 import java.util.List;
@@ -122,9 +123,9 @@ public class OptionsDialog implements DialogInterface.OnClickListener {
 
             ParameterLongSelectListener.Action action = actions.get(index);
 
-            CheckedTextView checkedTextView = view.findViewById(android.R.id.text1);
+            TextView textView = view.findViewById(android.R.id.text1);
 
-            checkedTextView.setText(action.title());
+            textView.setText(action.title());
 
             return view;
         }

@@ -37,6 +37,9 @@ public class ScalableImageView extends View {
 
 	private static final Paint BOUNDS_PAINT = boundsPaint();
 
+	private RectF viewRect = new RectF();
+	private RectF bitmapRect = new RectF();
+
 	private static Paint boundsPaint() {
 		Paint boundsPaint = new Paint();
 		boundsPaint.setColor(0xaa000000); // semi-transparent black
@@ -86,7 +89,7 @@ public class ScalableImageView extends View {
 	/**
 	 * Inverse of it.
 	 */
-	private Matrix inverseImageMatrix;
+	private Matrix inverseImageMatrix = new Matrix();
 
 	private Bitmap bitmap;
 
@@ -245,9 +248,42 @@ public class ScalableImageView extends View {
 		}
 	}
 
+//	@Override
+//	protected void onMeasure(int widthMeasureSpec, int heightMeasureSpec) {
+//		float vw = MeasureSpec.getSize(widthMeasureSpec);
+//		float vh = MeasureSpec.getSize(heightMeasureSpec);
+//
+//		float bw = bitmap.getWidth();
+//		float bh = bitmap.getHeight();
+//
+//		viewRect.set(0f, 0f, vw, vh);
+//
+//		if(vw > vh) {
+//			// if width of view is bigger, match longer side to it
+//			bitmapRect.set(0f, 0f, Math.max(bw, bh), Math.min(bw, bh));
+//		} else {
+//			bitmapRect.set(0f, 0f, Math.min(bw, bh), Math.max(bw, bh));
+//		}
+//
+//		bitmap2view.setRectToRect(bitmapRect, viewRect, Matrix.ScaleToFit.CENTER);
+//
+//		// Check orientation
+//		if(flipBitmap(vw, vh)) {
+//			bitmap2view.postRotate(90f); // FIXME
+//			bitmap2view.postTranslate(bh, 0);
+//		}
+//
+//		bitmap2view.invert(view2bitmap); // never false because bitmap.width and height > 0.
+//
+//		initializeImageMatrix();
+//		//setMeasuredDimension((int) scaledBitmapWidth(vw, vh), (int) scaledBitmapHeight(vw, vh));
+//		setMeasuredDimension((int) scaledBitmapWidth(vw, vh), (int) scaledBitmapHeight(vw, vh));
+//	}
+
+
 	@Override
 	protected void onMeasure(int widthMeasureSpec, int heightMeasureSpec) {
-		Log.d("SIV", "onMeasure called now");
+		// FIXME exactly the requested size!
 
 		float vw = MeasureSpec.getSize(widthMeasureSpec);
 		float vh = MeasureSpec.getSize(heightMeasureSpec);
@@ -260,41 +296,38 @@ public class ScalableImageView extends View {
 		float bw = bitmap.getWidth();
 		float bh = bitmap.getHeight();
 
+		viewRect.set(0f, 0f, vw, vh);
+
 		if(vw > vh) {
-			// fixme use matrices
 			// if width of view is bigger, match longer side to it
-			RectF viewRect = new RectF(0f, 0f, vw, vh);
-			RectF bitmapRect = new RectF(0f, 0f, Math.max(bw, bh), Math.min(bw, bh));
-			bitmap2view.setRectToRect(bitmapRect, viewRect, Matrix.ScaleToFit.CENTER);
+			bitmapRect.set(0f, 0f, Math.max(bw, bh), Math.min(bw, bh));
 		} else {
-			// fixme use matrices
-			RectF viewRect = new RectF(0f, 0f, vw, vh);
-			RectF bitmapRect = new RectF(0f, 0f, Math.min(bw, bh), Math.max(bw, bh));
-			bitmap2view.setRectToRect(bitmapRect, viewRect, Matrix.ScaleToFit.CENTER);
+			bitmapRect.set(0f, 0f, Math.min(bw, bh), Math.max(bw, bh));
 		}
+
+		bitmap2view.setRectToRect(bitmapRect, viewRect, Matrix.ScaleToFit.CENTER);
 
 		// Check orientation
 		if(flipBitmap(vw, vh)) {
-			// fixme create this one directly
 			// Turn centerImageMatrix by 90 degrees
-			Matrix m = new Matrix();
-			m.postRotate(90f);
-			m.postTranslate(bh, 0);
-
-			bitmap2view.preConcat(m);
+			bitmap2view.preTranslate(bh, 0);
+			bitmap2view.preRotate(90f);
 		}
 
 		bitmap2view.invert(view2bitmap);
 
-		setImageMatrix(multitouch.createViewMatrix());
+		initializeImageMatrix();
 
 		setMeasuredDimension((int) vw, (int) vh);
 	}
 
-	private void setImageMatrix(Matrix newImageMatrix) {
-		if(this.inverseImageMatrix == null) {
-			this.inverseImageMatrix = new Matrix();
-		}
+	private void initializeImageMatrix() {
+		Matrix newImageMatrix = multitouch.initializeViewMatrix();
+
+		newImageMatrix.preConcat(Commons.bitmap2norm(bitmap.getWidth(), bitmap.getHeight()));
+		newImageMatrix.postConcat(Commons.norm2bitmap(bitmap.getWidth(), bitmap.getHeight()));
+
+		newImageMatrix.postConcat(bitmap2view);
 
 		if(!newImageMatrix.invert(this.inverseImageMatrix)) {
 			// in this case, it is better to keep the old one.
@@ -352,7 +385,7 @@ public class ScalableImageView extends View {
 		if(!lastScale.isEmpty()) {
 			Matrix l = lastScale.removeLast(); // FIXME what is this?
 			// update the createViewMatrix.
-			setImageMatrix(multitouch.createViewMatrix());
+			initializeImageMatrix();
 		}
 	}
 
@@ -518,34 +551,20 @@ public class ScalableImageView extends View {
 
 	class MultiTouch {
 
+		final Matrix viewMatrix = new Matrix();
+
 		MultiTouchController controller = null;
 
 		boolean isScrollEvent = false;
 
-		/**
-		 * returns the current view-matrix
-		 */
-		Matrix createViewMatrix() {
-			Matrix m;
-
-			if(isScrollEvent) {
-				// fixme avoid creating a new matrix all the time
-				m = controller.getMatrix();
-			} else {
-				// fixme avoid creating a new matrix all the time
-				m = new Matrix();
-			}
+		Matrix initializeViewMatrix() {
+			viewMatrix.set(isScrollEvent ? controller.getMatrix() : null);
 
 			for(Matrix l : lastScale) {
-				m.preConcat(l);
+				viewMatrix.preConcat(l);
 			}
 
-			m.preConcat(Commons.bitmap2norm(bitmap.getWidth(), bitmap.getHeight()));
-			m.postConcat(Commons.norm2bitmap(bitmap.getWidth(), bitmap.getHeight()));
-
-			m.postConcat(bitmap2view);
-
-			return m;
+			return viewMatrix;
 		}
 
 		/**
@@ -558,7 +577,7 @@ public class ScalableImageView extends View {
 
 			if(isScrollEvent) {
 				isScrollEvent = false;
-				ScalableImageView.this.setImageMatrix(createViewMatrix());
+				ScalableImageView.this.initializeImageMatrix();
 			}
 		}
 
@@ -640,7 +659,7 @@ public class ScalableImageView extends View {
 
 			// for now, we will set the latest view matrix.
 			// it will be reset later when the first preview has been generated.
-			ScalableImageView.this.setImageMatrix(createViewMatrix());
+			ScalableImageView.this.initializeImageMatrix();
 		}
 
 		void scroll(MotionEvent event) {
@@ -655,7 +674,7 @@ public class ScalableImageView extends View {
 					controller.movePoint(id, new PointF(pt[0], pt[1]));
 				}
 
-				ScalableImageView.this.setImageMatrix(createViewMatrix());
+				ScalableImageView.this.initializeImageMatrix();
 			}
 		}
 	}

@@ -1,6 +1,7 @@
 package at.searles.fractview.main;
 
 
+import android.annotation.SuppressLint;
 import android.graphics.Bitmap;
 import android.renderscript.RenderScript;
 import android.view.View;
@@ -13,6 +14,8 @@ import at.searles.fractview.bitmap.ui.CalculatorView;
 import at.searles.fractview.bitmap.ui.ScalableImageView;
 import at.searles.fractview.fractal.DrawerContext;
 import at.searles.math.Scale;
+
+import static android.view.ViewGroup.LayoutParams.MATCH_PARENT;
 
 /**
  * Initializes renderscript and provides a method to create RenderscriptDrawers. Furthermore
@@ -39,7 +42,7 @@ public class CalculatorWrapper implements ScalableImageView.Listener {
      * The view. Set after it is initialized. Must be unset when
      * the parent view is destroyed.
      */
-    private CalculatorView view;
+    private CalculatorView calculatorView;
 
     CalculatorWrapper(FractalProviderFragment parent, int width, int height) {
         this.parent = parent;
@@ -70,12 +73,17 @@ public class CalculatorWrapper implements ScalableImageView.Listener {
         parent.appendInitializedWrapper(this);
     }
 
+    public int index() {
+        return index;
+    }
+
     void setIndex(int index) {
         // parent can update index if a calculate wrapper was added or removed.
         this.index = index;
     }
 
-    void startDrawerContextExecution(Fractal fractal) {
+    void startRunLoop(Fractal fractal) {
+        // put life into calculator (this only has to be done once).
         calculator.initializeFractal(fractal);
         calculator.initializeRunLoop();
     }
@@ -87,21 +95,22 @@ public class CalculatorWrapper implements ScalableImageView.Listener {
         parent.setParameterValue(Fractal.SCALE_LABEL, index, absoluteScale);
     }
 
-    View createCalculatorView() {
-        // TODO: Inflate using layout inflater
-        this.view = new CalculatorView(parent.getContext(), null);
-        this.view.setWrapper(this);
+    @SuppressLint("SetTextI18n")
+    View createView() {
+        // First, create calculatorView
+        this.calculatorView = new CalculatorView(parent.getContext(), null);
+        this.calculatorView.setWrapper(this);
 
-        ViewGroup.LayoutParams layoutParams = new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT, 1f);
-        this.view.setLayoutParams(layoutParams);
+        ViewGroup.LayoutParams layoutParams = new LinearLayout.LayoutParams(MATCH_PARENT, MATCH_PARENT, 1f);
+        this.calculatorView.setLayoutParams(layoutParams);
 
         // the next line sets the bitmap
-        view.newBitmapCreated(calculator);
+        calculatorView.newBitmapCreated(calculator);
 
         // let calculator respond to view events.
-        calculator.addListener(view);
+        calculator.addListener(calculatorView);
 
-        return view;
+        return calculatorView;
     }
 
     /**
@@ -109,9 +118,9 @@ public class CalculatorWrapper implements ScalableImageView.Listener {
      * This happens eg if the screen is rotated.
      */
     void destroyView() {
-        calculator.removeListener(this.view);
-        this.view.dispose();
-        this.view = null;
+        calculator.removeListener(this.calculatorView);
+        this.calculatorView.dispose();
+        this.calculatorView = null;
     }
 
     public Bitmap bitmap() {
@@ -127,21 +136,37 @@ public class CalculatorWrapper implements ScalableImageView.Listener {
         this.calculator.dispose();
     }
 
-    public void updateInteractivePointsInView() {
+    private void updateInteractivePointsInView() {
         // Scale might have changed or the point itself
-        if(view != null) {
-            view.clearPoints();
+        if(calculatorView != null) {
+            calculatorView.clearPoints();
 
             float[] normPt = new float[2]; // reuse
 
             for (InteractivePoint pt : parent.interactivePoints()) {
-                calculator.invert(pt.position()[0], pt.position()[1], normPt);
-                view.addPoint(pt, normPt[0], normPt[1]);
+                // FIXME change scale
+                float[] tmp = parent.getFractal(index).scale().invScale(pt.position()[0], pt.position()[1]);
+                normPt[0] = tmp[0];
+                normPt[1] = tmp[1];
+
+                // [bkp] calculator.invert(, normPt);
+                calculatorView.addPoint(pt, normPt[0], normPt[1]);
             }
         }
     }
 
     public void normToValue(float normX, float normY, double[] dst) {
-        calculator.translate(normX, normY, dst);
+        double[] tmp = parent.getFractal(index).scale().scale(normX, normY);
+
+        // FIXME change scale!
+        dst[0] = tmp[0];
+        dst[1] = tmp[1];
+
+        // FIXME [bkp] calculator.translate(normX, normY, dst);
+    }
+
+    public void invalidateInteractivePoints() {
+        // fixme lazy.
+        updateInteractivePointsInView();
     }
 }

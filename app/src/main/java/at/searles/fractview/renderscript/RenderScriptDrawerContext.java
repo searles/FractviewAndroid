@@ -75,12 +75,6 @@ public class RenderScriptDrawerContext implements DrawerContext {
 		updateScale(fractal.scale());
 	}
 
-	@Deprecated
-	public void setScale(Scale sc) {
-		this.scale = sc;
-		updateScale(sc);
-	}
-
 	@Override
 	public Scale getScale() {
 		return this.scale;
@@ -374,6 +368,8 @@ public class RenderScriptDrawerContext implements DrawerContext {
 	}
 
 	private void updateScale(Scale scale) {
+		this.scale = scale;
+
 		Double2 x = new Double2(scale.xx, scale.xy);
 		Double2 y = new Double2(scale.yx, scale.yy);
 
@@ -382,6 +378,8 @@ public class RenderScriptDrawerContext implements DrawerContext {
 		script.set_xx(x);
 		script.set_yy(y);
 		script.set_tt(c);
+
+		// fixme fetch scale like palettes
 	}
 
 	private class RSAlloc extends Alloc {

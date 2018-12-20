@@ -54,7 +54,7 @@ public enum CheckedActions implements ParameterLongSelectListener.CheckableActio
 
         @Override
         public boolean isApplicable(FractalProviderFragment provider, FractalProvider.ParameterEntry item) {
-            return true;
+            return provider.fractalCount() > 1;
         }
     }
 }

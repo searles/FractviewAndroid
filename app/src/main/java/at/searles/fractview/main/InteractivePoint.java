@@ -27,6 +27,8 @@ public class InteractivePoint {
         if (parameterClass == Cplx.class) {
             position[0] = ((Cplx) value).re();
             position[1] = ((Cplx) value).im();
+
+            return;
         }
 
         // FIXME expr.
@@ -38,6 +40,8 @@ public class InteractivePoint {
             // position is updated indirectly via listener.
             Cplx value = new Cplx(newValue[0], newValue[1]);
             parent.setParameterValue(id, owner, value);
+
+            return;
         }
 
         // FIXME expr.

@@ -89,8 +89,6 @@ public class FractviewActivity extends Activity {
 		listView.setAdapter(adapter);
 		listView.setOnItemClickListener(new ParameterSelectListener(fractalProviderFragment));
 		listView.setOnItemLongClickListener(new ParameterLongSelectListener(fractalProviderFragment));
-
-		fractalProviderFragment.addListener(adapter);
 	}
 
 	@Override
@@ -108,9 +106,7 @@ public class FractviewActivity extends Activity {
 			else if (requestCode == FRACTAL_RETURN) {
 				if (resultCode == 1) { // = "a fractal was selected"
 					FractalData newFractal = BundleAdapter.fractalFromBundle(data.getBundleExtra(FavoritesActivity.FRACTAL_INDENT_LABEL));
-
-
-					// FIXME fractalProviderFragment.setSingleFractal(newFractal);
+					fractalProviderFragment.setKeyFractal(newFractal);
 				}
 			}
 		}
@@ -119,10 +115,10 @@ public class FractviewActivity extends Activity {
 	private void selectMenuItem(MenuItem menuItem) {
 		switch(menuItem.getItemId()) {
 			case R.id.action_add_fractal_view:
-				addFractalView(0);
+				fractalProviderFragment.addFractalFromKey();
 				return;
 			case R.id.action_remove_fractal_view:
-				removeFractalView(0);
+				fractalProviderFragment.removeFractalFromKey();
 				return;
 			case R.id.action_tutorial:
 				startActivity(new Intent(this, TutorialActivity.class));
@@ -131,7 +127,7 @@ public class FractviewActivity extends Activity {
 				startActivityForResult(new Intent(this, FavoritesActivity.class), FRACTAL_RETURN);
 				return;
 			case R.id.action_add_favorite:
-				addToFavorites();
+				fractalProviderFragment.addToFavorites();
 				return;
 			case R.id.action_demos:
 				{
@@ -173,27 +169,6 @@ public class FractviewActivity extends Activity {
 //                return super.onOptionsItemSelected(item);
         }
     }
-
-	private void addFractalView(int index) {
-		fractalProviderFragment.addFractal(index);
-
-		// TODO: update menu
-	}
-
-	private void removeFractalView(int index) {
-		fractalProviderFragment.removeFractal(index);
-
-		// TODO: update menu
-	}
-
-	/**
-	 * Opens a dialog to add the index-th fractal of the provider to favorites.
-	 */
-	private void addToFavorites() {
-		// FIXME index
-		fractalProviderFragment.addToFavorites(0);
-	}
-
 
 //	public static final int SAVE_TO_MEDIA_PERMISSIONS = 105;
 //	public static final int WALLPAPER_PERMISSIONS = 106;

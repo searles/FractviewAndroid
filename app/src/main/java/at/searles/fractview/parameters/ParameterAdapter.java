@@ -66,7 +66,7 @@ public class ParameterAdapter extends BaseAdapter implements ListAdapter, Fracta
     }
 
     private String description(FractalProvider.ParameterEntry entry) {
-        if(entry.owner == -1) {
+        if(entry.owner == -1 || parent.fractalCount() == 1) {
             return entry.parameter.description;
         } else {
             return entry.parameter.description + " (" + entry.owner + ")";
