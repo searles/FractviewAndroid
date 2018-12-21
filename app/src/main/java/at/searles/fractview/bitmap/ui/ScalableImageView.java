@@ -248,43 +248,8 @@ public class ScalableImageView extends View {
 		}
 	}
 
-//	@Override
-//	protected void onMeasure(int widthMeasureSpec, int heightMeasureSpec) {
-//		float vw = MeasureSpec.getSize(widthMeasureSpec);
-//		float vh = MeasureSpec.getSize(heightMeasureSpec);
-//
-//		float bw = bitmap.getWidth();
-//		float bh = bitmap.getHeight();
-//
-//		viewRect.set(0f, 0f, vw, vh);
-//
-//		if(vw > vh) {
-//			// if width of view is bigger, match longer side to it
-//			bitmapRect.set(0f, 0f, Math.max(bw, bh), Math.min(bw, bh));
-//		} else {
-//			bitmapRect.set(0f, 0f, Math.min(bw, bh), Math.max(bw, bh));
-//		}
-//
-//		bitmap2view.setRectToRect(bitmapRect, viewRect, Matrix.ScaleToFit.CENTER);
-//
-//		// Check orientation
-//		if(flipBitmap(vw, vh)) {
-//			bitmap2view.postRotate(90f); // FIXME
-//			bitmap2view.postTranslate(bh, 0);
-//		}
-//
-//		bitmap2view.invert(view2bitmap); // never false because bitmap.width and height > 0.
-//
-//		initializeImageMatrix();
-//		//setMeasuredDimension((int) scaledBitmapWidth(vw, vh), (int) scaledBitmapHeight(vw, vh));
-//		setMeasuredDimension((int) scaledBitmapWidth(vw, vh), (int) scaledBitmapHeight(vw, vh));
-//	}
-
-
 	@Override
 	protected void onMeasure(int widthMeasureSpec, int heightMeasureSpec) {
-		// FIXME exactly the requested size!
-
 		float vw = MeasureSpec.getSize(widthMeasureSpec);
 		float vh = MeasureSpec.getSize(heightMeasureSpec);
 

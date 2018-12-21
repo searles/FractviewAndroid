@@ -83,7 +83,7 @@ public class FractalProviderFragment extends Fragment {
 
         this.provider.addExclusiveParameter(Fractal.SCALE_LABEL);
 
-        this.provider.addListener(src -> invalidatePoints());
+        this.provider.addListener(src -> updateInteractivePoints());
 
         FractalData defaultFractal = AssetsHelper.defaultFractal(getActivity());
 
@@ -134,7 +134,8 @@ public class FractalProviderFragment extends Fragment {
             throw new IllegalArgumentException("cannot remove it there are no fractals left");
         }
 
-        int removedIndex = this.provider.removeFractal();
+        int removedIndex = this.provider.keyIndex();
+
         CalculatorWrapper removedWrapper = this.calculatorWrappers.remove(removedIndex);
         removedWrapper.dispose();
 
@@ -148,17 +149,99 @@ public class FractalProviderFragment extends Fragment {
         }
 
         // update points
-        for(int i = interactivePoints.size() - 1; i >= 0; --i) {
-            InteractivePoint pt = interactivePoints.get(i);
+        interactivePoints.removeIf(pt -> pt.owner == removedIndex);
+        interactivePoints.forEach(pt -> { if(pt.owner > removedIndex) pt.owner--; });
 
-            if(pt.owner == removedIndex) {
-                interactivePoints.remove(i);
-            }
+        if(this.provider.removeFractal() != removedIndex) {
+            throw new IllegalArgumentException();
+        }
+    }
 
-            if(pt.owner > removedIndex) {
-                pt.owner --;
+    // ========= Handle exclusive parameter ids. ==============
+
+    public void addExclusiveParameter(String id) {
+        provider.addExclusiveParameter(id);
+    }
+
+    public boolean isExclusiveParameter(String id) {
+        return provider.isExclusiveParameter(id);
+    }
+
+    public void removeExclusiveParameter(String id) {
+        provider.removeExclusiveParameter(id);
+    }
+
+    // ============= Interactive Points ================
+
+    public void addInteractivePoint(String id, int owner) {
+        interactivePoints.add(new InteractivePoint(this, id, owner));
+        containerView.invalidate();
+        calculatorWrappers.forEach(CalculatorWrapper::updateInteractivePointsInView);
+    }
+
+    public boolean isInteractivePoint(String id, int owner) {
+        for(InteractivePoint pt : interactivePoints) {
+            if(pt.is(id, owner)) {
+                return true;
             }
         }
+
+        return false;
+    }
+
+    public void removeInteractivePoint(String id, int owner) {
+        for(Iterator<InteractivePoint> it = interactivePoints.iterator(); it.hasNext(); ) {
+            InteractivePoint pt = it.next();
+
+            if(pt.is(id, owner)) {
+                it.remove();
+
+                calculatorWrappers.forEach(CalculatorWrapper::updateInteractivePointsInView);
+
+                return;
+            }
+        }
+    }
+
+    public Iterable<InteractivePoint> interactivePoints() {
+        return interactivePoints;
+    }
+
+    // ===============================
+
+    private int getWidth() {
+        return WIDTH; // FIXME
+    }
+
+    private int getHeight() {
+        return HEIGHT; // FIXME
+    }
+
+    // ========== Dealing with View =============
+
+    @Nullable
+    @Override
+    public View onCreateView(LayoutInflater inflater, @Nullable ViewGroup container, Bundle savedInstanceState) {
+        containerView = (LinearLayout) inflater.inflate(R.layout.fractalview_layout, container);
+
+        for(int i = 0; i < calculatorWrappers.size(); ++i) {
+            CalculatorWrapper wrapper = calculatorWrappers.get(i);
+            addView(i, wrapper);
+        }
+
+        return this.containerView;
+    }
+
+    @Override
+    public void onDestroyView() {
+        for(int i = provider.fractalCount() - 1; i >= 0; --i) {
+            calculatorWrappers.get(i).destroyView();
+        }
+
+        this.containerView = null;
+        this.selectorButtons.clear();
+
+        super.onDestroyView();
     }
 
     private void addView(int index, CalculatorWrapper wrapper) {
@@ -195,93 +278,7 @@ public class FractalProviderFragment extends Fragment {
         }
     }
 
-    // ========= Handle exclusive parameter ids. ==============
-
-    public void addExclusiveParameter(String id) {
-        provider.addExclusiveParameter(id);
-    }
-
-    public boolean isExclusiveParameter(String id) {
-        return provider.isExclusiveParameter(id);
-    }
-
-    public void removeExclusiveParameter(String id) {
-        provider.removeExclusiveParameter(id);
-    }
-
-    // ============= Interactive Points ================
-
-    public void addInteractivePoint(String id, int owner) {
-        interactivePoints.add(new InteractivePoint(this, id, owner));
-        containerView.invalidate();
-
-        for(CalculatorWrapper wrapper : calculatorWrappers) {
-            wrapper.invalidateInteractivePoints();
-        }
-    }
-
-    public boolean isInteractivePoint(String id, int owner) {
-        for(InteractivePoint pt : interactivePoints) {
-            if(pt.is(id, owner)) {
-                return true;
-            }
-        }
-
-        return false;
-    }
-
-    public void removeInteractivePoint(String id, int owner) {
-        for(Iterator<InteractivePoint> it = interactivePoints.iterator(); it.hasNext(); ) {
-            InteractivePoint pt = it.next();
-
-            if(pt.is(id, owner)) {
-                it.remove();
-
-                for(CalculatorWrapper wrapper : calculatorWrappers) {
-                    wrapper.invalidateInteractivePoints();
-                }
-
-                return;
-            }
-        }
-    }
-
-    public Iterable<InteractivePoint> interactivePoints() {
-        return interactivePoints;
-    }
-
-    // ===============================
-
-    private int getWidth() {
-        return WIDTH; // FIXME
-    }
-
-    private int getHeight() {
-        return HEIGHT; // FIXME
-    }
-
-    @Nullable
-    @Override
-    public View onCreateView(LayoutInflater inflater, @Nullable ViewGroup container, Bundle savedInstanceState) {
-        containerView = (LinearLayout) inflater.inflate(R.layout.fractalview_layout, container);
-
-        for(int i = 0; i < calculatorWrappers.size(); ++i) {
-            CalculatorWrapper wrapper = calculatorWrappers.get(i);
-            containerView.addView(wrapper.createView(), i);
-        }
-
-        return this.containerView;
-    }
-
-    @Override
-    public void onDestroyView() {
-        for(int i = provider.fractalCount() - 1; i >= 0; --i) {
-            calculatorWrappers.get(i).destroyView();
-        }
-
-        this.containerView = null;
-        super.onDestroyView();
-    }
+    // =================================================
 
     @Override
     public void onActivityResult(int requestCode, int resultCode, Intent data) {
@@ -309,14 +306,15 @@ public class FractalProviderFragment extends Fragment {
         super.onActivityResult(requestCode, resultCode, data);
     }
 
-    private void invalidatePoints() {
-        interactivePoints.forEach(InteractivePoint::invalidate);
-        calculatorWrappers.forEach(CalculatorWrapper::invalidateInteractivePoints);
+    private void updateInteractivePoints() {
+        interactivePoints.removeIf(pt -> !pt.update());
+
+        calculatorWrappers.forEach(CalculatorWrapper::updateInteractivePointsInView);
     }
 
     public void setParameterValue(String key, int owner, Object newValue) {
         provider.setParameterValue(key, owner, newValue);
-        invalidatePoints();
+        updateInteractivePoints();
     }
 
     public int parameterCount() {
@@ -375,5 +373,13 @@ public class FractalProviderFragment extends Fragment {
 
     public void setKeyFractal(FractalData newFractal) {
         this.provider.setKeyFractal(newFractal);
+    }
+
+    public boolean parameterExists(String id, int owner) {
+        if(owner != -1) {
+            return provider.getFractal(owner).getParameter(id) != null;
+        } else {
+            return provider.getParameterValue(id, owner) != null;
+        }
     }
 }

@@ -136,7 +136,7 @@ public class CalculatorWrapper implements ScalableImageView.Listener {
         this.calculator.dispose();
     }
 
-    private void updateInteractivePointsInView() {
+    public void updateInteractivePointsInView() {
         // Scale might have changed or the point itself
         if(calculatorView != null) {
             calculatorView.clearPoints();
@@ -157,16 +157,9 @@ public class CalculatorWrapper implements ScalableImageView.Listener {
 
     public void normToValue(float normX, float normY, double[] dst) {
         double[] tmp = parent.getFractal(index).scale().scale(normX, normY);
-
         // FIXME change scale!
+
         dst[0] = tmp[0];
         dst[1] = tmp[1];
-
-        // FIXME [bkp] calculator.translate(normX, normY, dst);
-    }
-
-    public void invalidateInteractivePoints() {
-        // fixme lazy.
-        updateInteractivePointsInView();
     }
 }

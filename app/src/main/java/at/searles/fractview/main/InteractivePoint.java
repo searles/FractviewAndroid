@@ -10,7 +10,6 @@ public class InteractivePoint {
     private Class<?> parameterClass;
 
     private double[] position;
-    private boolean invalid; // update position at next access
 
     InteractivePoint(FractalProviderFragment parent, String id, int owner) {
         this.parent = parent;
@@ -18,7 +17,8 @@ public class InteractivePoint {
         this.owner = owner;
 
         this.position = new double[]{0, 0};
-        this.invalid = true;
+
+        update();
     }
 
     private void updatePosition(Object value) {
@@ -35,7 +35,7 @@ public class InteractivePoint {
         throw new IllegalArgumentException("unsupported type");
     }
 
-    public void updateValue(double[] newValue) {
+    public void setValue(double[] newValue) {
         if (parameterClass == Cplx.class) {
             // position is updated indirectly via listener.
             Cplx value = new Cplx(newValue[0], newValue[1]);
@@ -45,26 +45,31 @@ public class InteractivePoint {
         }
 
         // FIXME expr.
-        throw new IllegalArgumentException("unsupported type");
+        throw new IllegalArgumentException("unsupported type: " + this);
     }
 
-    private void validate() {
-        if (invalid) {
-            Object parameterValue = parent.getParameterValue(id, owner);
-
-            if (parameterValue == null) {
-                // remove yourself.
-                parent.removeInteractivePoint(this);
-            }
-
-            updatePosition(parameterValue);
-
-            invalid = false;
+    /**
+     *
+     * @return false if there is no value for this point (ie the point should be deleted)
+     */
+    public boolean update() {
+        if(!parent.parameterExists(id, owner)) {
+            // this check is necessary because parameterValue might generalize owner.
+            return false;
         }
+
+        Object parameterValue = parent.getParameterValue(id, owner);
+
+        if (parameterValue == null) {
+            throw new NullPointerException("no parameter although parameterExists was true...");
+        }
+
+        updatePosition(parameterValue);
+
+        return true;
     }
 
     public double[] position() {
-        validate();
         return position;
     }
 
@@ -76,11 +81,11 @@ public class InteractivePoint {
         return owner;
     }
 
-    public void invalidate() {
-        this.invalid = true;
-    }
-
     public boolean is(String id, int owner) {
         return this.id.equals(id) && this.owner == owner;
+    }
+
+    public String toString() {
+        return id + "/" + owner;
     }
 }
