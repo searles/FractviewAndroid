@@ -14,6 +14,8 @@ import android.widget.ListView;
 
 import at.searles.fractal.Fractal;
 import at.searles.fractal.data.FractalData;
+import at.searles.fractal.gson.Serializers;
+import at.searles.fractview.ClipboardHelper;
 import at.searles.fractview.R;
 import at.searles.fractview.SourceEditorActivity;
 import at.searles.fractview.assets.SelectAssetActivity;
@@ -22,6 +24,7 @@ import at.searles.fractview.fractal.BundleAdapter;
 import at.searles.fractview.parameters.ParameterAdapter;
 import at.searles.fractview.parameters.ParameterLongSelectListener;
 import at.searles.fractview.parameters.ParameterSelectListener;
+import at.searles.fractview.ui.DialogHelper;
 import at.searles.tutorial.TutorialActivity;
 
 
@@ -114,115 +117,65 @@ public class FractviewActivity extends Activity {
 
 	private void selectMenuItem(MenuItem menuItem) {
 		switch(menuItem.getItemId()) {
+			case R.id.action_demos:
+				// show new activity
+				Intent i = new Intent(FractviewActivity.this, SelectAssetActivity.class);
+				i.putExtra(SelectAssetActivity.IN_FRACTAL_LABEL, BundleAdapter.toBundle(fractalProviderFragment.getKeyFractal()));
+				startActivityForResult(i, FRACTAL_RETURN); // return is a fractal
+				return;
+			case R.id.action_favorites:
+				startActivityForResult(new Intent(this, FavoritesActivity.class), FRACTAL_RETURN);
+				return;
+			case R.id.action_tutorial:
+				startActivity(new Intent(this, TutorialActivity.class));
+				return;
 			case R.id.action_add_fractal_view:
 				fractalProviderFragment.addFractalFromKey();
 				return;
 			case R.id.action_remove_fractal_view:
 				fractalProviderFragment.removeFractalFromKey();
 				return;
-			case R.id.action_tutorial:
-				startActivity(new Intent(this, TutorialActivity.class));
-				return;
-			case R.id.action_favorites:
-				startActivityForResult(new Intent(this, FavoritesActivity.class), FRACTAL_RETURN);
-				return;
 			case R.id.action_add_favorite:
-				fractalProviderFragment.addToFavorites();
+				// call from fractal because of child-fragment-manager
+				fractalProviderFragment.showAddToFavoritesDialog();
 				return;
-			case R.id.action_demos:
-				{
-					// show new activity
-					Intent i = new Intent(FractviewActivity.this, SelectAssetActivity.class);
-					i.putExtra(SelectAssetActivity.IN_FRACTAL_LABEL, BundleAdapter.toBundle(fractalProviderFragment.getKeyFractal()));
-					startActivityForResult(i, FRACTAL_RETURN); // return is a fractal
+			case R.id.action_share:
+				fractalProviderFragment.showShareOrSaveDialog();
+				return;
+			case R.id.action_size:
+				fractalProviderFragment.showChangeSizeDialog();
+				return;
+			case R.id.action_copy_to_clipboard:
+				FractalData data = fractalProviderFragment.getKeyFractal();
+				String serialized = Serializers.serializer().toJson(data);
+				ClipboardHelper.copy(this, serialized);
+				return;
+			case R.id.action_paste_from_clipboard:
+				CharSequence pasted = ClipboardHelper.paste(this);
+
+				if(pasted == null) {
+					DialogHelper.error(this, "Clipboard is empty");
+					return;
 				}
-			return;
-//			case R.id.action_size:
-//				openChangeImageSizeDialog();
-//				return;
-//			case R.id.action_paste_from_clipboard: {
-//				// paste from clipboard
-//				Fractal newFractal = ClipboardHelper.pasteFractal(this);
-//
-//				if(newFractal != null) {
-//					fractalFragment.setFractal(newFractal);
-//					// otherwise a message was already shown
-//				}
-//			} return true;
-//
-//			case R.id.action_copy_to_clipboard: {
-//				// copy to clipboard
-//				ClipboardHelper.copyFractal(this, fractalFragment.fractal());
-//			} return true;
-//			case R.id.action_share: {
-//				openShareDialog();
-//			} return true;
-//
-//			case R.id.action_gui_settings: {
-//				// FIXME replace by swipe-in
-//				openUiSettingsDialog();
-//			} return true;
-//
-//
-//
-//            default:
-//                return super.onOptionsItemSelected(item);
+
+				FractalData pastedData = Serializers.serializer().fromJson(pasted.toString(), FractalData.class);
+
+				if(pastedData == null) {
+					DialogHelper.error(this, "Clipboard does not contain a fractal");
+					return;
+				}
+
+				fractalProviderFragment.setKeyFractal(pastedData);
+				return;
+ 			case R.id.action_gui_settings:
+				// FIXME replace by swipe-in
+				// openUiSettingsDialog();
+				return;
+            default:
+            	throw new IllegalArgumentException("option not implemented");
         }
     }
 
-//	public static final int SAVE_TO_MEDIA_PERMISSIONS = 105;
-//	public static final int WALLPAPER_PERMISSIONS = 106;
-//
-//
-//	// ===================================================================
-//
-//	private void openShareDialog() {
-//		ShareModeDialogFragment shareModeDialogFragment = ShareModeDialogFragment.newInstance();
-//		shareModeDialogFragment.show(getFragmentManager(), SHARE_MODE_DIALOG_TAG);
-//	}
-//
-//	@Override
-//	public void onShareModeResult(ShareModeDialogFragment.Result result) {
-//		switch (result) {
-//			case Share:
-//				fractalCalculator.registerFragmentAsChild(ShareBitmapFragment.newInstance(), SaveInBackgroundFragment.SAVE_FRAGMENT_TAG);
-//				return;
-//			case Save:
-//				int readPermission = ContextCompat.checkSelfPermission(this, Manifest.permission.READ_EXTERNAL_STORAGE);
-//				int writePermission = ContextCompat.checkSelfPermission(this, Manifest.permission.WRITE_EXTERNAL_STORAGE);
-//
-//				if(readPermission != PackageManager.PERMISSION_GRANTED || writePermission != PackageManager.PERMISSION_GRANTED) {
-//					ActivityCompat.requestPermissions(MainActivity.this,
-//							new String[]{
-//									Manifest.permission.READ_EXTERNAL_STORAGE,
-//									Manifest.permission.WRITE_EXTERNAL_STORAGE
-//							}, SAVE_TO_MEDIA_PERMISSIONS);
-//					return;
-//				}
-//
-//				EnterFilenameDialogFragment fragment = EnterFilenameDialogFragment.newInstance(BITMAP_FRAGMENT_TAG);
-//				fragment.show(getFragmentManager(), SAVE_TO_MEDIA_TAG);
-//
-//				return;
-//			case Wallpaper:
-//				int wallpaperPermission = ContextCompat.checkSelfPermission(MainActivity.this, Manifest.permission.SET_WALLPAPER);
-//
-//				if(wallpaperPermission != PackageManager.PERMISSION_GRANTED) {
-//					ActivityCompat.requestPermissions(MainActivity.this,
-//							new String[]{
-//									Manifest.permission.SET_WALLPAPER
-//							}, WALLPAPER_PERMISSIONS);
-//					return;
-//				}
-//
-//				fractalCalculator.registerFragmentAsChild(SetWallpaperFragment.newInstance(), SaveInBackgroundFragment.SAVE_FRAGMENT_TAG);
-//
-//				return;
-//			default:
-//				throw new UnsupportedOperationException();
-//		}
-//	}
-//
 //	//FIXME Override in API 23
 //	@SuppressLint("Override")
 //	public void onRequestPermissionsResult(int requestCode,
@@ -293,11 +246,6 @@ public class FractviewActivity extends Activity {
 //                    @Override
 //                    public void onClick(DialogInterface dialog, int id) {}
 //                }).create().show();
-//	}
-//
-//	private void openChangeImageSizeDialog() {
-//		ImageSizeDialogFragment fragment = ImageSizeDialogFragment.newInstance(BITMAP_FRAGMENT_TAG, fractalCalculator.width(), fractalCalculator.height());
-//		fragment.show(getFragmentManager(), IMAGE_SIZE_DIALOG_TAG);
 //	}
 //
 //	public void saveFavorite(String name) {

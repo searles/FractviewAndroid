@@ -46,7 +46,7 @@ public enum Actions implements ParameterLongSelectListener.Action {
         @Override
         public void apply(FractalProviderFragment provider, FractalProvider.ParameterEntry item) {
             Scale scale = (Scale) item.parameter.value;
-            provider.setParameterValue(item.key, item.owner, new Scale(scale.xx, scale.xy, scale.yx, scale.yy, 0., 0.));
+            provider.setParameterValue(item.id, item.owner, new Scale(scale.xx, scale.xy, scale.yx, scale.yy, 0., 0.));
         }
 
         @Override
@@ -66,7 +66,7 @@ public enum Actions implements ParameterLongSelectListener.Action {
         public void apply(FractalProviderFragment provider, FractalProvider.ParameterEntry item) {
             // TODO: check whether scale is shared or not.
             Scale scale = (Scale) provider.getParameterValue(Fractal.SCALE_LABEL, 0);
-            provider.setParameterValue(item.key, item.owner, new Scale(scale.xx, scale.xy, scale.yx, scale.yy, 0., 0.));
+            provider.setParameterValue(item.id, item.owner, new Scale(scale.xx, scale.xy, scale.yx, scale.yy, 0., 0.));
         }
 
         @Override
@@ -83,7 +83,7 @@ public enum Actions implements ParameterLongSelectListener.Action {
         @Override
         public void apply(FractalProviderFragment provider, FractalProvider.ParameterEntry item) {
             Scale scale = (Scale) item.parameter.value;
-            provider.setParameterValue(item.key, item.owner, new Scale(scale.xx, scale.xy, scale.yx, scale.yy, 0., 0.));
+            provider.setParameterValue(item.id, item.owner, new Scale(scale.xx, scale.xy, scale.yx, scale.yy, 0., 0.));
         }
 
         @Override
@@ -103,7 +103,7 @@ public enum Actions implements ParameterLongSelectListener.Action {
             Scale scale = (Scale) item.parameter.value;
             double s = Math.sqrt(Math.abs(scale.xx * scale.yy - scale.xy * scale.yx));
             Scale newScale = new Scale(s, 0, 0, s, scale.cx, scale.cy);
-            provider.setParameterValue(item.key, item.owner, newScale);
+            provider.setParameterValue(item.id, item.owner, newScale);
         }
 
         @Override
@@ -119,7 +119,7 @@ public enum Actions implements ParameterLongSelectListener.Action {
     RESET_TO_DEFAULT {
         @Override
         public void apply(FractalProviderFragment provider, FractalProvider.ParameterEntry item) {
-            provider.setParameterValue(item.key, item.owner, null);
+            provider.setParameterValue(item.id, item.owner, null);
         }
 
         @Override
@@ -135,7 +135,7 @@ public enum Actions implements ParameterLongSelectListener.Action {
     SPLIT_FRACTAL {
         @Override
         public void apply(FractalProviderFragment provider, FractalProvider.ParameterEntry item) {
-            String id = item.key;
+            String id = item.id;
             Boolean value = (Boolean) item.parameter.value;
             provider.addFractalFromKey(id, !value);
         }

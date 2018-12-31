@@ -1,9 +1,17 @@
 [
   {
-    "title": ,
-    "icon": ,
-    "description": ,
+    "title": "Mandelbrot Set",
+    "icon": "mandelbrot.png",
+    "description": "Function of the Mandelbrot Set",
     "data": {
+      "function": {
+        "type": "expr",
+        "value": "mandelbrot(z, p)"
+      },
+      "mandelinit": {
+        "type": "expr",
+        "value": "0"
+      }
     }
   }
 
@@ -13,16 +21,14 @@
       "Mandelbrot Set (z^2 + p)",
       {
         "data": {
-          "function": [ "expr", "mandelbrot(z, p)"],
-          "mandelinit": [ "expr", "0" ]
         }
       }
-    ],
-    ["Wikipedia-Settings", "wiki.png", "Mandelbrot Set with Parameters from Wikipedia",
+  ],
+    ["Wikipedia-Settings", "wiki.png", "Mandelbrot Set with Parameters from Wikipedi,
     { "data": {
     "bailoutvalue": [ "expr", "i + smooth_i" ],
-    "bailouttransfer": [ "expr", "log(1 + value * (0.42 / 28))" ],
-    "laketransfer": [ "expr", "0" ],
+    "bailouttransfer": [ "expr", "log(1 + value * (0.42 / 28))" ]
+    "laketransfer": [ "expr", "0" ,
     "lakepalette": [ "palette", new Palette(new int[][]{
     {
     0xff000000
@@ -404,5 +410,5 @@
     ["Domain Coloring", "domain.png", "Domain Coloring for Complex Functions",
       { "data":
       "transfer": [ "expr", "arcnorm z : (0.6 fract (log rad z / log 2) + 0.0667)")
-      ],
+      ]
     }

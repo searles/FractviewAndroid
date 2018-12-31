@@ -49,8 +49,6 @@ public class FractalCalculator implements DrawerListener, Fractal.Listener {
 	 */
 	private int height, width;
 
-	//private Bitmap bitmap;
-
 	/**
 	 * The drawerContext does the actual drawing operation
 	 */
@@ -120,13 +118,13 @@ public class FractalCalculator implements DrawerListener, Fractal.Listener {
 		startBackgroundTask();
 	}
 
-	public void translate(float normX, float normY, double[] dst) {
-		drawerContext.translate(normX, normY, dst);
-	}
-
-	public void invert(double x, double y, float[] dst) {
-		drawerContext.invert(x, y, dst);
-	}
+//	public void translate(float normX, float normY, double[] dst) {
+//		drawerContext.translate(normX, normY, dst);
+//	}
+// fixme remove unused code.
+//	public void invert(double x, double y, float[] dst) {
+//		drawerContext.invert(x, y, dst);
+//	}
 
 	public float progress() {
 		return drawerContext.progress();
@@ -139,6 +137,7 @@ public class FractalCalculator implements DrawerListener, Fractal.Listener {
 	// =============================================================
 	// ====== Managing the job queue ===============================
 	// =============================================================
+
 	public void removeIdleJob(IdleJob job) {
 		if(!jobQueue.remove(job)) {
 			Log.i(getClass().getName(), "tried to remove job " + job + " but it was not in the queue...");

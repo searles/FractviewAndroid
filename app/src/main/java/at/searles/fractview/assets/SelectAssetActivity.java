@@ -8,6 +8,7 @@ import android.support.v7.widget.RecyclerView;
 
 import at.searles.fractal.data.FractalData;
 import at.searles.fractview.R;
+import at.searles.fractview.favorites.FavoritesActivity;
 import at.searles.fractview.fractal.BundleAdapter;
 
 /**
@@ -41,9 +42,6 @@ public class SelectAssetActivity extends Activity {
         RecyclerView lv = findViewById(R.id.assetsListView);
         lv.setAdapter(adapter);
         lv.setLayoutManager(new LinearLayoutManager(this));
-
-
-//        lv.setOnClickListener(new O);
 //
 //        lv.setOnChildClickListener(new AdapterView.OnItemClickListener() {
 //            @Override
@@ -52,8 +50,6 @@ public class SelectAssetActivity extends Activity {
 //                returnFractal(selected, false);
 //            }
 //        });
-//
-//        // TODO Check SingleChoiceSelection whether it is helpful in this case.
 //
 //        lv.setOnChildLongC(new AdapterView.OnItemLongClickListener() {
 //            @Override
@@ -93,14 +89,13 @@ public class SelectAssetActivity extends Activity {
 //        });
     }
 
-//    private void returnFractal(ParameterEntry selected, boolean merge) {
-//        Fractal outFractal = inFractal.copyNewData(selected.parameters, merge);
-//
-//        Intent data = new Intent();
-//
-//        data.putExtra(SourcesListActivity.FRACTAL_INDENT_LABEL, BundleAdapter.fractalToBundle(outFractal));
-//        setResult(1, data);
-//        finish();
-//    }
+    public void returnFractal(FractalData data) {
+        Intent intent = new Intent();
+
+        // FIXME move that constant somewhere else.
+        intent.putExtra(FavoritesActivity.FRACTAL_INDENT_LABEL, BundleAdapter.toBundle(data));
+        setResult(1, intent);
+        finish();
+    }
 
 }

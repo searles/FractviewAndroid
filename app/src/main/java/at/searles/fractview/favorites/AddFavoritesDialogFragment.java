@@ -5,7 +5,6 @@ import android.app.AlertDialog;
 import android.app.Dialog;
 import android.app.DialogFragment;
 import android.content.DialogInterface;
-import android.graphics.Bitmap;
 import android.os.Bundle;
 import android.text.Editable;
 import android.text.TextWatcher;
@@ -14,23 +13,14 @@ import android.widget.Button;
 import android.widget.EditText;
 import android.widget.TextView;
 
-import at.searles.fractal.data.FractalData;
-import at.searles.fractal.entries.FavoriteEntry;
-import at.searles.fractview.Commons;
 import at.searles.fractview.R;
-import at.searles.fractview.SharedPrefsHelper;
 import at.searles.fractview.main.FractalProviderFragment;
 
 // This is practically the same as the IntDialogFragment, except for the parser...
 public class AddFavoritesDialogFragment extends DialogFragment {
 
-    private static final String FRAGMENT_INDEX_KEY = "index";
-    private static final int FAVORITES_ICON_SIZE = 64;
-
     public static AddFavoritesDialogFragment newInstance(int fragmentIndex) {
         Bundle b = new Bundle();
-
-        b.putInt(FRAGMENT_INDEX_KEY, fragmentIndex);
 
         AddFavoritesDialogFragment fragment = new AddFavoritesDialogFragment();
         fragment.setArguments(b);
@@ -100,26 +90,15 @@ public class AddFavoritesDialogFragment extends DialogFragment {
     }
 
     private boolean onOkClick(Button okButton, EditText editor, TextView msgTextView) {
-        String key = editor.getText().toString();
+        String name = editor.getText().toString();
 
-        if(key.isEmpty()) {
+        if(name.isEmpty()) {
             msgTextView.setText("Name must not be empty");
             return false;
         }
 
-        FractalProviderFragment fractalProviderFragment = (FractalProviderFragment) getParentFragment();
-
-        int index = getArguments().getInt(FRAGMENT_INDEX_KEY);
-
-        FractalData fractal = fractalProviderFragment.getFractal(index).data();
-        Bitmap icon = Commons.createIcon(fractalProviderFragment.getBitmap(index), FAVORITES_ICON_SIZE);
-
-		// create icon out of bitmap
-        byte[] iconData = Commons.toPNG(icon);
-
-        FavoriteEntry fav = new FavoriteEntry(iconData, fractal, Commons.fancyTimestamp());
-
-		SharedPrefsHelper.putWithUniqueKey(getContext(), key, fav, FavoritesAccessor.FAVORITES_SHARED_PREF);
+        FractalProviderFragment parent = (FractalProviderFragment) getParentFragment();
+        parent.addToFavorites(name);
 
         return true;
     }

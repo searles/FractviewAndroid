@@ -18,6 +18,7 @@ import android.widget.TextView;
 import java.io.File;
 
 import at.searles.fractview.R;
+import at.searles.fractview.main.FractalProviderFragment;
 import at.searles.fractview.ui.DialogHelper;
 import at.searles.fractview.utils.CharUtil;
 //import at.searles.utils.CharUtil;
@@ -85,7 +86,7 @@ public class EnterFilenameDialogFragment extends DialogFragment {
     private void initializeValidator(AlertDialog dialog) {
         dialog.getButton(AlertDialog.BUTTON_POSITIVE).setEnabled(false);
 
-        EditText editText = (EditText) dialog.findViewById(R.id.filenameEditText);
+        EditText editText = dialog.findViewById(R.id.filenameEditText);
 
         editText.addTextChangedListener(new TextWatcher() {
             @Override
@@ -112,7 +113,7 @@ public class EnterFilenameDialogFragment extends DialogFragment {
     }
 
     private boolean checkValidity(DialogInterface d) {
-        EditText editText = (EditText) ((AlertDialog) d).findViewById(R.id.filenameEditText);
+        EditText editText = ((AlertDialog) d).findViewById(R.id.filenameEditText);
 
         String filename = filenameWithoutExtension(editText.getText().toString());
 
@@ -135,7 +136,7 @@ public class EnterFilenameDialogFragment extends DialogFragment {
     }
 
     private void setMessage(String message, DialogInterface d) {
-        TextView messageTextView = (TextView) ((AlertDialog) d).findViewById(R.id.messageTextView);
+        TextView messageTextView = ((AlertDialog) d).findViewById(R.id.messageTextView);
         messageTextView.setText(message);
     }
 
@@ -147,7 +148,7 @@ public class EnterFilenameDialogFragment extends DialogFragment {
 
     private void saveToMedia(DialogInterface d) {
         // check "bookmark"-checkbox.
-        EditText editText = (EditText) ((AlertDialog) d).findViewById(R.id.filenameEditText);
+        EditText editText = ((AlertDialog) d).findViewById(R.id.filenameEditText);
         CheckBox addToFavoritesCheckBox = (CheckBox) ((AlertDialog) d).findViewById(R.id.addToFavoritesCheckBox);
 
         String filenamePrefix = filenameWithoutExtension(editText.getText().toString());
@@ -155,6 +156,7 @@ public class EnterFilenameDialogFragment extends DialogFragment {
         boolean addToFavorites = addToFavoritesCheckBox.isChecked();
 
         if (addToFavorites) {
+            ((FractalProviderFragment) getParentFragment()).addToFavorites(filenamePrefix);
             // TODO
             //((MainActivity) getActivity()).saveFavorite(filenamePrefix);
         }

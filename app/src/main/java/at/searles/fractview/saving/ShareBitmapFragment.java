@@ -15,8 +15,8 @@ public class ShareBitmapFragment extends SaveInBackgroundFragment {
     private File imageFile;
     private IOException exception;
 
-    public static SaveInBackgroundFragment newInstance() {
-        SaveInBackgroundFragment fragment = new ShareBitmapFragment();
+    public static ShareBitmapFragment newInstance() {
+        ShareBitmapFragment fragment = new ShareBitmapFragment();
 
         Bundle args = new Bundle();
 
@@ -66,7 +66,6 @@ public class ShareBitmapFragment extends SaveInBackgroundFragment {
         Intent share = new Intent(Intent.ACTION_SEND);
         share.setType("image/png");
         share.putExtra(Intent.EXTRA_STREAM, contentUri);
-        startActivity(Intent.createChooser(share, "Share Image"));
+        startActivity(Intent.createChooser(share, "Share Image")); // FIXME
     }
-
 }

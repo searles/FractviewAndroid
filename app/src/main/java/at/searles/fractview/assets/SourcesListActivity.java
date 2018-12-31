@@ -43,7 +43,7 @@ public class SourcesListActivity extends Activity {
 //		lv.setOnItemClickListener(new AdapterView.OnItemClickListener() {
 //			@Override
 //			public void onItemClick(AdapterView<?> parent, View view, int index, long id) {
-//				SourceEntry entry = adapter.getItem(index);
+//				SourceAsset entry = adapter.getItem(index);
 //
 //				Fractal outFractal = new Fractal(entry.source, inFractal.parameterMap());
 //

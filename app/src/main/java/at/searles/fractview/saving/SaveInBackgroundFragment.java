@@ -18,8 +18,8 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.lang.ref.WeakReference;
 
-import at.searles.fractview.bitmap.FractalCalculator;
 import at.searles.fractview.bitmap.IdleJob;
+import at.searles.fractview.main.FractalProviderFragment;
 
 /**
  * This fragment saves bitmaps. It waits until the corresponding
@@ -41,11 +41,6 @@ public abstract class SaveInBackgroundFragment extends Fragment {
         this.status = Status.Waiting;
     }
 
-    protected FractalCalculator fractalCalculator() {
-        // get bitmap fragment
-        return (FractalCalculator) null;//getParentFragment();
-    }
-
     @Override
     public void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -56,12 +51,10 @@ public abstract class SaveInBackgroundFragment extends Fragment {
 
         job = new SaveJob();
 
-        // get bitmap fragment
-        FractalCalculator fractalCalculator = fractalCalculator();//(FractalCalculator) getParentFragment();
+        // hence, a new idle job must be attached to the key fractal calculator.
 
-        // add job to bitmap fragment, executed before all
-        // others, but do not interrupt the execution.
-        fractalCalculator.addIdleJob(job, true, false);
+        FractalProviderFragment parent = (FractalProviderFragment) getParentFragment();
+        parent.addSaveJob(job);
     }
 
     @Nullable
@@ -88,7 +81,8 @@ public abstract class SaveInBackgroundFragment extends Fragment {
 
     @Override
     public void onDestroy() {
-        fractalCalculator().removeIdleJob(job);
+        FractalProviderFragment parent = (FractalProviderFragment) getParentFragment();
+        parent.removeSaveJob(job);
         super.onDestroy();
     }
 
@@ -212,12 +206,14 @@ public abstract class SaveInBackgroundFragment extends Fragment {
     }
 
     private void onCancel() {
-        fractalCalculator().removeIdleJob(job);
+        FractalProviderFragment parent = (FractalProviderFragment) getParentFragment();
+        parent.removeSaveJob(job);
         terminate();
     }
 
     private void onSkip() {
-        fractalCalculator().removeIdleJob(job);
+        FractalProviderFragment parent = (FractalProviderFragment) getParentFragment();
+        parent.removeSaveJob(job);
         job.startJob();
     }
 
@@ -249,8 +245,8 @@ public abstract class SaveInBackgroundFragment extends Fragment {
     public ProgressDialog createProgressDialog() {
         ProgressDialog dialog = new ProgressDialog(getActivity());
 
-        dialog.setTitle("Please wait...");
-        dialog.setMessage("Saving image...");
+        dialog.setTitle("Please wait..."); // fixme
+        dialog.setMessage("Saving image..."); // fixme
         dialog.setIndeterminate(true);
 
         dialog.setCancelable(false);

@@ -82,5 +82,7 @@
     <string name="set_center_to_origin">Set Center to Origin (0:0)</string>
     <string name="orthogonalize">Orthogonalize</string>
     <string name="closeDialog">Close</string>
+    <string name="remove_view">Remove View</string>
+    <string name="add_view">Add View</string>
 
 </resources>

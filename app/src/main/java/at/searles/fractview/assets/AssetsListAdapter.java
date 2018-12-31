@@ -1,29 +1,25 @@
 package at.searles.fractview.assets;
 
 import android.app.Activity;
-import android.content.Context;
-import android.content.res.AssetManager;
-import android.graphics.Bitmap;
-import android.graphics.BitmapFactory;
 import android.support.annotation.NonNull;
 import android.support.v7.widget.RecyclerView;
 import android.view.View;
 import android.view.ViewGroup;
 
-import java.io.BufferedReader;
+import com.google.gson.Gson;
+import com.google.gson.stream.JsonReader;
+
 import java.io.IOException;
-import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.stream.Collectors;
 
 import at.searles.fractal.data.FractalData;
 import at.searles.fractview.R;
-import at.searles.meelan.compiler.Ast;
 
 /**
  * Groups are source code
@@ -34,43 +30,63 @@ public class AssetsListAdapter extends RecyclerView.Adapter {
     private static final int SOURCE_TYPE = 0;
     private static final int PARAMETER_TYPE = 1;
 
-    private static final SourceEntry sourceEntries[] = new SourceEntry[] {
-            // sources are in the "sources/" folder
-            // icons in the "icons/" folder
-            new SourceEntry("Default", "Default", "default.png"),
-            new SourceEntry("Branching", "Branching", "branching.png"),
-            new SourceEntry("ComplexFn", "ComplexFn", "default.png"),
-            new SourceEntry("Pendulum", "Pendulum", "default.png"),
-            new SourceEntry("Pendulum3", "Pendulum3", "default.png"),
-            new SourceEntry("OrbitTrap", "OrbitTrap", "default.png"),
-            new SourceEntry("MinMaxOrbitTrap", "MinMaxOrbitTrap", "default.png"),
-            new SourceEntry("Lyapunov", "Lyapunov", "default.png"),
-    };
+    private static final String SOURCE_ENTRY_FILE = "sources.json";
+    private static final String PARAMETERS_ENTRY_FILE = "parameters.json";
 
+    private SelectAssetActivity parent;
 
-    private AssetManager assetManager;
-    private List<Source> groups;
-    private Map<String, List<Param>> groupCache; // key is group filename
+    /**
+     * All sources that are defined in assets
+     */
+    private SourceAsset[] sourceEntries;
+
+    /**
+     * All parameters that are defined in assets.
+     */
+    private ParameterAsset[] parameterAssets;
+
+    private ArrayList<SourceAsset> groups;
+    private Map<String, List<ParameterAsset>> groupCache; // key is group filename
     private int openGroupPosition;
-    private List<Param> openGroup;
+    private List<ParameterAsset> openGroup;
 
-
-    AssetsListAdapter(Context context, FractalData current) {
-        this.assetManager = context.getAssets();
+    AssetsListAdapter(SelectAssetActivity parent, FractalData current) {
+        this.parent = parent;
         initAssets();
+
+        // TODO do sth with current.
+    }
+
+    private void initSourceEntries() {
+        if(sourceEntries == null) {
+            // load from json
+            Gson gson = new Gson();
+
+            try(JsonReader reader = new JsonReader(new InputStreamReader(parent.getAssets().open(SOURCE_ENTRY_FILE)))) {
+                sourceEntries = gson.fromJson(reader, SourceAsset[].class); // contains the whole reviews list
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        }
+    }
+
+    private void initParameterEntries() {
+        // TODO read json
     }
 
     private void initAssets() {
+        // read json data
+        initSourceEntries();
+        initParameterEntries();
+
         // First, add current, then add assets
         groups = new ArrayList<>();
         groupCache = new HashMap<>();
         openGroupPosition = -1;
 
-        groups.add(new Source("Current", "Current value", "TODO", null));
+        groups.add(new SourceAsset("Current", "Current value", "TODO")); // todo current source
 
-        for(SourceEntry entry : sourceEntries) {
-            groups.add(createSource(entry));
-        }
+        groups.addAll(Arrays.asList(sourceEntries));
     }
 
     @Override
@@ -97,7 +113,7 @@ public class AssetsListAdapter extends RecyclerView.Adapter {
 
     @Override
     public void onBindViewHolder(@NonNull RecyclerView.ViewHolder holder, int position) {
-        Source sourceEntry = getGroupEntryAt(position);
+        SourceAsset sourceEntry = getGroupEntryAt(position);
 
         if(sourceEntry != null) {
             bindSourceView((SourceViewHolder) holder, sourceEntry);
@@ -105,22 +121,22 @@ public class AssetsListAdapter extends RecyclerView.Adapter {
             return;
         }
 
-        Param parametersEntry = getChildEntryAt(position);
+        ParameterAsset parametersEntry = getChildEntryAt(position);
         bindParamView((ParametersViewHolder) holder, parametersEntry);
         // it is a parameter
     }
 
-    private void bindSourceView(SourceViewHolder holder, Source sourceEntry) {
+    private void bindSourceView(SourceViewHolder holder, SourceAsset sourceEntry) {
         holder.titleView.setText(sourceEntry.title);
         holder.descriptionView.setText(sourceEntry.description);
 
         // null for icon is fine.
-        holder.iconView.setImageBitmap(sourceEntry.icon);
+        holder.iconView.setImageBitmap(sourceEntry.icon(parent.getAssets()));
     }
 
-    private void bindParamView(ParametersViewHolder holder, Param parametersEntry) {
+    private void bindParamView(ParametersViewHolder holder, ParameterAsset parametersEntry) {
         holder.titleView.setText(parametersEntry.description);
-        holder.iconView.setImageBitmap(parametersEntry.icon);
+        holder.iconView.setImageBitmap(parametersEntry.icon(parent.getAssets()));
     }
 
     @Override
@@ -129,7 +145,7 @@ public class AssetsListAdapter extends RecyclerView.Adapter {
     }
 
     void toggleGroupAt(int position) {
-        Source source = getGroupEntryAt(position);
+        SourceAsset source = getGroupEntryAt(position);
 
         if(openGroup != null) {
             boolean sameGroup = position == openGroupPosition;
@@ -154,32 +170,26 @@ public class AssetsListAdapter extends RecyclerView.Adapter {
         // open group at position.
 
         this.openGroupPosition = position;
-        this.openGroup = groupCache.computeIfAbsent(source.title, k -> fetch(source)); // FIXME pass source along.
+        this.openGroup = groupCache.computeIfAbsent(source.title, k -> fetchParametersForParent(source)); // FIXME pass source along.
 
         notifyItemRangeInserted(openGroupPosition + 1, openGroup.size());
     }
 
     void selectChildAt(int position) {
-        // select child --> exit and return fractal
-
-    }
+        // TODO select child --> exit and return fractal
+        ParameterAsset parameters = getChildEntryAt(position);
+        // FIXME parent.returnFractal(parameters.fractal);
+     }
 
     void showContextAt(int position) {
-        // Long click on child
+        // TODO Long click on child
     }
 
-    private Source createSource(SourceEntry entry) {
-        String sourceCode = readSourcecode(entry.sourceFilename);
-        Bitmap icon = entry.iconFilename != null ? readIcon(entry.iconFilename) : null;
-
-        return new Source(entry.sourceFilename, entry.description, sourceCode, icon); // FIXME rename
-    }
-
-    private List<Param> fetch(Source parent) {
+    private List<ParameterAsset> fetchParametersForParent(SourceAsset parent) {
         // fetch fresh.
-        List<Param> list = new ArrayList<>();
+        List<ParameterAsset> list = new ArrayList<>();
 
-        list.add(new Param("Default", "Default values of this source", Collections.emptyMap(), null));
+        list.add(new ParameterAsset("Default", "Default values of this source", Collections.emptyMap()));
 
         // FIXME add others
 
@@ -189,7 +199,7 @@ public class AssetsListAdapter extends RecyclerView.Adapter {
     /**
      * returns null if it does not exist
      */
-    Param getChildEntryAt(int position) {
+    ParameterAsset getChildEntryAt(int position) {
         if(openGroupPosition == -1) {
             return null;
         }
@@ -206,7 +216,7 @@ public class AssetsListAdapter extends RecyclerView.Adapter {
     /**
      * returns null if it does not exist
      */
-    Source getGroupEntryAt(int position) {
+    SourceAsset getGroupEntryAt(int position) {
         if(openGroupPosition == -1 || position <= openGroupPosition) {
             return groups.get(position);
         }
@@ -218,72 +228,5 @@ public class AssetsListAdapter extends RecyclerView.Adapter {
         }
 
         return groups.get(position - openGroup.size());
-    }
-
-    /**
-     * Try to read content of assets-folder
-     * @param title The filename to be read (+ .fv extension)
-     * @return The content of the file as a string, null in case of an error
-     */
-    private String readSourcecode(String title) {
-        try(InputStream is = assetManager.open(String.format("sources/%s.fv", title))) {
-            BufferedReader br = new BufferedReader(new InputStreamReader(is));
-            return br.lines().collect(Collectors.joining("\n"));
-        } catch (IOException e) {
-            throw new IllegalArgumentException(e);
-        }
-    }
-
-    /**
-     * Reads an icon from assets
-     * @param iconFilename Filename of the icon.
-     * @return null if there is no such file. The error message is logged
-     */
-    private Bitmap readIcon(String iconFilename) {
-        if(iconFilename == null) return null;
-
-        try(InputStream is = assetManager.open("icons/" + iconFilename)) {
-            return BitmapFactory.decodeStream(is);
-        } catch (IOException e) {
-            e.printStackTrace();
-            return null;
-        }
-    }
-
-
-    class ItemClickedListener {
-        // FIXME
-        public void onClick(View v, int position) {
-        }
-    }
-
-    class Source {
-        final String title;
-        final String description;
-        final String source;
-        final Bitmap icon;
-        Ast ast;
-
-        Source(String title, String description, String source, Bitmap icon) {
-            this.title = title;
-            this.description = description;
-            this.source = source;
-            this.icon = icon;
-        }
-    }
-
-    class Param {
-        final String title;
-        final String description;
-        final Map<String, FractalData.Parameter> data;
-        final Bitmap icon;
-        FractalData fractal;
-
-        Param(String title, String description, Map<String, FractalData.Parameter> parameters, Bitmap icon) {
-            this.title = title;
-            this.description = description;
-            this.data = parameters;
-            this.icon = icon;
-        }
     }
 }

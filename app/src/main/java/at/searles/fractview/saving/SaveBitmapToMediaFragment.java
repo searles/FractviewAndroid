@@ -35,8 +35,6 @@ public class SaveBitmapToMediaFragment extends SaveInBackgroundFragment {
         getActivity().sendBroadcast(mediaScanIntent);
     }
 
-
-
     @Override
     protected void prepareSaveInUIThread() {
         String filenamePrefix = getArguments().getString(FILENAME_PREFIX_KEY);

@@ -38,7 +38,7 @@ public class ParameterSelectListener implements AdapterView.OnItemClickListener 
 
                 // in the case of non-individual parameters, owner may be null
                 // but it is never accessed.
-                fragment.setParameterValue(item.key, item.owner, newValue);
+                fragment.setParameterValue(item.id, item.owner, newValue);
                 ((CheckedTextView) view).setChecked(newValue);
 
                 ((ParameterAdapter) parent.getAdapter()).notifyDataSetChanged();
@@ -46,32 +46,32 @@ public class ParameterSelectListener implements AdapterView.OnItemClickListener 
                 return;
             }
             case Int: {
-                IntegerDialogFragment ft = IntegerDialogFragment.newInstance("Edit integer number " + item.parameter.description, item.key, item.owner, (Integer) item.parameter.value);
+                IntegerDialogFragment ft = IntegerDialogFragment.newInstance("Edit integer number " + item.parameter.description, item.id, item.owner, (Integer) item.parameter.value);
                 fragment.getChildFragmentManager().beginTransaction().add(ft, "editor").commit();
             }
             return;
             case Real: {
-                RealDialogFragment ft = RealDialogFragment.newInstance("Edit decimal number " + item.parameter.description, item.key, item.owner, (Double) item.parameter.value);
+                RealDialogFragment ft = RealDialogFragment.newInstance("Edit decimal number " + item.parameter.description, item.id, item.owner, (Double) item.parameter.value);
                 fragment.getChildFragmentManager().beginTransaction().add(ft, "editor").commit();
             }
             return;
             case Cplx: {
-                CplxDialogFragment ft = CplxDialogFragment.newInstance("Edit complex number " + item.parameter.description, item.key, item.owner, (Cplx) item.parameter.value);
+                CplxDialogFragment ft = CplxDialogFragment.newInstance("Edit complex number " + item.parameter.description, item.id, item.owner, (Cplx) item.parameter.value);
                 fragment.getChildFragmentManager().beginTransaction().add(ft, "editor").commit();
             }
             return;
             case Expr: {
-                ExprDialogFragment ft = ExprDialogFragment.newInstance("Edit expression " + item.parameter.description, item.key, item.owner, (String) item.parameter.value);
+                ExprDialogFragment ft = ExprDialogFragment.newInstance("Edit expression " + item.parameter.description, item.id, item.owner, (String) item.parameter.value);
                 fragment.getChildFragmentManager().beginTransaction().add(ft, "editor").commit();
             }
             return;
             case Scale: {
-                ScaleDialogFragment ft = ScaleDialogFragment.newInstance("Edit scale " + item.parameter.description, item.key, item.owner, (Scale) item.parameter.value);
+                ScaleDialogFragment ft = ScaleDialogFragment.newInstance("Edit scale " + item.parameter.description, item.id, item.owner, (Scale) item.parameter.value);
                 fragment.getChildFragmentManager().beginTransaction().add(ft, "editor").commit();
             }
             return;
             case Color: {
-                ColorDialogFragment ft = ColorDialogFragment.newInstance("Edit color " + item.parameter.description, item.key, item.owner, (Integer) item.parameter.value);
+                ColorDialogFragment ft = ColorDialogFragment.newInstance("Edit color " + item.parameter.description, item.id, item.owner, (Integer) item.parameter.value);
                 fragment.getChildFragmentManager().beginTransaction().add(ft, "editor").commit();
             }
             return;
@@ -84,7 +84,7 @@ public class ParameterSelectListener implements AdapterView.OnItemClickListener 
                 i.putExtra(PaletteActivity.PALETTE_LABEL, BundleAdapter.toBundle(value));
 
                 // add information which palette it actually is.
-                i.putExtra(PaletteActivity.ID_LABEL, item.key);
+                i.putExtra(PaletteActivity.ID_LABEL, item.id);
                 i.putExtra(PaletteActivity.DESCRIPTION_LABEL, item.parameter.description);
                 i.putExtra(PaletteActivity.OWNER_LABEL, item.owner);
 

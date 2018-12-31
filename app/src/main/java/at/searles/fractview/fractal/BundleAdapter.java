@@ -54,7 +54,7 @@ public class BundleAdapter {
             Bundle parameter = new Bundle();
             parameter.putInt(TYPE_LABEL, entry.getValue().type.ordinal());
 
-            Object value = data.get(entry.getKey());
+            Object value = entry.getValue().value;
 
             switch(entry.getValue().type) {
                 case Int:

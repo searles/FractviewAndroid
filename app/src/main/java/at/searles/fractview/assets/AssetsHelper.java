@@ -37,14 +37,14 @@ public class AssetsHelper {
     /**
      * Try to read content of assets-folder
      * @param am The asset manager that should be used
-     * @param title The filename to be read (+ .fv extension)
+     * @param filename The filename to be read (with extension)
      * @return The content of the file as a string, null in case of an error
      */
-    public static String readSourcecode(AssetManager am, String title) {
+    public static String readSourcecode(AssetManager am, String filename) {
         BufferedReader reader = null;
         String program = null;
 
-        try(InputStream is = am.open(String.format("sources/%s.fv", title))) {
+        try(InputStream is = am.open(String.format("sources/%s", filename))) {
             BufferedReader br = new BufferedReader(new InputStreamReader(is));
             return br.lines().collect(Collectors.joining("\n"));
         } catch (IOException e) {

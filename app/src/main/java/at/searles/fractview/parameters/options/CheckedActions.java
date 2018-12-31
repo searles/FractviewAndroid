@@ -9,15 +9,15 @@ public enum CheckedActions implements ParameterLongSelectListener.CheckableActio
     EDIT_IN_VIEW {
         @Override
         public boolean isChecked(FractalProviderFragment provider, FractalProvider.ParameterEntry item) {
-            return provider.isInteractivePoint(item.key, item.owner);
+            return provider.isInteractivePoint(item.id, item.owner);
         }
 
         @Override
         public void setChecked(boolean newValue, FractalProviderFragment provider, FractalProvider.ParameterEntry item) {
             if(newValue) {
-                provider.addInteractivePoint(item.key, item.owner);
+                provider.addInteractivePoint(item.id, item.owner);
             } else {
-                provider.removeInteractivePoint(item.key, item.owner);
+                provider.removeInteractivePoint(item.id, item.owner);
             }
         }
 
@@ -35,15 +35,15 @@ public enum CheckedActions implements ParameterLongSelectListener.CheckableActio
     SHARE_IN_VIEWS {
         @Override
         public boolean isChecked(FractalProviderFragment provider, FractalProvider.ParameterEntry item) {
-            return !provider.isExclusiveParameter(item.key);
+            return provider.isSharedParameter(item.id);
         }
 
         @Override
         public void setChecked(boolean newValue, FractalProviderFragment provider, FractalProvider.ParameterEntry item) {
             if(newValue) {
-                provider.removeExclusiveParameter(item.key);
+                provider.removeExclusiveParameter(item.id);
             } else {
-                provider.addExclusiveParameter(item.key);
+                provider.addExclusiveParameter(item.id);
             }
         }
 

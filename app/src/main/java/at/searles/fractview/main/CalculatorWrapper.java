@@ -13,6 +13,7 @@ import at.searles.fractview.bitmap.FractalCalculator;
 import at.searles.fractview.bitmap.ui.CalculatorView;
 import at.searles.fractview.bitmap.ui.ScalableImageView;
 import at.searles.fractview.fractal.DrawerContext;
+import at.searles.fractview.saving.SaveInBackgroundFragment;
 import at.searles.math.Scale;
 
 import static android.view.ViewGroup.LayoutParams.MATCH_PARENT;
@@ -161,5 +162,17 @@ public class CalculatorWrapper implements ScalableImageView.Listener {
 
         dst[0] = tmp[0];
         dst[1] = tmp[1];
+    }
+
+    public boolean setBitmapSize(int width, int height) {
+        return calculator.setSize(width, height);
+    }
+
+    public void removeSaveJob(SaveInBackgroundFragment.SaveJob job) {
+        calculator.removeIdleJob(job);
+    }
+
+    public void addSaveJob(SaveInBackgroundFragment.SaveJob job) {
+        calculator.addIdleJob(job, true, false);
     }
 }
