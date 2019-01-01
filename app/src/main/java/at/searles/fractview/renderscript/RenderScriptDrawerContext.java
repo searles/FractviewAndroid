@@ -168,6 +168,9 @@ public class RenderScriptDrawerContext implements DrawerContext {
 		// in ui-thread.
 		isCancelled = false;
 
+		progress = 0;
+		maxProgress = bitmap.getWidth() * bitmap.getHeight();
+
 		new Thread(
 				new Runnable() {
 					@Override
@@ -201,9 +204,6 @@ public class RenderScriptDrawerContext implements DrawerContext {
 		int pixcount; // number of pixels to be run in the next run.
 
 		boolean firstCall = true;
-
-		progress = 0;
-		maxProgress = size;
 
 		while (stepsize > 0) {
 			if (isCancelled) break;
@@ -240,10 +240,6 @@ public class RenderScriptDrawerContext implements DrawerContext {
 				fillScript.set_stepsize(stepsize);
 				fillScript.forEach_root(rsBitmap, rsBitmap);
 			}
-
-			// copy to image
-			// rsBitmap.copyTo(bitmap);
-			// line before was replaced by the following: try whether this improves crashes.
 
 			try {
 				synchronized (copyRunnable) {

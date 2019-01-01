@@ -31,7 +31,6 @@ import at.searles.fractview.main.InteractivePoint;
 public class CalculatorView extends FrameLayout implements FractalCalculatorListener {
 
     private CalculatorWrapper wrapper;
-    private DrawerProgressTask progressTask;
     private ProgressBar drawerProgressBar;
 
     private ScalableImageView imageView;
@@ -87,37 +86,19 @@ public class CalculatorView extends FrameLayout implements FractalCalculatorList
 
     // ================
 
-    void setProgress(float progress) {
+    public void setProgress(float progress) {
         drawerProgressBar.setVisibility(VISIBLE);
         drawerProgressBar.setProgress(
                 (int) (progress * drawerProgressBar.getMax() + 0.5));
     }
 
-    void hideProgress() {
+    public void hideProgress() {
         drawerProgressBar.setVisibility(INVISIBLE);
     }
 
     public boolean backButtonAction() {
         // FIXME
         return imageView.backButtonAction();
-    }
-
-    public void startShowProgress(FractalCalculator src) {
-        progressTask = new DrawerProgressTask(this, src);
-
-        // first update is in the currently running ui-thread.
-        progressTask.run();
-    }
-
-    /**
-     * Called when the view should be destroyed asap (eg if the screen was rotated)
-     */
-    public void dispose() {
-        // dispose progress task if running
-        if(progressTask != null) {
-            // TODO: Move this to fractalcalculatorfragment?
-            progressTask.dispose();
-        }
     }
 
     public ScalableImageView scaleableImageView() {
@@ -140,8 +121,6 @@ public class CalculatorView extends FrameLayout implements FractalCalculatorList
 
     @Override
     public void drawerStarted(FractalCalculator src) {
-        this.startShowProgress(src);
-
         // wait until preview is shown
         interactivePointsPlugin.setEnabled(false);
     }

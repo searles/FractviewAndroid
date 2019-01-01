@@ -23,6 +23,9 @@ import static android.view.ViewGroup.LayoutParams.MATCH_PARENT;
  * maintains views and parameters of views.
  */
 public class CalculatorWrapper implements ScalableImageView.Listener {
+
+    private DrawerProgressTask progressTask;
+
     private final FractalProviderFragment parent;
     private int index;
 
@@ -65,11 +68,12 @@ public class CalculatorWrapper implements ScalableImageView.Listener {
      * @param drawerContext the drawerContext that was just created.
      */
     void drawerInitializationFinished(DrawerContext drawerContext) {
-        this.calculator = new FractalCalculator();
-
-        calculator.setDrawerContext(width, height, drawerContext);
-
         this.createDrawerTask = null;
+
+        this.progressTask = new DrawerProgressTask(this);
+
+        this.calculator = new FractalCalculator(this);
+        calculator.setDrawerContext(width, height, drawerContext);
 
         parent.appendInitializedWrapper(this);
     }
@@ -120,7 +124,6 @@ public class CalculatorWrapper implements ScalableImageView.Listener {
      */
     void destroyView() {
         calculator.removeListener(this.calculatorView);
-        this.calculatorView.dispose();
         this.calculatorView = null;
     }
 
@@ -134,7 +137,8 @@ public class CalculatorWrapper implements ScalableImageView.Listener {
             createDrawerTask.cancel(true);
         }
 
-        this.calculator.dispose();
+        this.progressTask.destroy();
+        this.calculator.destroy();
     }
 
     public void updateInteractivePointsInView() {
@@ -174,5 +178,28 @@ public class CalculatorWrapper implements ScalableImageView.Listener {
 
     public void addSaveJob(SaveInBackgroundFragment.SaveJob job) {
         calculator.addIdleJob(job, true, false);
+    }
+
+    public void updateProgress() {
+        if(calculatorView != null) {
+            if (calculator.isRunning()) {
+                calculatorView.setProgress(calculator.progress());
+            } else {
+                calculatorView.hideProgress();
+            }
+        }
+    }
+
+    public void onCalculatorStarted() {
+        startShowProgress();
+    }
+
+    public void startShowProgress() {
+        // first update is in the currently running ui-thread.
+        progressTask.run();
+    }
+
+    public boolean isRunning() {
+        return calculator.isRunning();
     }
 }

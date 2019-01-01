@@ -11,6 +11,7 @@ import java.util.List;
 import at.searles.fractal.Fractal;
 import at.searles.fractview.fractal.DrawerContext;
 import at.searles.fractview.fractal.DrawerListener;
+import at.searles.fractview.main.CalculatorWrapper;
 
 /**
  * This class is the glue maintaining all parameters for drawing the fractal
@@ -74,6 +75,7 @@ public class FractalCalculator implements DrawerListener, Fractal.Listener {
 	 * Listeners
 	 */
 	private List<FractalCalculatorListener> listeners = new LinkedList<>();
+	private CalculatorWrapper parent;
 
 	public void initializeFractal(Fractal fractal) {
 		this.drawerContext.setFractal(fractal);
@@ -87,7 +89,8 @@ public class FractalCalculator implements DrawerListener, Fractal.Listener {
 		IDLE          // waiting for IdleJobs
 	}
 
-	public FractalCalculator() {
+	public FractalCalculator(CalculatorWrapper parent) {
+		this.parent = parent;
 		this.status = Status.IDLE;
 	}
 
@@ -127,6 +130,7 @@ public class FractalCalculator implements DrawerListener, Fractal.Listener {
 //	}
 
 	public float progress() {
+		// FIXME NPE: drawerContext is null if context is destroyed!
 		return drawerContext.progress();
 	}
 
@@ -232,14 +236,17 @@ public class FractalCalculator implements DrawerListener, Fractal.Listener {
 
 		status = Status.RUNNING;
 
+		drawerContext.start();
+
+		// FIXME can I remove listeners all together because everything is a member of 'wrapper'?
 		for(FractalCalculatorListener listener : listeners) {
 			listener.drawerStarted(this);
 		}
 
-		drawerContext.start();
+		parent.onCalculatorStarted();
 	}
 
-	public void dispose() {
+	public void destroy() {
 		if (drawerContext != null) {
 			drawerContext.cancel();
 			drawerContext = null;
