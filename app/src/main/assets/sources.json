@@ -31,8 +31,8 @@
     },
     {
         "title": "Frame Orbit Trap",
-        "icon": "\"Default\" with an orbit trap with a transparent pattern",
-        "description": "frameorbittrap.png",
+        "icon": "frameorbittrap.png",
+        "description": "\"Default\" with an orbit trap with a transparent pattern",
         "file": "FrameOrbitTrap.fv"
     },
     {

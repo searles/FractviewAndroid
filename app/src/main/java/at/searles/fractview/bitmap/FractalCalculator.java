@@ -266,8 +266,6 @@ public class FractalCalculator implements DrawerListener, Fractal.Listener {
 	@Override
 	public void drawingFinished() {
 		// Not in the UI Thread.
-		Log.d(getClass().getName(), "drawingFinished");
-
 		new Handler(Looper.getMainLooper()).post(new Runnable() {
 			@Override
 			public void run() {

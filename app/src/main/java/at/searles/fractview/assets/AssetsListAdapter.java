@@ -176,9 +176,12 @@ public class AssetsListAdapter extends RecyclerView.Adapter {
     }
 
     void selectChildAt(int position) {
-        // TODO select child --> exit and return fractal
-        ParameterAsset parameters = getChildEntryAt(position);
-        // FIXME parent.returnFractal(parameters.fractal);
+        String source = getGroupEntryAt(openGroupPosition).source(parent.getAssets());
+        Map<String, FractalData.Parameter> parameters = getChildEntryAt(position).data;
+
+        FractalData data = new FractalData(source, parameters);
+
+        parent.returnFractal(data);
      }
 
     void showContextAt(int position) {
