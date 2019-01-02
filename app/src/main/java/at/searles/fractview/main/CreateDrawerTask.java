@@ -12,7 +12,7 @@ import at.searles.fractview.renderscript.RenderScriptDrawerContext;
  */
 public class CreateDrawerTask extends AsyncTask<Void, Void, Void> {
 
-    private final CalculatorWrapper parent; // FIXME longrunning op
+    private final CalculatorWrapper parent;
     private final RenderScript renderScript;
     private RenderScriptDrawerContext drawer;
 

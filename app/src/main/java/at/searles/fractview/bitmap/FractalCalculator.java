@@ -6,7 +6,6 @@ import android.os.Looper;
 import android.util.Log;
 
 import java.util.LinkedList;
-import java.util.List;
 
 import at.searles.fractal.Fractal;
 import at.searles.fractview.fractal.DrawerContext;
@@ -71,10 +70,6 @@ public class FractalCalculator implements DrawerListener, Fractal.Listener {
 	 */
 	private boolean triggerStart = false;
 
-	/**
-	 * Listeners
-	 */
-	private List<FractalCalculatorListener> listeners = new LinkedList<>();
 	private CalculatorWrapper parent;
 
 	public void initializeFractal(Fractal fractal) {
@@ -121,16 +116,7 @@ public class FractalCalculator implements DrawerListener, Fractal.Listener {
 		startBackgroundTask();
 	}
 
-//	public void translate(float normX, float normY, double[] dst) {
-//		drawerContext.translate(normX, normY, dst);
-//	}
-// fixme remove unused code.
-//	public void invert(double x, double y, float[] dst) {
-//		drawerContext.invert(x, y, dst);
-//	}
-
 	public float progress() {
-		// FIXME NPE: drawerContext is null if context is destroyed!
 		return drawerContext.progress();
 	}
 
@@ -238,11 +224,6 @@ public class FractalCalculator implements DrawerListener, Fractal.Listener {
 
 		drawerContext.start();
 
-		// FIXME can I remove listeners all together because everything is a member of 'wrapper'?
-		for(FractalCalculatorListener listener : listeners) {
-			listener.drawerStarted(this);
-		}
-
 		parent.onCalculatorStarted();
 	}
 
@@ -259,12 +240,10 @@ public class FractalCalculator implements DrawerListener, Fractal.Listener {
 		new Handler(Looper.getMainLooper()).post(new Runnable() {
 			@Override
 			public void run() {
-				for(FractalCalculatorListener listener : listeners) {
-					if(firstUpdate) {
-						listener.previewGenerated(FractalCalculator.this);
-					} else {
-						listener.bitmapUpdated(FractalCalculator.this);
-					}
+				if(firstUpdate) {
+					parent.onPreviewGenerated();
+				} else {
+					parent.onBitmapUpdated();
 				}
 			}
 		});
@@ -277,13 +256,8 @@ public class FractalCalculator implements DrawerListener, Fractal.Listener {
 			@Override
 			public void run() {
 				Log.d(getClass().getName(), "setting status to idle and notifying listeners");
-
 				status = Status.IDLE;
-
-				for(FractalCalculatorListener listener : listeners) {
-					listener.drawerFinished(-1, FractalCalculator.this);
-				}
-
+				parent.onDrawerFinished();
 				executeNextJob();
 			}
 		});
@@ -361,9 +335,7 @@ public class FractalCalculator implements DrawerListener, Fractal.Listener {
 		this.width = alloc.bitmap.getWidth();
 		this.height = alloc.bitmap.getHeight();
 
-		for(FractalCalculatorListener l : listeners) {
-			l.newBitmapCreated(FractalCalculator.this);
-		}
+		parent.onNewBitmapCreated();
 	}
 
 	// =============================================================
@@ -385,21 +357,4 @@ public class FractalCalculator implements DrawerListener, Fractal.Listener {
     public int height() {
         return height;
     }
-
-	// =============================================================
-	// ====== Manage listener    ===================================
-	// =============================================================
-
-	public void addListener(FractalCalculatorListener listener) {
-		Log.d(getClass().getName(), "adding listener " + listener);
-		listeners.add(listener);
-	}
-
-	public void removeListener(FractalCalculatorListener listener) {
-		Log.d(getClass().getName(), "removing listener " + listener);
-
-		if(!listeners.remove(listener)) {
-			Log.e(getClass().getName(), "Trying to remove a non-existing listener: " + listener);
-		}
-	}
 }

@@ -104,16 +104,10 @@ public class CalculatorWrapper implements ScalableImageView.Listener {
     View createView() {
         // First, create calculatorView
         this.calculatorView = new CalculatorView(parent.getContext(), null);
-        this.calculatorView.setWrapper(this);
-
         ViewGroup.LayoutParams layoutParams = new LinearLayout.LayoutParams(MATCH_PARENT, MATCH_PARENT, 1f);
         this.calculatorView.setLayoutParams(layoutParams);
 
-        // the next line sets the bitmap
-        calculatorView.newBitmapCreated(calculator);
-
-        // let calculator respond to view events.
-        calculator.addListener(calculatorView);
+        this.calculatorView.setWrapper(this);
 
         return calculatorView;
     }
@@ -123,7 +117,6 @@ public class CalculatorWrapper implements ScalableImageView.Listener {
      * This happens eg if the screen is rotated.
      */
     void destroyView() {
-        calculator.removeListener(this.calculatorView);
         this.calculatorView = null;
     }
 
@@ -168,38 +161,64 @@ public class CalculatorWrapper implements ScalableImageView.Listener {
         dst[1] = tmp[1];
     }
 
-    public boolean setBitmapSize(int width, int height) {
+    boolean setBitmapSize(int width, int height) {
         return calculator.setSize(width, height);
     }
 
-    public void removeSaveJob(SaveInBackgroundFragment.SaveJob job) {
+    void removeSaveJob(SaveInBackgroundFragment.SaveJob job) {
         calculator.removeIdleJob(job);
     }
 
-    public void addSaveJob(SaveInBackgroundFragment.SaveJob job) {
+    void addSaveJob(SaveInBackgroundFragment.SaveJob job) {
         calculator.addIdleJob(job, true, false);
     }
 
-    public void updateProgress() {
+    /**
+     * Called periodically from ProgressTask
+     */
+    void updateProgress() {
         if(calculatorView != null) {
             if (calculator.isRunning()) {
                 calculatorView.setProgress(calculator.progress());
-            } else {
-                calculatorView.hideProgress();
             }
         }
     }
 
-    public void onCalculatorStarted() {
-        startShowProgress();
+    public void onDrawerFinished() {
+        if(calculator.isRunning()) {
+            // FIXME for debugging. Remove!
+            throw new IllegalArgumentException();
+        }
+
+        calculatorView.hideProgress();
     }
 
-    public void startShowProgress() {
-        // first update is in the currently running ui-thread.
+    public void onCalculatorStarted() {
         progressTask.run();
+        if(calculatorView != null) {
+            calculatorView.drawerStarted();
+        }
     }
 
     public boolean isRunning() {
         return calculator.isRunning();
+    }
+
+    public void onPreviewGenerated() {
+        if(calculatorView != null) {
+            calculatorView.previewGenerated();
+        }
+    }
+
+    public void onBitmapUpdated() {
+        if(calculatorView != null) {
+            calculatorView.invalidate();
+        }
+    }
+
+    public void onNewBitmapCreated() {
+        if(calculatorView != null) {
+            calculatorView.initBitmap();
+        }
     }
 }

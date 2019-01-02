@@ -8,8 +8,6 @@ import android.widget.FrameLayout;
 import android.widget.ProgressBar;
 
 import at.searles.fractview.R;
-import at.searles.fractview.bitmap.FractalCalculator;
-import at.searles.fractview.bitmap.FractalCalculatorListener;
 import at.searles.fractview.bitmap.ui.imageview.InteractivePointsPlugin;
 import at.searles.fractview.main.CalculatorWrapper;
 import at.searles.fractview.main.InteractivePoint;
@@ -28,7 +26,7 @@ import at.searles.fractview.main.InteractivePoint;
 // Then FractalProviderFragment tells FractalCalculator that there is a new fractal.
 // Then, FractalCalculator calls FractalCalculatorView.
 
-public class CalculatorView extends FrameLayout implements FractalCalculatorListener {
+public class CalculatorView extends FrameLayout {
 
     private CalculatorWrapper wrapper;
     private ProgressBar drawerProgressBar;
@@ -55,8 +53,12 @@ public class CalculatorView extends FrameLayout implements FractalCalculatorList
         imageView.setListener(scale -> wrapper.scaleRelative(scale));
     }
 
+    /**
+     * Initializes the wrapper. Also fetches and sets bitmap.
+     */
     public void setWrapper(CalculatorWrapper wrapper) {
         this.wrapper = wrapper;
+        initBitmap();
     }
 
     // interactive points section.
@@ -105,13 +107,7 @@ public class CalculatorView extends FrameLayout implements FractalCalculatorList
         return imageView;
     }
 
-    @Override
-    public void bitmapUpdated(FractalCalculator src) {
-        this.invalidate();
-    }
-
-    @Override
-    public void previewGenerated(FractalCalculator src) {
+    public void previewGenerated() {
         // can be called from outside the UI-thread!
         this.scaleableImageView().removeLastScale();
         interactivePointsPlugin.setEnabled(true);
@@ -119,20 +115,13 @@ public class CalculatorView extends FrameLayout implements FractalCalculatorList
         this.invalidate();
     }
 
-    @Override
-    public void drawerStarted(FractalCalculator src) {
+    public void drawerStarted() {
         // wait until preview is shown
         interactivePointsPlugin.setEnabled(false);
     }
 
-    @Override
-    public void drawerFinished(long ms, FractalCalculator src) {
-        // progress bar is hidden in update task.
-    }
-
-    @Override
-    public void newBitmapCreated(FractalCalculator src) {
-        this.scaleableImageView().setBitmap(src.bitmap());
+    public void initBitmap() {
+        this.scaleableImageView().setBitmap(wrapper.bitmap());
         this.requestLayout();
     }
 
