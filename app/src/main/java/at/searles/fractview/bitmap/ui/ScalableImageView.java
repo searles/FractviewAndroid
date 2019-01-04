@@ -149,7 +149,7 @@ public class ScalableImageView extends View {
 		return deactivateZoom;
 	}
 
-	public boolean backButtonAction() {
+	public boolean onBackPressed() {
 		// cancel selection if it exists
 		if(multitouch != null && multitouch.controller != null) {
 			multitouch.cancel();

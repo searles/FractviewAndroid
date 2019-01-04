@@ -35,6 +35,7 @@ public class InteractivePointsPlugin extends Plugin {
 
     private final Paint selectedPaintStroke;
     private final Paint selectedPaintFill;
+
     private boolean enabled;
 
     public InteractivePointsPlugin(ScalableImageView parent) {
@@ -139,7 +140,8 @@ public class InteractivePointsPlugin extends Plugin {
 
         switch(action) {
             case MotionEvent.ACTION_CANCEL: {
-                return releasePoint();
+                // same as back pressed.
+                return cancelDragging();
             }
             case MotionEvent.ACTION_DOWN: {
                 return event.getPointerId(0) == 0 && trySelectPoint(event.getX(), event.getY());
@@ -225,6 +227,16 @@ public class InteractivePointsPlugin extends Plugin {
 
     public void setEnabled(boolean enabled) {
         this.enabled = enabled;
+    }
+
+    public boolean cancelDragging() {
+        if(draggedPoint != null) {
+            draggedPoint = null;
+            parent.invalidate();
+            return true;
+        }
+
+        return false;
     }
 
     private class ViewPoint {

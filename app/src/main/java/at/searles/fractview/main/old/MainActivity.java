@@ -354,11 +354,11 @@ public class MainActivity /* extends Activity
 ////	// =======================================================================
 //
 //	@Override
-//	public void onBackPressed() {
+//	public void cancelDragging() {
 //		// first, send it to image view
-//		if(imageView.backButtonAction()) return;
+//		if(imageView.cancelDragging()) return;
 //		if(fractalFragment.historyBack()) return;
-//		super.onBackPressed();
+//		super.cancelDragging();
 //	}
 //
 //

@@ -98,9 +98,8 @@ public class CalculatorView extends FrameLayout {
         drawerProgressBar.setVisibility(INVISIBLE);
     }
 
-    public boolean backButtonAction() {
-        // FIXME
-        return imageView.backButtonAction();
+    public boolean onBackPressed() {
+        return interactivePointsPlugin.cancelDragging() || imageView.onBackPressed();
     }
 
     public ScalableImageView scaleableImageView() {

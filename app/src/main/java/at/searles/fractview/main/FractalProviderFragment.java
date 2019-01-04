@@ -36,6 +36,7 @@ import at.searles.fractview.parameters.palettes.PaletteActivity;
 import at.searles.fractview.saving.SaveInBackgroundFragment;
 import at.searles.fractview.saving.ShareBitmapFragment;
 import at.searles.fractview.saving.ShareModeDialogFragment;
+import at.searles.fractview.ui.DialogHelper;
 import at.searles.math.color.Palette;
 
 /**
@@ -473,6 +474,20 @@ public class FractalProviderFragment extends Fragment {
 
     public void addSaveJob(SaveInBackgroundFragment.SaveJob job) {
         calculatorWrappers.get(provider.keyIndex()).addSaveJob(job);
+    }
+
+    public void onBackPressed() {
+        // FIXME
+
+        // first, check whether any view currently does any editing.
+        for(CalculatorWrapper wrapper : calculatorWrappers) {
+            if(wrapper.cancelViewEditing()) {
+                return;
+            }
+        }
+
+        // second, undo history in key fractal
+        calculatorWrappers.get(provider.keyIndex()).historyBack();
     }
 
 //	//FIXME Override in API 23

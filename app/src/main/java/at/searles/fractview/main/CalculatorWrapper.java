@@ -14,6 +14,7 @@ import at.searles.fractview.bitmap.ui.CalculatorView;
 import at.searles.fractview.bitmap.ui.ScalableImageView;
 import at.searles.fractview.fractal.DrawerContext;
 import at.searles.fractview.saving.SaveInBackgroundFragment;
+import at.searles.fractview.ui.DialogHelper;
 import at.searles.math.Scale;
 
 import static android.view.ViewGroup.LayoutParams.MATCH_PARENT;
@@ -222,5 +223,28 @@ public class CalculatorWrapper implements ScalableImageView.Listener {
         if(calculatorView != null) {
             calculatorView.initBitmap();
         }
+    }
+
+    public boolean cancelViewEditing() {
+        if(calculatorView != null) {
+            return calculatorView.onBackPressed();
+        }
+
+        return false;
+    }
+
+    private boolean historyBackWarningIssued = false;
+
+    public void historyBack() {
+        if(parent.getFractal(index).historyBack()) {
+            historyBackWarningIssued = false;
+        }
+
+        if(!historyBackWarningIssued) {
+            DialogHelper.info(parent.getContext(), "Hitting back one more time will wrap to the end of the history");
+            historyBackWarningIssued = true;
+        }
+
+        parent.getFractal(index).historySetToLast();
     }
 }

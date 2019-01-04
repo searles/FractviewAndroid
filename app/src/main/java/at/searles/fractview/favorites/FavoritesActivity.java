@@ -1,39 +1,23 @@
 package at.searles.fractview.favorites;
 
 import android.app.Activity;
-import android.content.DialogInterface;
 import android.content.Intent;
 import android.net.Uri;
 import android.os.Bundle;
-import android.support.v4.content.FileProvider;
-import android.util.JsonWriter;
-import android.util.Log;
-import android.util.SparseBooleanArray;
 import android.view.Menu;
 import android.view.MenuInflater;
 import android.view.MenuItem;
-import android.view.View;
-import android.widget.Button;
 import android.widget.ListView;
 
 import java.io.BufferedReader;
-import java.io.BufferedWriter;
-import java.io.File;
 import java.io.FileNotFoundException;
-import java.io.FileWriter;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
-import java.util.HashMap;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Map;
 import java.util.Set;
-import java.util.TreeSet;
 
 import at.searles.fractal.entries.FavoriteEntry;
 import at.searles.fractal.gson.Serializers;
-import at.searles.fractview.Commons;
 import at.searles.fractview.R;
 import at.searles.fractview.ui.DialogHelper;
 
@@ -57,17 +41,6 @@ public class FavoritesActivity extends Activity {
      */
     private ListView listView;
 
-    private void initCloseButton() {
-        Button closeButton = findViewById(R.id.closeButton);
-        closeButton.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-                // end this activity.
-                FavoritesActivity.this.finish();
-            }
-        });
-    }
-
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -77,7 +50,6 @@ public class FavoritesActivity extends Activity {
         this.adapter = new FavoritesListAdapter(this, accessor);
 
         initListView();
-        initCloseButton();
     }
 
     private void initListView() {
@@ -155,6 +127,11 @@ public class FavoritesActivity extends Activity {
 
     private FavoriteEntry.Collection importFromUri(Uri uri) throws FileNotFoundException {
         try(InputStream inputStream = getContentResolver().openInputStream(uri)) {
+            if(inputStream == null) {
+                throw new IllegalArgumentException("it would be nice if the documentation of " +
+                        "openInputStream would tell us why it can return null.");
+            }
+
             BufferedReader reader = new BufferedReader(new InputStreamReader(inputStream));
             return Serializers.serializer().fromJson(reader, FavoriteEntry.Collection.class);
         } catch (IOException e) {

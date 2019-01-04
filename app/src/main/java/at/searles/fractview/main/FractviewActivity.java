@@ -176,6 +176,12 @@ public class FractviewActivity extends Activity {
         }
     }
 
+	@Override
+	public void onBackPressed() {
+		// send it to the provider
+		fractalProviderFragment.onBackPressed();
+	}
+
 //	//FIXME Override in API 23
 //	@SuppressLint("Override")
 //	public void onRequestPermissionsResult(int requestCode,
@@ -270,13 +276,6 @@ public class FractviewActivity extends Activity {
 ////	// ============= Some History ... ========================================
 ////	// =======================================================================
 //
-//	@Override
-//	public void onBackPressed() {
-//		// first, send it to image view
-//		if(imageView.backButtonAction()) return;
-//		if(fractalFragment.historyBack()) return;
-//		super.onBackPressed();
-//	}
 //
 //
 //	public static Point screenDimensions(Context context) {
