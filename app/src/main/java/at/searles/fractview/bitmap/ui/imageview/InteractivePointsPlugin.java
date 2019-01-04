@@ -2,6 +2,7 @@ package at.searles.fractview.bitmap.ui.imageview;
 
 import android.graphics.Canvas;
 import android.graphics.Paint;
+import android.graphics.Path;
 import android.util.Log;
 import android.view.MotionEvent;
 
@@ -23,8 +24,6 @@ public class InteractivePointsPlugin extends Plugin {
     // Convert normalized to view:
     // parent.screenToNormalized (does this consider current selection?)
     // parent.normalizedToScreen
-
-    private static final float RAD = 50.f;
 
     private final List<ViewPoint> points;
 
@@ -52,16 +51,73 @@ public class InteractivePointsPlugin extends Plugin {
     }
 
     private void initPaint() {
+        // fixme one for each should be enough?
         selectedPaintStroke.setColor(0xffffffff);
         selectedPaintStroke.setStyle(Paint.Style.STROKE);
-        selectedPaintStroke.setStrokeWidth(4.f);
-        selectedPaintFill.setColor(0x80676767);
+        selectedPaintStroke.setStrokeWidth(8.f); // fixme dpi!
+        selectedPaintFill.setColor(0xff444444);
         selectedPaintFill.setStyle(Paint.Style.FILL);
+
         unselectedPaintStroke.setColor(0x80ffffff);
         unselectedPaintStroke.setStyle(Paint.Style.STROKE);
-        unselectedPaintStroke.setStrokeWidth(4.f);
-        unselectedPaintFill.setColor(0x80676767);
+        unselectedPaintStroke.setStrokeWidth(8.f); // fixme dpi!
+        unselectedPaintFill.setColor(0x80444444);
         unselectedPaintFill.setStyle(Paint.Style.FILL);
+    }
+
+    private void drawPoint(@NotNull Canvas canvas, float x, float y, boolean isSelected) {
+        float rad = 60; // fixme from DPI!
+        float alpha = 45; // alpha being the angle between the horizontal and
+        // radius to the begin of the drop ball.
+
+        float sinAlpha = (float) Math.sin(alpha * Math.PI / 180);
+        float height = (float) (rad * Math.sqrt((1 + sinAlpha) / (1 - sinAlpha))); // distance x/y to center of drop
+
+        Paint fill = isSelected ? selectedPaintFill : unselectedPaintFill;
+        Paint stroke = isSelected ? selectedPaintStroke : unselectedPaintStroke;
+
+        float rad2 = rad * sinAlpha / (1 - sinAlpha); // radius of pointy part
+
+        Path path = new Path();
+
+        path.moveTo(x, y);
+        path.arcTo(x - 2 * rad2, y - rad2, x, y + rad2, 0F, alpha - 90F, false);
+        path.arcTo(x - rad, y - height - rad, x + rad, y - height + rad,
+                90 + alpha, 360 - 2 * alpha, false);
+        path.arcTo(x, y - rad2, x + 2 * rad2, y + rad2, 270 - alpha, alpha - 90, false);
+        path.close();
+
+        path.addCircle(x, y - height, rad / 2, Path.Direction.CW);
+
+        path.setFillType(Path.FillType.EVEN_ODD);
+
+        canvas.drawPath(path, fill);
+        canvas.drawPath(path, stroke);
+    }
+
+    /**
+     * returns the distance from the center of the point drawing (not the point itself)
+     * if x/y is close to it, otherwise Float.MAX_VALUE (not selected)
+     */
+    private float isSelected(float x, float y, float pointX, float pointY) {
+        float rad = 60; // fixme from DPI and larger than drawing!
+        float alpha = 45; // alpha being the angle between the horizontal and
+        // radius to the begin of the drop ball.
+
+        float sinAlpha = (float) Math.sin(alpha * Math.PI / 180);
+        float height = (float) (rad * Math.sqrt((1 + sinAlpha) / (1 - sinAlpha))); // distance x/y to center of drop
+
+        // left top rectangle
+        float dx = Math.abs(x - pointX);
+        float dy = Math.abs(y - (pointY - height));
+
+        float d = Math.max(dx, dy);
+
+        if(d < rad) {
+            return d;
+        }
+
+        return Float.MAX_VALUE;
     }
 
     @Override
@@ -71,16 +127,7 @@ public class InteractivePointsPlugin extends Plugin {
         for(ViewPoint point : points) {
             point.updateViewPoint();
 
-            float x = point.viewX();
-            float y = point.viewY();
-
-            if(draggedPoint == point) {
-                canvas.drawCircle(x, y, RAD * 0.75f + 4, selectedPaintFill);
-                canvas.drawCircle(x, y, RAD * 0.75f, selectedPaintStroke);
-            } else {
-                canvas.drawCircle(x, y, RAD * 0.5f + 2, unselectedPaintFill);
-                canvas.drawCircle(x, y, RAD * 0.5f, unselectedPaintStroke);
-            }
+            drawPoint(canvas, point.viewX(), point.viewY(), draggedPoint == point);
         }
     }
 
@@ -112,18 +159,6 @@ public class InteractivePointsPlugin extends Plugin {
         }
     }
 
-//    public void moveViewPointTo(InteractivePoint pt, float viewX, float viewY) {
-//        ViewPoint point = findEntry(key);
-//        point.moveViewPointTo(viewX, viewY);
-//        parent.invalidate();
-//    }
-//
-//    public void moveBitmapPointTo(String key, float bitmapX, float bitmapY) {
-//        ViewPoint point = findEntry(key);
-//        point.moveBitmapPointTo(bitmapX, bitmapY);
-//        parent.invalidate();
-//    }
-
     public void addPoint(InteractivePoint pt, float viewX, float viewY, CalculatorView parent) {
         ViewPoint point = new ViewPoint(parent, pt, viewX, viewY);
 
@@ -133,7 +168,7 @@ public class InteractivePointsPlugin extends Plugin {
 
     private boolean trySelectPoint(float x, float y) {
         if(draggedPoint != null) {
-            throw new IllegalStateException("old point was not released?");
+            throw new IllegalStateException("this is embarrasing and should not happen: old point was not released?");
         }
 
         // find closest point
@@ -141,21 +176,18 @@ public class InteractivePointsPlugin extends Plugin {
         float closestDistance = Float.MAX_VALUE;
 
         for(ViewPoint point : points) {
-            float dx = point.viewX() - x;
-            float dy = point.viewY() - y;
-
-            float d = dx * dx + dy * dy;
+            float d = isSelected(x, y, point.viewX(), point.viewY());
 
             if(closestDistance > d) {
                 closestDistance = d;
                 closest = point;
 
-                this.dx = dx;
-                this.dy = dy;
+                this.dx = point.viewX() - x;
+                this.dy = point.viewY() - y;
             }
         }
 
-        if(closestDistance <= RAD * RAD) {
+        if(closestDistance < Float.MAX_VALUE) {
             draggedPoint = closest;
             parent.invalidate();
             return true;

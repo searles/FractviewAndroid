@@ -96,7 +96,7 @@ public class CalculatorWrapper implements ScalableImageView.Listener {
     @Override
     public void scaleRelative(Scale relativeScale) {
         Scale originalScale = ((Scale) parent.getParameterValue(Fractal.SCALE_LABEL, index));
-        Scale absoluteScale = originalScale.relative(relativeScale);
+        Scale absoluteScale = originalScale.relative(relativeScale); // FIXME bad original scale!
         parent.setParameterValue(Fractal.SCALE_LABEL, index, absoluteScale);
     }
 
@@ -190,7 +190,9 @@ public class CalculatorWrapper implements ScalableImageView.Listener {
             throw new IllegalArgumentException();
         }
 
-        calculatorView.hideProgress();
+        if(calculatorView != null) {
+            calculatorView.hideProgress();
+        }
     }
 
     public void onCalculatorStarted() {
