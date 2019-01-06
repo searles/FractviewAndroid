@@ -4,6 +4,9 @@ import at.searles.fractal.FractalProvider;
 import at.searles.fractal.data.ParameterType;
 import at.searles.fractview.main.FractalProviderFragment;
 import at.searles.fractview.parameters.ParameterLongSelectListener;
+import at.searles.meelan.values.CplxVal;
+import at.searles.meelan.values.Int;
+import at.searles.meelan.values.Real;
 
 public enum CheckedActions implements ParameterLongSelectListener.CheckableAction {
     EDIT_IN_VIEW {
@@ -28,8 +31,15 @@ public enum CheckedActions implements ParameterLongSelectListener.CheckableActio
 
         @Override
         public boolean isApplicable(FractalProviderFragment provider, FractalProvider.ParameterEntry item) {
-            // TODO allow for expr
-            return item.parameter.type == ParameterType.Cplx;
+            // TODO
+            return item.parameter.type == ParameterType.Cplx
+                    || (item.parameter.type == ParameterType.Expr
+                        && (
+                            item.parameter.value instanceof Int
+                            || item.parameter.value instanceof Real
+                            || item.parameter.value instanceof CplxVal
+                        )
+                    );
         }
     },
     SHARE_IN_VIEWS {

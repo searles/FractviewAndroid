@@ -64,7 +64,7 @@ public class FractalProviderFragment extends Fragment {
 
     private static final String ADD_FRAGMENT_TAG = "add_fragment";
 
-    private static final int FAVORITES_ICON_SIZE = 64; // FIXME separate dialog stuff and other things.
+    private static final int FAVORITES_ICON_SIZE = 64;
 
     private static final int WIDTH = 1920; // FIXME Change to smaller items
     private static final int HEIGHT = 1080;
@@ -138,22 +138,26 @@ public class FractalProviderFragment extends Fragment {
         if(containerView != null) {
             addView(index,  wrapper);
         }
+
+        if(fractalCount() > 1) {
+            ((FractviewActivity) getActivity()).setRemoveViewEnabled(true);
+        }
     }
 
     public void removeFractalFromKey() {
-        if(fractalCount() < 2) {
+        if(fractalCount() <= 1) {
             throw new IllegalArgumentException("cannot remove it there are no fractals left");
         }
 
-        int removedIndex = this.provider.keyIndex();
+        int removedIndex = this.provider.removeFractal();
 
-        CalculatorWrapper removedWrapper = this.calculatorWrappers.remove(removedIndex);
-        removedWrapper.dispose();
+        this.calculatorWrappers.remove(removedIndex).dispose();
 
         if(containerView != null) {
             removeView(removedIndex);
         }
 
+        // update
         for(int i = removedIndex; i < calculatorWrappers.size(); ++i) {
             // update indices
             calculatorWrappers.get(i).setIndex(i);
@@ -163,9 +167,11 @@ public class FractalProviderFragment extends Fragment {
         interactivePoints.removeIf(pt -> pt.owner == removedIndex);
         interactivePoints.forEach(pt -> { if(pt.owner > removedIndex) pt.owner--; });
 
-        if(this.provider.removeFractal() != removedIndex) {
-            throw new IllegalArgumentException();
+        if(fractalCount() == 1) {
+            ((FractviewActivity) getActivity()).setRemoveViewEnabled(false);
         }
+
+
     }
 
     // ========= Handle exclusive parameter ids. ==============
@@ -266,9 +272,13 @@ public class FractalProviderFragment extends Fragment {
         });
 
         containerView.addView(selectorButton, index * 2);
-        containerView.addView(wrapper.createView(), index * 2 + 1);
+
+        View view = wrapper.createView();
+        containerView.addView(view, index * 2 + 1);
 
         updateKeySelection();
+
+        updateViewPadding();
     }
 
     private void removeView(int removedIndex) {
@@ -277,8 +287,26 @@ public class FractalProviderFragment extends Fragment {
 
         selectorButtons.remove(removedIndex);
 
+        updateViewPadding();
+
         // update selection
         updateKeySelection();
+    }
+
+    private void updateViewPadding() {
+        if(fractalCount() == 1) {
+            // hide selector and set padding to 0
+            selectorButtons.get(0).setVisibility(View.GONE);
+            containerView.getChildAt(1).setPadding(0, 0, 0, 0);
+        } else {
+            for(RadioButton button : selectorButtons) {
+                button.setVisibility(View.VISIBLE);
+            }
+
+            for(int i = 1; i < containerView.getChildCount(); i += 2) {
+                containerView.getChildAt(i).setPadding(10, 0, 10, 10); // FIXME padding
+            }
+        }
     }
 
     public void updateKeySelection() {
@@ -287,6 +315,10 @@ public class FractalProviderFragment extends Fragment {
             selectorButtons.get(i).setText("View " + i); // FIXME
             selectorButtons.get(i).setChecked(i == provider.keyIndex());
         }
+    }
+
+    public int keyIndex() {
+        return provider.keyIndex();
     }
 
     // =================================================
@@ -440,18 +472,17 @@ public class FractalProviderFragment extends Fragment {
     }
 
     public void showSaveBitmapDialog() {
-        // FIXME
-        //				EnterFilenameDialogFragment fragment = EnterFilenameDialogFragment.newInstance(BITMAP_FRAGMENT_TAG);
-//				fragment.show(getFragmentManager(), SAVE_TO_MEDIA_TAG);
-
-//				if(grantResults[0] != PackageManager.PERMISSION_GRANTED || grantResults[1] != PackageManager.PERMISSION_GRANTED) {
-//					DialogHelper.error(this, "No permission to write to external storage");
-//					return;
-//				}
+// fixme        EnterFilenameDialogFragment fragment = EnterFilenameDialogFragment.newInstance(BITMAP_FRAGMENT_TAG);
+//        fragment.show(getFragmentManager(), SAVE_TO_MEDIA_TAG);
 //
-//				// try again...
-//				onShareModeResult(ShareModeDialogFragment.Result.Save);
-//				return;
+//        if(grantResults[0] != PackageManager.PERMISSION_GRANTED || grantResults[1] != PackageManager.PERMISSION_GRANTED) {
+//            DialogHelper.error(this, "No permission to write to external storage");
+//            return;
+//        }
+//
+//        // try again...
+//        onShareModeResult(ShareModeDialogFragment.Result.Save);
+        return;
     }
 
     public void shareBitmap() {
@@ -477,8 +508,6 @@ public class FractalProviderFragment extends Fragment {
     }
 
     public void onBackPressed() {
-        // FIXME
-
         // first, check whether any view currently does any editing.
         for(CalculatorWrapper wrapper : calculatorWrappers) {
             if(wrapper.cancelViewEditing()) {
@@ -487,7 +516,23 @@ public class FractalProviderFragment extends Fragment {
         }
 
         // second, undo history in key fractal
-        calculatorWrappers.get(provider.keyIndex()).historyBack();
+        historyBack();
+    }
+
+    public void historyBack() {
+        if(!provider.historyBack(provider.keyIndex())) {
+            DialogHelper.error(getContext(), "History is empty");
+        }
+    }
+
+    public void historyForward() {
+        if(!provider.historyForward(provider.keyIndex())) {
+            DialogHelper.error(getContext(), "No further items in history");
+        }
+    }
+
+    public Bitmap getBitmap() {
+        return getBitmap(keyIndex());
     }
 
 //	//FIXME Override in API 23

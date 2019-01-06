@@ -2,7 +2,6 @@ package at.searles.fractview.saving;
 
 import android.content.Intent;
 import android.net.Uri;
-import android.os.Bundle;
 import android.support.v4.content.FileProvider;
 
 import java.io.File;
@@ -16,13 +15,7 @@ public class ShareBitmapFragment extends SaveInBackgroundFragment {
     private IOException exception;
 
     public static ShareBitmapFragment newInstance() {
-        ShareBitmapFragment fragment = new ShareBitmapFragment();
-
-        Bundle args = new Bundle();
-
-        fragment.setArguments(args);
-
-        return fragment;
+        return new ShareBitmapFragment();
     }
 
     @Override

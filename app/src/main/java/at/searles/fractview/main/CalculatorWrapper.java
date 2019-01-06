@@ -4,7 +4,6 @@ package at.searles.fractview.main;
 import android.annotation.SuppressLint;
 import android.graphics.Bitmap;
 import android.renderscript.RenderScript;
-import android.view.View;
 import android.view.ViewGroup;
 import android.widget.LinearLayout;
 
@@ -14,7 +13,6 @@ import at.searles.fractview.bitmap.ui.CalculatorView;
 import at.searles.fractview.bitmap.ui.ScalableImageView;
 import at.searles.fractview.fractal.DrawerContext;
 import at.searles.fractview.saving.SaveInBackgroundFragment;
-import at.searles.fractview.ui.DialogHelper;
 import at.searles.math.Scale;
 
 import static android.view.ViewGroup.LayoutParams.MATCH_PARENT;
@@ -97,12 +95,12 @@ public class CalculatorWrapper implements ScalableImageView.Listener {
     @Override
     public void scaleRelative(Scale relativeScale) {
         Scale originalScale = ((Scale) parent.getParameterValue(Fractal.SCALE_LABEL, index));
-        Scale absoluteScale = originalScale.relative(relativeScale); // FIXME bad original scale!
+        Scale absoluteScale = originalScale.relative(relativeScale);
         parent.setParameterValue(Fractal.SCALE_LABEL, index, absoluteScale);
     }
 
     @SuppressLint("SetTextI18n")
-    View createView() {
+    CalculatorView createView() {
         // First, create calculatorView
         this.calculatorView = new CalculatorView(parent.getContext(), null);
         ViewGroup.LayoutParams layoutParams = new LinearLayout.LayoutParams(MATCH_PARENT, MATCH_PARENT, 1f);
@@ -143,7 +141,6 @@ public class CalculatorWrapper implements ScalableImageView.Listener {
             float[] normPt = new float[2]; // reuse
 
             for (InteractivePoint pt : parent.interactivePoints()) {
-                // FIXME change scale
                 float[] tmp = parent.getFractal(index).scale().invScale(pt.position()[0], pt.position()[1]);
                 normPt[0] = tmp[0];
                 normPt[1] = tmp[1];
@@ -186,11 +183,6 @@ public class CalculatorWrapper implements ScalableImageView.Listener {
     }
 
     public void onDrawerFinished() {
-        if(calculator.isRunning()) {
-            // FIXME for debugging. Remove!
-            throw new IllegalArgumentException();
-        }
-
         if(calculatorView != null) {
             calculatorView.hideProgress();
         }
@@ -225,26 +217,7 @@ public class CalculatorWrapper implements ScalableImageView.Listener {
         }
     }
 
-    public boolean cancelViewEditing() {
-        if(calculatorView != null) {
-            return calculatorView.onBackPressed();
-        }
-
-        return false;
-    }
-
-    private boolean historyBackWarningIssued = false;
-
-    public void historyBack() {
-        if(parent.getFractal(index).historyBack()) {
-            historyBackWarningIssued = false;
-        }
-
-        if(!historyBackWarningIssued) {
-            DialogHelper.info(parent.getContext(), "Hitting back one more time will wrap to the end of the history");
-            historyBackWarningIssued = true;
-        }
-
-        parent.getFractal(index).historySetToLast();
+    boolean cancelViewEditing() {
+        return calculatorView != null && calculatorView.onBackPressed();
     }
 }

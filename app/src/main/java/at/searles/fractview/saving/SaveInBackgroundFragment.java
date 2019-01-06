@@ -35,6 +35,7 @@ public abstract class SaveInBackgroundFragment extends Fragment {
     private SaveJob job;
     private Dialog dialog;
     private Status status;
+    protected int index;
 
     public SaveInBackgroundFragment() {
         this.dialog = null;
@@ -96,13 +97,13 @@ public abstract class SaveInBackgroundFragment extends Fragment {
         }
     }
 
-//    private void deleteFragmentFromParent() {
-//        fractalCalculator().getChildFragmentManager().beginTransaction().remove(this).commit();
-//    }
+    private void deleteFragmentFromParent() {
+        getParentFragment().getChildFragmentManager().beginTransaction().remove(this).commit();
+    }
 
     private void terminate() {
         this.status = Status.Done;
-// todo       deleteFragmentFromParent();
+        deleteFragmentFromParent();
 
         if(dialog != null) {
             dialog.dismiss();
@@ -127,7 +128,7 @@ public abstract class SaveInBackgroundFragment extends Fragment {
     }
 
     protected Bitmap getBitmap() {
-        return null;//fixme ((FractalCalculator) getParentFragment()).bitmap();
+        return ((FractalProviderFragment) getParentFragment()).getBitmap();
     }
 
     protected abstract void prepareSaveInUIThread();
@@ -160,7 +161,7 @@ public abstract class SaveInBackgroundFragment extends Fragment {
 
             if(saveInBackgroundFragment != null) {
                 saveInBackgroundFragment.postSaveInUIThread();
-                //fixme saveInBackgroundFragment.deleteFragmentFromParent();
+                saveInBackgroundFragment.deleteFragmentFromParent();
                 saveInBackgroundFragment.job.onFinished();
             }
         }

@@ -16,12 +16,12 @@
   },
   {
     "title": "Burning Ship",
-    "icon": "mandelbrot.png",
-    "description": "Function of the Mandelbrot Set",
+    "icon": "burningship.png",
+    "description": "Function of the Mandelbrot Set using the absolute Value",
     "data": {
       "function": {
         "type": "expr",
-        "value": "mandelbrot(z, p)"
+        "value": "mandelbrot(abs z, p)"
       },
       "mandelinit": {
         "type": "expr",
@@ -29,402 +29,1336 @@
       }
     }
   },
-  [, "burningship.png", "Burning Ship Fractal",
-    { "data":
-    "function": [ "expr", "mandelbrot(abs z, p)")
-    "mandelinit": [ "expr", "0")
-    ],
-
-
-    [
-      "Mandelbrot Set",
-      "mandelbrot.png",
-      "Mandelbrot Set (z^2 + p)",
-      {
-        "data": {
-        }
+  {
+    "title": "Wikipedia-Mandelbrot-Set",
+    "icon": "wiki.png",
+    "description": "Settings as they are used in Wikipedia"
+    "data": {
+      "bailoutvalue": {
+        "type": "expr",
+        "value": "i + smooth_i"
+      },
+      "bailouttransfer": {
+        "type": "expr",
+        "value": "log(1 + value * (0.42 / 28))"
+      },
+      "laketransfer": {
+        "type": "expr",
+        "value": "0"
+      },
+      "lakepalette": {
+        "type": "palette",
+        "value": "0xff000000"
+      },
+      "bailoutpalette": {
+        "type": "palette",
+        "value": [
+          [
+            0xff000764,
+            0xff206bcb,
+            0xffedffff,
+            0xffffaa00,
+            0xff310231
+          ]
+        ]
       }
-  ],
-    ["Wikipedia-Settings", "wiki.png", "Mandelbrot Set with Parameters from Wikipedi,
-    { "data": {
-    "bailoutvalue": [ "expr", "i + smooth_i" ],
-    "bailouttransfer": [ "expr", "log(1 + value * (0.42 / 28))" ]
-    "laketransfer": [ "expr", "0" ,
-    "lakepalette": [ "palette", new Palette(new int[][]{
+    }
+  },
+  {
+    "title": "Celtic",
+    "icon": "celtic.png",
+    "description": "Celtic Fractal",
+    "data": {
+      "function": {
+        "type": "expr",
+        "value": "rabs sqr z + p"
+      },
+      "mandelinit": {
+        "type": "expr",
+        "value": "0"
+      }
+    }
+  },
+  {
+    "title": "Tricorn",
+    "icon": "tricorn.png",
+    "description": "Tricorn Fractal",
+    "data": {
+      "function": {
+        "type": "expr",
+        "value": "mandelbrot(conj z, p)"
+      },
+      "mandelinit": {
+        "type": "expr",
+        "value": "0"
+      }
+    }
+  },
+  {
+    "title": "Buffalo",
+    "icon": "buffalo.png",
+    "description": "Buffalo Fractal",
+    "data": {
+      "function": {
+        "type": "expr",
+        "value": "abs sqr z + p"
+      },
+      "mandelinit": {
+        "type": "expr",
+        "value": "0"
+      }
+    }
+  },
+  {
+    "title": "Perpendicular Mandelbrot",
+    "icon": "perpendicular_mandelbrot.png",
+    "description": "Perpendicular Mandelbrot Fractal",
+    "data": {
+      "function": {
+        "type": "expr",
+        "value": "mandelbrot(conj rabs z, p)"
+      },
+      "mandelinit": {
+        "type": "expr",
+        "value": "0"
+      }
+    }
+  },
+  {
+    "title": "Perpendicular Burning Ship",
+    "icon": "perpendicular_burningship.png",
+    "description": "Perpendicular Burning Ship Fractal",
+    "data": {
+      "function": {
+        "type": "expr",
+        "value": "mandelbrot(iabs z, p)"
+      },
+      "mandelinit": {
+        "type": "expr",
+        "value": "0"
+      }
+    }
+  },
+  {
+    "title": "Perpendicular Celtic",
+    "icon": "perpendicular_celtic.png",
+    "description": "Perpendicular Celtic Fractal",
+    "data": {
+      "function": {
+        "type": "expr",
+        "value": "conj rabs sqr z + p"
+      },
+      "mandelinit": {
+        "type": "expr",
+        "value": "0"
+      }
+    }
+  },
+  {
+    "title": "Perpendicular Buffalo",
+    "icon": "perpendicular_buffalo.png",
+    "description": "Perpendicular Buffalo Fractal",
+    "data": {
+      "function": {
+        "type": "expr",
+        "value": "rabs sqr iabs z + p"
+      },
+      "mandelinit": {
+        "type": "expr",
+        "value": "0"
+      }
+    }
+  },
+  {
+    "title": "Mandel^3",
+    "icon": "mandel3.png",
+    "description": "Mandelbrot Set to the power of 3",
+    "data": {
+      "function": {
+        "type": "expr",
+        "value": "z^3 + p"
+      },
+      "max_power": {
+        "type": "real",
+        "value": "3"
+      },
+      "mandelinit": {
+        "type": "expr",
+        "value": "0"
+      }
+    }
+  },
+  {
+    "title": "Mandel^4",
+    "icon": "mandel4.png",
+    "description": "Mandelbrot Set to the power of 4",
+    "data": {
+      "function": {
+        "type": "expr",
+        "value": "z^4 + p"
+      },
+      "max_power": {
+        "type": "real",
+        "value": "4"
+      },
+      "mandelinit": {
+        "type": "expr",
+        "value": "0"
+      }
+    }
+  },
+  {
+    "title": "Lambda",
+    "icon": "lambda.png",
+    "description": "Lambda Fractal",
+    "data": {
+      "function": {
+        "type": "expr",
+        "value": "p (1 - z) z"
+      },
+      "mandelinit": {
+        "type": "expr",
+        "value": "0.5"
+      }
+    }
+  },
+  {
+    "title": "Generic Lambda",
+    "icon": "generic_lambda.png",
+    "description": "Lambda Fractal with parameterized maximum power",
+    "data": {
+      "function": {
+        "type": "expr",
+        "value": "p (1 - z^(max_power - 1)) z"
+      },
+      "max_power": {
+        "type": "real",
+        "value": "4"
+      },
+      "mandelinit": {
+        "type": "expr",
+        "value": "/max_power ^ /(max_power - 1)"
+      }
+    }
+  },
+  {
+    "title": "Simonbrot Normal",
+    "icon": "simonbrot_normal.png",
+    "description": "Simonbrot Fractal, a combination of Mandelbrot and Burning Ship",
+    "data": {
+      "function": {
+        "type": "expr",
+        "value": "sqr z abs z + p"
+      },
+      "max_power": {
+        "type": "real",
+        "value": "4"
+      },
+      "mandelinit": {
+        "type": "expr",
+        "value": "0"
+      }
+    }
+  },
+  {
+    "title": "Simonbrot Inverted",
+    "icon": "simonbrot_inverted.png",
+    "description": "Simonbrot with abs/sqr exchanged",
+    "data": {
+      "function": {
+        "type": "expr",
+        "value": "{ var t = sqr z; t * abs t } + p"
+      },
+      "max_power": {
+        "type": "real",
+        "value": "4"
+      },
+      "mandelinit": {
+        "type": "expr",
+        "value": "0"
+      }
+    }
+  },
+  {
+    "title": "Phoenix Julia Set",
+    "icon": "phoenix.png",
+    "description": "Julia Set of the Phoenix Fractal",
+    "data": {
+      "function": {
+        "type": "expr",
+        "value": "mandelbrot(z, p.x) + zlast p.y"
+      },
+      "mandelinit": {
+        "type": "expr",
+        "value": "c"
+      },
+      "juliaset": {
+        "type": "bool",
+        "value": "true"
+      },
+      "juliapoint": {
+        "type": "cplx",
+        "value": "0.5666:-0.5"
+      }
+    }
+  },
+  {
+    "title": "Cczcpaczcp",
+    "icon": "ccz-2.png",
+    "description": "Special formula by Mark R Eggleston",
+    "data": {
+      "function": {
+        "type": "expr",
+        "value": "p (alpha * z^beta + gamma * z^delta)"
+      },
+      "mandelinit": {
+        "type": "expr",
+        "value": "(-gamma delta / alpha beta)^/(beta - delta)"
+      },
+      "max_power": {
+        "type": "real",
+        "value": "3"
+      },
+      "alpha": {
+        "type": "expr",
+        "value": "1"
+      },
+      "beta": {
+        "type": "expr",
+        "value": "3"
+      },
+      "gamma": {
+        "type": "expr",
+        "value": "1"
+      },
+      "delta": {
+        "type": "expr",
+        "value": "-1"
+      }
+    }
+  },
+  {
+    "title": "Glynn",
+    "icon": "glynn.png",
+    "description": "Glynn Fractal (Julia Set of z^1.75 + p)",
+    "data": {
+      "function": {
+        "type": "expr",
+        "value": "z ^ 1.75 + p"
+      },
+      "mandelinit": {
+        "type": "expr",
+        "value": "0"
+      },
+      "max_power": {
+        "type": "real",
+        "value": "1.75"
+      },
+      "juliaset": {
+        "type": "bool",
+        "value": "true"
+      },
+      "juliapoint": {
+        "type": "cplx",
+        "value": "-0.4"
+      }
+    }
+  },
+  {
+    "title": "Magnet1",
+    "icon": "magnet1.png",
+    "description": "Magnet 1 Fractal",
+    "data": {
+      "function": {
+        "type": "expr",
+        "value": "sqr((sqr z + p - 1) / (2 z + p - 2))"
+      },
+      "mandelinit": {
+        "type": "expr",
+        "value": "0"
+      }
+    }
+  },
+  {
+    "title": "Magnet2",
+    "icon": "magnet2.png",
+    "description": "Magnet 2 Fractal",
+    "data": {
+      "function": {
+        "type": "expr",
+        "value": "sqr((z^3 + 3(p - 1)z + (p - 1)(p - 2)) / (3 sqr z + 3(p - 2)z + (p - 1)(p - 2) + 1))"
+      },
+      "mandelinit": {
+        "type": "expr",
+        "value": "0"
+      },
+      "max_power": {
+        "type": "real",
+        "value": "4"
+      }
+    }
+  },
+  {
+    "title": "Mandelbrot Newton",
+    "icon": "mandelnewton.png",
+    "description": "Mix of Newton Set and Mandelbrot Formula",
+    "data": {
+      "function": {
+        "type": "expr",
+        "value": "sqr newton(z^3 + p, z) + p"
+      },
+      "mandelinit": {
+        "type": "expr",
+        "value": "c"
+      }
+    }
+  },
+  {
+    "title": "SinhZ",
+    "icon": "sinhz.png",
+    "description": "Mandelbrot Set using the Sine Hyperbolicus (non-polynomial function)",
+    "data": {
+      "function": {
+        "type": "expr",
+        "value": "sinh z * p"
+      },
+      "mandelinit": {
+        "type": "expr",
+        "value": "I"
+      },
+      "bailout": {
+        "type": "real",
+        "value": "32"
+      }
+    }
+  },
+  [
+    "SinhZ",
+    "sinhz.png",
+    "Mandelbrot Set using the Sine Hyperbolicus (non-polynomial formular)"
     {
-    0xff000000
-    }
-    }))
-    "bailoutpalette": [ "palette", new Palette(new int[][]
-    {{0xff000764, 0xff206bcb, 0xffedffff, 0xffffaa00,
-    0xff310231}})))
-    }
-
-
-    ["Celtic", "celtic.png", "Celtic Fractal",
-      { "data":
-      "function": [ "expr", "rabs sqr z + p")
-      "mandelinit": [ "expr", "0")
-      ],
-  
-    ["Tricorn", "tricorn.png", "Tricorn Fractal",
-      { "data":
-      "function": [ "expr", "mandelbrot(conj z, p)")
-      "mandelinit": [ "expr", "0")
-      ],
-  
-    ["Buffalo", "buffalo.png", "Buffalo Fractal",
-      { "data":
-      "function": [ "expr", "abs sqr z + p")
-      "mandelinit": [ "expr", "0")
-      ],
-  
-    ["Perpendicular Mandelbrot", "perpendicular_mandelbrot.png", "Perpendicular Mandelbrot Fractal",
-      { "data":
-      "function": [ "expr", "mandelbrot(conj rabs z, p)")
-      "mandelinit": [ "expr", "0")
-      ],
-  
-    ["Perpendicular Burning Ship", "perpendicular_burningship.png", "Perpendicular Burning Ship Fractal",
-      { "data":
-      "function": [ "expr", "mandelbrot(iabs z, p)")
-      "mandelinit": [ "expr", "0")
-      ],
-  
-    ["Perpendicular Celtic", "perpendicular_celtic.png", "Perpendicular Celtic Fractal",
-      { "data":
-      "function": [ "expr", "conj rabs sqr z + p")
-      "mandelinit": [ "expr", "0")
-      ],
-  
-    ["Perpendicular Buffalo", "perpendicular_buffalo.png", "Perpendicular Buffalo Fractal",
-      { "data":
-      "function": [ "expr", "rabs sqr iabs z + p")
-      "mandelinit": [ "expr", "0")
-      ],
-  
-    ["Mandel^3", "mandel3.png", "Mandelbrot Set to the power of 3",
-      { "data":
-      "function": [ "expr", "z^3 + p")
-      "max_power": [ "real", 3)
-      "mandelinit": [ "expr", "0")
-      ],
-  
-    ["Mandel^4", "mandel4.png", "Mandelbrot Set to the power of 4",
-      { "data":
-      "function": [ "expr", "z^4 + p")
-      "max_power": [ "real", 4)
-      "mandelinit": [ "expr", "0")
-      ],
-  
-    ["Lambda", "lambda.png", "Lambda Fractal",
-      { "data":
-      "function": [ "expr", "p (1 - z) z")
-      "mandelinit": [ "expr", "0.5")
-      ],
-  
-    ["Generic Lambda", "generic_lambda.png", "Lambda Fractal with parameterized maximum power",
-      { "data":
-      "max_power": [ "real", 4)
-      "function": [ "expr", "p (1 - z^(max_power - 1)) z")
-      "mandelinit": [ "expr", "/max_power ^ /(max_power - 1)")
-      ],
-  
-    ["Simonbrot Normal", "simonbrot_normal.png", "Simonbrot ",
-      { "data":
-      "max_power": [ "real", 4)
-      "function": [ "expr", "sqr z abs z + p")
-      )
-      );
-  
-    ["Simonbrot Inverted", "simonbrot_inverted.png", "Simonbrot with abs/sqr exchanged",
-      { "data":
-      "max_power": [ "real", 4)
-      "function": [ "expr", "{ var t = sqr z; t * abs t } + p")
-      )
-      );
-  
-    ["Phoenix Julia Set", "phoenix.png", "Julia Set of the Phoenix Fractal",
-      { "data":
-      "function": [ "expr", "mandelbrot(z, p.x) + zlast p.y")
-      "mandelinit": [ "expr", "c")
-      "juliaset": [ "bool", true)
-      "juliapoint": [ "cplx", new Cplx(0.5666, -0.5))
-      ],
-  
-    ["Cczcpaczcp", "ccz-2.png", "Special formula by Mark R Eggleston",
-      { "data":
-      "function": [ "expr", "{ def alpha = 1; def beta = 3; def gamma = 1; def delta = -1; p (alpha * z^beta + gamma * z^delta) }")
-      "mandelinit": [ "expr", "{ def alpha = 1; def beta = 3; def gamma = 1; def delta = -1; (-gamma delta / alpha beta)^/(beta - delta)}")
-      "max_power": [ "real", 3)
-      ],
-  
-    ["Glynn", "glynn.png", "Glynn Fractal (Julia Set of z^1.75 + p)",
-      { "data":
-      "function": [ "expr", "z ^ 1.75 + p")
-      "max_power": [ "real", 1.75)
-      "mandelinit": [ "expr", "0")
-      "juliaset": [ "bool", true)
-      "juliapoint": [ "cplx", new Cplx(-0.4))
-      ],
-  
-    ["Magnet1", "magnet1.png", "Magnet 1 Fractal",
-      { "data":
-      "function": [ "expr", "sqr((sqr z + p - 1) / (2z + p - 2))")
-      "max_power": [ "real", 2)
-      "mandelinit": [ "expr", "0")
-      ],
-  
-    ["Magnet2", "magnet2.png", "Magnet 2 Fractal",
-      { "data":
-      "function": [ "expr", "sqr((z^3 + 3(p - 1)z + (p - 1)(p - 2)) / (3 sqr z + 3(p - 2)z + (p - 1)(p - 2) + 1))")
-      "max_power": [ "real", 4)
-      "mandelinit": [ "expr", "0")
-      ],
-  
-    ["Mandelbrot Newton", "mandelnewton.png", "Mix of Newton Set and Mandelbrot Formula",
-      { "data":
-      "function": [ "expr", "sqr newton(z^3 + p, z) + p")
-      "max_power": [ "real", 2)
-      "mandelinit": [ "expr", "c")
-      ],
-  
-    ["SinhZ", "sinhz.png", "Mandelbrot Set using the Sine Hyperbolicus (non-polynomial formular)",
-      { "data":
-      "function": [ "expr", "sinh z * p")
-      "bailout": [ "real", 32)
-      "mandelinit": [ "expr", "I")
-      ],
-  
-    ["CoshZ", "coshz.png", "Mandelbrot Set using the Cosine Hyperbolicus (non-polynomial formular)",
-      { "data":
-      "function": [ "expr", "cosh z * p")
-      "bailout": [ "real", 32)
-      "mandelinit": [ "expr", "0")
-      ],
-  
-    ["Inverse Mandel", "recipmandel3.png", "Fractal of z^-3 + p (lake only)",
-      { "data":
-      "scale": [ "scale", new Scale(2, 0, 0, 2, 0, -1.5))
-      "function": [ "expr", "z^-3 + p")
-      "mandelinit": [ "expr", "c")
-      ],
-  
-    ["(Lake) Duck fractal", "duck.png", "Duck fractal (lake only)",
-      { "data":
-      "scale": [ "scale", new Scale(2, 0, 0, 2, 0, -1.5))
-      "function": [ "expr", "log(iabs z + p)")
-      "mandelinit": [ "expr", "c")
-      ],
-  
-    ["(Lake) Newton of z^3 + p", "newton3.png", "Newton Set (lake only)",
-      { "data":
-      "function": [ "expr", "newton(z^3 + p, z)")
-      "mandelinit": [ "expr", "c")
-      ],
-  
-    ["(Lake) Newton of z^4 - 6 * z^2 - 2 p z + p", "newton4.png", "Newton Set for a more complex formular (lake only)",
-      { "data":
-      "function": [ "expr", "newton(z^4 - 6 * z^2 - 2 p z + p, z)")
-      "mandelinit": [ "expr", "-1")
-      ],
-  
-    ["(Lake) Newton of sinh z + p", "newtonsinh.png", "Newton Set using the Sine Hyperbolicus (lake only)",
-      { "data":
-      "function": [ "expr", "newton(sinh z + p, z)")
-      "mandelinit": [ "expr", "0")
-      ],
-  
-    ["(Lake) Nova of z^3 - 1", "nova3.png", "Nova fractal for power 3 (variation of the newton approximation, lake only)",
-      { "data":
-      "function": [ "expr", "newton(z^3 - 1, z) + p")
-      "mandelinit": [ "expr", "1")
-      ],
-  
-    ["(Lake) Nova z - R (z^power - 1)/(4 * z^3) + p", "nova34.png", "Generic Nova Formular (lake only)",
-      { "data":
-      "function": [ "expr", "{ def R=3; def power=4; z - R (z^power - 1) / derive(z^4 - 1, z) + p }")
-      "mandelinit": [ "expr", "{ def R=3; def power=4; (-(R power-R)/(R-power))^/power}")
-      ],
-  
-    ["Curvature Inequality", "curvature.png", "Branching Addend",
-      { "data":
-      "addend": [ "expr", "arcnorm((znext - z) / (z - zlast))")
-      ],
-  
-    ["Triange Inequality", "triangleinequality.png", "Branching Addend",
-      { "data":
-      "addend": [ "expr", "{ var t1 = rad z ^ max_power, t2 = rad p, M = abs(t1 - t2), m = t1 + t2; (rad znext - m) / (M - m) }")
-      ],
-
-    ["Gaussian Integer Min", "gaussianintmin.png", "Minimum distance to a gaussian integer (fold)",
-      { "data":
-      "foldinit": [ "expr", "bailout")
-      "foldfn": [ "expr", "min(dist(znext, floor(znext + 0.5:0.5)), foldvalue)")
-      "bailoutvalue": [ "expr", "foldvalue.x")
-      "lakevalue": [ "expr", "foldvalue.x")
-      ],
-  
-    ["Gaussian Integer Max", "gaussianintmax.png", "Maximum distance to a gaussian integer (fold)",
-      { "data":
-      "foldinit": [ "expr", "0")
-      "foldfn": [ "expr", "max(dist(znext, floor(znext + 0.5:0.5)), foldvalue)")
-      "bailoutvalue": [ "expr", "foldvalue.x")
-      "lakevalue": [ "expr", "foldvalue.x")
-      ],
-  
-    ["Gaussian Integer Mixed", "gaussianinttwofold.png", "Minimum (bailout) and maximum (lake) distance to a gaussian integer (two-fold)",
-      { "data":
-      "foldinit": [ "expr", "bailout")
-      "foldfn": [ "expr", "min(dist(znext, floor(znext + 0.5:0.5)), foldvalue)")
-      "foldinit2": [ "expr", "0")
-      "foldfn2": [ "expr", "max(dist(znext, floor(znext + 0.5:0.5)), foldvalue2)")
-      ],
-  
-    ["Distance Estimation (Mandelbrot)", "distance_estimation.png", "Distance estimation for the mandelbrot set (fold)",
-      { "data":
-      "foldfn": [ "expr", "2 znext foldvalue + 1")
-      "bailoutvalue": [ "expr", "rad znext / rad foldvalue / 2 * log rad znext")
-      ],
-
-    ["Exponential Smoothing (Bailout and Lake)", "expsmooth.png", "Exponential Smoothing for bailout and lake (fold)",
-      { "data":
-      "foldfn": [ "expr", "/cosh(rad znext + /dist(znext, z)) + foldvalue")
-      "bailoutvalue": [ "expr", "log(E^2 + foldvalue.x)")
-      "lakevalue": [ "expr", "log(1 + foldvalue.x)")
-      ],
-  
-    ["Exponential Smoothing (Bailout)", "expsmoothbailout.png", "Exponential Smoothing for bailout (fold)",
-      { "data":
-      "foldfn": [ "expr", "/cosh rad znext + foldvalue")
-      "bailoutvalue": [ "expr", "log(E^2 + foldvalue.x)")
-      ],
-  
-    ["Exponential Smoothing (Lake)", "expsmoothlake.png", "Exponential Smoothing for lake",
-      { "data":
-      "foldfn": [ "expr", "/cosh(/dist(znext, z)) + foldvalue")
-      "lakevalue": [ "expr", "log(1 + foldvalue.x)")
-      ],
-  
-    ["Exponential Smoothing (Two Fold)", "expsmoothtwofold.png", "Exponential Smoothing for bailout (first fold) and lake (second fold)",
-      { "data":
-      "foldfn": [ "expr", "/cosh rad znext + foldvalue")
-      "bailoutvalue": [ "expr", "log(E^2 + foldvalue.x)")
-      "foldfn2": [ "expr", "/cosh(/dist(znext, z)) + foldvalue2")
-      "lakevalue": [ "expr", "log(1 + foldvalue2.x)")
-      ],
-  
-    ["Smooth Drawing (Lake)", "smoothlake.png", "Smooth drawing for the lake based on atan (fold)",
-      { "data":
-      "foldfn": [ "expr", "dist(znext, z) + foldvalue")
-      "lakevalue": [ "expr", "1.3 atan foldvalue.x / PI"))
-      );
-  
-    ["Fold-Branching (Bailout and Lake)", "foldbranching.png", "Branching for fold for bailout and lake (fold)",
-      { "data":
-      "foldfn": [ "expr", "(0.5 + 0.5 cos 6 arc (z - znext)) / (12 + rad znext + /dist(znext, z)) + foldvalue")
-      "bailoutvalue": [ "expr", "log(1 + foldvalue.x)")
-      "lakevalue": [ "expr", "log(1 + foldvalue.x)")
-      ],
-  
-    ["Fold-Branching (Bailout)", "foldbranchingbailout.png", "Branching for fold for bailout (fold)",
-      { "data":
-      "foldfn": [ "expr", "(0.5 + 0.5 cos 6 arc znext) / (12 + rad znext) + foldvalue")
-      "bailoutvalue": [ "expr", "log(1 + foldvalue.x)")
-      ],
-  
-    ["Fold-Geometry Pattern (Bailout)", "foldgeometrybailout.png", "Branching for fold for bailout (fold)",
-      { "data":
-      "foldfn": [ "expr", "/line(0:0, 1:0, znext) + foldvalue")
-      "bailoutvalue": [ "expr", "log(1 + foldvalue.x)")
-      ],
-  
-    ["Fold-Branching (Lake)", "foldbranchinglake.png", "Branching for fold for lake (fold)",
-      { "data":
-      "foldfn": [ "expr", "(0.5 + 0.5 cos 6 arc(z - znext)) / (12 + /dist(znext, z)) + foldvalue")
-      "lakevalue": [ "expr", "log(1 + foldvalue.x)")
-      ],
-  
-    ["Fold-Branching Alternative (Lake)", "foldbranchinglake2.png", "Branching based on atan for fold for lake (fold)",
-      { "data":
-      "foldfn": [ "expr", "(0.5 + 0.5 cos 4 arc(z - znext)) * (1 - 2 atan(12 + /dist(znext, z)) / PI) + foldvalue")
-      "lakevalue": [ "expr", "log(1 + foldvalue.x)")
-      ],
-  
-    ["Fold-Geometry Pattern (Lake)", "foldgeometrylake.png", "Branching for fold for bailout (fold)",
-      { "data":
-      "foldfn": [ "expr", "/line(0:0, 1:0, /(znext - z)) + foldvalue")
-      "lakevalue": [ "expr", "log(1 + foldvalue.x)")
-      ],
-  
-    ["Fold-Branching (Two Fold)", "foldbranchingtwofold.png", "Branching for bailout (first fold) and lake (second fold) (two fold)",
-      { "data":
-      "foldfn": [ "expr", "(0.5 + 0.5 cos 6 arc znext) / (12 + rad znext) + foldvalue")
-      "foldfn2": [ "expr", "(0.5 + 0.5 cos 6 arc(z - znext)) / (12 + /dist(znext, z)) + foldvalue2")
-      "bailoutvalue": [ "expr", "log(1 + foldvalue.x)")
-      "lakevalue": [ "expr", "log(1 + foldvalue2.x)")
-      ],
-  
-    ["Exponential Smoothing and Branching (Two Fold)", "twofoldexpsmoothbranch.png", "Combination of exponential smoothing and branching (two fold)",
-      { "data":
-      "foldfn": [ "expr", "/cosh(rad znext + /dist(znext, z)) + foldvalue")
-      "bailoutvalue": [ "expr", "log(E^2 + foldvalue.x + foldvalue2.x)")
-      "foldfn2": [ "expr", "(0.5 + 0.5 cos 6 arc (z - znext)) / (12 + rad znext + /dist(znext, z)) + foldvalue2")
-      "lakevalue": [ "expr", "log(1 + foldvalue.x + foldvalue2.x)")
-      "bailouttransfer": [ "expr", "log(1 + foldvalue2.x) : value")
-      "laketransfer": [ "expr", "log(1 + foldvalue2.x) : value")
-      ],
-  
-  
-      // Next: Orbit Traps
-    ["Cross Trap", "crosstrap.png", "Orbit Trap of a centered cross",
-      { "data":
-      "trapfn": [ "expr", "min(line(0:0, 1:0, znext), line(0:0, 0:1, znext))")
-      ],
-  
-    ["Two Boxes Trap", "twoboxestrap.png", "Orbit Trap of two boxes",
-      { "data":
-      "trapfn": [ "expr", "min(box(-2:-2, 0.5:0.5, znext), box(2:2, -0.5:-0.5, znext))")
-      ],
-  
-    ["Steiner Circles Trap", "steinertrap.png", "Orbit Trap of 6 Steiner Circles",
-      { "data":
-      "trapfn": [ "expr", "min(circle(0:0, 3, znext), circle(-2:0, 1, znext), circle(2:0, 1, znext), circle(-1:-1.73205, 1, znext), circle(-1:1.73205, 1, znext), circle(1:-1.73205, 1, znext), circle(1:1.73205, 1, znext))")
-      ],
-  
-    ["Min/Max Neighbors", "minmaxneighbor.png", "Orbit trap determining the distance of neighbors in the orbit",
-      { "data":
-      "trapfn": [ "expr", "dist(znext, z)")
-      ],
-  
-    ["Min/Max Gaussian Integer", "minmaxgaussianint.png", "Orbit trap determining the distance to the next gaussian integer",
-      { "data":
-      "trapfn": [ "expr", "dist(znext, floor(znext + 0.5:0.5))")
-      ],
-  
-  
-  
-      // Next Lyapunov Fractals
-    ["Edge of BA-Lyapunov Fractal", "lyapunovba.png", "Part of Lyapunov fractal",
-      { "data":
-      "scale": [ "scale", new Scale(1, 0, 0, -1, 3, 3))
-      "lyastring": [ "expr", "[b,a]")
-      ],
-  
-    ["Edge of BBABA-Lyapunov Fractal", "lyapunovbbaba.png", "Part of Lyapunov fractal",
-      { "data":
-      "scale": [ "scale", new Scale(1, 0, 0, -1, 3, 3))
-      "lyastring": [ "expr", "[b,b,a,b,a]")
-      ],
-  
-    ["Zirkony Zity", "zirkony.png", "Part of Lyapunov fractal called Zirkony Zity",
-      { "data":
-      "scale": [ "scale", new Scale(0.45, 0, 0, -0.3, 3.05, 3.7))
-      "lyastring": [ "expr", "[a,a,a,a,a,a,b,b,b,b,b,b]")
-      ],
-  
-    ["Domain Coloring", "domain.png", "Domain Coloring for Complex Functions",
-      { "data":
-      "transfer": [ "expr", "arcnorm z : (0.6 fract (log rad z / log 2) + 0.0667)")
+      "data": "function"
+      : [
+      "expr", "")
+      "bailout": [
+      "real", 32)
+      "mandelinit":
+      [
+      "expr", "I")
       ]
+      ,
+      {
+      "title": "",
+      "icon": ".png",
+      "description": "",
+      "data": {
+      "function": {
+      "type": "expr",
+      "value": ""
+      },
+      "mandelinit"
+      : {
+      "type": "expr",
+      "value": "0"
+      }
+      }
+      },
+    [
+      "CoshZ", "coshz.png", "Mandelbrot Set using the Cosine Hyperbolicus (non-polynomial formular)",
+      {
+      "data": "function"
+      : [
+      "expr", "cosh z * p")
+      "bailout": [
+      "real", 32)
+      "mandelinit":
+      [
+      "expr", "0")
+      ]
+      ,
+      {
+      "title": "",
+      "icon": ".png",
+      "description": "",
+      "data": {
+      "function": {
+      "type": "expr",
+      "value": ""
+      },
+      "mandelinit"
+      : {
+      "type": "expr",
+      "value": "0"
+      }
+      }
+      },
+    [
+      "Inverse Mandel", "recipmandel3.png", "Fractal of z^-3 + p (lake only)",
+      {
+      "data": "scale"
+      : [
+      "scale", new Scale(2, 0, 0, 2
+      , 0, -1.5))
+      "function": [
+      "expr", "z^-3 + p")
+      "mandelinit":
+      [
+      "expr", "c")
+      ]
+      ,
+      {
+      "title": "",
+      "icon": ".png",
+      "description": "",
+      "data": {
+      "function": {
+      "type": "expr",
+      "value": ""
+      },
+      "mandelinit"
+      : {
+      "type": "expr",
+      "value": "0"
+      }
+      }
+      },
+    [
+      "(Lake) Duck fractal", "duck.png", "Duck fractal (lake only)",
+      {
+      "data": "scale"
+      : [
+      "scale", new Scale(2, 0, 0, 2
+      , 0, -1.5))
+      "function": [
+      "expr", "log(iabs z + p)")
+      "mandelinit":
+      [
+      "expr", "c")
+      ]
+      ,
+      {
+      "title": "",
+      "icon": ".png",
+      "description": "",
+      "data": {
+      "function": {
+      "type": "expr",
+      "value": ""
+      },
+      "mandelinit"
+      : {
+      "type": "expr",
+      "value": "0"
+      }
+      }
+      },
+    [
+      "(Lake) Newton of z^3 + p", "newton3.png", "Newton Set (lake only)",
+      {
+      "data": "function"
+      : [
+      "expr", "newton(z^3 + p, z)")
+      "mandelinit":
+      [
+      "expr", "c")
+      ]
+      ,
+      {
+      "title": "",
+      "icon": ".png",
+      "description": "",
+      "data": {
+      "function": {
+      "type": "expr",
+      "value": ""
+      },
+      "mandelinit"
+      : {
+      "type": "expr",
+      "value": "0"
+      }
+      }
+      },
+    [
+      "(Lake) Newton of z^4 - 6 * z^2 - 2 p z + p", "newton4.png", "Newton Set for a more complex formular (lake only)",
+      {
+      "data": "function"
+      : [
+      "expr", "newton(z^4 - 6 * z^2 - 2 p z + p, z)")
+      "mandelinit":
+      [
+      "expr", "-1")
+      ]
+      ,
+      {
+      "title": "",
+      "icon": ".png",
+      "description": "",
+      "data": {
+      "function": {
+      "type": "expr",
+      "value": ""
+      },
+      "mandelinit"
+      : {
+      "type": "expr",
+      "value": "0"
+      }
+      }
+      },
+    [
+      "(Lake) Newton of sinh z + p", "newtonsinh.png", "Newton Set using the Sine Hyperbolicus (lake only)",
+      {
+      "data": "function"
+      : [
+      "expr", "newton(sinh z + p, z)")
+      "mandelinit":
+      [
+      "expr", "0")
+      ]
+      ,
+      {
+      "title": "",
+      "icon": ".png",
+      "description": "",
+      "data": {
+      "function": {
+      "type": "expr",
+      "value": ""
+      },
+      "mandelinit"
+      : {
+      "type": "expr",
+      "value": "0"
+      }
+      }
+      },
+    [
+      "(Lake) Nova of z^3 - 1", "nova3.png", "Nova fractal for power 3 (variation of the newton approximation, lake only)",
+      {
+      "data": "function"
+      : [
+      "expr", "newton(z^3 - 1, z) + p")
+      "mandelinit":
+      [
+      "expr", "1")
+      ]
+      ,
+      {
+      "title": "",
+      "icon": ".png",
+      "description": "",
+      "data": {
+      "function": {
+      "type": "expr",
+      "value": ""
+      },
+      "mandelinit"
+      : {
+      "type": "expr",
+      "value": "0"
+      }
+      }
+      },
+    [
+      "(Lake) Nova z - R (z^power - 1)/(4 * z^3) + p", "nova34.png", "Generic Nova Formular (lake only)",
+      {
+      "data": "function"
+      : [
+      "expr", "{ def R=3; def power=4; z - R (z^power - 1) / derive(z^4 - 1, z) + p }")
+      "mandelinit":
+      [
+      "expr", "{ def R=3; def power=4; (-(R power-R)/(R-power))^/power}")
+      ]
+      ,
+      {
+      "title": "",
+      "icon": ".png",
+      "description": "",
+      "data": {
+      "function": {
+      "type": "expr",
+      "value": ""
+      },
+      "mandelinit"
+      : {
+      "type": "expr",
+      "value": "0"
+      }
+      }
+      },
+    [
+      "Curvature Inequality", "curvature.png", "Branching Addend",
+      {
+      "data": "addend"
+      :
+      [
+      "expr", "arcnorm((znext - z) / (z - zlast))")
+      ]
+      ,
+      {
+      "title": "",
+      "icon": ".png",
+      "description": "",
+      "data": {
+      "function": {
+      "type": "expr",
+      "value": ""
+      },
+      "mandelinit"
+      : {
+      "type": "expr",
+      "value": "0"
+      }
+      }
+      },
+    [
+      "Triange Inequality", "triangleinequality.png", "Branching Addend",
+      {
+      "data": "addend"
+      :
+      [
+      "expr", "{ var t1 = rad z ^ max_power, t2 = rad p, M = abs(t1 - t2), m = t1 + t2; (rad znext - m) / (M - m) }")
+      ]
+      ,
+      {
+      "title": "",
+      "icon": ".png",
+      "description": "",
+      "data": {
+      "function": {
+      "type": "expr",
+      "value": ""
+      },
+      "mandelinit"
+      : {
+      "type": "expr",
+      "value": "0"
+      }
+      }
+      },
+    [
+      "Gaussian Integer Min", "gaussianintmin.png", "Minimum distance to a gaussian integer (fold)",
+      {
+      "data": "foldinit"
+      : [
+      "expr", "bailout")
+      "foldfn": [
+      "expr", "min(dist(znext, floor(znext + 0.5:0.5)), foldvalue)")
+      "bailoutvalue": [
+      "expr", "foldvalue.x")
+      "lakevalue":
+      [
+      "expr", "foldvalue.x")
+      ]
+      ,
+      {
+      "title": "",
+      "icon": ".png",
+      "description": "",
+      "data": {
+      "function": {
+      "type": "expr",
+      "value": ""
+      },
+      "mandelinit"
+      : {
+      "type": "expr",
+      "value": "0"
+      }
+      }
+      },
+    [
+      "Gaussian Integer Max", "gaussianintmax.png", "Maximum distance to a gaussian integer (fold)",
+      {
+      "data": "foldinit"
+      : [
+      "expr", "0")
+      "foldfn": [
+      "expr", "max(dist(znext, floor(znext + 0.5:0.5)), foldvalue)")
+      "bailoutvalue": [
+      "expr", "foldvalue.x")
+      "lakevalue":
+      [
+      "expr", "foldvalue.x")
+      ]
+      ,
+      {
+      "title": "",
+      "icon": ".png",
+      "description": "",
+      "data": {
+      "function": {
+      "type": "expr",
+      "value": ""
+      },
+      "mandelinit"
+      : {
+      "type": "expr",
+      "value": "0"
+      }
+      }
+      },
+    [
+      "Gaussian Integer Mixed", "gaussianinttwofold.png", "Minimum (bailout) and maximum (lake) distance to a gaussian integer (two-fold)",
+      {
+      "data": "foldinit"
+      : [
+      "expr", "bailout")
+      "foldfn": [
+      "expr", "min(dist(znext, floor(znext + 0.5:0.5)), foldvalue)")
+      "foldinit2": [
+      "expr", "0")
+      "foldfn2":
+      [
+      "expr", "max(dist(znext, floor(znext + 0.5:0.5)), foldvalue2)")
+      ]
+      ,
+      {
+      "title": "",
+      "icon": ".png",
+      "description": "",
+      "data": {
+      "function": {
+      "type": "expr",
+      "value": ""
+      },
+      "mandelinit"
+      : {
+      "type": "expr",
+      "value": "0"
+      }
+      }
+      },
+    [
+      "Distance Estimation (Mandelbrot)", "distance_estimation.png", "Distance estimation for the mandelbrot set (fold)",
+      {
+      "data": "foldfn"
+      : [
+      "expr", "2 znext foldvalue + 1")
+      "bailoutvalue":
+      [
+      "expr", "rad znext / rad foldvalue / 2 * log rad znext")
+      ]
+      ,
+      {
+      "title": "",
+      "icon": ".png",
+      "description": "",
+      "data": {
+      "function": {
+      "type": "expr",
+      "value": ""
+      },
+      "mandelinit"
+      : {
+      "type": "expr",
+      "value": "0"
+      }
+      }
+      },
+    [
+      "Exponential Smoothing (Bailout and Lake)", "expsmooth.png", "Exponential Smoothing for bailout and lake (fold)",
+      {
+      "data": "foldfn"
+      : [
+      "expr", "/cosh(rad znext + /dist(znext, z)) + foldvalue")
+      "bailoutvalue": [
+      "expr", "log(E^2 + foldvalue.x)")
+      "lakevalue":
+      [
+      "expr", "log(1 + foldvalue.x)")
+      ]
+      ,
+      {
+      "title": "",
+      "icon": ".png",
+      "description": "",
+      "data": {
+      "function": {
+      "type": "expr",
+      "value": ""
+      },
+      "mandelinit"
+      : {
+      "type": "expr",
+      "value": "0"
+      }
+      }
+      },
+    [
+      "Exponential Smoothing (Bailout)", "expsmoothbailout.png", "Exponential Smoothing for bailout (fold)",
+      {
+      "data": "foldfn"
+      : [
+      "expr", "/cosh rad znext + foldvalue")
+      "bailoutvalue":
+      [
+      "expr", "log(E^2 + foldvalue.x)")
+      ]
+      ,
+      {
+      "title": "",
+      "icon": ".png",
+      "description": "",
+      "data": {
+      "function": {
+      "type": "expr",
+      "value": ""
+      },
+      "mandelinit"
+      : {
+      "type": "expr",
+      "value": "0"
+      }
+      }
+      },
+    [
+      "Exponential Smoothing (Lake)", "expsmoothlake.png", "Exponential Smoothing for lake",
+      {
+      "data": "foldfn"
+      : [
+      "expr", "/cosh(/dist(znext, z)) + foldvalue")
+      "lakevalue":
+      [
+      "expr", "log(1 + foldvalue.x)")
+      ]
+      ,
+      {
+      "title": "",
+      "icon": ".png",
+      "description": "",
+      "data": {
+      "function": {
+      "type": "expr",
+      "value": ""
+      },
+      "mandelinit"
+      : {
+      "type": "expr",
+      "value": "0"
+      }
+      }
+      },
+    [
+      "Exponential Smoothing (Two Fold)", "expsmoothtwofold.png", "Exponential Smoothing for bailout (first fold) and lake (second fold)",
+      {
+      "data": "foldfn"
+      : [
+      "expr", "/cosh rad znext + foldvalue")
+      "bailoutvalue": [
+      "expr", "log(E^2 + foldvalue.x)")
+      "foldfn2": [
+      "expr", "/cosh(/dist(znext, z)) + foldvalue2")
+      "lakevalue":
+      [
+      "expr", "log(1 + foldvalue2.x)")
+      ]
+      ,
+      {
+      "title": "",
+      "icon": ".png",
+      "description": "",
+      "data": {
+      "function": {
+      "type": "expr",
+      "value": ""
+      },
+      "mandelinit"
+      : {
+      "type": "expr",
+      "value": "0"
+      }
+      }
+      },
+    [
+      "Smooth Drawing (Lake)", "smoothlake.png", "Smooth drawing for the lake based on atan (fold)",
+      {
+      "data": "foldfn"
+      : [
+      "expr", "dist(znext, z) + foldvalue")
+      "lakevalue": [
+      "expr", "1.3 atan foldvalue.x / PI"))
+      );
+
+      {
+      "title": ""
+      ,
+      "icon": ".png",
+      "description": "",
+      "data"
+      : {
+      "function": {
+      "type": "expr",
+      "value"
+      : ""
+      },
+      "mandelinit": {
+      "type": "expr"
+      ,
+      "value": "0"
+      }
+      }
+      },
+    [
+      "Fold-Branching (Bailout and Lake)", "foldbranching.png", "Branching for fold for bailout and lake (fold)",
+      {
+      "data": "foldfn"
+      : [
+      "expr", "(0.5 + 0.5 cos 6 arc (z - znext)) / (12 + rad znext + /dist(znext, z)) + foldvalue")
+      "bailoutvalue": [
+      "expr", "log(1 + foldvalue.x)")
+      "lakevalue":
+      [
+      "expr", "log(1 + foldvalue.x)")
+      ]
+      ,
+      {
+      "title": "",
+      "icon": ".png",
+      "description": "",
+      "data": {
+      "function": {
+      "type": "expr",
+      "value": ""
+      },
+      "mandelinit"
+      : {
+      "type": "expr",
+      "value": "0"
+      }
+      }
+      },
+    [
+      "Fold-Branching (Bailout)", "foldbranchingbailout.png", "Branching for fold for bailout (fold)",
+      {
+      "data": "foldfn"
+      : [
+      "expr", "(0.5 + 0.5 cos 6 arc znext) / (12 + rad znext) + foldvalue")
+      "bailoutvalue":
+      [
+      "expr", "log(1 + foldvalue.x)")
+      ]
+      ,
+      {
+      "title": "",
+      "icon": ".png",
+      "description": "",
+      "data": {
+      "function": {
+      "type": "expr",
+      "value": ""
+      },
+      "mandelinit"
+      : {
+      "type": "expr",
+      "value": "0"
+      }
+      }
+      },
+    [
+      "Fold-Geometry Pattern (Bailout)", "foldgeometrybailout.png", "Branching for fold for bailout (fold)",
+      {
+      "data": "foldfn"
+      : [
+      "expr", "/line(0:0, 1:0, znext) + foldvalue")
+      "bailoutvalue":
+      [
+      "expr", "log(1 + foldvalue.x)")
+      ]
+      ,
+      {
+      "title": "",
+      "icon": ".png",
+      "description": "",
+      "data": {
+      "function": {
+      "type": "expr",
+      "value": ""
+      },
+      "mandelinit"
+      : {
+      "type": "expr",
+      "value": "0"
+      }
+      }
+      },
+    [
+      "Fold-Branching (Lake)", "foldbranchinglake.png", "Branching for fold for lake (fold)",
+      {
+      "data": "foldfn"
+      : [
+      "expr", "(0.5 + 0.5 cos 6 arc(z - znext)) / (12 + /dist(znext, z)) + foldvalue")
+      "lakevalue":
+      [
+      "expr", "log(1 + foldvalue.x)")
+      ]
+      ,
+      {
+      "title": "",
+      "icon": ".png",
+      "description": "",
+      "data": {
+      "function": {
+      "type": "expr",
+      "value": ""
+      },
+      "mandelinit"
+      : {
+      "type": "expr",
+      "value": "0"
+      }
+      }
+      },
+    [
+      "Fold-Branching Alternative (Lake)", "foldbranchinglake2.png", "Branching based on atan for fold for lake (fold)",
+      {
+      "data": "foldfn"
+      : [
+      "expr", "(0.5 + 0.5 cos 4 arc(z - znext)) * (1 - 2 atan(12 + /dist(znext, z)) / PI) + foldvalue")
+      "lakevalue":
+      [
+      "expr", "log(1 + foldvalue.x)")
+      ]
+      ,
+      {
+      "title": "",
+      "icon": ".png",
+      "description": "",
+      "data": {
+      "function": {
+      "type": "expr",
+      "value": ""
+      },
+      "mandelinit"
+      : {
+      "type": "expr",
+      "value": "0"
+      }
+      }
+      },
+    [
+      "Fold-Geometry Pattern (Lake)", "foldgeometrylake.png", "Branching for fold for bailout (fold)",
+      {
+      "data": "foldfn"
+      : [
+      "expr", "/line(0:0, 1:0, /(znext - z)) + foldvalue")
+      "lakevalue":
+      [
+      "expr", "log(1 + foldvalue.x)")
+      ]
+      ,
+      {
+      "title": "",
+      "icon": ".png",
+      "description": "",
+      "data": {
+      "function": {
+      "type": "expr",
+      "value": ""
+      },
+      "mandelinit"
+      : {
+      "type": "expr",
+      "value": "0"
+      }
+      }
+      },
+    [
+      "Fold-Branching (Two Fold)", "foldbranchingtwofold.png", "Branching for bailout (first fold) and lake (second fold) (two fold)",
+      {
+      "data": "foldfn"
+      : [
+      "expr", "(0.5 + 0.5 cos 6 arc znext) / (12 + rad znext) + foldvalue")
+      "foldfn2": [
+      "expr", "(0.5 + 0.5 cos 6 arc(z - znext)) / (12 + /dist(znext, z)) + foldvalue2")
+      "bailoutvalue": [
+      "expr", "log(1 + foldvalue.x)")
+      "lakevalue":
+      [
+      "expr", "log(1 + foldvalue2.x)")
+      ]
+      ,
+      {
+      "title": "",
+      "icon": ".png",
+      "description": "",
+      "data": {
+      "function": {
+      "type": "expr",
+      "value": ""
+      },
+      "mandelinit"
+      : {
+      "type": "expr",
+      "value": "0"
+      }
+      }
+      },
+    [
+      "Exponential Smoothing and Branching (Two Fold)", "twofoldexpsmoothbranch.png", "Combination of exponential smoothing and branching (two fold)",
+      {
+      "data": "foldfn"
+      : [
+      "expr", "/cosh(rad znext + /dist(znext, z)) + foldvalue")
+      "bailoutvalue": [
+      "expr", "log(E^2 + foldvalue.x + foldvalue2.x)")
+      "foldfn2": [
+      "expr", "(0.5 + 0.5 cos 6 arc (z - znext)) / (12 + rad znext + /dist(znext, z)) + foldvalue2")
+      "lakevalue": [
+      "expr", "log(1 + foldvalue.x + foldvalue2.x)")
+      "bailouttransfer": [
+      "expr", "log(1 + foldvalue2.x) : value")
+      "laketransfer":
+      [
+      "expr", "log(1 + foldvalue2.x) : value")
+      ]
+      ,
+      // Next: Orbit Traps
+      {
+      "title": "",
+      "icon": ".png",
+      "description": "",
+      "data": {
+      "function": {
+      "type": "expr",
+      "value": ""
+      }
+      }
+      }
+      ,
+    [
+      "Cross Trap", "crosstrap.png", "Orbit Trap of a centered cross",
+      {
+      "data": "trapfn"
+      :
+      [
+      "expr", "min(line(0:0, 1:0, znext), line(0:0, 0:1, znext))")
+      ]
+      ,
+      {
+      "title": "",
+      "icon": ".png",
+      "description": "",
+      "data": {
+      "function": {
+      "type": "expr",
+      "value": ""
+      }
+      }
+      }
+      ,
+    [
+      "Two Boxes Trap", "twoboxestrap.png", "Orbit Trap of two boxes",
+      {
+      "data": "trapfn"
+      :
+      [
+      "expr", "min(box(-2:-2, 0.5:0.5, znext), box(2:2, -0.5:-0.5, znext))")
+      ]
+      ,
+      {
+      "title": "",
+      "icon": ".png",
+      "description": "",
+      "data": {
+      "function": {
+      "type": "expr",
+      "value": ""
+      }
+      }
+      }
+      ,
+    [
+      "Steiner Circles Trap", "steinertrap.png", "Orbit Trap of 6 Steiner Circles",
+      {
+      "data": "trapfn": [
+      "expr", "min(circle(0:0, 3, znext), circle(-2:0, 1, znext), circle(2:0, 1, znext), circle(-1:-1.73205, 1, znext), circle(-1:1.73205, 1, znext), circle(1:-1.73205, 1, znext), circle(1:1.73205, 1, znext))")
+      ],
+      {
+      "title": "Min/Max Neighbors",
+      "icon": "minmaxneighbor.png",
+      "description": "Orbit trap determining the distance of neighbors in the orbit",
+      "data": {
+      "trapfn": {
+      "type": "expr",
+      "value": "dist(znext, z)"
+      }
+      }
+      },
+      {
+      "title": "Min/Max Gaussian Integer",
+      "icon": "minmaxgaussianint.png",
+      "description": "Orbit trap determining the distance to the next gaussian integer",
+      "data": {
+      "trapfn": {
+      "type": "expr",
+      "value": "dist(znext, floor(znext + 0.5:0.5))"
+      }
+      }
+      },
+      {
+      "title": "BA-Lyapunov Fractal",
+      "icon": ".png",
+      "description": "Edge of BA-Lyapunov Fractal",
+      "data": {
+      "Scale": {
+      "type": "scale",
+      "value": ["1", "0", "0", "-1", "3", "3"]
+      },
+      "lyastring": {
+      "type": "expr",
+      "value": "[b,a]"
+      }
+      }
+      },
+      {
+      "title": "BBABA-Lyapunov Fractal",
+      "icon": "lyapunovbbaba.png",
+      "description": "Edge of BBABA-Lyapunov Fractal",
+      "data": {
+      "Scale": {
+      "type": "scale",
+      "value": ["-1", "0", "0", "-1", "3", "3"]
+      },
+      "lyastring": {
+      "type": "expr",
+      "value"
+      : "[b,b,a,b,a]"
+      }
+      }
+      },
+      {
+      "title": "Zirkony Zity"
+      ,
+      "icon": "zirkony.png",
+      "description": "Part of Lyapunov fractal called Zirkony Zity",
+      "data"
+      : {
+      "Scale": {
+      "type": "scale",
+      "value"
+      :
+      ["0.45", "0", "0", "-0.3", "3.05", "3.7"]
+      }
+      "lyastring": {
+      "type": "expr",
+      "value":
+      "[a,a,a,a,a,a,b,b,b,b,b,b]"
+      }
+      }
+      },
+      {
+      "title": "Domain Coloring",
+      "icon": "domain.png",
+      "description": "Domain Coloring for Complex Functions",
+      "data":
+      {
+      "transfer": {
+      "type": "expr",
+      "value":
+      "arcnorm z : (0.6 fract (log rad z / log 2) + 0.0667)"
+    }
+    }
+    }
     }

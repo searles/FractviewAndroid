@@ -84,5 +84,6 @@
     <string name="closeDialog">Close</string>
     <string name="remove_view">Remove View</string>
     <string name="add_view">Add View</string>
+    <string name="action_forward">Forward</string>
 
 </resources>

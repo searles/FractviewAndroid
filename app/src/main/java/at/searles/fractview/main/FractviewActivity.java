@@ -49,7 +49,7 @@ public class FractviewActivity extends Activity {
 
 		DrawerLayout drawerLayout = findViewById(R.id.drawer_layout);
 
-		NavigationView navigationView = findViewById(R.id.nav_view);
+		NavigationView navigationView = findViewById(R.id.menu_nav_view);
 		navigationView.setNavigationItemSelectedListener(
 				new NavigationView.OnNavigationItemSelectedListener() {
 					@Override
@@ -63,7 +63,7 @@ public class FractviewActivity extends Activity {
 					}
 				});
 
-		ListView navListView = findViewById(R.id.nav_list_view);
+		ListView navListView = findViewById(R.id.parameter_nav_list_view);
 
 		// FIXME Background should depend on theme!
 		navListView.setBackgroundColor(0x80ffffff);
@@ -88,7 +88,7 @@ public class FractviewActivity extends Activity {
 	private void initParameterMenu() {
 		this.adapter = new ParameterAdapter(this, fractalProviderFragment);
 
-		ListView listView = findViewById(R.id.nav_list_view);
+		ListView listView = findViewById(R.id.parameter_nav_list_view);
 		listView.setAdapter(adapter);
 		listView.setOnItemClickListener(new ParameterSelectListener(fractalProviderFragment));
 		listView.setOnItemLongClickListener(new ParameterLongSelectListener(fractalProviderFragment));
@@ -117,6 +117,9 @@ public class FractviewActivity extends Activity {
 
 	private void selectMenuItem(MenuItem menuItem) {
 		switch(menuItem.getItemId()) {
+			case R.id.action_forward:
+				fractalProviderFragment.historyForward();
+				return;
 			case R.id.action_demos:
 				// show new activity
 				Intent i = new Intent(FractviewActivity.this, SelectAssetActivity.class);
@@ -180,6 +183,10 @@ public class FractviewActivity extends Activity {
 	public void onBackPressed() {
 		// send it to the provider
 		fractalProviderFragment.onBackPressed();
+	}
+
+	public void setRemoveViewEnabled(boolean enabled) {
+		// TODO
 	}
 
 //	//FIXME Override in API 23
