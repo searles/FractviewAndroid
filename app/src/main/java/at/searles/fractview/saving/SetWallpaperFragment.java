@@ -5,6 +5,7 @@ import android.os.Bundle;
 
 import java.io.IOException;
 
+import at.searles.fractview.main.FractalProviderFragment;
 import at.searles.fractview.ui.DialogHelper;
 
 public class SetWallpaperFragment extends SaveInBackgroundFragment {
@@ -12,11 +13,10 @@ public class SetWallpaperFragment extends SaveInBackgroundFragment {
     private WallpaperManager wallpaperManager;
     private IOException exception;
 
-    public static SaveInBackgroundFragment newInstance() {
-        SaveInBackgroundFragment fragment = new SetWallpaperFragment();
+    public static SetWallpaperFragment newInstance() {
+        SetWallpaperFragment fragment = new SetWallpaperFragment();
 
         Bundle args = new Bundle();
-
         fragment.setArguments(args);
 
         return fragment;
@@ -29,11 +29,11 @@ public class SetWallpaperFragment extends SaveInBackgroundFragment {
 
     @Override
     protected void asyncSaveInBackground() {
-// FIXME        try {
-//            wallpaperManager.setBitmap(fractalCalculator().bitmap());
-//        } catch (IOException e) {
-//            this.exception = e;
-//        }
+        try {
+            wallpaperManager.setBitmap(((FractalProviderFragment) getParentFragment()).getBitmap());
+        } catch (IOException e) {
+            this.exception = e;
+        }
     }
 
     @Override

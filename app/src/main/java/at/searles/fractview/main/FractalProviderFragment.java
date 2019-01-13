@@ -1,11 +1,15 @@
 package at.searles.fractview.main;
 
+import android.Manifest;
 import android.annotation.SuppressLint;
 import android.app.Fragment;
 import android.content.Intent;
+import android.content.pm.PackageManager;
 import android.graphics.Bitmap;
 import android.os.Bundle;
 import android.support.annotation.Nullable;
+import android.support.v4.app.ActivityCompat;
+import android.support.v4.content.ContextCompat;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -21,7 +25,6 @@ import java.util.Queue;
 import at.searles.fractal.Fractal;
 import at.searles.fractal.FractalProvider;
 import at.searles.fractal.data.FractalData;
-import at.searles.fractal.data.ParameterType;
 import at.searles.fractal.entries.FavoriteEntry;
 import at.searles.fractview.Commons;
 import at.searles.fractview.R;
@@ -33,7 +36,10 @@ import at.searles.fractview.favorites.AddFavoritesDialogFragment;
 import at.searles.fractview.favorites.FavoritesAccessor;
 import at.searles.fractview.fractal.BundleAdapter;
 import at.searles.fractview.parameters.palettes.PaletteActivity;
+import at.searles.fractview.saving.EnterFilenameDialogFragment;
+import at.searles.fractview.saving.SaveBitmapToMediaFragment;
 import at.searles.fractview.saving.SaveInBackgroundFragment;
+import at.searles.fractview.saving.SetWallpaperFragment;
 import at.searles.fractview.saving.ShareBitmapFragment;
 import at.searles.fractview.saving.ShareModeDialogFragment;
 import at.searles.fractview.ui.DialogHelper;
@@ -104,9 +110,7 @@ public class FractalProviderFragment extends Fragment {
     public void addFractalFromKey(String exclusiveParameterId, Object newValue) {
         Fractal src = provider.getFractal(provider.keyIndex());
 
-        FractalData originalData = src.data();
-        ParameterType type = src.getParameter(exclusiveParameterId).type;
-        FractalData newData = originalData.copySetParameter(exclusiveParameterId, type, newValue);
+        FractalData newData = src.data().copySetParameter(exclusiveParameterId, newValue);
 
         addExclusiveParameter(exclusiveParameterId);
 
@@ -304,15 +308,19 @@ public class FractalProviderFragment extends Fragment {
             }
 
             for(int i = 1; i < containerView.getChildCount(); i += 2) {
-                containerView.getChildAt(i).setPadding(10, 0, 10, 10); // FIXME padding
+                // fixme use dpi instead
+                containerView.getChildAt(i).setPadding(20, 0, 0, 10);
             }
         }
     }
 
+    public static String label(int index) {
+        return "View " + index;
+    }
+
     public void updateKeySelection() {
-        // fixme can be seriously improved!
         for(int i = selectorButtons.size(); i --> 0;) { // well, that is fun...
-            selectorButtons.get(i).setText("View " + i); // FIXME
+            selectorButtons.get(i).setText(label(i));
             selectorButtons.get(i).setChecked(i == provider.keyIndex());
         }
     }
@@ -372,8 +380,12 @@ public class FractalProviderFragment extends Fragment {
         provider.addListener(l);
     }
 
-    public boolean removeListener(FractalProvider.Listener l) {
-        return provider.removeListener(l);
+    public void removeListener(FractalProvider.Listener l) {
+        provider.removeListener(l);
+    }
+
+    public Bitmap getBitmap() {
+        return getBitmap(keyIndex());
     }
 
     public String getSourceByOwner(int owner) {
@@ -433,11 +445,6 @@ public class FractalProviderFragment extends Fragment {
         }
     }
 
-    public void showShareOrSaveDialog() {
-		ShareModeDialogFragment shareModeDialogFragment = ShareModeDialogFragment.newInstance();
-		shareModeDialogFragment.show(getChildFragmentManager(), ShareModeDialogFragment.TAG);
-    }
-
     public void showChangeSizeDialog() {
         Bitmap bitmap = calculatorWrappers.get(provider.keyIndex()).bitmap();
 
@@ -445,52 +452,62 @@ public class FractalProviderFragment extends Fragment {
 		fragment.show(getChildFragmentManager(), ImageSizeDialogFragment.TAG);
     }
 
+    // ===== Save bitmap =====
+
+    public void showShareOrSaveDialog() {
+        ShareModeDialogFragment shareModeDialogFragment = ShareModeDialogFragment.newInstance();
+        shareModeDialogFragment.show(getChildFragmentManager(), ShareModeDialogFragment.TAG);
+    }
+
     public void setBitmapAsWallpaper() {
-        // FIXME
-//				if(grantResults[0] != PackageManager.PERMISSION_GRANTED) {
-//					DialogHelper.error(this, "No permission to set wallpaper");
-//					return;
-//				}
-//
-//				onShareModeResult(ShareModeDialogFragment.Result.Wallpaper);
-//				return;
+        int wallpaperPermission = ContextCompat.checkSelfPermission(getContext(), Manifest.permission.SET_WALLPAPER);
 
-        //				int wallpaperPermission = ContextCompat.checkSelfPermission(MainActivity.this, Manifest.permission.SET_WALLPAPER);
-//
-//				if(wallpaperPermission != PackageManager.PERMISSION_GRANTED) {
-//					ActivityCompat.requestPermissions(MainActivity.this,
-//							new String[]{
-//									Manifest.permission.SET_WALLPAPER
-//							}, WALLPAPER_PERMISSIONS);
-//					return;
-//				}
-//
-//				fractalCalculator.registerFragmentAsChild(SetWallpaperFragment.newInstance(), SaveInBackgroundFragment.SAVE_FRAGMENT_TAG);
-//
-//				return;
+        if(wallpaperPermission != PackageManager.PERMISSION_GRANTED) {
+            if(ActivityCompat.shouldShowRequestPermissionRationale(getActivity(), Manifest.permission.SET_WALLPAPER)) {
+                DialogHelper.info(getContext(), "Without permission to set the wallpaper, " +
+                        "the wallpaper cannot be changed.");
+            } else {
+                ActivityCompat.requestPermissions(getActivity(),
+                        new String[]{
+                                Manifest.permission.SET_WALLPAPER
+                        }, FractviewActivity.WALLPAPER_PERMISSIONS);
+            }
+            return;
+        }
 
+        SetWallpaperFragment fragment = SetWallpaperFragment.newInstance();
+        getChildFragmentManager().beginTransaction().add(fragment, SetWallpaperFragment.SAVE_FRAGMENT_TAG).commit();
     }
 
     public void showSaveBitmapDialog() {
-// fixme        EnterFilenameDialogFragment fragment = EnterFilenameDialogFragment.newInstance(BITMAP_FRAGMENT_TAG);
-//        fragment.show(getFragmentManager(), SAVE_TO_MEDIA_TAG);
-//
-//        if(grantResults[0] != PackageManager.PERMISSION_GRANTED || grantResults[1] != PackageManager.PERMISSION_GRANTED) {
-//            DialogHelper.error(this, "No permission to write to external storage");
-//            return;
-//        }
-//
-//        // try again...
-//        onShareModeResult(ShareModeDialogFragment.Result.Save);
-        return;
+        int wallpaperPermission = ContextCompat.checkSelfPermission(getContext(), Manifest.permission.WRITE_EXTERNAL_STORAGE);
+
+        if(wallpaperPermission != PackageManager.PERMISSION_GRANTED) {
+            if(ActivityCompat.shouldShowRequestPermissionRationale(getActivity(), Manifest.permission.WRITE_EXTERNAL_STORAGE)) {
+                DialogHelper.info(getContext(), "Cannot save bitmap to media " +
+                        "folder without this permission. Please either grant this permission " +
+                        "or use \"Share Bitmap\" instead.");
+            } else {
+                ActivityCompat.requestPermissions(getActivity(),
+                        new String[]{
+                                Manifest.permission.WRITE_EXTERNAL_STORAGE
+                        }, FractviewActivity.SAVE_TO_MEDIA_PERMISSIONS);
+            }
+            return;
+        }
+
+        EnterFilenameDialogFragment fragment = EnterFilenameDialogFragment.newInstance();
+        fragment.show(getChildFragmentManager(), EnterFilenameDialogFragment.TAG);
+    }
+
+    public void saveBitmap(String filePrefix) {
+        SaveBitmapToMediaFragment fragment = SaveBitmapToMediaFragment.newInstance(filePrefix);
+        getChildFragmentManager().beginTransaction().add(fragment, SaveBitmapToMediaFragment.SAVE_FRAGMENT_TAG).commit();
     }
 
     public void shareBitmap() {
-        // FIXME
         ShareBitmapFragment fragment = ShareBitmapFragment.newInstance();
         getChildFragmentManager().beginTransaction().add(fragment, ShareBitmapFragment.SAVE_FRAGMENT_TAG).commit();
-//				fractalCalculator.registerFragmentAsChild(ShareBitmapFragment.newInstance(), SaveInBackgroundFragment.SAVE_FRAGMENT_TAG);
-//				return;
     }
 
     public boolean setBitmapSizeInKeyFractal(int width, int height) {
@@ -499,13 +516,15 @@ public class FractalProviderFragment extends Fragment {
     }
 
     public void removeSaveJob(SaveInBackgroundFragment.SaveJob job) {
-        // this is mainly for save-jobs.
+        // if someone cancels a wait-for-save dialog
         calculatorWrappers.get(provider.keyIndex()).removeSaveJob(job);
     }
 
     public void addSaveJob(SaveInBackgroundFragment.SaveJob job) {
         calculatorWrappers.get(provider.keyIndex()).addSaveJob(job);
     }
+
+    // ===== History
 
     public void onBackPressed() {
         // first, check whether any view currently does any editing.
@@ -530,21 +549,5 @@ public class FractalProviderFragment extends Fragment {
             DialogHelper.error(getContext(), "No further items in history");
         }
     }
-
-    public Bitmap getBitmap() {
-        return getBitmap(keyIndex());
-    }
-
-//	//FIXME Override in API 23
-//	@SuppressLint("Override")
-//	public void onRequestPermissionsResult(int requestCode,
-//										   @NotNull String permissions[], @NotNull int[] grantResults) {
-//		switch (requestCode) {
-//			case SAVE_TO_MEDIA_PERMISSIONS:
-//			case WALLPAPER_PERMISSIONS:
-//			default:
-//				throw new UnsupportedOperationException();
-//		}
-//	}
 
 }

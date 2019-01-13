@@ -21,24 +21,19 @@ import at.searles.fractview.R;
 import at.searles.fractview.main.FractalProviderFragment;
 import at.searles.fractview.ui.DialogHelper;
 import at.searles.fractview.utils.CharUtil;
-//import at.searles.utils.CharUtil;
 
 public class EnterFilenameDialogFragment extends DialogFragment {
 
-    private static final String BITMAP_FRAGMENT_TAG_KEY = "asdon";
+    public static final String TAG = "filename.tag";
     public static final String FILE_EXTENSION = ".png";
     
     private static final String RESERVED_CHARS = "|\\?*<\":>+[]/'";
 
-    public static EnterFilenameDialogFragment newInstance(String bitmapFragmentTag) {
+    public static EnterFilenameDialogFragment newInstance() {
         EnterFilenameDialogFragment fragment = new EnterFilenameDialogFragment();
-
         Bundle bundle = new Bundle();
 
-        bundle.putString(BITMAP_FRAGMENT_TAG_KEY, bitmapFragmentTag);
-
         fragment.setArguments(bundle);
-
         return fragment;
     }
 
@@ -54,13 +49,6 @@ public class EnterFilenameDialogFragment extends DialogFragment {
         @SuppressLint("InflateParams") View dialogView = inflater.inflate(R.layout.save_image_layout, null);
         builder.setView(dialogView);
 
-        builder.setNegativeButton("Cancel", new DialogInterface.OnClickListener() {
-            @Override
-            public void onClick(DialogInterface dialog, int which) {
-                dialog.dismiss();
-            }
-        });
-
         builder.setPositiveButton("Save", new DialogInterface.OnClickListener() {
             @Override
             public void onClick(DialogInterface dialog, int which) {
@@ -75,7 +63,6 @@ public class EnterFilenameDialogFragment extends DialogFragment {
 
         AlertDialog dialog = builder.create();
 
-        // XXX there must be a better way to get the positive button.
         dialog.show();
 
         initializeValidator(dialog);
@@ -140,7 +127,7 @@ public class EnterFilenameDialogFragment extends DialogFragment {
         messageTextView.setText(message);
     }
 
-    public static File getMediaDirectory() {
+    private static File getMediaDirectory() {
         return new File(
                 Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_PICTURES),
                 "Fractview");
@@ -149,7 +136,7 @@ public class EnterFilenameDialogFragment extends DialogFragment {
     private void saveToMedia(DialogInterface d) {
         // check "bookmark"-checkbox.
         EditText editText = ((AlertDialog) d).findViewById(R.id.filenameEditText);
-        CheckBox addToFavoritesCheckBox = (CheckBox) ((AlertDialog) d).findViewById(R.id.addToFavoritesCheckBox);
+        CheckBox addToFavoritesCheckBox = ((AlertDialog) d).findViewById(R.id.addToFavoritesCheckBox);
 
         String filenamePrefix = filenameWithoutExtension(editText.getText().toString());
 
@@ -157,8 +144,6 @@ public class EnterFilenameDialogFragment extends DialogFragment {
 
         if (addToFavorites) {
             ((FractalProviderFragment) getParentFragment()).addToFavorites(filenamePrefix);
-            // TODO
-            //((MainActivity) getActivity()).saveFavorite(filenamePrefix);
         }
 
         File directory = getMediaDirectory();
@@ -170,18 +155,18 @@ public class EnterFilenameDialogFragment extends DialogFragment {
             }
         }
 
-        File imageFile = new File(directory, filenamePrefix + FILE_EXTENSION);
+        File imageFile = getFile(filenamePrefix);
 
         while (imageFile.exists()) {
             filenamePrefix = CharUtil.nextIndex(filenamePrefix);
-            imageFile = new File(directory, filenamePrefix + FILE_EXTENSION);
+            imageFile = getFile(filenamePrefix);
         }
 
-        String bitmapFragmentTag = getArguments().getString(BITMAP_FRAGMENT_TAG_KEY);
+        ((FractalProviderFragment) getParentFragment()).saveBitmap(filenamePrefix);
+    }
 
-        // fixme
-//        FractalCalculator fractalCalculator = (FractalCalculator) getFragmentManager().findFragmentByTag(bitmapFragmentTag);
-//
-//        fractalCalculator.registerFragmentAsChild(SaveBitmapToMediaFragment.newInstance(filenamePrefix), SaveInBackgroundFragment.SAVE_FRAGMENT_TAG);
+    public static File getFile(String filenamePrefix) {
+        File directory = getMediaDirectory();
+        return new File(directory, filenamePrefix + EnterFilenameDialogFragment.FILE_EXTENSION);
     }
 }

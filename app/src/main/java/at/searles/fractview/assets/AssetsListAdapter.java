@@ -177,11 +177,13 @@ public class AssetsListAdapter extends RecyclerView.Adapter {
 
     void selectChildAt(int position) {
         String source = getGroupEntryAt(openGroupPosition).source(parent.getAssets());
-        Map<String, FractalData.Parameter> parameters = getChildEntryAt(position).data;
+        Map<String, Object> parameters = getChildEntryAt(position).data;
 
-        FractalData data = new FractalData(source, parameters);
+        FractalData.Builder builder = new FractalData.Builder().setSource(source);
 
-        parent.returnFractal(data);
+        parameters.forEach(builder::addParameter);
+
+        parent.returnFractal(builder.commit());
      }
 
     void showContextAt(int position) {

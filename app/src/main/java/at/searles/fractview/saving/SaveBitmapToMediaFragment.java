@@ -16,8 +16,8 @@ public class SaveBitmapToMediaFragment extends SaveInBackgroundFragment {
     private File imageFile;
     private IOException exception;
 
-    public static SaveInBackgroundFragment newInstance(String filenamePrefix) {
-        SaveInBackgroundFragment fragment = new SaveBitmapToMediaFragment();
+    public static SaveBitmapToMediaFragment newInstance(String filenamePrefix) {
+        SaveBitmapToMediaFragment fragment = new SaveBitmapToMediaFragment();
 
         Bundle args = new Bundle();
 
@@ -38,9 +38,7 @@ public class SaveBitmapToMediaFragment extends SaveInBackgroundFragment {
     @Override
     protected void prepareSaveInUIThread() {
         String filenamePrefix = getArguments().getString(FILENAME_PREFIX_KEY);
-        File directory = EnterFilenameDialogFragment.getMediaDirectory();
-
-        imageFile = new File(directory, filenamePrefix + EnterFilenameDialogFragment.FILE_EXTENSION);
+        imageFile = EnterFilenameDialogFragment.getFile(filenamePrefix);
     }
 
     @Override

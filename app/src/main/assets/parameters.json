@@ -32,7 +32,7 @@
   {
     "title": "Wikipedia-Mandelbrot-Set",
     "icon": "wiki.png",
-    "description": "Settings as they are used in Wikipedia"
+    "description": "Settings as they are used in Wikipedia",
     "data": {
       "bailoutvalue": {
         "type": "expr",
@@ -54,11 +54,11 @@
         "type": "palette",
         "value": [
           [
-            0xff000764,
-            0xff206bcb,
-            0xffedffff,
-            0xffffaa00,
-            0xff310231
+            "0xff000764",
+            "0xff206bcb",
+            "0xffedffff",
+            "0xffffaa00",
+            "0xff310231"
           ]
         ]
       }
@@ -432,29 +432,105 @@
       }
     }
   },
-  [
-    "SinhZ",
-    "sinhz.png",
-    "Mandelbrot Set using the Sine Hyperbolicus (non-polynomial formular)"
-    {
-      "data": "function"
-      : [
-      "expr", "")
-      "bailout": [
-      "real", 32)
-      "mandelinit":
-      [
-      "expr", "I")
-      ]
-      ,
+  {
+    "title": "CoshZ",
+    "icon": "coshz.png",
+    "description": "Mandelbrot Set using the Cosine Hyperbolicus (non-polynomial function)",
+    "data": {
+      "function": {
+        "type": "expr",
+        "value": "cosh z * p"
+      },
+      "mandelinit": {
+        "type": "expr",
+        "value": "0"
+      },
+      "bailout": {
+        "type": "real",
+        "value": "32"
+      }
+    }
+  },
       {
-      "title": "",
-      "icon": ".png",
-      "description": "",
+      "title": "Inverse Mandel^3",
+      "icon": "recipmandel3.png",
+      "description": "Fractal of z^-3 + p (lake only)",
+      "data": {
+      "Scale": {
+          "type": "scale",
+          "value": ["2", "0", "0", "2", "-1.5", "0"]
+      },
+      "function": {
+      "type": "expr",
+      "value": "z^-3 + p"
+      },
+      "mandelinit"
+      : {
+      "type": "expr",
+      "value": "c"
+      }
+      }
+      },
+      {
+      "title": "Duck Fractal",
+      "icon": "duck.png",
+      "description": "Fractal of a logarithmic function",
+      "data": {
+      "Scale": {
+          "type": "scale",
+          "value": ["2", "0", "0", "2", "-1.5", "0"]
+      },
+      "function": {
+      "type": "expr",
+      "value": "log(iabs z + p)"
+      },
+      "mandelinit"
+      : {
+      "type": "expr",
+      "value": "c"
+      }
+      }
+      },
+      {
+      "title": "Newton Set of Power 3",
+      "icon": "newton3.png",
+      "description": "Newton Set of z^3 + p",
       "data": {
       "function": {
       "type": "expr",
-      "value": ""
+      "value": "newton(z^3 + p, z)"
+      },
+      "mandelinit"
+      : {
+      "type": "expr",
+      "value": "c"
+      }
+      }
+      },
+      {
+      "title": "Newton Set of Power 4",
+      "icon": "newton4.png",
+      "description": "Newton of z^4 - 6 * z^2 - 2 p z + p",
+      "data": {
+      "function": {
+      "type": "expr",
+      "value": "newton(z^4 - 6 * z^2 - 2 p z + p, z)"
+      },
+      "mandelinit"
+      : {
+      "type": "expr",
+      "value": "-1"
+      }
+      }
+      },
+      {
+      "title": "Newton Set of Sine Hyperbolicus",
+      "icon": "newtonsinh.png",
+      "description": "Newton of sinh z + p",
+      "data": {
+      "function": {
+      "type": "expr",
+      "value": "newton(sinh z + p, z)"
       },
       "mandelinit"
       : {
@@ -463,27 +539,57 @@
       }
       }
       },
-    [
-      "CoshZ", "coshz.png", "Mandelbrot Set using the Cosine Hyperbolicus (non-polynomial formular)",
       {
-      "data": "function"
-      : [
-      "expr", "cosh z * p")
-      "bailout": [
-      "real", 32)
-      "mandelinit":
-      [
-      "expr", "0")
-      ]
-      ,
+      "title": "Nova Fractal of Power 3",
+      "icon": "nova3.png",
+      "description": "Variation of Newton Fractal",
+      "data": {
+      "function": {
+      "type": "expr",
+      "value": "newton(z^3 - 1, z) + p"
+      },
+      "mandelinit"
+      : {
+      "type": "expr",
+      "value": "1"
+      }
+      }
+      },
       {
-      "title": "",
-      "icon": ".png",
+      "title": "Generic Nova Fractal",
+      "icon": "nova34.png",
       "description": "",
       "data": {
       "function": {
       "type": "expr",
-      "value": ""
+      "value": "z - R (z^power - 1) / derive(z^4 - 1, z) + p"
+      },
+      "mandelinit"
+      : {
+      "type": "expr",
+      "value": "0"
+      },
+      "R"
+      : {
+      "type": "expr",
+      "value": "3"
+      },
+            "power"
+      : {
+      "type": "expr",
+      "value": "4"
+      }
+
+      }
+      },
+      {
+      "title": "Curvature Inequality",
+      "icon": "curvature.png",
+      "description": "Branching Addend",
+      "data": {
+      "addend": {
+      "type": "expr",
+      "value": "arcnorm((znext - z) / (z - zlast))"
       },
       "mandelinit"
       : {
@@ -492,210 +598,8 @@
       }
       }
       },
-    [
-      "Inverse Mandel", "recipmandel3.png", "Fractal of z^-3 + p (lake only)",
-      {
-      "data": "scale"
-      : [
-      "scale", new Scale(2, 0, 0, 2
-      , 0, -1.5))
-      "function": [
-      "expr", "z^-3 + p")
-      "mandelinit":
-      [
-      "expr", "c")
-      ]
-      ,
-      {
-      "title": "",
-      "icon": ".png",
-      "description": "",
-      "data": {
-      "function": {
-      "type": "expr",
-      "value": ""
-      },
-      "mandelinit"
-      : {
-      "type": "expr",
-      "value": "0"
-      }
-      }
-      },
-    [
-      "(Lake) Duck fractal", "duck.png", "Duck fractal (lake only)",
-      {
-      "data": "scale"
-      : [
-      "scale", new Scale(2, 0, 0, 2
-      , 0, -1.5))
-      "function": [
-      "expr", "log(iabs z + p)")
-      "mandelinit":
-      [
-      "expr", "c")
-      ]
-      ,
-      {
-      "title": "",
-      "icon": ".png",
-      "description": "",
-      "data": {
-      "function": {
-      "type": "expr",
-      "value": ""
-      },
-      "mandelinit"
-      : {
-      "type": "expr",
-      "value": "0"
-      }
-      }
-      },
-    [
-      "(Lake) Newton of z^3 + p", "newton3.png", "Newton Set (lake only)",
-      {
-      "data": "function"
-      : [
-      "expr", "newton(z^3 + p, z)")
-      "mandelinit":
-      [
-      "expr", "c")
-      ]
-      ,
-      {
-      "title": "",
-      "icon": ".png",
-      "description": "",
-      "data": {
-      "function": {
-      "type": "expr",
-      "value": ""
-      },
-      "mandelinit"
-      : {
-      "type": "expr",
-      "value": "0"
-      }
-      }
-      },
-    [
-      "(Lake) Newton of z^4 - 6 * z^2 - 2 p z + p", "newton4.png", "Newton Set for a more complex formular (lake only)",
-      {
-      "data": "function"
-      : [
-      "expr", "newton(z^4 - 6 * z^2 - 2 p z + p, z)")
-      "mandelinit":
-      [
-      "expr", "-1")
-      ]
-      ,
-      {
-      "title": "",
-      "icon": ".png",
-      "description": "",
-      "data": {
-      "function": {
-      "type": "expr",
-      "value": ""
-      },
-      "mandelinit"
-      : {
-      "type": "expr",
-      "value": "0"
-      }
-      }
-      },
-    [
-      "(Lake) Newton of sinh z + p", "newtonsinh.png", "Newton Set using the Sine Hyperbolicus (lake only)",
-      {
-      "data": "function"
-      : [
-      "expr", "newton(sinh z + p, z)")
-      "mandelinit":
-      [
-      "expr", "0")
-      ]
-      ,
-      {
-      "title": "",
-      "icon": ".png",
-      "description": "",
-      "data": {
-      "function": {
-      "type": "expr",
-      "value": ""
-      },
-      "mandelinit"
-      : {
-      "type": "expr",
-      "value": "0"
-      }
-      }
-      },
-    [
-      "(Lake) Nova of z^3 - 1", "nova3.png", "Nova fractal for power 3 (variation of the newton approximation, lake only)",
-      {
-      "data": "function"
-      : [
-      "expr", "newton(z^3 - 1, z) + p")
-      "mandelinit":
-      [
-      "expr", "1")
-      ]
-      ,
-      {
-      "title": "",
-      "icon": ".png",
-      "description": "",
-      "data": {
-      "function": {
-      "type": "expr",
-      "value": ""
-      },
-      "mandelinit"
-      : {
-      "type": "expr",
-      "value": "0"
-      }
-      }
-      },
-    [
-      "(Lake) Nova z - R (z^power - 1)/(4 * z^3) + p", "nova34.png", "Generic Nova Formular (lake only)",
-      {
-      "data": "function"
-      : [
-      "expr", "{ def R=3; def power=4; z - R (z^power - 1) / derive(z^4 - 1, z) + p }")
-      "mandelinit":
-      [
-      "expr", "{ def R=3; def power=4; (-(R power-R)/(R-power))^/power}")
-      ]
-      ,
-      {
-      "title": "",
-      "icon": ".png",
-      "description": "",
-      "data": {
-      "function": {
-      "type": "expr",
-      "value": ""
-      },
-      "mandelinit"
-      : {
-      "type": "expr",
-      "value": "0"
-      }
-      }
-      },
-    [
-      "Curvature Inequality", "curvature.png", "Branching Addend",
-      {
-      "data": "addend"
-      :
-      [
-      "expr", "arcnorm((znext - z) / (z - zlast))")
-      ]
-      ,
+
+// cursor
       {
       "title": "",
       "icon": ".png",
@@ -1275,6 +1179,9 @@
       "data": "trapfn": [
       "expr", "min(circle(0:0, 3, znext), circle(-2:0, 1, znext), circle(2:0, 1, znext), circle(-1:-1.73205, 1, znext), circle(-1:1.73205, 1, znext), circle(1:-1.73205, 1, znext), circle(1:1.73205, 1, znext))")
       ],
+      
+      
+      
       {
       "title": "Min/Max Neighbors",
       "icon": "minmaxneighbor.png",
@@ -1333,8 +1240,7 @@
       ,
       "icon": "zirkony.png",
       "description": "Part of Lyapunov fractal called Zirkony Zity",
-      "data"
-      : {
+      "data": {
       "Scale": {
       "type": "scale",
       "value"

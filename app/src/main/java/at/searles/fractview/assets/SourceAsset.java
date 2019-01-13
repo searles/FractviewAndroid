@@ -6,7 +6,6 @@ import android.graphics.Bitmap;
 import com.google.gson.annotations.SerializedName;
 
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 
 import at.searles.fractal.ParserInstance;
@@ -70,9 +69,9 @@ class SourceAsset {
     Map<String, ParameterType> parameterTypes(AssetManager am) {
         if(parameterTypes == null) {
             Ast ast = ast(am);
-            List<ExternDeclaration> externDeclarations = ast.traverseExternData();
+            Map<String, ExternDeclaration> externDecls = ast.collectExternDecls();
             parameterTypes = new HashMap<>();
-            externDeclarations.forEach(e -> parameterTypes.put(e.id, ParameterType.fromString(e.externTypeString)));
+            externDecls.values().forEach(e -> parameterTypes.put(e.id, ParameterType.fromString(e.externTypeString)));
         }
 
         return parameterTypes;

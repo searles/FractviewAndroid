@@ -3,6 +3,7 @@ package at.searles.fractview.main;
 import android.app.Activity;
 import android.app.FragmentManager;
 import android.content.Intent;
+import android.content.pm.PackageManager;
 import android.os.Bundle;
 import android.support.annotation.NonNull;
 import android.support.design.widget.NavigationView;
@@ -11,6 +12,8 @@ import android.util.Log;
 import android.view.MenuItem;
 import android.view.WindowManager;
 import android.widget.ListView;
+
+import org.jetbrains.annotations.NotNull;
 
 import at.searles.fractal.Fractal;
 import at.searles.fractal.data.FractalData;
@@ -33,6 +36,10 @@ public class FractviewActivity extends Activity {
 
 	private static final int FRACTAL_RETURN = 213;
 	private static final int SOURCE_ACTIVITY_RETURN = 631;
+
+    public static final int WALLPAPER_PERMISSIONS = 352349;
+	public static final int SAVE_TO_MEDIA_PERMISSIONS = 265324;
+
 	private ParameterAdapter adapter;
 	private FractalProviderFragment fractalProviderFragment;
 
@@ -189,32 +196,30 @@ public class FractviewActivity extends Activity {
 		// TODO
 	}
 
-//	//FIXME Override in API 23
-//	@SuppressLint("Override")
-//	public void onRequestPermissionsResult(int requestCode,
-//										   @NotNull String permissions[], @NotNull int[] grantResults) {
-//		switch (requestCode) {
-//			case SAVE_TO_MEDIA_PERMISSIONS:
-//				if(grantResults[0] != PackageManager.PERMISSION_GRANTED || grantResults[1] != PackageManager.PERMISSION_GRANTED) {
-//					DialogHelper.error(this, "No permission to write to external storage");
-//					return;
-//				}
-//
-//				// try again...
-//				onShareModeResult(ShareModeDialogFragment.Result.Save);
-//				return;
-//			case WALLPAPER_PERMISSIONS:
-//				if(grantResults[0] != PackageManager.PERMISSION_GRANTED) {
-//					DialogHelper.error(this, "No permission to set wallpaper");
-//					return;
-//				}
-//
-//				onShareModeResult(ShareModeDialogFragment.Result.Wallpaper);
-//				return;
-//			default:
-//				throw new UnsupportedOperationException();
-//		}
-//	}
+	@Override
+	public void onRequestPermissionsResult(int requestCode,
+										   @NotNull String permissions[], @NotNull int[] grantResults) {
+		switch (requestCode) {
+			case SAVE_TO_MEDIA_PERMISSIONS:
+				if(grantResults[0] != PackageManager.PERMISSION_GRANTED || grantResults[1] != PackageManager.PERMISSION_GRANTED) {
+					return;
+				}
+
+				// try again...
+				fractalProviderFragment.showSaveBitmapDialog();
+				return;
+			case WALLPAPER_PERMISSIONS:
+				if(grantResults[0] != PackageManager.PERMISSION_GRANTED) {
+					return;
+				}
+
+				// try again
+				fractalProviderFragment.setBitmapAsWallpaper();
+				return;
+			default:
+				throw new UnsupportedOperationException();
+		}
+	}
 //
 //	// ===================================================================
 //
@@ -261,21 +266,6 @@ public class FractviewActivity extends Activity {
 //                }).create().show();
 //	}
 //
-//	public void saveFavorite(String name) {
-//		if(name.isEmpty()) {
-//			Toast.makeText(MainActivity.this, "ERROR: Name must not be empty", Toast.LENGTH_LONG).show();
-//			return;
-//		}
-//
-//		Fractal fractal = fractalFragment.fractal();
-//
-//		// create icon out of bitmap
-//		Bitmap icon = Commons.createIcon(fractalCalculator.bitmap(), FAVORITES_ICON_SIZE);
-//
-//		FavoriteEntry fav = new FavoriteEntry(icon, fractal, Commons.fancyTimestamp());
-//
-//		SharedPrefsHelper.storeInSharedPreferences(this, name, fav, FavoritesActivity.FAVORITES_SHARED_PREF);
-//	}
 //
 //
 //

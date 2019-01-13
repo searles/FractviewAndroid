@@ -7,8 +7,6 @@ import com.google.gson.annotations.SerializedName;
 
 import java.util.Map;
 
-import at.searles.fractal.data.FractalData;
-
 /**
  * Deserialization of data via FractalDataAdapter.deserializeParameters!
  */
@@ -20,13 +18,13 @@ public class ParameterAsset {
     @SerializedName("icon")
     public String iconFilename;
     @SerializedName("data")
-    public Map<String, FractalData.Parameter> data;
+    public Map<String, Object> data;
 
     private transient Bitmap icon;
 
     ParameterAsset() {}
 
-    ParameterAsset(String title, String description, Map<String, FractalData.Parameter> data) {
+    ParameterAsset(String title, String description, Map<String, Object> data) {
         this.title = title;
         this.description = description;
         this.data = data;

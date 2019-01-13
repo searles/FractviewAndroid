@@ -9,7 +9,6 @@ import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
-import java.util.Collections;
 import java.util.stream.Collectors;
 
 import at.searles.fractal.data.FractalData;
@@ -26,7 +25,7 @@ public class AssetsHelper {
             BufferedReader br = new BufferedReader(new InputStreamReader(is));
 
             String source = br.lines().collect(Collectors.joining("\n"));
-            return new FractalData(source, Collections.emptyMap());
+            return new FractalData.Builder().setSource(source).commit();
         } catch (IOException e) {
             throw new IllegalArgumentException(e);
         }
