@@ -30,63 +30,80 @@ public class AssetsListAdapter extends RecyclerView.Adapter {
     private static final int SOURCE_TYPE = 0;
     private static final int PARAMETER_TYPE = 1;
 
-    private static final String SOURCE_ENTRY_FILE = "sources.json";
-    private static final String PARAMETERS_ENTRY_FILE = "parameters.json";
+    private static final String SOURCE_ENTRIES_FILE = "sources.json";
+    private static final String PARAMETER_ENTRIES_FILE = "parameters.json";
 
     private SelectAssetActivity parent;
 
     /**
      * All sources that are defined in assets
      */
-    private SourceAsset[] sourceEntries;
+    private List<SourceAsset> sourceEntries;
 
     /**
      * All parameters that are defined in assets.
      */
-    private ParameterAsset[] parameterAssets;
+    private List<ParameterAsset> parameterEntries;
 
-    private ArrayList<SourceAsset> groups;
+    private List<SourceAsset> groups;
     private Map<String, List<ParameterAsset>> groupCache; // key is group filename
     private int openGroupPosition;
     private List<ParameterAsset> openGroup;
 
     AssetsListAdapter(SelectAssetActivity parent, FractalData current) {
         this.parent = parent;
-        initAssets();
+        initAssets(current);
 
         // TODO do sth with current.
     }
 
-    private void initSourceEntries() {
+    private void initSourceEntries(FractalData current) {
         if(sourceEntries == null) {
             // load from json
             Gson gson = new Gson();
 
-            try(JsonReader reader = new JsonReader(new InputStreamReader(parent.getAssets().open(SOURCE_ENTRY_FILE)))) {
-                sourceEntries = gson.fromJson(reader, SourceAsset[].class); // contains the whole reviews list
+            try(JsonReader reader = new JsonReader(new InputStreamReader(parent.getAssets().open(SOURCE_ENTRIES_FILE)))) {
+                SourceAsset[] storedAssets = gson.fromJson(reader, SourceAsset[].class); // contains the whole reviews list
+                sourceEntries = new ArrayList<>(storedAssets.length + 1);
+                sourceEntries.add(new SourceAsset("Current", "Current", current.source())); // TODO: Text!
+                sourceEntries.addAll(Arrays.asList(storedAssets));
             } catch (IOException e) {
                 e.printStackTrace();
             }
         }
     }
 
-    private void initParameterEntries() {
-        // TODO read json
+    private void initParameterEntries(FractalData current) {
+        if(parameterEntries == null) {
+            Gson gson = new Gson();
+
+            try(JsonReader reader = new JsonReader(new InputStreamReader(parent.getAssets().open(PARAMETER_ENTRIES_FILE)))) {
+                ParameterAsset[] storedAssets = gson.fromJson(reader, ParameterAsset[].class); // contains the whole reviews list
+
+                parameterEntries = new ArrayList<>(storedAssets.length + 2);
+
+                parameterEntries.add(new ParameterAsset("Default", "Default values in source code", Collections.emptyMap()));
+
+                Map<String, Object> currentMap = new HashMap<>();
+                current.forEachParameter(currentMap::put);
+
+                parameterEntries.add(new ParameterAsset("Current", "Values of the current drawing", currentMap));
+                parameterEntries.addAll(Arrays.asList(storedAssets));
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        }
     }
 
-    private void initAssets() {
+    private void initAssets(FractalData current) {
         // read json data
-        initSourceEntries();
-        initParameterEntries();
+        initSourceEntries(current);
+        initParameterEntries(current);
 
-        // First, add current, then add assets
-        groups = new ArrayList<>();
+        groups = sourceEntries;
+
         groupCache = new HashMap<>();
         openGroupPosition = -1;
-
-        groups.add(new SourceAsset("Current", "Current value", "TODO")); // todo current source
-
-        groups.addAll(Arrays.asList(sourceEntries));
     }
 
     @Override
@@ -177,7 +194,9 @@ public class AssetsListAdapter extends RecyclerView.Adapter {
 
     void selectChildAt(int position) {
         String source = getGroupEntryAt(openGroupPosition).source(parent.getAssets());
-        Map<String, Object> parameters = getChildEntryAt(position).data;
+        ParameterAsset childEntry = getChildEntryAt(position);
+        assert childEntry != null;
+        Map<String, Object> parameters = childEntry.data;
 
         FractalData.Builder builder = new FractalData.Builder().setSource(source);
 
@@ -188,15 +207,31 @@ public class AssetsListAdapter extends RecyclerView.Adapter {
 
     void showContextAt(int position) {
         // TODO Long click on child
+
     }
 
     private List<ParameterAsset> fetchParametersForParent(SourceAsset parent) {
         // fetch fresh.
         List<ParameterAsset> list = new ArrayList<>();
 
-        list.add(new ParameterAsset("Default", "Default values of this source", Collections.emptyMap()));
+        for(ParameterAsset entry : parameterEntries) {
+            // check whether all contain bla.
+            FractalData.Builder builder = new FractalData.Builder().setSource(parent.source(this.parent.getAssets()));
 
-        // FIXME add others
+            boolean match = true;
+
+            for(Map.Entry<String, Object> param : entry.data.entrySet()) {
+                if(!builder.addParameter(param.getKey(), param.getValue())) {
+                    match = false;
+                    break;
+                }
+            }
+
+            if (match) {
+                // TODO cache fractal data?
+                list.add(entry);
+            }
+        }
 
         return list;
     }
@@ -204,7 +239,7 @@ public class AssetsListAdapter extends RecyclerView.Adapter {
     /**
      * returns null if it does not exist
      */
-    ParameterAsset getChildEntryAt(int position) {
+    private ParameterAsset getChildEntryAt(int position) {
         if(openGroupPosition == -1) {
             return null;
         }
@@ -221,7 +256,7 @@ public class AssetsListAdapter extends RecyclerView.Adapter {
     /**
      * returns null if it does not exist
      */
-    SourceAsset getGroupEntryAt(int position) {
+    private SourceAsset getGroupEntryAt(int position) {
         if(openGroupPosition == -1 || position <= openGroupPosition) {
             return groups.get(position);
         }

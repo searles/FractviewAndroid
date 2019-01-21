@@ -17,8 +17,6 @@ import org.jetbrains.annotations.NotNull;
 
 import at.searles.fractal.Fractal;
 import at.searles.fractal.data.FractalData;
-import at.searles.fractal.gson.Serializers;
-import at.searles.fractview.ClipboardHelper;
 import at.searles.fractview.R;
 import at.searles.fractview.SourceEditorActivity;
 import at.searles.fractview.assets.SelectAssetActivity;
@@ -27,7 +25,6 @@ import at.searles.fractview.fractal.BundleAdapter;
 import at.searles.fractview.parameters.ParameterAdapter;
 import at.searles.fractview.parameters.ParameterLongSelectListener;
 import at.searles.fractview.parameters.ParameterSelectListener;
-import at.searles.fractview.ui.DialogHelper;
 import at.searles.tutorial.TutorialActivity;
 
 
@@ -155,79 +152,26 @@ public class FractviewActivity extends Activity {
 			case R.id.action_size:
 				fractalProviderFragment.showChangeSizeDialog();
 				return;
-			case R.id.action_copy_to_clipboard:
-				FractalData data = fractalProviderFragment.getKeyFractal();
-				String serialized = Serializers.serializer().toJson(data);
-				ClipboardHelper.copy(this, serialized);
-				return;
-			case R.id.action_paste_from_clipboard:
-				CharSequence pasted = ClipboardHelper.paste(this);
-
-				if(pasted == null) {
-					DialogHelper.error(this, "Clipboard is empty");
-					return;
-				}
-
-				FractalData pastedData = Serializers.serializer().fromJson(pasted.toString(), FractalData.class);
-
-				if(pastedData == null) {
-					DialogHelper.error(this, "Clipboard does not contain a fractal");
-					return;
-				}
-
-				fractalProviderFragment.setKeyFractal(pastedData);
-				return;
  			case R.id.action_gui_settings:
-				// FIXME replace by swipe-in
-				// openUiSettingsDialog();
+				openUiSettingsDialog();
 				return;
             default:
             	throw new IllegalArgumentException("option not implemented");
         }
     }
 
-	@Override
-	public void onBackPressed() {
-		// send it to the provider
-		fractalProviderFragment.onBackPressed();
-	}
+	private void openUiSettingsDialog() {
 
-	public void setRemoveViewEnabled(boolean enabled) {
-		// TODO
-	}
+		// UI Settings:
+		// [x] Show Grid
+		// [x] Activate On-Screen Scaling
+		//   [x] Confirm Zoom with Tab
+		//   [x] Lock Rotation
+		//   [x] Lock Center
+		// --------------------
+		// [x] Apply to all views
+		final CharSequence[] items = {"Show Grid","Rotation Lock", "Confirm Zoom with Tab", "Deactivate Zoom"};
 
-	@Override
-	public void onRequestPermissionsResult(int requestCode,
-										   @NotNull String permissions[], @NotNull int[] grantResults) {
-		switch (requestCode) {
-			case SAVE_TO_MEDIA_PERMISSIONS:
-				if(grantResults[0] != PackageManager.PERMISSION_GRANTED || grantResults[1] != PackageManager.PERMISSION_GRANTED) {
-					return;
-				}
-
-				// try again...
-				fractalProviderFragment.showSaveBitmapDialog();
-				return;
-			case WALLPAPER_PERMISSIONS:
-				if(grantResults[0] != PackageManager.PERMISSION_GRANTED) {
-					return;
-				}
-
-				// try again
-				fractalProviderFragment.setBitmapAsWallpaper();
-				return;
-			default:
-				throw new UnsupportedOperationException();
-		}
-	}
-//
-//	// ===================================================================
-//
-//	private void openUiSettingsDialog() {
-//		// FIXME put into swipe in list.
-//		// show alert dialog with two checkboxes
-//		final CharSequence[] items = {"Show Grid","Rotation Lock", "Confirm Zoom with Tab", "Deactivate Zoom"};
-//
 //		new AlertDialog.Builder(this)
 //                .setCancelable(true)
 //                .setMultiChoiceItems(items,
@@ -264,16 +208,49 @@ public class FractviewActivity extends Activity {
 //                    @Override
 //                    public void onClick(DialogInterface dialog, int id) {}
 //                }).create().show();
-//	}
-//
-//
-//
-//
+	}
+
+	@Override
+	public void onBackPressed() {
+		// send it to the provider
+		fractalProviderFragment.onBackPressed();
+	}
+
+	public void setRemoveViewEnabled(boolean enabled) {
+		// TODO
+	}
+
+	@Override
+	public void onRequestPermissionsResult(int requestCode,
+										   @NotNull String permissions[], @NotNull int[] grantResults) {
+		switch (requestCode) {
+			case SAVE_TO_MEDIA_PERMISSIONS:
+				if(grantResults[0] != PackageManager.PERMISSION_GRANTED || grantResults[1] != PackageManager.PERMISSION_GRANTED) {
+					return;
+				}
+
+				// try again...
+				fractalProviderFragment.showSaveBitmapDialog();
+				return;
+			case WALLPAPER_PERMISSIONS:
+				if(grantResults[0] != PackageManager.PERMISSION_GRANTED) {
+					return;
+				}
+
+				// try again
+				fractalProviderFragment.setBitmapAsWallpaper();
+				return;
+			default:
+				throw new UnsupportedOperationException();
+		}
+	}
+
+	// ===================================================================
+
+
 ////	// =======================================================================
 ////	// ============= Some History ... ========================================
 ////	// =======================================================================
-//
-//
 //
 //	public static Point screenDimensions(Context context) {
 //		// FIXME put into commons.

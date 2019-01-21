@@ -33,14 +33,6 @@
           android:title="@string/action_share"
           android:icon="@android:drawable/ic_menu_share"
         />
-    <item android:id="@+id/action_copy_to_clipboard"
-          android:title="@string/action_copy_to_clipboard"
-          android:icon="@drawable/ic_content_copy_white_24dp"
-        />
-    <item android:id="@+id/action_paste_from_clipboard"
-          android:title="@string/action_paste_from_clipboard"
-          android:icon="@drawable/ic_content_paste_white_24dp"
-        />
     <item android:id="@+id/action_size"
           android:title="@string/action_size"
           android:icon="@drawable/ic_photo_size_select_large_white_24dp"

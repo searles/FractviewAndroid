@@ -76,12 +76,13 @@ public class FractalProviderFragment extends Fragment {
     private static final int HEIGHT = 1080;
 
     private FractalProvider provider;
+    private List<InteractivePoint> interactivePoints;
+
     private Queue<FractalData> fractalDataQueue;
 
     private List<CalculatorWrapper> calculatorWrappers;
     private List<RadioButton> selectorButtons;
 
-    private List<InteractivePoint> interactivePoints;
     private LinearLayout containerView;
 
     public FractalProviderFragment() {
@@ -97,14 +98,19 @@ public class FractalProviderFragment extends Fragment {
         setRetainInstance(true);
 
         this.provider = new FractalProvider();
-
         this.provider.addExclusiveParameter(Fractal.SCALE_LABEL);
-
         this.provider.addListener(src -> updateInteractivePoints());
 
         FractalData defaultFractal = AssetsHelper.defaultFractal(getActivity());
 
         lazyAppendFractal(defaultFractal);
+    }
+
+    @Override
+    public void onDestroy() {
+        super.onDestroy();
+
+        // todo save state of provider and interactive points.
     }
 
     public void addFractalFromKey(String exclusiveParameterId, Object newValue) {
@@ -150,6 +156,7 @@ public class FractalProviderFragment extends Fragment {
 
     public void removeFractalFromKey() {
         if(fractalCount() <= 1) {
+            // fixme allow this but add new mb instantly
             throw new IllegalArgumentException("cannot remove it there are no fractals left");
         }
 
@@ -359,7 +366,6 @@ public class FractalProviderFragment extends Fragment {
 
     private void updateInteractivePoints() {
         interactivePoints.removeIf(pt -> !pt.update());
-
         calculatorWrappers.forEach(CalculatorWrapper::updateInteractivePointsInView);
     }
 
@@ -396,23 +402,6 @@ public class FractalProviderFragment extends Fragment {
         return provider.getFractal(owner).source();
     }
 
-    public void showAddToFavoritesDialog() {
-        AddFavoritesDialogFragment fragment = AddFavoritesDialogFragment.newInstance(provider.keyIndex());
-        fragment.show(getChildFragmentManager(), ADD_FRAGMENT_TAG);
-    }
-
-    public void addToFavorites(String name) {
-        FractalData fractal = getFractal(provider.keyIndex()).data();
-        Bitmap icon = Commons.createIcon(getBitmap(provider.keyIndex()), FAVORITES_ICON_SIZE);
-
-        // create icon out of bitmap
-        byte[] iconData = Commons.toPNG(icon);
-
-        FavoriteEntry fav = new FavoriteEntry(iconData, fractal, Commons.fancyTimestamp());
-
-        SharedPrefsHelper.putWithUniqueKey(getContext(), name, fav, FavoritesAccessor.FAVORITES_SHARED_PREF);
-    }
-
     public FractalData getKeyFractal() {
         return provider.getFractal(0).data();
     }
@@ -438,11 +427,16 @@ public class FractalProviderFragment extends Fragment {
     }
 
     public boolean parameterExists(String id, int owner) {
+        if(owner >= fractalCount()) {
+            return false;
+        }
+
         if(owner != -1) {
             return provider.getFractal(owner).getParameter(id) != null;
-        } else {
-            return provider.getParameterValue(id, owner) != null;
         }
+
+        // this will use the parameter table
+        return provider.getParameterValue(id, owner) != null;
     }
 
     public void showChangeSizeDialog() {
@@ -450,6 +444,23 @@ public class FractalProviderFragment extends Fragment {
 
 		ImageSizeDialogFragment fragment = ImageSizeDialogFragment.newInstance(bitmap.getWidth(), bitmap.getHeight());
 		fragment.show(getChildFragmentManager(), ImageSizeDialogFragment.TAG);
+    }
+
+    public void showAddToFavoritesDialog() {
+        AddFavoritesDialogFragment fragment = AddFavoritesDialogFragment.newInstance(provider.keyIndex());
+        fragment.show(getChildFragmentManager(), ADD_FRAGMENT_TAG);
+    }
+
+    public void addToFavorites(String name) {
+        FractalData fractal = getFractal(provider.keyIndex()).data();
+        Bitmap icon = Commons.createIcon(getBitmap(provider.keyIndex()), FAVORITES_ICON_SIZE);
+
+        // create icon out of bitmap
+        byte[] iconData = Commons.toPNG(icon);
+
+        FavoriteEntry fav = new FavoriteEntry(iconData, fractal, Commons.fancyTimestamp());
+
+        SharedPrefsHelper.putWithUniqueKey(getContext(), name, fav, FavoritesAccessor.FAVORITES_SHARED_PREF);
     }
 
     // ===== Save bitmap =====

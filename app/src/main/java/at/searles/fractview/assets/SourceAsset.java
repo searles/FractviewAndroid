@@ -8,6 +8,7 @@ import com.google.gson.annotations.SerializedName;
 import java.util.HashMap;
 import java.util.Map;
 
+import at.searles.fractal.Fractal;
 import at.searles.fractal.ParserInstance;
 import at.searles.fractal.data.ParameterType;
 import at.searles.meelan.compiler.Ast;
@@ -72,6 +73,7 @@ class SourceAsset {
             Map<String, ExternDeclaration> externDecls = ast.collectExternDecls();
             parameterTypes = new HashMap<>();
             externDecls.values().forEach(e -> parameterTypes.put(e.id, ParameterType.fromString(e.externTypeString)));
+            parameterTypes.put(Fractal.SCALE_LABEL, ParameterType.Scale);
         }
 
         return parameterTypes;
