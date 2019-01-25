@@ -31,9 +31,7 @@ public enum Actions implements ParameterLongSelectListener.Action {
         @Override
         public void apply(FractalProviderFragment provider, FractalProvider.ParameterEntry item) {
             Scale scale = (Scale) item.parameter.value;
-            double s = Math.sqrt(Math.abs(scale.xx * scale.yy - scale.xy * scale.yx));
-            Scale newScale = new Scale(s, 0, 0, s, scale.cx, scale.cy);
-            provider.setParameterValue(item.id, item.owner, newScale);
+            provider.setParameterValue(item.id, item.owner, scale.createOrthogonal());
         }
 
         @Override

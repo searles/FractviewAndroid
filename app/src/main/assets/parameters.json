@@ -6,6 +6,9 @@
     "data": {
       "function": "mandelbrot(z, p)",
       "mandelinit": "0"
+    },
+    "optional": {
+      "max_power": "2"
     }
   },
   {
@@ -15,10 +18,13 @@
     "data": {
       "function": "mandelbrot(abs z, p)",
       "mandelinit": "0"
+    },
+    "optional": {
+      "max_power": "2"
     }
   },
   {
-    "title": "Wikipedia-Mandelbrot-Set",
+    "title": "Wikipedia-Settings",
     "icon": "wiki.png",
     "description": "Settings as they are used in Wikipedia",
     "data": {
@@ -44,6 +50,9 @@
     "data": {
       "function": "rabs sqr z + p",
       "mandelinit": "0"
+    },
+    "optional": {
+      "max_power": "2"
     }
   },
   {
@@ -53,6 +62,9 @@
     "data": {
       "function": "mandelbrot(conj z, p)",
       "mandelinit": "0"
+    },
+    "optional": {
+      "max_power": "2"
     }
   },
   {
@@ -62,6 +74,9 @@
     "data": {
       "function": "abs sqr z + p",
       "mandelinit": "0"
+    },
+    "optional": {
+      "max_power": "2"
     }
   },
   {
@@ -71,6 +86,9 @@
     "data": {
       "function": "mandelbrot(conj rabs z, p)",
       "mandelinit": "0"
+    },
+    "optional": {
+      "max_power": "2"
     }
   },
   {
@@ -80,6 +98,9 @@
     "data": {
       "function": "mandelbrot(iabs z, p)",
       "mandelinit": "0"
+    },
+    "optional": {
+      "max_power": "2"
     }
   },
   {
@@ -89,6 +110,9 @@
     "data": {
       "function": "conj rabs sqr z + p",
       "mandelinit": "0"
+    },
+    "optional": {
+      "max_power": "2"
     }
   },
   {
@@ -98,6 +122,9 @@
     "data": {
       "function": "rabs sqr iabs z + p",
       "mandelinit": "0"
+    },
+    "optional": {
+      "max_power": "2"
     }
   },
   {
@@ -106,8 +133,10 @@
     "description": "Mandelbrot Set to the power of 3",
     "data": {
       "function": "z^3 + p",
-      "max_power": "3",
       "mandelinit": "0"
+    },
+    "optional": {
+      "max_power": "3"
     }
   },
   {
@@ -116,8 +145,10 @@
     "description": "Mandelbrot Set to the power of 4",
     "data": {
       "function": "z^4 + p",
-      "max_power": "4",
       "mandelinit": "0"
+    },
+    "optional": {
+      "max_power": "4"
     }
   },
   {
@@ -127,6 +158,9 @@
     "data": {
       "function": "p (1 - z) z",
       "mandelinit": "0.5"
+    },
+    "optional": {
+      "max_power": "2"
     }
   },
   {
@@ -135,8 +169,10 @@
     "description": "Lambda Fractal with parameterized maximum power",
     "data": {
       "function": "p (1 - z^(max_power - 1)) z",
-      "max_power": "4",
       "mandelinit": "/max_power ^ /(max_power - 1)"
+    },
+    "optional": {
+      "max_power": "3"
     }
   },
   {
@@ -145,8 +181,10 @@
     "description": "Simonbrot Fractal, a combination of Mandelbrot and Burning Ship",
     "data": {
       "function": "sqr z abs z + p",
-      "max_power": "4",
       "mandelinit": "0"
+    },
+    "optional": {
+      "max_power": "4"
     }
   },
   {
@@ -155,8 +193,10 @@
     "description": "Simonbrot with abs/sqr exchanged",
     "data": {
       "function": "{ var t = sqr z; t * abs t } + p",
-      "max_power": "4",
       "mandelinit": "0"
+    },
+    "optional": {
+      "max_power": "4"
     }
   },
   {
@@ -168,6 +208,9 @@
       "mandelinit": "c",
       "juliaset": "true",
       "juliapoint": "0.5666:-0.5"
+    },
+    "optional": {
+      "max_power": "2"
     }
   },
   {
@@ -176,12 +219,14 @@
     "description": "Special formula by Mark R Eggleston",
     "data": {
       "function": "p (alpha * z^beta + gamma * z^delta)",
-      "mandelinit": "(-gamma delta / alpha beta)^/(beta - delta)",
-      "max_power": "3",
+      "mandelinit": "(-gamma delta / alpha beta)^/(beta - delta)"
+    },
+    "optional": {
       "alpha": "1",
       "beta": "3",
       "gamma": "1",
-      "delta": "-1"
+      "delta": "-1",
+      "max_power": "beta"
     }
   },
   {
@@ -191,9 +236,11 @@
     "data": {
       "function": "z ^ 1.75 + p",
       "mandelinit": "0",
-      "max_power": "1.75",
       "juliaset": "true",
       "juliapoint": "-0.4"
+    },
+    "optional": {
+      "max_power": "1.75"
     }
   },
   {
@@ -203,6 +250,9 @@
     "data": {
       "function": "sqr((sqr z + p - 1) / (2 z + p - 2))",
       "mandelinit": "0"
+    },
+    "optional": {
+      "max_power": "2"
     }
   },
   {
@@ -211,7 +261,9 @@
     "description": "Magnet 2 Fractal",
     "data": {
       "function": "sqr((z^3 + 3(p - 1)z + (p - 1)(p - 2)) / (3 sqr z + 3(p - 2)z + (p - 1)(p - 2) + 1))",
-      "mandelinit": "0",
+      "mandelinit": "0"
+    },
+    "optional": {
       "max_power": "4"
     }
   },
@@ -222,6 +274,9 @@
     "data": {
       "function": "sqr newton(z^3 + p, z) + p",
       "mandelinit": "c"
+    },
+    "optional": {
+      "max_power": "4"
     }
   },
   {
@@ -244,7 +299,7 @@
       "bailout": "32"
     }
   },
-      {
+  {
       "title": "Inverse Mandel^3",
       "icon": "recipmandel3.png",
       "description": "Fractal of z^-3 + p (lake only)",
@@ -252,6 +307,9 @@
       "Scale": ["2", "0", "0", "2", "-1.5", "0"],
       "function": "z^-3 + p",
       "mandelinit": "c"
+      },
+      "optional": {
+        "lake_only": "true"
       }
       },
       {
@@ -262,6 +320,9 @@
       "Scale": ["2", "0", "0", "2", "-1.5", "0"],
       "function": "log(iabs z + p)",
       "mandelinit": "c"
+      },
+      "optional": {
+        "lake_only": "true"
       }
       },
       {
@@ -271,6 +332,9 @@
       "data": {
       "function": "newton(z^3 + p, z)",
       "mandelinit": "c"
+      },
+      "optional": {
+        "lake_only": "true"
       }
       },
       {
@@ -280,6 +344,9 @@
       "data": {
       "function": "newton(z^4 - 6 * z^2 - 2 p z + p, z)",
       "mandelinit": "-1"
+      },
+      "optional": {
+        "lake_only": "true"
       }
       },
       {
@@ -289,6 +356,9 @@
       "data": {
       "function": "newton(sinh z + p, z)",
       "mandelinit": "0"
+      },
+      "optional": {
+        "lake_only": "true"
       }
       },
       {
@@ -298,6 +368,9 @@
       "data": {
       "function": "newton(z^3 - 1, z) + p",
       "mandelinit": "1"
+      },
+      "optional": {
+        "lake_only": "true"
       }
       },
       {
@@ -306,10 +379,12 @@
       "description": "",
       "data": {
       "function": "z - R (z^power - 1) / derive(z^4 - 1, z) + p",
-      "mandelinit": "0",
+      "mandelinit": "0"},
+    "optional": {
       "R": "3",
-      "power": "4"
-      }
+      "power": "4",
+        "lake_only": "true"
+    }
       },
       {
       "title": "Curvature Inequality",
@@ -332,20 +407,24 @@
           "icon": "gaussianintmin.png",
           "description": "Minimum distance to a gaussian integer (fold)",
           "data": {
-              "foldfn": "min(dist(znext, floor(znext + 0.5:0.5)), foldvalue)",
-              "bailoutvalue": "foldvalue.x",
-              "lakevalue": "foldvalue.x"
-          }
+              "foldfn": "min(dist(znext, floor(znext + 0.5:0.5)), foldvalue)"
+          },
+            "optional": {
+                      "bailoutvalue": "foldvalue.x",
+                      "lakevalue": "foldvalue.x"
+            }
       },
       {
           "title": "Gaussian Integer Max",
           "icon": "gaussianintmax.png",
           "description": "Maximum distance to a gaussian integer (fold)",
           "data": {
-              "foldfn": "max(dist(znext, floor(znext + 0.5:0.5)), foldvalue)",
-              "bailoutvalue": "foldvalue.x",
-              "lakevalue": "foldvalue.x"
-          }
+              "foldfn": "max(dist(znext, floor(znext + 0.5:0.5)), foldvalue)"
+          },
+            "optional": {
+                      "bailoutvalue": "foldvalue.x",
+                      "lakevalue": "foldvalue.x"
+            }
       },
       {
           "title": "Gaussian Integer Mixed",
@@ -358,10 +437,12 @@
           }
       },
       {
-          "title": "Distance Estimation (Mandelbrot",
+          "title": "Distance Estimation (Mandelbrot)",
           "icon": "distance_estimation.png",
           "description": "Distance estimation for the mandelbrot set (fold)",
           "data": {
+              "function": "mandelbrot(z, p)",
+              "mandelinit": "0",
               "foldfn": "2 znext foldvalue + 1",
               "bailoutvalue": "rad znext / rad foldvalue / 2 * log rad znext"
           }
@@ -371,17 +452,21 @@
           "icon": "expsmooth.png",
           "description": "Exponential Smoothing for bailout and lake (fold)",
           "data": {
-              "foldfn": "/cosh(rad znext + /dist(znext, z)) + foldvalue",
+              "foldfn": "/cosh(rad znext + /dist(znext, z)) + foldvalue"
+          },
+          "optional": {
               "bailoutvalue": "log(E^2 + foldvalue.x)",
               "lakevalue": "log(1 + foldvalue.x)"
           }
       },
       {
-          "title": "Exponential Smoothing (Bailout",
+          "title": "Exponential Smoothing (Bailout)",
           "icon": "expsmoothbailout.png",
           "description": "Exponential Smoothing for bailout (fold",
           "data": {
-              "foldfn": "/cosh rad znext + foldvalue",
+              "foldfn": "/cosh rad znext + foldvalue"
+          },
+          "optional": {
               "bailoutvalue": "log(E^2 + foldvalue.x"
           }
       },
@@ -390,7 +475,9 @@
           "icon": "expsmoothlake.png",
           "description": "Exponential Smoothing for lake",
           "data": {
-              "foldfn": "/cosh(/dist(znext, z)) + foldvalue",
+              "foldfn": "/cosh(/dist(znext, z)) + foldvalue"
+          },
+          "optional": {
               "lakevalue": "log(1 + foldvalue.x)"
           }
       },
@@ -400,10 +487,13 @@
           "description": "Exponential Smoothing for bailout (first fold) and lake (second fold)",
           "data": {
               "foldfn": "/cosh rad znext + foldvalue",
+              "foldfn2": "/cosh(/dist(znext, z)) + foldvalue2"
+          },
+          "optional": {
               "bailoutvalue": "log(E^2 + foldvalue.x)",
-              "foldfn2": "/cosh(/dist(znext, z)) + foldvalue2",
               "lakevalue": "log(1 + foldvalue2.x)"
           }
+          
       },
    
       {
@@ -411,7 +501,9 @@
           "icon": "smoothlake.png",
           "description": "Smooth drawing for the lake based on atan (fold)",
           "data": {
-              "foldfn": "dist(znext, z) + foldvalue",
+              "foldfn": "dist(znext, z) + foldvalue"
+          },
+          "optional": {
               "lakevalue": "1.3 atan foldvalue.x / PI"
           }
       },
@@ -420,7 +512,9 @@
           "icon": "foldbranching.png",
           "description": "Branching for fold for bailout and lake",
           "data": {
-              "foldfn": "(0.5 + 0.5 cos 6 arc (z - znext)) / (12 + rad znext + /dist(znext, z)) + foldvalue",
+              "foldfn": "(0.5 + 0.5 cos 6 arc (z - znext)) / (12 + rad znext + /dist(znext, z)) + foldvalue"
+          },
+          "optional": {
               "bailoutvalue": "log(1 + foldvalue.x)",
               "lakevalue": "log(1 + foldvalue.x)"
           }
@@ -430,7 +524,9 @@
           "icon": "foldbranchingbailout.png",
           "description": "Branching for fold for bailout (fold)",
           "data": {
-              "foldfn": "(0.5 + 0.5 cos 6 arc znext) / (12 + rad znext) + foldvalue",
+              "foldfn": "(0.5 + 0.5 cos 6 arc znext) / (12 + rad znext) + foldvalue"
+          },
+          "optional": {
               "bailoutvalue": "log(1 + foldvalue.x)"
           }
       },
@@ -439,7 +535,9 @@
           "icon": "foldgeometrybailout.png",
           "description": "Branching for fold for bailout (fold)",
           "data": {
-              "foldfn": "/line(0:0, 1:0, znext) + foldvalue",
+              "foldfn": "/line(0:0, 1:0, znext) + foldvalue"
+          },
+          "optional": {
               "bailoutvalue": "log(1 + foldvalue.x)"
           }
       },
@@ -448,7 +546,9 @@
           "icon": "foldbranchinglake.png",
           "description": "Branching for fold for lake (fold)",
           "data": {
-              "foldfn": "(0.5 + 0.5 cos 6 arc(z - znext)) / (12 + /dist(znext, z)) + foldvalue",
+              "foldfn": "(0.5 + 0.5 cos 6 arc(z - znext)) / (12 + /dist(znext, z)) + foldvalue"
+          },
+          "optional": {
               "lakevalue": "log(1 + foldvalue.x)"
           }
       },
@@ -457,7 +557,9 @@
           "icon": "foldbranchinglake2.png",
           "description": "Branching based on atan for fold for lake (fold)",
           "data": {
-              "foldfn": "(0.5 + 0.5 cos 4 arc(z - znext)) * (1 - 2 atan(12 + /dist(znext, z)) / PI) + foldvalue",
+              "foldfn": "(0.5 + 0.5 cos 4 arc(z - znext)) * (1 - 2 atan(12 + /dist(znext, z)) / PI) + foldvalue"
+          },
+          "optional": {
               "lakevalue": "log(1 + foldvalue.x)"
           }
       },
@@ -466,7 +568,9 @@
           "icon": "foldgeometrylake.png",
           "description": "Branching for fold for bailout (fold)",
           "data": {
-              "foldfn": "/line(0:0, 1:0, /(znext - z)) + foldvalue",
+              "foldfn": "/line(0:0, 1:0, /(znext - z)) + foldvalue"
+          },
+          "optional": {
               "lakevalue": "log(1 + foldvalue.x)"
           }
       },
@@ -476,7 +580,9 @@
           "description": "Branching for bailout (first fold) and lake (second fold) (two fold)",
           "data": {
               "foldfn": "(0.5 + 0.5 cos 6 arc znext) / (12 + rad znext) + foldvalue",
-              "foldfn2": "(0.5 + 0.5 cos 6 arc(z - znext)) / (12 + /dist(znext, z)) + foldvalue2",
+              "foldfn2": "(0.5 + 0.5 cos 6 arc(z - znext)) / (12 + /dist(znext, z)) + foldvalue2"
+          },
+          "optional": {
               "bailoutvalue": "log(1 + foldvalue.x)",
               "lakevalue": "log(1 + foldvalue2.x)"
           }
@@ -487,7 +593,9 @@
           "description": "Combination of exponential smoothing and branching (two fold)",
           "data": {
               "foldfn": "/cosh(rad znext + /dist(znext, z)) + foldvalue",
-              "foldfn2": "(0.5 + 0.5 cos 6 arc (z - znext)) / (12 + rad znext + /dist(znext, z)) + foldvalue2",
+              "foldfn2": "(0.5 + 0.5 cos 6 arc (z - znext)) / (12 + rad znext + /dist(znext, z)) + foldvalue2"
+          },
+          "optional": {
               "bailoutvalue": "log(E^2 + foldvalue.x + foldvalue2.x)",
               "lakevalue": "log(1 + foldvalue.x + foldvalue2.x)",
               "bailouttransfer": "log(1 + foldvalue2.x) : value",
@@ -539,10 +647,7 @@
       "icon": ".png",
       "description": "Edge of BA-Lyapunov Fractal",
       "data": {
-      "Scale": {
-      "type": "scale",
-      "value": ["1", "0", "0", "-1", "3", "3"]
-      },
+      "Scale": ["1", "0", "0", "-1", "3", "3"],
       "lyastring": "[b,a]"
       }
       },

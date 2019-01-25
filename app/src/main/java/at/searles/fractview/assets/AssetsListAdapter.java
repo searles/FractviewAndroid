@@ -193,14 +193,23 @@ public class AssetsListAdapter extends RecyclerView.Adapter {
     }
 
     void selectChildAt(int position) {
-        String source = getGroupEntryAt(openGroupPosition).source(parent.getAssets());
+        FractalData.Builder builder = new FractalData.Builder();
+
+        SourceAsset groupEntry = getGroupEntryAt(openGroupPosition);
+        assert groupEntry != null;
+
+        String source = groupEntry.source(parent.getAssets());
+        builder.setSource(source);
+
         ParameterAsset childEntry = getChildEntryAt(position);
         assert childEntry != null;
-        Map<String, Object> parameters = childEntry.data;
 
-        FractalData.Builder builder = new FractalData.Builder().setSource(source);
+        childEntry.data.forEach(builder::addParameter);
 
-        parameters.forEach(builder::addParameter);
+        if(childEntry.optional != null) {
+            // add optional parameters
+            childEntry.optional.forEach(builder::addParameter);
+        }
 
         parent.returnFractal(builder.commit());
      }
@@ -221,14 +230,16 @@ public class AssetsListAdapter extends RecyclerView.Adapter {
             boolean match = true;
 
             for(Map.Entry<String, Object> param : entry.data.entrySet()) {
-                if(!builder.addParameter(param.getKey(), param.getValue())) {
+                // check whether keys match.
+                String id = param.getKey();
+
+                if(!(builder.isExternDecl(id) && builder.addParameter(id, param.getValue()))) {
                     match = false;
                     break;
                 }
             }
 
             if (match) {
-                // TODO cache fractal data?
                 list.add(entry);
             }
         }

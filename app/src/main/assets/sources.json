@@ -6,6 +6,11 @@
         "file": "Default.fv"
     },
     {
+        "title": "NewDefault",
+        "description": "New default program",
+        "file": "NewDefault.fv"
+    },
+    {
         "title": "Julia Map",
         "icon": "juliamap.png",
         "description": "Variation of \"Default\" that shows a map of julia sets.",

@@ -5,6 +5,7 @@ import android.graphics.Bitmap;
 
 import com.google.gson.annotations.SerializedName;
 
+import java.util.Collections;
 import java.util.Map;
 
 /**
@@ -19,15 +20,18 @@ public class ParameterAsset {
     public String iconFilename;
     @SerializedName("data")
     public Map<String, Object> data;
+    @SerializedName("optional")
+    public Map<String, Object> optional;
 
     private transient Bitmap icon;
 
     ParameterAsset() {}
 
-    ParameterAsset(String title, String description, Map<String, Object> data) {
+    ParameterAsset(String title, String description, Map<String, Object> optional) {
         this.title = title;
         this.description = description;
-        this.data = data;
+        this.data = Collections.emptyMap();
+        this.optional = optional;
     }
 
     Bitmap icon(AssetManager am) {

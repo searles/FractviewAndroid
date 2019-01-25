@@ -34,20 +34,6 @@ public interface DrawerContext {
 
 	Scale getScale();
 
-	default void translate(float normX, float normY, double[] dst) {
-		// FIXME change scale!
-		double[] tmp = getScale().scale(normX, normY);
-		dst[0] = tmp[0];
-		dst[1] = tmp[1];
-	}
-
-	default void invert(double x, double y, float[] dst) {
-		// FIXME change scale!
-		float[] tmp = getScale().invScale(x, y);
-		dst[0] = tmp[0];
-		dst[1] = tmp[1];
-	}
-
 	void setFractal(Fractal f);
 
 	float progress(); // value between 0 and 1

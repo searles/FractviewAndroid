@@ -95,7 +95,7 @@ public class CalculatorWrapper implements ScalableImageView.Listener {
     @Override
     public void scaleRelative(Scale relativeScale) {
         Scale originalScale = ((Scale) parent.getParameterValue(Fractal.SCALE_LABEL, index));
-        Scale absoluteScale = originalScale.relative(relativeScale);
+        Scale absoluteScale = originalScale.createRelative(relativeScale);
         parent.setParameterValue(Fractal.SCALE_LABEL, index, absoluteScale);
     }
 
@@ -138,25 +138,17 @@ public class CalculatorWrapper implements ScalableImageView.Listener {
         if(calculatorView != null) {
             calculatorView.clearPoints();
 
-            float[] normPt = new float[2]; // reuse
+            double[] normPt = new double[2]; // reuse
 
             for (InteractivePoint pt : parent.interactivePoints()) {
-                float[] tmp = parent.getFractal(index).scale().invScale(pt.position()[0], pt.position()[1]);
-                normPt[0] = tmp[0];
-                normPt[1] = tmp[1];
-
-                // [bkp] calculator.invert(, normPt);
-                calculatorView.addPoint(pt, normPt[0], normPt[1]);
+                parent.getFractal(index).scale().invScalePoint(pt.position()[0], pt.position()[1], normPt);
+                calculatorView.addPoint(pt, (float) normPt[0], (float) normPt[1]);
             }
         }
     }
 
     public void normToValue(float normX, float normY, double[] dst) {
-        double[] tmp = parent.getFractal(index).scale().scale(normX, normY);
-        // FIXME change scale!
-
-        dst[0] = tmp[0];
-        dst[1] = tmp[1];
+        parent.getFractal(index).scale().scalePoint(normX, normY, dst);
     }
 
     boolean setBitmapSize(int width, int height) {

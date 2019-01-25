@@ -7,13 +7,14 @@ import android.text.Editable;
 import android.text.TextWatcher;
 import android.view.Menu;
 import android.view.MenuInflater;
+import android.view.MenuItem;
 import android.view.View;
 import android.widget.Button;
 import android.widget.EditText;
 
 import at.searles.fractal.Fractal;
-import at.searles.fractal.data.FractalData;
 import at.searles.fractview.ui.DialogHelper;
+import at.searles.meelan.MeelanException;
 
 public class SourceEditorActivity extends Activity {
 
@@ -91,17 +92,20 @@ public class SourceEditorActivity extends Activity {
 		String source = currentSource();
 
 		try {
-			Fractal.fromData(new FractalData.Builder().setSource(source).commit());
+			Fractal.fromSource(source);
 			acceptedSource = source;
 
 			return true;
+		} catch(MeelanException e) {
+			DialogHelper.error(this, "Compiler Error: " + e.toString());
+			// TODO improve meelan exception
 		} catch(Throwable e) {
 			// TODO
 			DialogHelper.error(this, "Compiler Error: " + e.getMessage());
 			e.printStackTrace();
-
-			return false;
 		}
+
+		return false;
 	}
 
 	@Override
@@ -112,31 +116,30 @@ public class SourceEditorActivity extends Activity {
 		return super.onCreateOptionsMenu(menu);
 	}
 
-//	@Override
-//	public boolean onOptionsItemSelected(MenuItem item) {
-		// Handle presses on the action bar items
-//		switch (item.getItemId()) {
-//			case R.id.action_load_program: {
+	@Override
+	public boolean onOptionsItemSelected(MenuItem item) {
+		switch (item.getItemId()) {
+			case R.id.action_load_program: {
 //				EditableDialogFragment ft = EditableDialogFragment.newInstance(LOAD_PROGRAM,
 //						"Load Program", false, EditableDialogFragment.Type.LoadSharedPref);
 //				ft.show(getFragmentManager(), "dialog");
 //				ft.getArguments().putString("prefs_name", PREFS_NAME);
-//			} return true;
-//			case R.id.action_save_program: {
+			} return true;
+			case R.id.action_save_program: {
 //				EditableDialogFragment ft = EditableDialogFragment.newInstance(SAVE_PROGRAM,
 //						"Save Program", false, EditableDialogFragment.Type.SaveSharedPref);
 //				ft.show(getFragmentManager(), "dialog");
 //				ft.getArguments().putString("prefs_name", PREFS_NAME);
-//			} return true;
-//			case R.id.action_compile: {
-//				if(checkCompile()) {
-//					DialogHelper.info(this, "Program compiled without errors");
-//				}
-//			} return true;
-//			default:
-//				return super.onOptionsItemSelected(item);
-// todo		}
-//	}
+			} return true;
+			case R.id.action_compile: {
+				if(checkCompile()) {
+					DialogHelper.info(this, "Program compiled without errors");
+				}
+			} return true;
+			default:
+				return super.onOptionsItemSelected(item);
+		}
+	}
 
 	private String currentSource() {
 		// unchecked acceptedSource code

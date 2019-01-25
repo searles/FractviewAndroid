@@ -1,0 +1,201 @@
+// Header for every program: Preset data in memory in this order.
+var x int, y int, color int, width int, height int;
+
+extern maximumNumberOfIterations int = 120;
+extern function expr = "mandelbrot(z, p)";
+
+/**
+ * Template for fractal calculations of iterative nature.
+ * For traps/folds etc... different colorizers can be used.
+ */
+template Calculation(colorizer) {
+    var index int;  // the iteration index
+    var p cplx; // the current parameter
+    var c cplx; // the current coordinates
+    var z cplx; // always contains z[i]
+    var zlast cplx; // always contains z[i-1], or 0 if i == 0.
+
+    /*
+     * Initializes all values for these iterations. Parameter are
+     * the coordinates of the current point.
+     */
+    func initialize(coords) {
+        c = coords;
+        index = 0;
+        zlast = 0:0;
+
+        extern isJuliaSet bool = false;
+
+        if isJuliaSet then {
+            extern juliaParameter expr = "-0.75 : 0.13";
+
+            z = c;
+            p = juliaParameter;
+        } else {
+            extern initialValue expr = "0";
+
+            z = initialValue;
+            p = c;
+        }
+
+        colorizer.initialize(c);
+    }
+
+    /*
+     * Performs an iteration step unless the maximum number of iterations has been reached
+     * or some other break condition was met. In the latter case, "index" is modified to
+     * avoid further calculations by 'step'.
+     */
+    func step() {
+        if next(index, maximumNumberOfIterations) then {
+
+            var znext cplx = function;
+
+            if colorizer.check(znext, z, zlast, index, p, c) then {
+                // update returns true if no break condition is satisfied.
+                zlast = z;
+                z = znext;
+
+                true // next step.
+            } else {
+                index = maximumNumberOfIterations; // to avoid that further calls to step would cause time loss
+                false
+            }
+        } else {
+            colorizer.applyLake(z, zlast, index, c, p);
+            false
+        }
+    }
+}
+
+extern has3DEffect bool = false;
+
+/**
+ * Simple colorizer
+ */
+template ColorizerBailoutEpsilon {
+    extern hasBailout bool = true;
+    extern hasEpsilon bool = true;
+
+    extern bailout real = 4;
+    extern epsilon real = 1E-9;
+
+    // the next items are set in the color functions.
+    var height real;
+    var value cplx;
+
+    var color quat;
+
+    func initialize(coords) {}
+
+    func applyBailout(znext, z, index, c, p) {
+        def lastIndexFraction = {
+            extern maximumExponent expr = "2";
+            smoothen(znext, bailout, maximumExponent)
+        }
+
+        extern bailoutColorFunction expr = "log(1 + index + lastIndexFraction)";
+
+        value = bailoutColorFunction;
+
+        if has3DEffect then {
+            extern bailoutHeightFunction expr = "re value";
+            height = bailoutHeightFunction;
+        }
+
+        extern bailoutPalette palette = [[#000, #f00, #ff0, #fff, #00f]];
+
+        color = bailoutPalette value;
+    }
+
+    func applyLake(znext, z, index, c, p) {
+        extern lakeColorFunction expr = "rad znext : arcnorm znext";
+
+        value = lakeColorFunction;
+
+        if has3DEffect then {
+            extern lakeHeightFunction expr = "re value";
+            height = lakeHeightFunction;
+        }
+
+        extern lakePalette palette = [[#000]];
+
+        color = lakePalette value;
+    }
+
+    func applyEpsilon(znext, z, index, c, p) {
+        applyLake(znext, z, index, c, p)
+    }
+
+    /*
+     * Returns true if no break condition is met. False indicates that
+     * the calculation is terminated. In the latter case, layer, degree and color
+     * must be set.
+     */
+    func check(znext, z, zlast, index, p, c) {
+        radrange(znext, z, bailout, epsilon, applyBailout(znext, z, index, c, p), applyEpsilon(znext, z, index, c, p)) if hasBailout and hasEpsilon
+        else rad2(znext) >= bailout and { applyBailout(znext, z, index, c, p); true } if hasBailout
+        else dist2(znext, z) =< epsilon and { applyEpsilon(znext, z, index, c, p); true } if hasEpsilon
+        else false
+    }
+}
+
+func run2D() {
+    var coords cplx = map(x, y);
+
+    object colorizer = ColorizerBailoutEpsilon();
+    object calculation = Calculation(colorizer);
+
+    calculation.initialize(coords);
+
+    while calculation.step();
+
+    color = lab2int colorizer.color;
+}
+
+run2D()
+
+/*
+func step3D() {
+    var height0 real;
+    var color0 int;
+    var height1 real;
+    var color1 int;
+    var height2 real;
+    var color2 int;
+
+    var density int = 0
+
+    if(fn0.step() and fn0.layer >< -1) {
+        color0 = getColor(fn0.layer, fn0.value);
+        height0 = fn0.height;
+        fn0.layer = -1; // reset layer to avoid confusion with others.
+        density = 1;
+    } else {
+        // color is dark.
+        color0 = 0;
+    }
+
+    if(fn1.step() and fn1.layer >< -1) {
+        color1 = getColor(fn1.layer, fn1.value);
+        height1 = fn1.height;
+        fn1.layer = -1;
+        density = density + 1;
+    } else {
+        color1 = 0;
+    }
+
+    if fn2.step() and fn2.layer >< -1 then {
+        color2 = getColor(fn2.layer, fn2.value);
+        height2 = fn2.height;
+        fn2.layer = -1;
+        density = density + 1;
+    } else {
+        color2 = 0;
+    }
+
+    if density > 0 then {
+        // todo combine color.
+        // if density is not 3, then set alpha appropriately.
+    }
+*/
