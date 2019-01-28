@@ -4,9 +4,7 @@ import at.searles.fractal.FractalProvider;
 import at.searles.fractal.data.ParameterType;
 import at.searles.fractview.main.FractalProviderFragment;
 import at.searles.fractview.parameters.ParameterLongSelectListener;
-import at.searles.meelan.values.CplxVal;
-import at.searles.meelan.values.Int;
-import at.searles.meelan.values.Real;
+import at.searles.fractview.ui.DialogHelper;
 
 public enum CheckedActions implements ParameterLongSelectListener.CheckableAction {
     EDIT_IN_VIEW {
@@ -18,7 +16,11 @@ public enum CheckedActions implements ParameterLongSelectListener.CheckableActio
         @Override
         public void setChecked(boolean newValue, FractalProviderFragment provider, FractalProvider.ParameterEntry item) {
             if(newValue) {
-                provider.addInteractivePoint(item.id, item.owner);
+                try {
+                    provider.addInteractivePoint(item.id, item.owner);
+                } catch (Throwable th) {
+                    DialogHelper.error(provider.getContext(), "Point must be a numeric value: " + th.getMessage());
+                }
             } else {
                 provider.removeInteractivePoint(item.id, item.owner);
             }
@@ -31,15 +33,8 @@ public enum CheckedActions implements ParameterLongSelectListener.CheckableActio
 
         @Override
         public boolean isApplicable(FractalProviderFragment provider, FractalProvider.ParameterEntry item) {
-            // TODO
             return item.parameter.type == ParameterType.Cplx
-                    || (item.parameter.type == ParameterType.Expr
-                        && (
-                            item.parameter.value instanceof Int
-                            || item.parameter.value instanceof Real
-                            || item.parameter.value instanceof CplxVal
-                        )
-                    );
+                    || item.parameter.type == ParameterType.Expr;
         }
     },
     SHARE_IN_VIEWS {

@@ -1,12 +1,24 @@
-// Header for every program: Preset data in memory in this order.
-var x int, y int, color int, width int, height int;
+/*
+ * The following 5 integer variables are fixed in this order in memory
+ */
+var x int, y int; // The current pixel coordinates
 
+var color int; // output variable. Expects after a run the color of the pixel.
+
+var width int, height int; // if needed the dimensions of the image.
+
+/*
+ * Externs are always shown in the order of the program, provided they are used.
+ */
 extern maximumNumberOfIterations int = 120;
 extern function expr = "mandelbrot(z, p)";
 
 /**
  * Template for fractal calculations of iterative nature.
- * For traps/folds etc... different colorizers can be used.
+ * API:
+ *     initialize(coords): coords are the complex real coordinates.
+ *     step(): Performs one step. Returns true if another step can follow.
+ * Input parameter: Colorizer
  */
 template Calculation(colorizer) {
     var index int;  // the iteration index
@@ -51,8 +63,7 @@ template Calculation(colorizer) {
 
             var znext cplx = function;
 
-            if colorizer.check(znext, z, zlast, index, p, c) then {
-                // update returns true if no break condition is satisfied.
+            if not colorizer.check(znext, z, zlast, index, p, c) then {
                 zlast = z;
                 z = znext;
 
@@ -72,6 +83,11 @@ extern has3DEffect bool = false;
 
 /**
  * Simple colorizer
+ * API:
+ *      initialize(coords): Initializes this one.
+ *      applyLake(znext, z, index, p, c):
+ *      check(znext, z, zlast, index, parameter, coordinates):
+ *          Returns true if the break condition is satisfied.
  */
 template ColorizerBailoutEpsilon {
     extern hasBailout bool = true;
@@ -86,9 +102,7 @@ template ColorizerBailoutEpsilon {
 
     var color quat;
 
-    func initialize(coords) {}
-
-    func applyBailout(znext, z, index, c, p) {
+    func applyBailout(znext, z, zlast, index, c, p) {
         def lastIndexFraction = {
             extern maximumExponent expr = "2";
             smoothen(znext, bailout, maximumExponent)
@@ -108,8 +122,8 @@ template ColorizerBailoutEpsilon {
         color = bailoutPalette value;
     }
 
-    func applyLake(znext, z, index, c, p) {
-        extern lakeColorFunction expr = "rad znext : arcnorm znext";
+    func applyLake(z, zlast, index, c, p) {
+        extern lakeColorFunction expr = "rad z : arcnorm z";
 
         value = lakeColorFunction;
 
@@ -123,8 +137,22 @@ template ColorizerBailoutEpsilon {
         color = lakePalette value;
     }
 
-    func applyEpsilon(znext, z, index, c, p) {
+    func applyEpsilon(znext, z, zlast, index, c, p) {
         applyLake(znext, z, index, c, p)
+    }
+
+    /*
+     * Run before iterations are started
+     */
+    func initialize(coords) {
+
+    }
+
+    /*
+     * Run after check-condition has failed
+     */
+    func update(znext, z, zlast, index, p, c) {
+
     }
 
     /*
@@ -133,10 +161,12 @@ template ColorizerBailoutEpsilon {
      * must be set.
      */
     func check(znext, z, zlast, index, p, c) {
-        radrange(znext, z, bailout, epsilon, applyBailout(znext, z, index, c, p), applyEpsilon(znext, z, index, c, p)) if hasBailout and hasEpsilon
-        else rad2(znext) >= bailout and { applyBailout(znext, z, index, c, p); true } if hasBailout
-        else dist2(znext, z) =< epsilon and { applyEpsilon(znext, z, index, c, p); true } if hasEpsilon
-        else false
+        (
+            radrange(znext, z, bailout, epsilon, applyBailout(znext, z, zlast, index, c, p), applyEpsilon(znext, z, zlast, index, c, p)) if hasBailout and hasEpsilon
+            else not radless(znext, bailout) and { applyBailout(znext, z, zlast, index, c, p); true } if hasBailout
+            else distless(znext, z, epsilon) and { applyEpsilon(znext, z, zlast, index, c, p); true } if hasEpsilon
+            else false
+        ) or { update(znext, z, zlast, index, p, c); false }
     }
 }
 

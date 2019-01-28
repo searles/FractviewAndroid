@@ -10,7 +10,6 @@ import android.widget.ProgressBar;
 import at.searles.fractview.R;
 import at.searles.fractview.bitmap.ui.imageview.InteractivePointsPlugin;
 import at.searles.fractview.main.CalculatorWrapper;
-import at.searles.fractview.main.InteractivePoint;
 
 /**
  * This view allows to dynamically interact with a bitmap fragment.
@@ -44,6 +43,7 @@ public class CalculatorView extends FrameLayout {
         inflate(context, R.layout.view_fractal_calculator, this);
 
         imageView = findViewById(R.id.scaleableImageView);
+
         interactivePointsPlugin = new InteractivePointsPlugin(imageView);
         imageView.addPlugin(interactivePointsPlugin);
 
@@ -53,37 +53,21 @@ public class CalculatorView extends FrameLayout {
         imageView.setListener(scale -> wrapper.scaleRelative(scale));
     }
 
+//    public void screenToNormalized(float viewX, float viewY, float[] normPt) {
+//        imageView.screenToNormalized(viewX, viewY, normPt);
+//    }
+//
+//    public void normalizedToScreen(float normX, float normY, float[] screenPt) {
+//        imageView.normalizedToScreen(normX, normY, screenPt);
+// todo remove    }
+
     /**
      * Initializes the wrapper. Also fetches and sets bitmap.
      */
     public void setWrapper(CalculatorWrapper wrapper) {
         this.wrapper = wrapper;
         initBitmap();
-    }
-
-    // interactive points section.
-
-    public void addPoint(InteractivePoint pt, float normX, float normY) {
-        float[] screenPt = new float[2];
-        imageView.normalizedToScreen(normX, normY, screenPt);
-
-        // Step 2: Set point
-        interactivePointsPlugin.addPoint(pt, screenPt[0], screenPt[1], this);
-
-        scaleableImageView().invalidate();
-    }
-
-    public void interactivePointMoved(InteractivePoint pt, float screenX, float screenY) {
-        float[] normPt = new float[2];
-        double[] value = new double[2];
-
-        imageView.screenToNormalized(screenX, screenY, normPt);
-        wrapper.normToValue(normPt[0], normPt[1], value);
-        pt.setValue(value);
-    }
-
-    public void clearPoints() {
-        interactivePointsPlugin.clear();
+        interactivePointsPlugin.setWrapper(wrapper);
     }
 
     // ================
@@ -124,4 +108,7 @@ public class CalculatorView extends FrameLayout {
         this.requestLayout();
     }
 
+    public void updateInteractivePoints() {
+        interactivePointsPlugin.updatePoints();
+    }
 }

@@ -19,10 +19,11 @@ public class GridPlugin extends Plugin {
 
     public static final float LEFT_UP_INDICATOR_LENGTH = 40f;
 
+    private ScalableImageView parent;
     private boolean showGrid;
 
     public GridPlugin(ScalableImageView parent, boolean showGrid) {
-        super(parent);
+        this.parent = parent;
         this.showGrid = showGrid;
     }
 

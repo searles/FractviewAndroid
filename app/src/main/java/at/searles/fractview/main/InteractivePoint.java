@@ -1,15 +1,25 @@
 package at.searles.fractview.main;
 
+import android.graphics.Color;
+
+import at.searles.fractal.ParserInstance;
 import at.searles.math.Cplx;
+import at.searles.meelan.MeelanException;
+import at.searles.meelan.compiler.Ast;
+import at.searles.meelan.optree.Tree;
+import at.searles.meelan.values.CplxVal;
+import at.searles.meelan.values.Int;
+import at.searles.meelan.values.Real;
 
 public class InteractivePoint {
     private FractalProviderFragment parent;
     private final String id;
     int owner; // this is updated on a regular basis by the provider if a fractal is removed.
 
-    private Class<?> parameterClass;
+    private double[] position; // actual position; cached because parsing is expensive.
+    private boolean isCplx; // is the backing element a complex number or an expression?
 
-    private double[] position;
+    private int color;
 
     InteractivePoint(FractalProviderFragment parent, String id, int owner) {
         this.parent = parent;
@@ -21,31 +31,54 @@ public class InteractivePoint {
         update();
     }
 
-    private void updatePosition(Object value) {
-        parameterClass = value.getClass();
-
-        if (parameterClass == Cplx.class) {
+    private boolean updatePosition(Object value) throws MeelanException {
+        this.isCplx = value instanceof Cplx;
+        if(isCplx) {
+            // XXX no cplx in the long run
             position[0] = ((Cplx) value).re();
             position[1] = ((Cplx) value).im();
 
-            return;
+            return true;
         }
 
-        // FIXME expr.
-        throw new IllegalArgumentException("unsupported type");
+        return pointFromExpr(value.toString());
+    }
+
+    private boolean pointFromExpr(String expr) throws MeelanException {
+        Tree parsedExpr = ParserInstance.get().parseExpr(expr);
+        Tree preprocessedExpr = new Ast(parsedExpr).preprocess(id -> {
+            throw new MeelanException("Cannot resolve " + id, parsedExpr);
+        });
+
+        if(preprocessedExpr instanceof CplxVal) {
+            Cplx num = ((CplxVal) preprocessedExpr).value();
+            position[0] = num.re();
+            position[1] = num.im();
+            return true;
+        } else if(preprocessedExpr instanceof Real) {
+            Number num = ((Real) preprocessedExpr).value();
+            position[0] = num.doubleValue();
+            position[1] = 0;
+            return true;
+        } else if(preprocessedExpr instanceof Int) {
+            Number num = ((Int) preprocessedExpr).value();
+            position[0] = num.intValue();
+            position[1] = 0;
+            return true;
+        }
+
+        return false;
     }
 
     public void setValue(double[] newValue) {
-        if (parameterClass == Cplx.class) {
+        Cplx value = new Cplx(newValue[0], newValue[1]);
+
+        if(isCplx) {
             // position is updated indirectly via listener.
-            Cplx value = new Cplx(newValue[0], newValue[1]);
             parent.setParameterValue(id, owner, value);
-
-            return;
+        } else {
+            parent.setParameterValue(id, owner, value.toString());
         }
-
-        // FIXME expr.
-        throw new IllegalArgumentException("unsupported type: " + this);
     }
 
     /**
@@ -64,9 +97,7 @@ public class InteractivePoint {
             throw new NullPointerException("no parameter although parameterExists was true...");
         }
 
-        updatePosition(parameterValue);
-
-        return true;
+        return updatePosition(parameterValue);
     }
 
     public double[] position() {
@@ -83,6 +114,14 @@ public class InteractivePoint {
 
     public boolean is(String id, int owner) {
         return this.id.equals(id) && this.owner == owner;
+    }
+
+    public int color() {
+        return this.color;
+    }
+
+    public void setColorFromWheel(int index, int count) {
+        this.color = Color.HSVToColor(new float[]{ });
     }
 
     public String toString() {

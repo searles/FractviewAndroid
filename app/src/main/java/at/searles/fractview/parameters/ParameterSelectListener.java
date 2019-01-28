@@ -46,12 +46,12 @@ public class ParameterSelectListener implements AdapterView.OnItemClickListener 
                 return;
             }
             case Int: {
-                IntegerDialogFragment ft = IntegerDialogFragment.newInstance("Edit integer number " + item.parameter.description, item.id, item.owner, (Integer) item.parameter.value);
+                IntegerDialogFragment ft = IntegerDialogFragment.newInstance("Edit integer number " + item.parameter.description, item.id, item.owner, ((Number) item.parameter.value).intValue());
                 fragment.getChildFragmentManager().beginTransaction().add(ft, "editor").commit();
             }
             return;
             case Real: {
-                RealDialogFragment ft = RealDialogFragment.newInstance("Edit decimal number " + item.parameter.description, item.id, item.owner, (Double) item.parameter.value);
+                RealDialogFragment ft = RealDialogFragment.newInstance("Edit decimal number " + item.parameter.description, item.id, item.owner, ((Number) item.parameter.value).doubleValue());
                 fragment.getChildFragmentManager().beginTransaction().add(ft, "editor").commit();
             }
             return;

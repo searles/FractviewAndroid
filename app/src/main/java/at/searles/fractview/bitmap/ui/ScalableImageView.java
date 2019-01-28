@@ -99,11 +99,15 @@ public class ScalableImageView extends View {
 		initTouch();
 	}
 
-	public void viewToBitmap(float[] screenPoint) {
-		inverseImageMatrix.mapPoints(screenPoint);
+	public void viewToBitmap(float viewX, float viewY, float[] bitmapPoint) {
+		bitmapPoint[0] = viewX;
+		bitmapPoint[1] = viewY;
+		inverseImageMatrix.mapPoints(bitmapPoint);
 	}
 
-	public void bitmapToView(float[] viewPoint) {
+	public void bitmapToView(float bitmapX, float bitmapY, float[] viewPoint) {
+		viewPoint[0] = bitmapX;
+		viewPoint[1] = bitmapY;
 		imageMatrix.mapPoints(viewPoint);
 	}
 
@@ -410,6 +414,9 @@ public class ScalableImageView extends View {
 
 	/**
 	 * Map point from view coordinates to screenToNormalized
+	 * @param viewX
+	 * @param viewY
+	 * @param normPt
 	 */
 	public void screenToNormalized(float viewX, float viewY, float[] normPt) {
 		normPt[0] = viewX;

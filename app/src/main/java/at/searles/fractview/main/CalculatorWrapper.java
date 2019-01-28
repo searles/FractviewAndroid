@@ -136,20 +136,35 @@ public class CalculatorWrapper implements ScalableImageView.Listener {
     public void updateInteractivePointsInView() {
         // Scale might have changed or the point itself
         if(calculatorView != null) {
-            calculatorView.clearPoints();
-
-            double[] normPt = new double[2]; // reuse
-
-            for (InteractivePoint pt : parent.interactivePoints()) {
-                parent.getFractal(index).scale().invScalePoint(pt.position()[0], pt.position()[1], normPt);
-                calculatorView.addPoint(pt, (float) normPt[0], (float) normPt[1]);
-            }
+            calculatorView.updateInteractivePoints();
         }
     }
 
-    public void normToValue(float normX, float normY, double[] dst) {
+    public void normToValue(double normX, double normY, double[] dst) {
         parent.getFractal(index).scale().scalePoint(normX, normY, dst);
     }
+
+    public void valueToNorm(double x, double y, double[] dst) {
+        parent.getFractal(index).scale().invScalePoint(x, y, dst);
+    }
+
+//    public void screenToNormalized(float viewX, float viewY, float[] normPt) {
+//        calculatorView.scaleableImageView().screenToNormalized(viewX, viewY, normPt);
+//    }
+//
+//    public void normalizedToScreen(float normX, float normY, float[] screenPt) {
+//        calculatorView.scaleableImageView().normalizedToScreen(normX, normY, screenPt);
+//    }
+//
+//    public void screenToValue(double viewX, double viewY, double[] dst) {
+//        screenToNormalized(viewX, viewY, dst);
+//        normToValue(dst[0], dst[1], dst);
+//    }
+//
+//    public void valueToScreen(double x, double y, double[] dst) {
+//        valueToNorm(x, y, dst);
+//        normalizedToScreen(dst[0], dst[1], dst);
+// todo remove    }
 
     boolean setBitmapSize(int width, int height) {
         return calculator.setSize(width, height);
@@ -211,5 +226,9 @@ public class CalculatorWrapper implements ScalableImageView.Listener {
 
     boolean cancelViewEditing() {
         return calculatorView != null && calculatorView.onBackPressed();
+    }
+
+    public Iterable<InteractivePoint> interactivePoints() {
+        return parent.interactivePoints();
     }
 }

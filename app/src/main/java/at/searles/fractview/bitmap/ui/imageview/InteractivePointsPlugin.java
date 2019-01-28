@@ -11,11 +11,13 @@ import org.jetbrains.annotations.NotNull;
 import java.util.ArrayList;
 import java.util.List;
 
-import at.searles.fractview.bitmap.ui.CalculatorView;
 import at.searles.fractview.bitmap.ui.ScalableImageView;
+import at.searles.fractview.main.CalculatorWrapper;
 import at.searles.fractview.main.InteractivePoint;
 
 public class InteractivePointsPlugin extends Plugin {
+    private static final float BALLON_RADIUS_INCH = 0.4f;
+    private static final float BALLON_ANGLE = 60.f; // 1/3 inch
 
     // This one must be agnostic towards view coordinates.
     // Therefore, it should either store bitmap coordinates
@@ -26,56 +28,68 @@ public class InteractivePointsPlugin extends Plugin {
     // parent.normalizedToScreen
 
     private final List<ViewPoint> points;
+    private CalculatorWrapper wrapper;
+    private final ScalableImageView parent;
 
     private ViewPoint draggedPoint;
     private float dx, dy; // if it was grabbed a bit on the side keep the side
 
-    private final Paint unselectedPaintStroke;
-    private final Paint unselectedPaintFill;
-
-    private final Paint selectedPaintStroke;
-    private final Paint selectedPaintFill;
+    private final Paint paintStroke;
+    private final Paint paintFill;
 
     private boolean enabled;
 
+    private final float ballonRadius; // 1/3 inch
+
     public InteractivePointsPlugin(ScalableImageView parent) {
-        super(parent);
+
+        this.ballonRadius = parent.getContext().getResources().getDisplayMetrics().densityDpi * BALLON_RADIUS_INCH;
+
+        this.parent = parent;
 
         points = new ArrayList<>(2);
 
-        selectedPaintStroke = new Paint();
-        selectedPaintFill = new Paint();
-        unselectedPaintStroke = new Paint();
-        unselectedPaintFill = new Paint();
+        paintStroke = new Paint();
+        paintFill = new Paint();
 
         initPaint();
     }
 
-    private void initPaint() {
-        // fixme one for each should be enough?
-        selectedPaintStroke.setColor(0xffffffff);
-        selectedPaintStroke.setStyle(Paint.Style.STROKE);
-        selectedPaintStroke.setStrokeWidth(8.f); // fixme dpi!
-        selectedPaintFill.setColor(0xff444444);
-        selectedPaintFill.setStyle(Paint.Style.FILL);
-
-        unselectedPaintStroke.setColor(0x80ffffff);
-        unselectedPaintStroke.setStyle(Paint.Style.STROKE);
-        unselectedPaintStroke.setStrokeWidth(8.f); // fixme dpi!
-        unselectedPaintFill.setColor(0x80444444);
-        unselectedPaintFill.setStyle(Paint.Style.FILL);
+    public void setWrapper(CalculatorWrapper wrapper) {
+        this.wrapper = wrapper;
+        updatePoints();
     }
 
-    private void drawPoint(@NotNull Canvas canvas, float x, float y, boolean isSelected) {
-        float rad = 60; // fixme from DPI!
-        float alpha = 45; // alpha being the angle between the horizontal and
-        // radius to the begin of the drop ball.
+    public void updatePoints() {
+        points.clear();
+
+        if(wrapper != null) {
+            for (InteractivePoint pt : wrapper.interactivePoints()) {
+                double[] normPt = new double[2];
+                wrapper.valueToNorm(pt.position()[0], pt.position()[1], normPt);
+                points.add(new ViewPoint(pt, normPt));
+            }
+
+            parent.invalidate();
+        }
+    }
+
+    private void initPaint() {
+        paintStroke.setColor(0xffffffff);
+        paintStroke.setStyle(Paint.Style.STROKE);
+        paintStroke.setStrokeWidth(ballonRadius / 12.f);
+        paintFill.setColor(0xff444444);
+        paintFill.setStyle(Paint.Style.FILL);
+    }
+
+    private void drawPoint(@NotNull Canvas canvas, float x, float y, int color, boolean isSelected) {
+        float rad = ballonRadius;
+        float alpha = BALLON_ANGLE;
 
         float sinAlpha = (float) Math.sin(alpha * Math.PI / 180);
         float height = (float) (rad * Math.sqrt((1 + sinAlpha) / (1 - sinAlpha))); // distance x/y to center of drop
 
-        Paint fill = isSelected ? selectedPaintFill : unselectedPaintFill;
-        Paint stroke = isSelected ? selectedPaintStroke : unselectedPaintStroke;
+        updatePaintColor(color, isSelected);
 
         float rad2 = rad * sinAlpha / (1 - sinAlpha); // radius of pointy part
 
@@ -92,8 +106,16 @@ public class InteractivePointsPlugin extends Plugin {
 
         path.setFillType(Path.FillType.EVEN_ODD);
 
-        canvas.drawPath(path, fill);
-        canvas.drawPath(path, stroke);
+        canvas.drawPath(path, paintFill);
+        canvas.drawPath(path, paintStroke);
+    }
+
+    private void updatePaintColor(int color, boolean isSelected) {
+        if(!isSelected) {
+            color = color & 0x7FFFFFFF;
+        }
+
+        paintFill.setColor(color);
     }
 
     /**
@@ -126,9 +148,15 @@ public class InteractivePointsPlugin extends Plugin {
         if(!enabled) return;
 
         for(ViewPoint point : points) {
-            point.updateViewPoint();
+            point.updateViewPt();
 
-            drawPoint(canvas, point.viewX(), point.viewY(), draggedPoint == point);
+            int color = point.color();
+
+            drawPoint(canvas, point.viewPt[0], point.viewPt[1], color, false);
+
+            if(point.draggedPosition != null) {
+                drawPoint(canvas, point.draggedPosition[0], point.draggedPosition[1], color, true);
+            }
         }
     }
 
@@ -161,36 +189,28 @@ public class InteractivePointsPlugin extends Plugin {
         }
     }
 
-    public void addPoint(InteractivePoint pt, float viewX, float viewY, CalculatorView parent) {
-        ViewPoint point = new ViewPoint(parent, pt, viewX, viewY);
-
-        points.add(point);
-        parent.invalidate();
-    }
-
     private boolean trySelectPoint(float x, float y) {
-        if(draggedPoint != null) {
-            throw new IllegalStateException("this is embarrasing and should not happen: old point was not released?");
-        }
+        assert draggedPoint == null;
 
         // find closest point
         ViewPoint closest = null;
         float closestDistance = Float.MAX_VALUE;
 
         for(ViewPoint point : points) {
-            float d = isSelected(x, y, point.viewX(), point.viewY());
+            float d = isSelected(x, y, point.viewPt[0], point.viewPt[1]);
 
             if(closestDistance > d) {
                 closestDistance = d;
                 closest = point;
 
-                this.dx = point.viewX() - x;
-                this.dy = point.viewY() - y;
+                this.dx = point.viewPt[0] - x;
+                this.dy = point.viewPt[1] - y;
             }
         }
 
         if(closestDistance < Float.MAX_VALUE) {
             draggedPoint = closest;
+            draggedPoint.initDragging();
             parent.invalidate();
             return true;
         }
@@ -201,7 +221,13 @@ public class InteractivePointsPlugin extends Plugin {
     private boolean releasePoint() {
         if(draggedPoint != null) {
             // inform others of the update
-            draggedPoint.firePointMovedEvent();
+            float[] normPt = new float[2];
+            double[] selectedPt = new double[2];
+            parent.screenToNormalized(draggedPoint.draggedPosition[0], draggedPoint.draggedPosition[1], normPt);
+            wrapper.normToValue(normPt[0], normPt[1], selectedPt);
+
+            draggedPoint.pt.setValue(selectedPt);
+
             draggedPoint = null;
             parent.invalidate();
 
@@ -213,16 +239,12 @@ public class InteractivePointsPlugin extends Plugin {
 
     private boolean movePoint(float x, float y) {
         if(draggedPoint != null) {
-            draggedPoint.moveViewPointTo(x + dx, y + dy);
+            draggedPoint.dragPointTo(x + dx, y + dy);
             parent.invalidate();
             return true;
         }
 
         return false;
-    }
-
-    public void clear() {
-        points.clear();
     }
 
     public void setEnabled(boolean enabled) {
@@ -231,6 +253,7 @@ public class InteractivePointsPlugin extends Plugin {
 
     public boolean cancelDragging() {
         if(draggedPoint != null) {
+            draggedPoint.cancelDragging();
             draggedPoint = null;
             parent.invalidate();
             return true;
@@ -249,52 +272,43 @@ public class InteractivePointsPlugin extends Plugin {
          */
 
         final InteractivePoint pt;
-        private final CalculatorView parent;
 
-        float bitmapPoint[];
+        final double normPt[]; // updated when needed.
+        float draggedPosition[]; // null if not needed.
 
-        transient float viewPoint[]; // updated when needed.
+        float[] viewPt; // updated on every call.
 
-        private ViewPoint(CalculatorView parent, InteractivePoint pt, float viewX, float viewY) {
+        private ViewPoint(InteractivePoint pt, double normPt[]) {
             this.pt = pt;
-            this.parent = parent;
+            this.normPt = normPt;
 
-            this.bitmapPoint = new float[2];
-            this.viewPoint = new float[2];
+            this.viewPt = new float[2];
 
-            moveViewPointTo(viewX, viewY);
+            this.draggedPosition = null;
         }
 
-        void firePointMovedEvent() {
-            parent.interactivePointMoved(pt, viewPoint[0], viewPoint[1]);
+        void updateViewPt() {
+            InteractivePointsPlugin.this.parent.normalizedToBitmap((float) normPt[0], (float) normPt[1], viewPt);
+            InteractivePointsPlugin.this.parent.bitmapToView(viewPt[0], viewPt[1], viewPt);
         }
 
-        void updateViewPoint() {
-            // this is called from the onDraw method.
-            viewPoint[0] = bitmapPoint[0];
-            viewPoint[1] = bitmapPoint[1];
-
-            InteractivePointsPlugin.this.parent.bitmapToView(viewPoint);
+        void initDragging() {
+            this.draggedPosition = new float[]{viewPt[0], viewPt[1]};
         }
 
-        void moveViewPointTo(float viewX, float viewY) {
-            bitmapPoint[0] = viewPoint[0] = viewX;
-            bitmapPoint[1] = viewPoint[1] = viewY;
-
-            InteractivePointsPlugin.this.parent.viewToBitmap(bitmapPoint);
+        void dragPointTo(float viewX, float viewY) {
+            if(draggedPosition != null) {
+                this.draggedPosition[0] = viewX;
+                this.draggedPosition[1] = viewY;
+            }
         }
 
-//        public void moveBitmapPointTo(float bitmapX, float bitmapY) {
-//            bitmapPoint[0] = bitmapX;
-//            bitmapPoint[1] = bitmapY;
-//        }
-
-        float viewX() {
-            return viewPoint[0];
+        public int color() {
+            return pt.color();
         }
 
-        float viewY() {
-            return viewPoint[1];
+        void cancelDragging() {
+            this.draggedPosition = null;
         }
     }
 }
