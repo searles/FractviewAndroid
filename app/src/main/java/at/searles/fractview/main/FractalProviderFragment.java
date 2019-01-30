@@ -160,7 +160,7 @@ public class FractalProviderFragment extends Fragment {
             throw new IllegalArgumentException("cannot remove it there are no fractals left");
         }
 
-        int removedIndex = this.provider.removeFractal();
+        int removedIndex = provider.keyIndex();
 
         this.calculatorWrappers.remove(removedIndex).dispose();
 
@@ -178,11 +178,11 @@ public class FractalProviderFragment extends Fragment {
         interactivePoints.removeIf(pt -> pt.owner == removedIndex);
         interactivePoints.forEach(pt -> { if(pt.owner > removedIndex) pt.owner--; });
 
+        this.provider.removeFractal();
+
         if(fractalCount() == 1) {
             ((FractviewActivity) getActivity()).setRemoveViewEnabled(false);
         }
-
-
     }
 
     // ========= Handle exclusive parameter ids. ==============
@@ -203,8 +203,8 @@ public class FractalProviderFragment extends Fragment {
 
     public void addInteractivePoint(String id, int owner) {
         interactivePoints.add(new InteractivePoint(this, id, owner));
+        updateInteractivePoints();
         containerView.invalidate();
-        calculatorWrappers.forEach(CalculatorWrapper::updateInteractivePointsInView);
     }
 
     public boolean isInteractivePoint(String id, int owner) {
@@ -366,6 +366,13 @@ public class FractalProviderFragment extends Fragment {
 
     private void updateInteractivePoints() {
         interactivePoints.removeIf(pt -> !pt.update());
+
+        Iterator<InteractivePoint> it = interactivePoints.iterator();
+
+        for(int index = 0; it.hasNext(); index++) {
+            it.next().setColorFromWheel(index, interactivePoints.size());
+        }
+
         calculatorWrappers.forEach(CalculatorWrapper::updateInteractivePointsInView);
     }
 

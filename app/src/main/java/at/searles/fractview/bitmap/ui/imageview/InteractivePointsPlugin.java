@@ -16,8 +16,8 @@ import at.searles.fractview.main.CalculatorWrapper;
 import at.searles.fractview.main.InteractivePoint;
 
 public class InteractivePointsPlugin extends Plugin {
-    private static final float BALLON_RADIUS_INCH = 0.4f;
-    private static final float BALLON_ANGLE = 60.f; // 1/3 inch
+    private static final float BALLON_RADIUS_INCH = 0.15f; // makes a diameter of 0.3 inch
+    private static final float BALLON_ANGLE = 50.f; // the larger the more distance
 
     // This one must be agnostic towards view coordinates.
     // Therefore, it should either store bitmap coordinates
@@ -53,6 +53,8 @@ public class InteractivePointsPlugin extends Plugin {
         paintFill = new Paint();
 
         initPaint();
+
+        this.enabled = true;
     }
 
     public void setWrapper(CalculatorWrapper wrapper) {
@@ -123,8 +125,8 @@ public class InteractivePointsPlugin extends Plugin {
      * if x/y is close to it, otherwise Float.MAX_VALUE (not selected)
      */
     private float isSelected(float x, float y, float pointX, float pointY) {
-        float rad = 60; // fixme from DPI and larger than drawing!
-        float alpha = 45; // alpha being the angle between the horizontal and
+        float rad = ballonRadius;
+        float alpha = BALLON_ANGLE; // alpha being the angle between the horizontal and
         // radius to the begin of the drop ball.
 
         float sinAlpha = (float) Math.sin(alpha * Math.PI / 180);

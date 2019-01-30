@@ -121,7 +121,7 @@ public class InteractivePoint {
     }
 
     public void setColorFromWheel(int index, int count) {
-        this.color = Color.HSVToColor(new float[]{ });
+        this.color = Color.HSVToColor(new float[]{360 * index / (float) count, 1, 1});
     }
 
     public String toString() {

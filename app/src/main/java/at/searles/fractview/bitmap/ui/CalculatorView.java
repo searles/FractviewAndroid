@@ -53,14 +53,6 @@ public class CalculatorView extends FrameLayout {
         imageView.setListener(scale -> wrapper.scaleRelative(scale));
     }
 
-//    public void screenToNormalized(float viewX, float viewY, float[] normPt) {
-//        imageView.screenToNormalized(viewX, viewY, normPt);
-//    }
-//
-//    public void normalizedToScreen(float normX, float normY, float[] screenPt) {
-//        imageView.normalizedToScreen(normX, normY, screenPt);
-// todo remove    }
-
     /**
      * Initializes the wrapper. Also fetches and sets bitmap.
      */

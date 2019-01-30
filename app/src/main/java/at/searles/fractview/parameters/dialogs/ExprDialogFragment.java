@@ -16,6 +16,7 @@ import android.widget.TextView;
 import at.searles.fractview.R;
 import at.searles.fractview.main.FractalProviderFragment;
 import at.searles.meelan.MeelanException;
+import at.searles.meelan.ParsingException;
 
 // This is practically the same as the IntDialogFragment, except for the parser...
 public class ExprDialogFragment extends DialogFragment {
@@ -124,7 +125,7 @@ public class ExprDialogFragment extends DialogFragment {
              fractalProviderFragment.setParameterValue(id, owner, value);
 
             return true;
-        } catch (MeelanException e) {
+        } catch (MeelanException | ParsingException e) {
             msgTextView.setText(e.getMessage());
             msgTextView.setVisibility(View.VISIBLE);
             okButton.setEnabled(false);
