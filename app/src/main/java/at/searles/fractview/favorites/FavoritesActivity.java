@@ -82,7 +82,7 @@ public class FavoritesActivity extends Activity {
             }
             return true;
             case R.id.action_select_all: {
-                // FIXME is there a faster way?
+                // XXX is there a faster way?
                 for (int i = 0; i < adapter.getCount(); ++i) {
                     listView.setItemChecked(i, true);
                 }

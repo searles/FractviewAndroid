@@ -101,9 +101,7 @@ public class FractalProviderFragment extends Fragment {
         this.provider.addExclusiveParameter(Fractal.SCALE_LABEL);
         this.provider.addListener(src -> updateInteractivePoints());
 
-        FractalData defaultFractal = AssetsHelper.defaultFractal(getActivity());
-
-        lazyAppendFractal(defaultFractal);
+        addDefaultFractal();
     }
 
     @Override
@@ -113,7 +111,22 @@ public class FractalProviderFragment extends Fragment {
         // todo save state of provider and interactive points.
     }
 
+    public void addDefaultFractal() {
+        FractalData defaultFractal = AssetsHelper.defaultFractal(getActivity());
+        lazyAppendFractal(defaultFractal);
+    }
+
+    /**
+     * Adds a new fractal based on the current key fractal
+     * @param exclusiveParameterId Modifies this parameter compared to key fractal
+     * @param newValue to this value
+     */
     public void addFractalFromKey(String exclusiveParameterId, Object newValue) {
+        if (provider.keyIndex() < 0) {
+            // FIXME ERROR LOG
+            return;
+        }
+
         Fractal src = provider.getFractal(provider.keyIndex());
 
         FractalData newData = src.data().copySetParameter(exclusiveParameterId, newValue);
@@ -123,7 +136,15 @@ public class FractalProviderFragment extends Fragment {
         lazyAppendFractal(newData);
     }
 
+    /**
+     * Clones the key fractal
+     */
     public void addFractalFromKey() {
+        if (provider.keyIndex() < 0) {
+            // FIXME ERROR LOG
+            return;
+        }
+
         Fractal src = provider.getFractal(provider.keyIndex());
         lazyAppendFractal(src.data());
     }
@@ -148,16 +169,12 @@ public class FractalProviderFragment extends Fragment {
         if(containerView != null) {
             addView(index,  wrapper);
         }
-
-        if(fractalCount() > 1) {
-            ((FractviewActivity) getActivity()).setRemoveViewEnabled(true);
-        }
     }
 
     public void removeFractalFromKey() {
-        if(fractalCount() <= 1) {
-            // fixme allow this but add new mb instantly
-            throw new IllegalArgumentException("cannot remove it there are no fractals left");
+        if(fractalCount() <= 0) {
+            // FIXME ERROR LOG
+            return;
         }
 
         int removedIndex = provider.keyIndex();
@@ -180,9 +197,10 @@ public class FractalProviderFragment extends Fragment {
 
         this.provider.removeFractal();
 
-        if(fractalCount() == 1) {
-            ((FractviewActivity) getActivity()).setRemoveViewEnabled(false);
-        }
+        updateViewPadding();
+
+        // update selection
+        updateKeySelection();
     }
 
     // ========= Handle exclusive parameter ids. ==============
@@ -297,11 +315,6 @@ public class FractalProviderFragment extends Fragment {
         containerView.removeViewAt(removedIndex * 2);
 
         selectorButtons.remove(removedIndex);
-
-        updateViewPadding();
-
-        // update selection
-        updateKeySelection();
     }
 
     private void updateViewPadding() {

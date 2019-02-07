@@ -184,8 +184,6 @@ func run2D() {
 }
 
 func run3D() {
-    var coords cplx = ;
-
     object colorizer = ColorizerBailoutEpsilon();
     object calculation = Calculation(colorizer);
 

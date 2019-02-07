@@ -6,8 +6,13 @@ import android.app.Dialog;
 import android.app.DialogFragment;
 import android.content.DialogInterface;
 import android.os.Bundle;
+import android.text.Editable;
+import android.text.TextWatcher;
 import android.view.View;
-import android.widget.EditText;
+import android.widget.ArrayAdapter;
+import android.widget.AutoCompleteTextView;
+
+import java.util.Optional;
 
 import at.searles.fractview.R;
 import at.searles.fractview.main.FractalProviderFragment;
@@ -81,12 +86,20 @@ public class ColorDialogFragment extends DialogFragment {
 
         // I initialize the view here.
         ColorView colorView = view.findViewById(R.id.colorView);
-        EditText webcolorEditor = view.findViewById(R.id.webcolorEditText);
 
-        // FIXME Text does not fit
+        AutoCompleteTextView textView = view.findViewById(R.id.webcolorEditText);
 
-        // I need listeners for both of them.
-        colorView.bindToEditText(webcolorEditor); // fixme put this into colorView.
+        ColorParser colorParser = new ColorParser();
+
+        textView.setAdapter(new ArrayAdapter<>(
+                getContext(), android.R.layout.simple_list_item_1,
+                colorParser.colorNames()
+        ));
+
+        CommonListener listener = new CommonListener(colorView, textView);
+
+        colorView.addColorEditedListener(listener);
+        textView.addTextChangedListener(listener);
 
         builder.setView(view);
 
@@ -106,7 +119,6 @@ public class ColorDialogFragment extends DialogFragment {
         if(savedInstanceState == null) {
             int value = getArguments().getInt(VALUE_KEY);
             colorView.setColor(value);
-            // todo does this also set the webcolorEditorText?
         }
 
         AlertDialog dialog = builder.create();
@@ -139,5 +151,65 @@ public class ColorDialogFragment extends DialogFragment {
         activity.model().set(x, y, value);
         PaletteView paletteView = activity.findViewById(R.id.paletteView);
         paletteView.invalidate();
+    }
+
+    class CommonListener implements ColorView.Listener, TextWatcher {
+
+        private final ColorView colorView;
+        private final AutoCompleteTextView textView;
+        private boolean lockColorViewCallbacks = false;
+        private final ColorParser parser;
+
+        CommonListener(ColorView colorView, AutoCompleteTextView textView) {
+            this.colorView = colorView;
+            this.textView = textView;
+
+            this.parser = new ColorParser();
+        }
+
+        @Override
+        public void onColorChanged(int color) {
+            // from color view.
+            try {
+                lockColorViewCallbacks = true;
+
+                String colorString = String.format("#%06X", (0xFFFFFF & color));
+                textView.setText(colorString);
+            } finally {
+                lockColorViewCallbacks = false;
+            }
+        }
+
+        @Override
+        public void beforeTextChanged(CharSequence s, int start, int count, int after) {
+            // ignore
+        }
+
+        @Override
+        public void onTextChanged(CharSequence s, int start, int before, int count) {
+            // ignore
+        }
+
+        @Override
+        public void afterTextChanged(Editable s) {
+            if(s.length() == 0) {
+                return;
+            }
+
+            Optional<Integer> color = parser.parseColor(s.toString());
+
+            if(!color.isPresent()) {
+                // fixme draw red
+                return;
+            }
+
+            // fixme draw green
+
+            if(!lockColorViewCallbacks) {
+                colorView.setColor(color.get());
+
+                return;
+            }
+        }
     }
 }

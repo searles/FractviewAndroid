@@ -141,6 +141,12 @@ public class FractviewActivity extends Activity {
 				return;
 			case R.id.action_remove_fractal_view:
 				fractalProviderFragment.removeFractalFromKey();
+
+				if(fractalProviderFragment.fractalCount() == 0) {
+					// add new default view.
+					fractalProviderFragment.addDefaultFractal();
+				}
+
 				return;
 			case R.id.action_add_favorite:
 				// call from fractal because of child-fragment-manager
@@ -214,10 +220,6 @@ public class FractviewActivity extends Activity {
 	public void onBackPressed() {
 		// send it to the provider
 		fractalProviderFragment.onBackPressed();
-	}
-
-	public void setRemoveViewEnabled(boolean enabled) {
-		// TODO
 	}
 
 	@Override

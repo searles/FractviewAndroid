@@ -63,17 +63,27 @@ class ItemsSelectedListener implements AbsListView.MultiChoiceModeListener {
         return false;
     }
 
-    private void rename(ActionMode mode) {
+    private void rename() {
+        // no mode because mode is not finished.
+
         // Only possible it there is one item selected.
-        int position = listView.getSelectedItemPosition();
-        String key = accessor.keyAt(position);
+
+        List<String> keys = selectedKeys();
+
+        if(keys.size() != 1) {
+            // FIXME ERROR LOG
+            return;
+        }
+
+        String key = keys.get(0);
 
         DialogHelper.inputText(listView.getContext(), "Rename " + key, key, new Commons.KeyAction() {
             @Override
             public void apply(String newKey) {
-                // unselect
-                listView.setItemChecked(position, false);
+                // unselect old
+                listView.setItemChecked(accessor.indexOf(key), false);
 
+                // act
                 String confirmedNewKey = accessor.rename(key, newKey);
 
                 if (confirmedNewKey != null) {
@@ -99,20 +109,20 @@ class ItemsSelectedListener implements AbsListView.MultiChoiceModeListener {
         return selectedKeys;
     }
 
-    private List<Integer> selectedIndices() {
-        SparseBooleanArray checkedItemPositions = listView.getCheckedItemPositions();
-
-        LinkedList<Integer> selectedIndices = new LinkedList<>();
-
-        for (int i = 0; i < checkedItemPositions.size(); ++i) {
-            int keyIndex = checkedItemPositions.keyAt(i);
-            if (checkedItemPositions.get(keyIndex)) {
-                selectedIndices.add(i);
-            }
-        }
-
-        return selectedIndices;
-    }
+// fixme remove    private List<Integer> selectedIndices() {
+//        SparseBooleanArray checkedItemPositions = listView.getCheckedItemPositions();
+//
+//        LinkedList<Integer> selectedIndices = new LinkedList<>();
+//
+//        for (int i = 0; i < checkedItemPositions.size(); ++i) {
+//            int keyIndex = checkedItemPositions.keyAt(i);
+//            if (checkedItemPositions.get(keyIndex)) {
+//                selectedIndices.add(i);
+//            }
+//        }
+//
+//        return selectedIndices;
+//    }
 
     private void delete(ActionMode mode) {
         DialogHelper.confirm(listView.getContext(), "Delete",
@@ -142,13 +152,13 @@ class ItemsSelectedListener implements AbsListView.MultiChoiceModeListener {
         Context context = listView.getContext();
         switch (item.getItemId()) {
             case R.id.action_select_all:
-                // FIXME is there a faster way?
+                // XXX is there a faster way?
                 for (int i = 0; i < listView.getCount(); ++i) {
                     listView.setItemChecked(i, true);
                 }
                 return true;
             case R.id.action_rename:
-                rename(mode);
+                rename();
                 return true;
             case R.id.action_delete:
                 delete(mode);

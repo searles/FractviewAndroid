@@ -31,18 +31,20 @@ import at.searles.fractview.utils.SharedPrefsHelperException;
  */
 public class FavoritesAccessor implements FractalAccessor {
 
+    public static final String FAVORITES_SHARED_PREF = "favorites";
     private static final String FILE_PROVIDER = "at.searles.fractview.fileprovider";
     private final SharedPreferences prefs;
-    public static final String FAVORITES_SHARED_PREF = "favorites";
+    private Context context;
 
     private CachedKeyAdapter<FavoriteEntry> entries;
     private boolean invalid;
 
-    public FavoritesAccessor(Context context) {
+    FavoritesAccessor(Context context) {
         // Fetch shared preferences
         this.prefs = context.getSharedPreferences(
                 FAVORITES_SHARED_PREF,
                 Context.MODE_PRIVATE);
+        this.context = context;
 
         this.entries = new CachedKeyAdapter<>(FavoriteEntry.class);
         invalid = true;
@@ -69,7 +71,7 @@ public class FavoritesAccessor implements FractalAccessor {
 
     private CachedKeyAdapter<FavoriteEntry> entries() {
         if(invalid) initializeEntries();
-        return entries; // FIXME remove old calls
+        return entries;
     }
 
     public String keyAt(int position) {
@@ -88,21 +90,24 @@ public class FavoritesAccessor implements FractalAccessor {
      * @return The new name which is newKey, possibly enriched with some index.
      * @throws SharedPrefsHelperException if there was some mistake.
      */
-    public String rename(String oldKey, String newKey) {
+    String rename(String oldKey, String newKey) {
         invalid = true;
         return SharedPrefsHelper.renameKey(prefs, oldKey, newKey);
     }
 
-    public int indexOf(String key) {
+    int indexOf(String key) {
         if(invalid) initializeEntries();
         return entries.indexOf(key);
     }
 
-    public void deleteEntries(List<String> keys) {
-
+    void deleteEntries(List<String> keys) {
+        for(String key : keys) {
+            SharedPrefsHelper.removeEntry(context, key, prefs);
+            invalid = true;
+        }
     }
 
-    public void importEntries(FavoritesActivity activity, FavoriteEntry.Collection newEntries) {
+    void importEntries(FavoritesActivity activity, FavoriteEntry.Collection newEntries) {
         // Find duplicates
         Map<String, FavoriteEntry> nonDuplicates = new HashMap<>();
         Map<String, FavoriteEntry> duplicates = new HashMap<>();
@@ -195,7 +200,7 @@ public class FavoritesAccessor implements FractalAccessor {
         invalid = true;
     }
 
-    public void exportEntries(Context context, List<String> keys) {
+    void exportEntries(Context context, List<String> keys) {
         // Fetch map from adapter
         JsonWriter writer = null;
 
