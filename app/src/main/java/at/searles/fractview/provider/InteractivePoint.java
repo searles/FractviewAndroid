@@ -86,18 +86,9 @@ public class InteractivePoint {
      * @return false if there is no value for this point (ie the point should be deleted)
      */
     public boolean update() {
-        if(!parent.parameterExists(key, id)) {
-            // this check is necessary because parameterValue might generalize id.
-            return false;
-        }
-
         Object parameterValue = parent.getParameterValue(key, id);
+        return parameterValue != null && updatePosition(parameterValue);
 
-        if (parameterValue == null) {
-            throw new NullPointerException("no parameter although parameterExists was true...");
-        }
-
-        return updatePosition(parameterValue);
     }
 
     public double[] position() {

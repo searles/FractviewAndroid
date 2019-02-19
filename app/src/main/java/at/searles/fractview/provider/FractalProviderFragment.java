@@ -331,21 +331,6 @@ public class FractalProviderFragment extends Fragment {
         return provider.fractalCount();
     }
 
-    public boolean parameterExists(String key, int id) {
-        if(id != -1) {
-            Fractal fractal = provider.getFractal(id);
-
-            if(fractal == null) {
-                return false;
-            }
-
-            return fractal.getParameter(key) != null;
-        }
-
-        // this will use the parameter table
-        return provider.getParameterValue(key, id) != null;
-    }
-
     // FIXME From here, move to external classes
 
     public void showChangeSizeDialog() {
