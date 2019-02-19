@@ -10,7 +10,7 @@ import java.util.LinkedList;
 import at.searles.fractal.Fractal;
 import at.searles.fractview.fractal.DrawerContext;
 import at.searles.fractview.fractal.DrawerListener;
-import at.searles.fractview.main.CalculatorWrapper;
+import at.searles.fractview.provider.CalculatorWrapper;
 
 /**
  * This class is the glue maintaining all parameters for drawing the fractal

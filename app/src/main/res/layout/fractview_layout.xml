@@ -5,7 +5,7 @@
                                         android:layout_width="match_parent"
                                         android:layout_height="match_parent">
 
-    <fragment android:name="at.searles.fractview.main.FractalProviderFragment"
+    <fragment android:name="at.searles.fractview.provider.FractalProviderFragment"
               android:id="@+id/fractal_fragment"
               android:layout_width="match_parent"
               android:layout_height="match_parent" />

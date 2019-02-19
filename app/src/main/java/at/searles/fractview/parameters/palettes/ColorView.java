@@ -1,4 +1,4 @@
-package at.searles.fractview.parameters;
+package at.searles.fractview.parameters.palettes;
 
 import android.content.Context;
 import android.graphics.Canvas;
@@ -372,15 +372,6 @@ public class ColorView extends View {
 				selectedId = id;
 			}
 
-			// set color coordinates
-			colorFraction = Math.max(0.f, Math.min(1.f, s));
-			whiteFraction = Math.max(0.f, Math.min(1.f, t));
-
-			if(colorFraction + whiteFraction > 1) {
-				// fixme experiment with other ways.
-				whiteFraction = 1 - colorFraction;
-			}
-
 			if(s >= 0 && t >= 0 && u >= 0) {
 				// inside triangle
 				draggedCorner = -1; // no dragged corner.
@@ -388,15 +379,43 @@ public class ColorView extends View {
 
 			if(t <= 0 && u <= 0) {
 				draggedCorner = 0; // A
+				s = 1; t = 0; u = 0;
 			}
 
 			if(s <= 0 && u <= 0) {
 				draggedCorner = 1; // B
+				s = 0; t = 1; u = 0;
 			}
 
 			if(s <= 0 && t <= 0) {
 				draggedCorner = 2; // C
+				s = 0; t = 0; u = 1;
 			}
+
+			// now, at most one of them is negative
+
+			// check if left/right of one side.
+			if(u < 0) {
+				s += u / 2.f;
+				t += u / 2.f;
+				u = 0; // for debugging
+			}
+
+			if(t < 0) {
+				s += t / 2.f;
+				u += t / 2.f;
+				t = 0;
+			}
+
+			if(s < 0) {
+				t += s / 2.f;
+				u += s / 2.f;
+				s = 0;
+			}
+
+			// set color coordinates
+			colorFraction = Math.max(0.f, Math.min(1.f, s));
+			whiteFraction = Math.max(0.f, Math.min(1.f, t));
 
 			// is there a drag? If yes, update hue.
 			if(draggedCorner != -1) { // A is dragged

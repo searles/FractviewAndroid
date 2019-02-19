@@ -1,4 +1,4 @@
-package at.searles.fractview.parameters;
+package at.searles.fractview.provider.view.parameters;
 
 import android.app.Activity;
 import android.graphics.Typeface;
@@ -10,8 +10,9 @@ import android.widget.ListAdapter;
 import android.widget.TextView;
 
 import at.searles.fractal.FractalProvider;
+import at.searles.fractal.ParameterTable;
 import at.searles.fractal.data.ParameterType;
-import at.searles.fractview.main.FractalProviderFragment;
+import at.searles.fractview.provider.FractalProviderFragment;
 
 public class ParameterAdapter extends BaseAdapter implements ListAdapter, FractalProvider.Listener {
 
@@ -39,7 +40,7 @@ public class ParameterAdapter extends BaseAdapter implements ListAdapter, Fracta
     }
 
     @Override
-    public FractalProvider.ParameterEntry getItem(int position) {
+    public ParameterTable.Entry getItem(int position) {
         return parent.getParameterEntryByIndex(position);
     }
 
@@ -65,7 +66,7 @@ public class ParameterAdapter extends BaseAdapter implements ListAdapter, Fracta
         }
     }
 
-    private String description(FractalProvider.ParameterEntry entry) {
+    private String description(ParameterTable.Entry entry) {
         if(entry.owner == -1 || parent.fractalCount() == 1) {
             return entry.parameter.description;
         } else {
@@ -77,7 +78,7 @@ public class ParameterAdapter extends BaseAdapter implements ListAdapter, Fracta
     public View getView(int position, View view, ViewGroup parent) {
         int viewType = getItemViewType(position);
 
-        FractalProvider.ParameterEntry entry = getItem(position);
+        ParameterTable.Entry entry = getItem(position);
 
         switch (viewType) {
             case BOOL: {

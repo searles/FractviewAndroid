@@ -12,8 +12,8 @@ import java.util.ArrayList;
 import java.util.List;
 
 import at.searles.fractview.bitmap.ui.ScalableImageView;
-import at.searles.fractview.main.CalculatorWrapper;
-import at.searles.fractview.main.InteractivePoint;
+import at.searles.fractview.provider.CalculatorWrapper;
+import at.searles.fractview.provider.InteractivePoint;
 
 public class InteractivePointsPlugin extends Plugin {
     private static final float BALLON_RADIUS_INCH = 0.15f; // makes a diameter of 0.3 inch

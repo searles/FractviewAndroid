@@ -18,7 +18,7 @@ import android.widget.TextView;
 import java.io.File;
 
 import at.searles.fractview.R;
-import at.searles.fractview.main.FractalProviderFragment;
+import at.searles.fractview.provider.FractalProviderFragment;
 import at.searles.fractview.ui.DialogHelper;
 import at.searles.fractview.utils.CharUtil;
 

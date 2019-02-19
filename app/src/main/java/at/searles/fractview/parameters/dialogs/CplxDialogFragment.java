@@ -14,7 +14,7 @@ import android.widget.EditText;
 import android.widget.TextView;
 
 import at.searles.fractview.R;
-import at.searles.fractview.main.FractalProviderFragment;
+import at.searles.fractview.provider.FractalProviderFragment;
 import at.searles.math.Cplx;
 
 // This is practically the same as the IntDialogFragment, except for the parser...
@@ -24,7 +24,7 @@ public class CplxDialogFragment extends DialogFragment {
     private static final String IM_VALUE_KEY = "im_value";
     private static final String TITLE_KEY = "title";
     private static final String ID_KEY = "id";
-    private static final String OWNER_KEY = "owner";
+    private static final String OWNER_KEY = "id";
 
     public static CplxDialogFragment newInstance(String title, String id, int owner, Cplx value) {
         Bundle b = new Bundle();

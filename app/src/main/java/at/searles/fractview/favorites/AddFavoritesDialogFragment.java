@@ -14,7 +14,7 @@ import android.widget.EditText;
 import android.widget.TextView;
 
 import at.searles.fractview.R;
-import at.searles.fractview.main.FractalProviderFragment;
+import at.searles.fractview.provider.FractalProviderFragment;
 
 // This is practically the same as the IntDialogFragment, except for the parser...
 public class AddFavoritesDialogFragment extends DialogFragment {

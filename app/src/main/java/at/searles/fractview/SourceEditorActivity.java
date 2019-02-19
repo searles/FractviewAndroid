@@ -28,7 +28,7 @@ public class SourceEditorActivity extends Activity {
 	static private final int LOAD_PROGRAM = -1;
 	static private final int SAVE_PROGRAM = -2;
 	public static final int SOURCE_EDITOR_ACTIVITY_RETURN = 98;
-    public static final String OWNER_LABEL = "owner";
+    public static final String OWNER_LABEL = "id";
 
     private EditText editor;
     

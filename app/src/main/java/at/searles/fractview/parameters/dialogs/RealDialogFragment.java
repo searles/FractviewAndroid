@@ -14,7 +14,7 @@ import android.widget.EditText;
 import android.widget.TextView;
 
 import at.searles.fractview.R;
-import at.searles.fractview.main.FractalProviderFragment;
+import at.searles.fractview.provider.FractalProviderFragment;
 
 // This is practically the same as the IntDialogFragment, except for the parser...
 public class RealDialogFragment extends DialogFragment {
@@ -22,7 +22,7 @@ public class RealDialogFragment extends DialogFragment {
     private static final String VALUE_KEY = "value";
     private static final String TITLE_KEY = "title";
     private static final String ID_KEY = "id";
-    private static final String OWNER_KEY = "owner";
+    private static final String OWNER_KEY = "id";
 
     public static RealDialogFragment newInstance(String title, String id, int owner, double value) {
         Bundle b = new Bundle();

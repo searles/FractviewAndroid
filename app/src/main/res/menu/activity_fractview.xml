@@ -1,6 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 
 <menu xmlns:android="http://schemas.android.com/apk/res/android">
+    <!-- FIXME Separators and icons -->
     <item android:id="@+id/action_forward"
           android:title="@string/action_forward"
         />
@@ -16,10 +17,12 @@
           android:title="@string/action_tutorial"
           android:icon="@android:drawable/ic_dialog_info"
         />
-    <!-- FIXME Separator -->
     <item android:id="@+id/action_add_fractal_view"
           android:title="@string/add_view"
           android:icon="@android:drawable/ic_menu_add"
+        />
+    <item android:id="@+id/action_merge_fractal_view"
+          android:title="@string/merge_view"
         />
     <item android:id="@+id/action_remove_fractal_view"
           android:title="@string/remove_view"

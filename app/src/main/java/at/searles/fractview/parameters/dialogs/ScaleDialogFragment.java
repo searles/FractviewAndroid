@@ -15,7 +15,7 @@ import android.widget.TextView;
 
 import at.searles.fractview.R;
 import at.searles.fractview.fractal.BundleAdapter;
-import at.searles.fractview.main.FractalProviderFragment;
+import at.searles.fractview.provider.FractalProviderFragment;
 import at.searles.math.Scale;
 
 // This is practically the same as the IntDialogFragment, except for the parser...
@@ -24,7 +24,7 @@ public class ScaleDialogFragment extends DialogFragment {
     private static final String VALUE_KEY = "value";
     private static final String TITLE_KEY = "title";
     private static final String ID_KEY = "id";
-    private static final String OWNER_KEY = "owner";
+    private static final String OWNER_KEY = "id";
 
     public static ScaleDialogFragment newInstance(String title, String id, int owner, Scale value) {
         Bundle b = new Bundle();

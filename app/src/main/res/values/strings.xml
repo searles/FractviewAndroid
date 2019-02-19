@@ -85,5 +85,6 @@
     <string name="remove_view">Remove View</string>
     <string name="add_view">Add View</string>
     <string name="action_forward">Forward</string>
+    <string name="merge_view">Merge Shared Parameters</string>
 
 </resources>

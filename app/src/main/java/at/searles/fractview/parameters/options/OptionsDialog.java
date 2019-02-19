@@ -12,10 +12,10 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.stream.Collectors;
 
-import at.searles.fractal.FractalProvider;
+import at.searles.fractal.ParameterTable;
 import at.searles.fractview.R;
-import at.searles.fractview.main.FractalProviderFragment;
-import at.searles.fractview.parameters.ParameterLongSelectListener;
+import at.searles.fractview.provider.FractalProviderFragment;
+import at.searles.fractview.provider.view.parameters.ParameterLongSelectListener;
 
 public class OptionsDialog implements DialogInterface.OnClickListener {
 
@@ -25,12 +25,12 @@ public class OptionsDialog implements DialogInterface.OnClickListener {
 
     private final String title;
     private final FractalProviderFragment provider;
-    private final FractalProvider.ParameterEntry item;
+    private final ParameterTable.Entry item;
 
     private List<ParameterLongSelectListener.Action> actions;
     private List<ParameterLongSelectListener.CheckableAction> checkableActions;
 
-    public OptionsDialog(String title, FractalProviderFragment provider, FractalProvider.ParameterEntry item) {
+    public OptionsDialog(String title, FractalProviderFragment provider, ParameterTable.Entry item) {
         this.title = title;
         this.provider = provider;
         this.item = item;

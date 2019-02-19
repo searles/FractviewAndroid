@@ -1,4 +1,4 @@
-package at.searles.fractview.main;
+package at.searles.fractview.provider;
 
 import android.graphics.Color;
 
@@ -13,18 +13,18 @@ import at.searles.meelan.values.Real;
 
 public class InteractivePoint {
     private FractalProviderFragment parent;
-    private final String id;
-    int owner; // this is updated on a regular basis by the provider if a fractal is removed.
+    private final String key;
+    private final int id; // this is updated on a regular basis by the provider if a fractal is removed.
 
     private double[] position; // actual position; cached because parsing is expensive.
     private boolean isCplx; // is the backing element a complex number or an expression?
 
     private int color;
 
-    InteractivePoint(FractalProviderFragment parent, String id, int owner) {
+    InteractivePoint(FractalProviderFragment parent, String key, int id) {
         this.parent = parent;
+        this.key = key;
         this.id = id;
-        this.owner = owner;
 
         this.position = new double[]{0, 0};
 
@@ -75,9 +75,9 @@ public class InteractivePoint {
 
         if(isCplx) {
             // position is updated indirectly via listener.
-            parent.setParameterValue(id, owner, value);
+            parent.setParameterValue(key, id, value);
         } else {
-            parent.setParameterValue(id, owner, value.toString());
+            parent.setParameterValue(key, id, value.toString());
         }
     }
 
@@ -86,12 +86,12 @@ public class InteractivePoint {
      * @return false if there is no value for this point (ie the point should be deleted)
      */
     public boolean update() {
-        if(!parent.parameterExists(id, owner)) {
-            // this check is necessary because parameterValue might generalize owner.
+        if(!parent.parameterExists(key, id)) {
+            // this check is necessary because parameterValue might generalize id.
             return false;
         }
 
-        Object parameterValue = parent.getParameterValue(id, owner);
+        Object parameterValue = parent.getParameterValue(key, id);
 
         if (parameterValue == null) {
             throw new NullPointerException("no parameter although parameterExists was true...");
@@ -104,16 +104,16 @@ public class InteractivePoint {
         return position;
     }
 
-    public String id() {
+    public String key() {
+        return key;
+    }
+
+    public int id() {
         return id;
     }
 
-    public int owner() {
-        return owner;
-    }
-
     public boolean is(String id, int owner) {
-        return this.id.equals(id) && this.owner == owner;
+        return this.key.equals(id) && this.id == owner;
     }
 
     public int color() {
@@ -125,6 +125,6 @@ public class InteractivePoint {
     }
 
     public String toString() {
-        return id + "/" + owner;
+        return key + "/" + id;
     }
 }

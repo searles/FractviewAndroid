@@ -15,10 +15,10 @@ import android.widget.AutoCompleteTextView;
 import java.util.Optional;
 
 import at.searles.fractview.R;
-import at.searles.fractview.main.FractalProviderFragment;
-import at.searles.fractview.parameters.ColorView;
+import at.searles.fractview.parameters.palettes.ColorView;
 import at.searles.fractview.parameters.palettes.PaletteActivity;
 import at.searles.fractview.parameters.palettes.PaletteView;
+import at.searles.fractview.provider.FractalProviderFragment;
 
 // This is practically the same as the IntDialogFragment, except for the parser...
 public class ColorDialogFragment extends DialogFragment {
@@ -29,7 +29,7 @@ public class ColorDialogFragment extends DialogFragment {
     private static final String TITLE_KEY = "title";
 
     private static final String ID_KEY = "id";
-    private static final String OWNER_KEY = "owner";
+    private static final String OWNER_KEY = "id";
 
     private static final String X_KEY = "x";
     private static final String Y_KEY = "y";

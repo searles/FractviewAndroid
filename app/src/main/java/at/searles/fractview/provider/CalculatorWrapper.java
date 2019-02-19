@@ -1,4 +1,4 @@
-package at.searles.fractview.main;
+package at.searles.fractview.provider;
 
 
 import android.annotation.SuppressLint;
@@ -12,6 +12,8 @@ import at.searles.fractview.bitmap.FractalCalculator;
 import at.searles.fractview.bitmap.ui.CalculatorView;
 import at.searles.fractview.bitmap.ui.ScalableImageView;
 import at.searles.fractview.fractal.DrawerContext;
+import at.searles.fractview.main.CreateDrawerTask;
+import at.searles.fractview.main.DrawerProgressTask;
 import at.searles.fractview.saving.SaveInBackgroundFragment;
 import at.searles.math.Scale;
 
@@ -26,7 +28,7 @@ public class CalculatorWrapper implements ScalableImageView.Listener {
     private DrawerProgressTask progressTask;
 
     private final FractalProviderFragment parent;
-    private int index;
+    private int id;
 
     private int width;
     private int height;
@@ -47,9 +49,8 @@ public class CalculatorWrapper implements ScalableImageView.Listener {
      */
     private CalculatorView calculatorView;
 
-    CalculatorWrapper(FractalProviderFragment parent, int width, int height) {
+    public CalculatorWrapper(FractalProviderFragment parent, int width, int height) {
         this.parent = parent;
-        this.index = -1;
 
         this.width = width;
         this.height = height;
@@ -58,7 +59,7 @@ public class CalculatorWrapper implements ScalableImageView.Listener {
         createDrawerTask = new CreateDrawerTask(RenderScript.create(parent.getContext()), this);
     }
 
-    void startInitialization() {
+    public void startInitialization() {
         createDrawerTask.execute();
     }
 
@@ -66,7 +67,7 @@ public class CalculatorWrapper implements ScalableImageView.Listener {
      * This method is called from the CreateDrawerTask.
      * @param drawerContext the drawerContext that was just created.
      */
-    void drawerInitializationFinished(DrawerContext drawerContext) {
+    public void drawerInitializationFinished(DrawerContext drawerContext) {
         this.createDrawerTask = null;
 
         this.progressTask = new DrawerProgressTask(this);
@@ -77,16 +78,13 @@ public class CalculatorWrapper implements ScalableImageView.Listener {
         parent.appendInitializedWrapper(this);
     }
 
-    public int index() {
-        return index;
+    public int id() {
+        return id;
     }
 
-    void setIndex(int index) {
-        // parent can update index if a calculate wrapper was added or removed.
-        this.index = index;
-    }
+    void startRunLoop(int id, Fractal fractal) {
+        this.id = id;
 
-    void startRunLoop(Fractal fractal) {
         // put life into calculator (this only has to be done once).
         calculator.initializeFractal(fractal);
         calculator.initializeRunLoop();
@@ -94,9 +92,9 @@ public class CalculatorWrapper implements ScalableImageView.Listener {
 
     @Override
     public void scaleRelative(Scale relativeScale) {
-        Scale originalScale = ((Scale) parent.getParameterValue(Fractal.SCALE_LABEL, index));
+        Scale originalScale = ((Scale) parent.getParameterValue(Fractal.SCALE_LABEL, id));
         Scale absoluteScale = originalScale.createRelative(relativeScale);
-        parent.setParameterValue(Fractal.SCALE_LABEL, index, absoluteScale);
+        parent.setParameterValue(Fractal.SCALE_LABEL, id, absoluteScale);
     }
 
     @SuppressLint("SetTextI18n")
@@ -141,30 +139,12 @@ public class CalculatorWrapper implements ScalableImageView.Listener {
     }
 
     public void normToValue(double normX, double normY, double[] dst) {
-        parent.getFractal(index).scale().scalePoint(normX, normY, dst);
+        parent.getFractal(id).scale().scalePoint(normX, normY, dst);
     }
 
     public void valueToNorm(double x, double y, double[] dst) {
-        parent.getFractal(index).scale().invScalePoint(x, y, dst);
+        parent.getFractal(id).scale().invScalePoint(x, y, dst);
     }
-
-//    public void screenToNormalized(float viewX, float viewY, float[] normPt) {
-//        calculatorView.scaleableImageView().screenToNormalized(viewX, viewY, normPt);
-//    }
-//
-//    public void normalizedToScreen(float normX, float normY, float[] screenPt) {
-//        calculatorView.scaleableImageView().normalizedToScreen(normX, normY, screenPt);
-//    }
-//
-//    public void screenToValue(double viewX, double viewY, double[] dst) {
-//        screenToNormalized(viewX, viewY, dst);
-//        normToValue(dst[0], dst[1], dst);
-//    }
-//
-//    public void valueToScreen(double x, double y, double[] dst) {
-//        valueToNorm(x, y, dst);
-//        normalizedToScreen(dst[0], dst[1], dst);
-// todo remove    }
 
     boolean setBitmapSize(int width, int height) {
         return calculator.setSize(width, height);
@@ -181,7 +161,7 @@ public class CalculatorWrapper implements ScalableImageView.Listener {
     /**
      * Called periodically from ProgressTask
      */
-    void updateProgress() {
+    public void updateProgress() {
         if(calculatorView != null) {
             if (calculator.isRunning()) {
                 calculatorView.setProgress(calculator.progress());

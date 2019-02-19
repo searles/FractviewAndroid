@@ -22,7 +22,7 @@ import android.widget.TextView;
 import java.util.Locale;
 
 import at.searles.fractview.R;
-import at.searles.fractview.main.FractalProviderFragment;
+import at.searles.fractview.provider.FractalProviderFragment;
 import at.searles.fractview.ui.DialogHelper;
 
 /**

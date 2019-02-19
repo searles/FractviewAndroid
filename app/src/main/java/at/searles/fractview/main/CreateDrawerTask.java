@@ -5,6 +5,7 @@ import android.renderscript.RenderScript;
 
 import at.searles.fractview.ScriptC_fillimage;
 import at.searles.fractview.ScriptC_fractal;
+import at.searles.fractview.provider.CalculatorWrapper;
 import at.searles.fractview.renderscript.RenderScriptDrawerContext;
 
 /**
@@ -16,7 +17,7 @@ public class CreateDrawerTask extends AsyncTask<Void, Void, Void> {
     private final RenderScript renderScript;
     private RenderScriptDrawerContext drawer;
 
-    CreateDrawerTask(RenderScript renderScript, CalculatorWrapper parent) {
+    public CreateDrawerTask(RenderScript renderScript, CalculatorWrapper parent) {
         this.renderScript = renderScript;
         this.parent = parent;
     }

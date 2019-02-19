@@ -19,7 +19,7 @@ import java.io.IOException;
 import java.lang.ref.WeakReference;
 
 import at.searles.fractview.bitmap.IdleJob;
-import at.searles.fractview.main.FractalProviderFragment;
+import at.searles.fractview.provider.FractalProviderFragment;
 
 /**
  * This fragment saves bitmaps. It waits until the corresponding

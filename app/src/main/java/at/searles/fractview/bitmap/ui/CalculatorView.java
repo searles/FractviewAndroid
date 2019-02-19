@@ -9,7 +9,7 @@ import android.widget.ProgressBar;
 
 import at.searles.fractview.R;
 import at.searles.fractview.bitmap.ui.imageview.InteractivePointsPlugin;
-import at.searles.fractview.main.CalculatorWrapper;
+import at.searles.fractview.provider.CalculatorWrapper;
 
 /**
  * This view allows to dynamically interact with a bitmap fragment.

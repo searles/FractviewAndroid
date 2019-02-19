@@ -25,7 +25,7 @@ import at.searles.math.color.Palette;
  * be better to, well, what? Store the model in a fragment
  * and call back to there?
  * It is not so bad, but it should be clearly stated that the
- * owner of the model is the activity and not the view.
+ * id of the model is the activity and not the view.
  *
  * Therefore, it would be better if the view did not hold the model.
  */
@@ -35,7 +35,7 @@ public class PaletteActivity extends Activity {
 
 	public static final String PALETTE_LABEL = "palette";
 	public static final String ID_LABEL = "id";
-	public static final String OWNER_LABEL = "owner";
+	public static final String OWNER_LABEL = "id";
 	public static final String DESCRIPTION_LABEL = "description";
 
 	public static final String PREFS_NAME = "SavedPalettes";

@@ -14,14 +14,14 @@ import android.widget.EditText;
 import android.widget.TextView;
 
 import at.searles.fractview.R;
-import at.searles.fractview.main.FractalProviderFragment;
+import at.searles.fractview.provider.FractalProviderFragment;
 
 public class IntegerDialogFragment extends DialogFragment {
 
     private static final String VALUE_KEY = "value";
     private static final String TITLE_KEY = "title";
     private static final String ID_KEY = "id";
-    private static final String OWNER_KEY = "owner";
+    private static final String OWNER_KEY = "id";
 
     public static IntegerDialogFragment newInstance(String title, String id, int owner, int value) {
         Bundle b = new Bundle();

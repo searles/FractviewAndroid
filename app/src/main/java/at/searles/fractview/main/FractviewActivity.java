@@ -22,9 +22,11 @@ import at.searles.fractview.SourceEditorActivity;
 import at.searles.fractview.assets.SelectAssetActivity;
 import at.searles.fractview.favorites.FavoritesActivity;
 import at.searles.fractview.fractal.BundleAdapter;
-import at.searles.fractview.parameters.ParameterAdapter;
-import at.searles.fractview.parameters.ParameterLongSelectListener;
-import at.searles.fractview.parameters.ParameterSelectListener;
+import at.searles.fractview.provider.FractalProviderFragment;
+import at.searles.fractview.provider.view.UISettings;
+import at.searles.fractview.provider.view.parameters.ParameterAdapter;
+import at.searles.fractview.provider.view.parameters.ParameterLongSelectListener;
+import at.searles.fractview.provider.view.parameters.ParameterSelectListener;
 import at.searles.tutorial.TutorialActivity;
 
 
@@ -113,7 +115,7 @@ public class FractviewActivity extends Activity {
 			else if (requestCode == FRACTAL_RETURN) {
 				if (resultCode == 1) { // = "a fractal was selected"
 					FractalData newFractal = BundleAdapter.fractalFromBundle(data.getBundleExtra(FavoritesActivity.FRACTAL_INDENT_LABEL));
-					fractalProviderFragment.setKeyFractal(newFractal);
+					fractalProviderFragment.setFractal(newFractal);
 				}
 			}
 		}
@@ -127,7 +129,7 @@ public class FractviewActivity extends Activity {
 			case R.id.action_demos:
 				// show new activity
 				Intent i = new Intent(FractviewActivity.this, SelectAssetActivity.class);
-				i.putExtra(SelectAssetActivity.IN_FRACTAL_LABEL, BundleAdapter.toBundle(fractalProviderFragment.getKeyFractal()));
+				i.putExtra(SelectAssetActivity.IN_FRACTAL_LABEL, BundleAdapter.toBundle(fractalProviderFragment.getSelected()));
 				startActivityForResult(i, FRACTAL_RETURN); // return is a fractal
 				return;
 			case R.id.action_favorites:
@@ -137,14 +139,17 @@ public class FractviewActivity extends Activity {
 				startActivity(new Intent(this, TutorialActivity.class));
 				return;
 			case R.id.action_add_fractal_view:
-				fractalProviderFragment.addFractalFromKey();
+				fractalProviderFragment.addFromSelected();
+				return;
+			case R.id.action_merge_fractal_view:
+				fractalProviderFragment.mergeFractalsFromKey();
 				return;
 			case R.id.action_remove_fractal_view:
-				fractalProviderFragment.removeFractalFromKey();
+				fractalProviderFragment.removeSelected();
 
 				if(fractalProviderFragment.fractalCount() == 0) {
 					// add new default view.
-					fractalProviderFragment.addDefaultFractal();
+					fractalProviderFragment.addDefault();
 				}
 
 				return;
@@ -169,14 +174,19 @@ public class FractviewActivity extends Activity {
 	private void openUiSettingsDialog() {
 
 		// UI Settings:
-		// [x] Show Grid
 		// [x] Activate On-Screen Scaling
 		//   [x] Confirm Zoom with Tab
-		//   [x] Lock Rotation
-		//   [x] Lock Center
+		//   [x] Rotation Lock
+		//   [x] Center Lock
+		//   [x] Scale Lock
+		//   [x] Deactivate Point Editing
+		// [x] Show Grid
+		// [x] Show Coordinates
 		// --------------------
 		// [x] Apply to all views
-		final CharSequence[] items = {"Show Grid","Rotation Lock", "Confirm Zoom with Tab", "Deactivate Zoom"};
+
+		// FIXME
+		UISettings settings = fractalProviderFragment.getUISettings();
 
 //		new AlertDialog.Builder(this)
 //                .setCancelable(true)

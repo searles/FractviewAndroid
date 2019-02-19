@@ -5,7 +5,7 @@ import android.os.Bundle;
 
 import java.io.IOException;
 
-import at.searles.fractview.main.FractalProviderFragment;
+import at.searles.fractview.provider.FractalProviderFragment;
 import at.searles.fractview.ui.DialogHelper;
 
 public class SetWallpaperFragment extends SaveInBackgroundFragment {

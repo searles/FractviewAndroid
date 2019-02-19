@@ -2,10 +2,12 @@ package at.searles.fractview.main;
 
 import android.os.Handler;
 
+import at.searles.fractview.provider.CalculatorWrapper;
+
 /**
  * Class used for updating the view on a regular basis
  */
-class DrawerProgressTask implements Runnable {
+public class DrawerProgressTask implements Runnable {
 
     private static final long PROGRESS_UPDATE_MILLIS = 500; // TODO move to res. update the progress bar every ... ms.
 
@@ -14,7 +16,7 @@ class DrawerProgressTask implements Runnable {
     private CalculatorWrapper parent;
     private boolean destroyed = false;
 
-    DrawerProgressTask(CalculatorWrapper parent) {
+    public DrawerProgressTask(CalculatorWrapper parent) {
         this.parent = parent;
         this.handler = new Handler();
     }
