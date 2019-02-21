@@ -1,0 +1,350 @@
+/*
+ * The following 5 integer variables are fixed in this order in memory
+ */
+var x int, y int; // The current pixel coordinates
+
+var color int; // output variable. Expects after a run the color of the pixel.
+
+var width int, height int; // if needed the dimensions of the image.
+
+/**
+ * Template for fractal calculations of iterative nature. Further processing of
+ * Orbital Values should happen in the colorizer
+ * API:
+ *     initialize(coords): coords are the complex real coordinates.
+ *     step(): Performs one step. Returns true if another step can follow.
+ * Input parameter: Colorizer
+ */
+template Calculation(colorizer) {
+    var index int;  // the iteration index
+    var p cplx; // the current parameter
+    var c cplx; // the current coordinates
+    var z cplx; // always contains z[index]
+    var zlast cplx; // always contains z[index-1], or 0 if index == 0.
+
+    /*
+     * Performs an iteration step unless the maximum number of iterations has been reached
+     * or some other break condition was met. In the latter case, "index" is modified to
+     * avoid further calculations by 'step'.
+     */
+    func step() {
+        /*
+         * Externs are always shown in the order of the program, provided they are used.
+         */
+        extern maximumNumberOfIterations int = 120;
+        extern function expr = "mandelbrot(z, p)";
+
+        if next(index, maximumNumberOfIterations) then {
+            var znext cplx = function;
+
+            if not colorizer.step(znext, z, zlast, index, p, c) then {
+                zlast = z;
+                z = znext;
+
+                true // next step.
+            } else {
+                index = maximumNumberOfIterations; // avoid further calls
+                // color was already set in the check function
+                false
+            }
+        } else {
+            colorizer.applyLake(z, zlast, index, c, p);
+            false
+        }
+    }
+
+    /*
+     * Initializes all values for these iterations. Parameter are
+     * the coordinates of the current point.
+     */
+    func initialize(coords) {
+        c = coords;
+        index = 0;
+        zlast = 0:0;
+
+        extern isJuliaSet bool = false;
+
+        if isJuliaSet then {
+            extern juliaParameter expr = "-0.75 : 0.13";
+
+            z = c;
+            p = juliaParameter;
+        } else {
+            extern initialValue expr = "0";
+
+            z = initialValue;
+            p = c;
+        }
+
+        colorizer.initialize(c);
+    }
+}
+
+extern use3D bool = false;
+
+/**
+ * Simple colorizer
+ * API:
+ *      initialize(coords): Initializes this one.
+ *      applyLake(z, zlast, index, p, c): color the lake.
+ *      check(znext, z, zlast, index, parameter, coordinates):
+ *          Returns true if the break condition is satisfied.
+ */
+template ColorizerBailoutEpsilon() {
+    extern hasBailout bool = true;
+    extern hasEpsilon bool = true;
+
+    extern bailout real = 4;
+    extern epsilon real = 1E-9;
+
+    var status int; // < 0 indicate that the calculation has terminated.
+                    // = 0 still running, no update in this step.
+                    // > 0 still running, values were updated (maybe an orbit trap was hit)
+
+    var height real;
+    var value cplx;
+
+    var color quat;
+
+    /**
+     * Colorization if the bailout value was exceeded. znext is z[index+1] here, the
+     * value that exceeded the bailout value.
+     */
+    func applyBailout(znext, z, zlast, index, c, p) {
+        status = -2;
+
+        def lastIndexFraction = {
+            extern maximumExponent expr = "2";
+            smoothen(znext, bailout, maximumExponent)
+        }
+
+        extern bailoutColorFunction expr = "log(1 + index + lastIndexFraction)";
+
+        value = bailoutColorFunction;
+
+        if use3D then {
+            extern bailoutHeightFunction expr = "re value";
+            height = bailoutHeightFunction;
+        }
+
+        extern bailoutPalette palette = [[#000, #f00, #ff0, #fff, #00f]];
+
+        color = bailoutPalette value;
+    }
+
+    /**
+     * Colorization of the lake.
+     */
+    func applyLake(z, zlast, index, c, p) {
+        status = -1;
+
+        extern lakeColorFunction expr = "rad z : arcnorm z";
+
+        value = lakeColorFunction;
+
+        if use3D then {
+            extern lakeHeightFunction expr = "re value";
+            height = lakeHeightFunction;
+        }
+
+        extern lakePalette palette = [[#000]];
+
+        color = lakePalette value;
+    }
+
+    /**
+     * Colorization if the epsilon value has been reached. By default, simply draw the lake.
+     * znext is the first value to be below the limit, hence znext corresponds to z[index+1]
+     */
+    func applyEpsilon(znext, z, zlast, index, c, p) {
+        applyLake(znext, z, index + 1, c, p)
+    }
+
+    /*
+     * Run before iterations are started
+     */
+    func initialize(c) {
+        // here, orbit traps or folds can be initialized
+        status = 0;
+    }
+
+    /*
+     * Run after check-condition has failed
+     */
+    func update(znext, z, zlast, index, p, c) {
+        // nothing to do in the default case.
+        // here, orbit traps or folds would be updated.
+        // in this case, status can be used.
+        // per default, status should remain 0.
+    }
+
+    /*
+     * Returns true if no break condition is met. False indicates that
+     * the calculation is terminated. In the latter case, layer, degree and color
+     * must be set.
+     */
+    func step(znext, z, zlast, index, p, c) {
+        // Here, custom bailout functions can be set.
+        (
+            radrange(znext, z, bailout, epsilon, applyBailout(znext, z, zlast, index, c, p), applyEpsilon(znext, z, zlast, index, c, p)) if hasBailout and hasEpsilon
+            else not radless(znext, bailout) and { applyBailout(znext, z, zlast, index, c, p); true } if hasBailout
+            else distless(znext, z, epsilon) and { applyEpsilon(znext, z, zlast, index, c, p); true } if hasEpsilon
+            else false
+        ) or { update(znext, z, zlast, index, p, c); false }
+    }
+}
+
+/************************************************/
+/**** Section pixel functions                ****/
+/**** This part is the same for all fractals ****/
+/************************************************/
+
+func calcPix2D(x, y) {
+    var coords cplx = map(x, y);
+
+    object colorizer = ColorizerBailoutEpsilon();
+    object calculation = Calculation(colorizer);
+
+    var combinedColor quat = 0;
+
+    while calculation.step() do {
+         // here, update orbit traps or other things
+        if colorizer.status > 0 then {
+            // direction can be twisted here.
+            combinedColor = over(combinedColor, colorizer.color);
+        }
+   }
+
+    lab2int over(colorizer.color, combinedColor)
+}
+
+/**
+ * Calculate pixel for x,y where the next pixel has a distance of 'distance' (usually 1, but for maps, some other value might be useful).
+ */
+func calcPix3D(x, y, distance) {
+
+    /**
+     * Specular light
+     */
+    func specular(lambert, nz, color) {
+        // Next, specular reflection. Viewer is always assumed to be in direction (0,0,1)
+        extern specularIntensity real = 1;
+
+        extern shininess real = 8;
+
+        // r = 2 n l - l; v = 0:0:1
+        var specRefl = 2 lambert nz - lz;
+
+        if specRefl > 0 then {
+            var ratio = specularIntensity * specRefl ^ shininess;
+
+            // 100 because L in the Lab-Model is between 0 and 100
+            color.d = color.d * (1 - ratio) + ratio;
+            color.a = color.a + 100 * ratio;
+        }
+    }
+
+    /**
+     * lamberts law for labColor
+     */
+    func lambert(c0, h0, c1, h1, c2, h2, color) {
+        // get the normal vector (cross product)
+        var xp = c1 - c0, xz = h1 - h0;
+        var yp = c2 - c0, yz = h2 - h0;
+
+        var np cplx = (xp.y yz - xz yp.y) : (xz yp.x - xp.x yz);
+        var nz real = xp.x yp.y - xp.y yp.x;
+
+        // normalize np and nz
+        var nlen = sqrt(rad2 np + sqr nz);
+        np = np / nlen; nz = nz / nlen;
+
+        // get light direction
+        extern lightBaseAngle real = 45; // in degrees, positive x-Axis is 0
+        extern lightZAngle real = 45; // in degrees, 0 is horizontal.
+
+        // the following are always inlined.
+        def lightVector = (cos(lightBaseAngle * Pi / 180) : sin(lightBaseAngle * Pi / 180)) * sin(lightZAngle * Pi / 180)
+        def lz = cos(lightZAngle * Pi / 180);
+
+        // Lambert's law.
+        var lambert real = dot(lightVector, np) + lz nz; // cosine of angle between normal vector on surface and light vector.
+
+        // diffuse reflexion with ambient factor
+        extern lightIntensity real = 1;
+        extern ambientLight real = 0.5;
+
+        // if lambert is negative it is behind,
+        // but I tweak it a bit for the sake of the looks:
+        // lambert = -1 (which is super-behind) ==> 0
+        // lambert = 0 ==> ambientLight
+        // lambert = 1 ==> lightIntensity
+
+        // for a mathematically correct look use the following:
+        // if lambert < 0 then lambert = 0;
+        // L = L * (lightIntensity + lightIntensity lumen);
+
+        // Change L in Lab-Color
+        color.a = color.a (((0.5 lightIntensity - ambientLight) lambert + 0.5 lightIntensity) lambert + lightIntensity);
+
+        // finally specular light which can also affect alpha.
+        specular(lambert, nz, color);
+    }
+
+    // need to evaluate 3 points per pixel
+    // uses the status-variable
+
+    object colorizer0 = ColorizerBailoutEpsilon();
+    object calculation0 = Calculation(colorizer0);
+
+    object colorizer1 = ColorizerBailoutEpsilon();
+    object calculation1 = Calculation(colorizer1);
+
+    object colorizer2 = ColorizerBailoutEpsilon();
+    object calculation2 = Calculation(colorizer2);
+
+    var c0 cplx = map(x, y - 0.5 * distance);
+    var c1 cplx = map(x - 0.433 * distance, y + 0.25 * distance);
+    var c2 cplx = map(x + 0.433 * distance, y + 0.25 * distance);
+
+    calculation0.initialize(c0);
+    calculation1.initialize(c1);
+    calculation2.initialize(c2);
+
+    var combinedColor quat = 0;
+
+    while {
+        calculation0.step();
+        calculation1.step();
+        calculation2.step();
+        colorizer0.status >= 0 or colorizer1.status >= 0 or colorizer2.status >= 0
+    } do {
+        // here, update orbit traps or other things
+        if colorizer0.status > 0 and colorizer0.status == colorizer1.status and colorizer0.status == colorizer2.status then {
+            // update it.
+            var color quat = (colorizer0.color + colorizer1.color + colorizer2.color) / 3;
+            lambert(c0, colorizer0.height, c1, colorizer1.height, c2, colorizer2.height, color);
+
+            // direction can be twisted here.
+            combinedColor = over(combinedColor, color);
+        }
+    }
+
+    lab2int over((colorizer0.color + colorizer1.color + colorizer2.color) / 3, combinedColor)
+}
+
+func calcPix(x, y, distance) {
+    calcPix3D(x, y, distance) if use3D else calcPix2D(x, y)
+}
+
+func calc(distance) {
+    extern supersampling bool = false;
+
+    calcPix(x, y, distance) if not supersampling
+    else 0.25 (calcPix(x - 0.375 * distance, y - 0.125 * distance, distance) +
+               calcPix(x + 0.125 * distance, y - 0.375 * distance, distance) +
+               calcPix(x + 0.375 * distance, y + 0.125 * distance, distance) +
+               calcPix(x - 0.125 * distance, y + 0.375 * distance, distance))
+}
+
+color = calc(1)

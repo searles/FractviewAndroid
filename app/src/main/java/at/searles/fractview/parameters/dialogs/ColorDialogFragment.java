@@ -28,8 +28,8 @@ public class ColorDialogFragment extends DialogFragment {
     private static final String VALUE_KEY = "value";
     private static final String TITLE_KEY = "title";
 
-    private static final String ID_KEY = "id";
-    private static final String OWNER_KEY = "id";
+    private static final String PARAMETER_NAME_LABEL = "name";
+    private static final String FRACTAL_ID_LABEL = "id";
 
     private static final String X_KEY = "x";
     private static final String Y_KEY = "y";
@@ -54,13 +54,13 @@ public class ColorDialogFragment extends DialogFragment {
     /**
      * This is called from ParameterEditor
      */
-    public static ColorDialogFragment newInstance(String title, String id, int owner, int value) {
+    public static ColorDialogFragment newInstance(String title, String name, int id, int value) {
         Bundle b = new Bundle();
 
         b.putString(TITLE_KEY, title);
-        b.putString(ID_KEY, id);
+        b.putString(PARAMETER_NAME_LABEL, name);
 
-        b.putInt(OWNER_KEY, owner);
+        b.putInt(FRACTAL_ID_LABEL, id);
 
         b.putInt(VALUE_KEY, value);
 
@@ -135,9 +135,9 @@ public class ColorDialogFragment extends DialogFragment {
 
         if(fractalProviderFragment != null) {
             // color dialog fragments are also called from the palette activity.
-            String id = getArguments().getString(ID_KEY);
-            int owner = getArguments().getInt(OWNER_KEY); // null if it does not exist.
-            fractalProviderFragment.setParameterValue(id, owner, value);
+            String name = getArguments().getString(PARAMETER_NAME_LABEL);
+            int id = getArguments().getInt(FRACTAL_ID_LABEL);
+            fractalProviderFragment.setParameterValue(name, id, value);
 
             return;
         }

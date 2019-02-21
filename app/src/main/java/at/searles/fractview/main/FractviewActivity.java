@@ -107,7 +107,7 @@ public class FractviewActivity extends Activity {
 		if(data != null) {
 			if (requestCode == SOURCE_ACTIVITY_RETURN) {
 				if (resultCode == 1) { // = "Ok"
-					int owner = data.getIntExtra(SourceEditorActivity.OWNER_LABEL, -1);
+					int owner = data.getIntExtra(SourceEditorActivity.ID_LABEL, -1);
 					String source = data.getStringExtra(SourceEditorActivity.SOURCE_LABEL);
 					fractalProviderFragment.setParameterValue(Fractal.SOURCE_LABEL, owner, source);
 				}

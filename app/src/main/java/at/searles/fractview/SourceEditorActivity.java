@@ -28,11 +28,13 @@ public class SourceEditorActivity extends Activity {
 	static private final int LOAD_PROGRAM = -1;
 	static private final int SAVE_PROGRAM = -2;
 	public static final int SOURCE_EDITOR_ACTIVITY_RETURN = 98;
-    public static final String OWNER_LABEL = "id";
+    public static final String ID_LABEL = "id";
 
     private EditText editor;
     
 	private String acceptedSource;
+
+	private int id;
 
 	@Override
 	public void onCreate(Bundle savedInstanceState) {
@@ -42,6 +44,7 @@ public class SourceEditorActivity extends Activity {
 
 		// fetch program from intent
 		this.acceptedSource = getIntent().getStringExtra(SOURCE_LABEL);
+		this.id = getIntent().getIntExtra(ID_LABEL, -1);
 
 		editor = findViewById(R.id.sourceEditText);
 		editor.setHorizontallyScrolling(true); // XXX Android Bug: the attribute in the xml is ignored
@@ -81,6 +84,7 @@ public class SourceEditorActivity extends Activity {
 					Intent data = new Intent();
                     
 					data.putExtra(SOURCE_LABEL, acceptedSource);
+					data.putExtra(ID_LABEL, id);
 					setResult(1, data);
 					finish();
 				}
@@ -120,13 +124,13 @@ public class SourceEditorActivity extends Activity {
 	public boolean onOptionsItemSelected(MenuItem item) {
 		switch (item.getItemId()) {
 			case R.id.action_load_program: {
-//				EditableDialogFragment ft = EditableDialogFragment.newInstance(LOAD_PROGRAM,
+//todo				EditableDialogFragment ft = EditableDialogFragment.newInstance(LOAD_PROGRAM,
 //						"Load Program", false, EditableDialogFragment.Type.LoadSharedPref);
 //				ft.show(getFragmentManager(), "dialog");
 //				ft.getArguments().putString("prefs_name", PREFS_NAME);
 			} return true;
 			case R.id.action_save_program: {
-//				EditableDialogFragment ft = EditableDialogFragment.newInstance(SAVE_PROGRAM,
+//todo				EditableDialogFragment ft = EditableDialogFragment.newInstance(SAVE_PROGRAM,
 //						"Save Program", false, EditableDialogFragment.Type.SaveSharedPref);
 //				ft.show(getFragmentManager(), "dialog");
 //				ft.getArguments().putString("prefs_name", PREFS_NAME);

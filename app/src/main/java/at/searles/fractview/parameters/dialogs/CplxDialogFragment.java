@@ -23,16 +23,16 @@ public class CplxDialogFragment extends DialogFragment {
     private static final String RE_VALUE_KEY = "re_value";
     private static final String IM_VALUE_KEY = "im_value";
     private static final String TITLE_KEY = "title";
-    private static final String ID_KEY = "id";
-    private static final String OWNER_KEY = "id";
+    private static final String PARAMETER_NAME_LABEL = "name";
+    private static final String FRACTAL_ID_LABEL = "id";
 
-    public static CplxDialogFragment newInstance(String title, String id, int owner, Cplx value) {
+    public static CplxDialogFragment newInstance(String title, String name, int id, Cplx value) {
         Bundle b = new Bundle();
 
         b.putString(TITLE_KEY, title);
-        b.putString(ID_KEY, id);
+        b.putString(PARAMETER_NAME_LABEL, name);
 
-        b.putInt(OWNER_KEY, owner);
+        b.putInt(FRACTAL_ID_LABEL, id);
 
         b.putDouble(RE_VALUE_KEY, value.re());
         b.putDouble(IM_VALUE_KEY, value.im());
@@ -159,8 +159,8 @@ public class CplxDialogFragment extends DialogFragment {
             // success
 
             FractalProviderFragment fractalProviderFragment = (FractalProviderFragment) getParentFragment();
-            String id = getArguments().getString(ID_KEY);
-            int owner = getArguments().getInt(OWNER_KEY);
+            String id = getArguments().getString(PARAMETER_NAME_LABEL);
+            int owner = getArguments().getInt(FRACTAL_ID_LABEL);
             fractalProviderFragment.setParameterValue(id, owner, value);
 
             return true;

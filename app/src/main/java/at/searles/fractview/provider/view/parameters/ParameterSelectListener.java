@@ -101,7 +101,7 @@ public class ParameterSelectListener implements AdapterView.OnItemClickListener 
 
                 // add information which source it is.
                 // key is of no use because there is only one.
-                i.putExtra(SourceEditorActivity.OWNER_LABEL, item.owner);
+                i.putExtra(SourceEditorActivity.ID_LABEL, item.owner);
 
                 fragment.startActivityForResult(i, SourceEditorActivity.SOURCE_EDITOR_ACTIVITY_RETURN);
             }

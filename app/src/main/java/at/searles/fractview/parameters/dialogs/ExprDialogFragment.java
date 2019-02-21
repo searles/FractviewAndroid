@@ -23,16 +23,16 @@ public class ExprDialogFragment extends DialogFragment {
 
     private static final String VALUE_KEY = "value";
     private static final String TITLE_KEY = "title";
-    private static final String ID_KEY = "id";
-    private static final String OWNER_KEY = "id";
+    private static final String PARAMETER_NAME_LABEL = "name";
+    private static final String FRACTAL_ID_LABEL = "id";
 
-    public static ExprDialogFragment newInstance(String title, String id, int owner, String value) {
+    public static ExprDialogFragment newInstance(String title, String name, int id, String value) {
         Bundle b = new Bundle();
 
         b.putString(TITLE_KEY, title);
-        b.putString(ID_KEY, id);
+        b.putString(PARAMETER_NAME_LABEL, name);
 
-        b.putInt(OWNER_KEY, owner);
+        b.putInt(FRACTAL_ID_LABEL, id);
 
         b.putString(VALUE_KEY, value);
 
@@ -118,8 +118,8 @@ public class ExprDialogFragment extends DialogFragment {
 
             FractalProviderFragment fractalProviderFragment = (FractalProviderFragment) getParentFragment();
 
-            String id = getArguments().getString(ID_KEY);
-            int owner = getArguments().getInt(OWNER_KEY);
+            String id = getArguments().getString(PARAMETER_NAME_LABEL); // fixme
+            int owner = getArguments().getInt(FRACTAL_ID_LABEL);
 
             // the next line will throw in case of an error.
              fractalProviderFragment.setParameterValue(id, owner, value);

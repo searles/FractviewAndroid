@@ -20,15 +20,15 @@ public class IntegerDialogFragment extends DialogFragment {
 
     private static final String VALUE_KEY = "value";
     private static final String TITLE_KEY = "title";
-    private static final String ID_KEY = "id";
-    private static final String OWNER_KEY = "id";
+    private static final String PARAMETER_NAME_LABEL = "name";
+    private static final String FRACTAL_ID_LABEL = "id";
 
     public static IntegerDialogFragment newInstance(String title, String id, int owner, int value) {
         Bundle b = new Bundle();
 
         b.putString(TITLE_KEY, title);
-        b.putString(ID_KEY, id);
-        b.putInt(OWNER_KEY, owner);
+        b.putString(PARAMETER_NAME_LABEL, id);
+        b.putInt(FRACTAL_ID_LABEL, owner);
         b.putInt(VALUE_KEY, value);
 
         IntegerDialogFragment fragment = new IntegerDialogFragment();
@@ -114,8 +114,8 @@ public class IntegerDialogFragment extends DialogFragment {
             // success
 
             FractalProviderFragment fractalProviderFragment = (FractalProviderFragment) getParentFragment();
-            String id = getArguments().getString(ID_KEY);
-            int owner = getArguments().getInt(OWNER_KEY);
+            String id = getArguments().getString(PARAMETER_NAME_LABEL);
+            int owner = getArguments().getInt(FRACTAL_ID_LABEL);
             fractalProviderFragment.setParameterValue(id, owner, value);
 
             return true;

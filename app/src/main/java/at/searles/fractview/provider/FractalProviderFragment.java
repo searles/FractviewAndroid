@@ -20,6 +20,7 @@ import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Queue;
 
 import at.searles.fractal.Fractal;
@@ -207,16 +208,47 @@ public class FractalProviderFragment extends Fragment {
 
     // ========= Handle exclusive parameter ids. ==============
 
-    public void addExclusiveParameter(String id) {
-        provider.addExclusiveParameter(id);
+    public void addExclusiveParameter(String name) {
+        provider.addExclusiveParameter(name);
+
+        // todo if there is name as interactive point, add for all.
+        splitInteractivePoint(name);
     }
 
-    public boolean isSharedParameter(String id) {
-        return provider.isSharedParameter(id);
+    private void splitInteractivePoint(String name) {
+        Optional<InteractivePoint> optPt = interactivePoints.stream().filter(pt -> pt.key().equals(name)).findAny();
+
+        optPt.ifPresent(interactivePoint ->
+                        calculatorWrappers.keySet().stream()
+                                .filter(id -> id != interactivePoint.id())
+                                .forEach(id -> addInteractivePoint(name, id)));
     }
 
-    public void removeExclusiveParameter(String id) {
-        provider.removeExclusiveParameter(id);
+    public boolean isSharedParameter(String name) {
+        return provider.isSharedParameter(name);
+    }
+
+    public void removeExclusiveParameter(String name) {
+        provider.removeExclusiveParameter(name);
+        removeDuplicateInteractivePoints(name);
+    }
+
+    private void removeDuplicateInteractivePoints(String name) {
+        Iterator<InteractivePoint> it = interactivePoints.iterator();
+
+        while(it.hasNext()) {
+            if(it.next().key().equals(name)) {
+                // skip first.
+                break;
+            }
+        }
+
+        while(it.hasNext()) {
+            if(it.next().key().equals(name)) {
+                it.remove();
+                containerViewController.invalidate();
+            }
+        }
     }
 
     // ===============================
@@ -270,10 +302,10 @@ public class FractalProviderFragment extends Fragment {
                 return;
             case SourceEditorActivity.SOURCE_EDITOR_ACTIVITY_RETURN:
                 if(resultCode == PaletteActivity.OK_RESULT) {
-                    int owner = data.getIntExtra(SourceEditorActivity.OWNER_LABEL, -1);
+                    int id = data.getIntExtra(SourceEditorActivity.ID_LABEL, -1);
 
                     String source = data.getStringExtra(SourceEditorActivity.SOURCE_LABEL);
-                    provider.setParameterValue(Fractal.SOURCE_LABEL, owner, source);
+                    provider.setParameterValue(Fractal.SOURCE_LABEL, id, source);
                 }
                 return;
             default:

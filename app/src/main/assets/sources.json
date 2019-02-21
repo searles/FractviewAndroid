@@ -11,6 +11,11 @@
         "file": "NewDefault.fv"
     },
     {
+        "title": "NewDefaultWith3D",
+        "description": "New default program with 3d",
+        "file": "NewDefaultWith3D.fv"
+    },
+    {
         "title": "Julia Map",
         "icon": "juliamap.png",
         "description": "Variation of \"Default\" that shows a map of julia sets.",
