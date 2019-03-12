@@ -13,6 +13,8 @@ import android.widget.Button;
 import android.widget.EditText;
 
 import at.searles.fractal.Fractal;
+import at.searles.fractview.parameters.dialogs.LoadSharedPreferenceDialogFragment;
+import at.searles.fractview.parameters.dialogs.SaveSharedPreferenceDialogFragment;
 import at.searles.fractview.ui.DialogHelper;
 import at.searles.meelan.MeelanException;
 
@@ -29,8 +31,9 @@ public class SourceEditorActivity extends Activity {
 	static private final int SAVE_PROGRAM = -2;
 	public static final int SOURCE_EDITOR_ACTIVITY_RETURN = 98;
     public static final String ID_LABEL = "id";
+	private static final String DIALOG_TAG = "dialogTag";
 
-    private EditText editor;
+	private EditText editor;
     
 	private String acceptedSource;
 
@@ -124,16 +127,14 @@ public class SourceEditorActivity extends Activity {
 	public boolean onOptionsItemSelected(MenuItem item) {
 		switch (item.getItemId()) {
 			case R.id.action_load_program: {
-//todo				EditableDialogFragment ft = EditableDialogFragment.newInstance(LOAD_PROGRAM,
-//						"Load Program", false, EditableDialogFragment.Type.LoadSharedPref);
-//				ft.show(getFragmentManager(), "dialog");
-//				ft.getArguments().putString("prefs_name", PREFS_NAME);
+				// Load from shared prefs, only one textfile
+				// export can only export one file.
+				LoadSharedPreferenceDialogFragment ft = LoadSharedPreferenceDialogFragment.newInstance(PREFS_NAME);
+				ft.show(getFragmentManager(), DIALOG_TAG);
 			} return true;
 			case R.id.action_save_program: {
-//todo				EditableDialogFragment ft = EditableDialogFragment.newInstance(SAVE_PROGRAM,
-//						"Save Program", false, EditableDialogFragment.Type.SaveSharedPref);
-//				ft.show(getFragmentManager(), "dialog");
-//				ft.getArguments().putString("prefs_name", PREFS_NAME);
+				SaveSharedPreferenceDialogFragment ft = SaveSharedPreferenceDialogFragment.newInstance(PREFS_NAME);
+				ft.show(getFragmentManager(), DIALOG_TAG);
 			} return true;
 			case R.id.action_compile: {
 				if(checkCompile()) {

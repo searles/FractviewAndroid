@@ -28,15 +28,16 @@ import at.searles.fractal.FractalProvider;
 import at.searles.fractal.ParameterTable;
 import at.searles.fractal.data.FractalData;
 import at.searles.fractal.entries.FavoriteEntry;
+import at.searles.fractal.gson.Serializers;
 import at.searles.fractview.Commons;
 import at.searles.fractview.SharedPrefsHelper;
 import at.searles.fractview.SourceEditorActivity;
 import at.searles.fractview.assets.AssetsHelper;
-import at.searles.fractview.editors.ImageSizeDialogFragment;
 import at.searles.fractview.favorites.AddFavoritesDialogFragment;
 import at.searles.fractview.favorites.FavoritesAccessor;
 import at.searles.fractview.fractal.BundleAdapter;
 import at.searles.fractview.main.FractviewActivity;
+import at.searles.fractview.parameters.dialogs.ImageSizeDialogFragment;
 import at.searles.fractview.parameters.palettes.PaletteActivity;
 import at.searles.fractview.provider.view.UISettings;
 import at.searles.fractview.saving.EnterFilenameDialogFragment;
@@ -79,6 +80,7 @@ public class FractalProviderFragment extends Fragment {
 
     private static final int WIDTH = 1920; // FIXME Change to smaller items
     private static final int HEIGHT = 1080;
+    private static final String PROVIDER_DATA = "providerData";
 
     private FractalProvider provider;
 
@@ -102,18 +104,38 @@ public class FractalProviderFragment extends Fragment {
         super.onCreate(savedInstanceState);
         setRetainInstance(true);
 
-        this.provider = new FractalProvider();
-        this.provider.addExclusiveParameter(Fractal.SCALE_LABEL);
-        this.provider.addListener(src -> updateInteractivePoints());
+        if(savedInstanceState != null) {
+            String serializedProvider = savedInstanceState.getString(PROVIDER_DATA);
 
-        addDefault();
+            if(serializedProvider != null) {
+                this.provider = Serializers.serializer().fromJson(serializedProvider, FractalProvider.class);
+            }
+        }
+
+        if(this.provider == null) {
+            this.provider = new FractalProvider();
+            this.provider.addExclusiveParameter(Fractal.SCALE_LABEL);
+        }
+
+        if(this.provider.fractalCount() == 0) {
+            addDefault();
+        }
+
+        this.provider.addListener(src -> updateInteractivePoints());
     }
 
     @Override
     public void onDestroy() {
         super.onDestroy();
 
-        // todo save state of provider and interactive points.
+        String serializedProvider = Serializers.serializer().toJson(provider);
+
+        Bundle saveState = new Bundle();
+        saveState.putString(PROVIDER_DATA, serializedProvider);
+
+        onSaveInstanceState(saveState);
+
+        // FIXME what about others?
     }
 
     /**

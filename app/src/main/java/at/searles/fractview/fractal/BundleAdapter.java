@@ -19,14 +19,6 @@ public class BundleAdapter {
     private static final String HEIGHT_LABEL = "height";
     private static final String PALETTE_LABEL = "palette";
 
-//    // for parameters
-//    private static final String TYPE_LABEL = "TYPE";
-//    private static final String VALUE_LABEL = "VALUE";
-//
-//    // for fractal data
-//    private static final String SOURCE_LABEL = "SOURCE";
-//    private static final String PARAMETERS_LABEL = "PARAMETERS";
-
     private static final String FRACTAL_DATA_JSON = "fds";
 
     public static Bundle toBundle(FractalData fractal) {
@@ -40,104 +32,6 @@ public class BundleAdapter {
         String json = bundle.getString(FRACTAL_DATA_JSON);
         return Serializers.serializer().fromJson(json, FractalData.class);
     }
-
-//    public static Bundle parametersToBundle(FractalData data) {
-//        Bundle bundle = new Bundle();
-//
-//        // TODO put an object into a bundle.
-//
-//        data.forEachParameter((id, value) -> bundle.p);
-//
-//        for(Map.Entry<String, FractalData.Parameter> entry : data.entrySet()) {
-//            Bundle parameter = new Bundle();
-//            parameter.putInt(TYPE_LABEL, entry.getValue().type.ordinal());
-//
-//            Object value = entry.getValue().value;
-//
-//            switch(entry.getValue().type) {
-//                case Int:
-//                    parameter.putInt(VALUE_LABEL, ((Number) value).intValue());
-//                    break;
-//                case Real:
-//                    parameter.putDouble(VALUE_LABEL, ((Number) value).doubleValue());
-//                    break;
-//                case Cplx:
-//                    parameter.putDoubleArray(VALUE_LABEL, new double[]{((Cplx) value).re(), ((Cplx) value).im()});
-//                    break;
-//                case Bool:
-//                    parameter.putInt(VALUE_LABEL, ((Boolean) value) ? 1 : 0);
-//                    break;
-//                case Expr:
-//                    parameter.putString(VALUE_LABEL, (String) value);
-//                    break;
-//                case Color:
-//                    parameter.putInt(VALUE_LABEL, (Integer) value);
-//                    break;
-//                case Palette:
-//                    parameter.putBundle(VALUE_LABEL, toBundle((Palette) value));
-//                    break;
-//                case Scale:
-//                    parameter.putDoubleArray(VALUE_LABEL, toArray((Scale) value));
-//                    break;
-//            }
-//
-//            bundle.putBundle(entry.getKey(), parameter);
-//        }
-//
-//        return bundle;
-//    }
-//
-//    public static Map<String, FractalData.Parameter> parametersFromBundle(Bundle bundle) {
-//        Map<String, FractalData.Parameter> parameters = new HashMap<>();
-//
-//        for(String id : bundle.keySet()) {
-//            Bundle parameter = bundle.getBundle(id);
-//
-//            if(parameter == null) {
-//                throw new NullPointerException();
-//            }
-//
-//            ParameterType type = ParameterType.values()[parameter.getInt(TYPE_LABEL, -1)];
-//
-//            Object value;
-//
-//            switch(type) {
-//                case Int:
-//                    value = parameter.getInt(VALUE_LABEL);
-//                    break;
-//                case Real:
-//                    value = parameter.getDouble(VALUE_LABEL);
-//                    break;
-//                case Cplx:
-//                    double[] cplx = parameter.getDoubleArray(VALUE_LABEL);
-//                    value = cplxFromArray(cplx);
-//                    break;
-//                case Bool:
-//                    value = 1 == parameter.getInt(VALUE_LABEL);
-//                    break;
-//                case Expr:
-//                    value = parameter.getString(VALUE_LABEL);
-//                    break;
-//                case Color:
-//                    value = parameter.getInt(VALUE_LABEL);
-//                    break;
-//                case Palette:
-//                    value = paletteFromBundle(parameter.getBundle(VALUE_LABEL));
-//                    break;
-//                case Scale:
-//                    double[] scale = parameter.getDoubleArray(VALUE_LABEL);
-//                    value = scaleFromArray(scale);
-//                    break;
-//                default:
-//                    throw new IllegalArgumentException();
-//            }
-//
-//            parameters.put(id, new FractalData.Parameter(type, value));
-//        }
-//
-//        return parameters;
-//    }
-
 
     /**
      * Used to put a palette into a bundle. Faster and easier than json.

@@ -1,6 +1,5 @@
-package at.searles.fractview.editors;
+package at.searles.fractview.parameters.dialogs;
 
-import android.annotation.SuppressLint;
 import android.app.AlertDialog;
 import android.app.Dialog;
 import android.app.DialogFragment;
@@ -10,7 +9,6 @@ import android.content.SharedPreferences;
 import android.graphics.Point;
 import android.os.Bundle;
 import android.preference.PreferenceManager;
-import android.view.LayoutInflater;
 import android.view.View;
 import android.view.WindowManager;
 import android.widget.AdapterView;
@@ -56,13 +54,7 @@ public class ImageSizeDialogFragment extends DialogFragment {
     @Override
     public Dialog onCreateDialog(Bundle savedInstanceState) {
         AlertDialog.Builder builder = new AlertDialog.Builder(getActivity());
-
-        LayoutInflater inflater = getActivity().getLayoutInflater();
-
-        // null is ok here because there is no parent yet (ie the dialog)
-        @SuppressLint("InflateParams")
-        View dialogView = inflater.inflate(R.layout.image_size_layout, null);
-        builder.setView(dialogView);
+        builder.setView(R.layout.image_size_layout);
 
         builder.setNegativeButton("Cancel", new DialogInterface.OnClickListener() {
             @Override

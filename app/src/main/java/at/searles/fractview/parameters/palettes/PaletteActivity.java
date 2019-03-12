@@ -15,6 +15,8 @@ import at.searles.fractal.gson.Serializers;
 import at.searles.fractview.ClipboardHelper;
 import at.searles.fractview.R;
 import at.searles.fractview.fractal.BundleAdapter;
+import at.searles.fractview.parameters.dialogs.LoadSharedPreferenceDialogFragment;
+import at.searles.fractview.parameters.dialogs.SaveSharedPreferenceDialogFragment;
 import at.searles.fractview.ui.DialogHelper;
 import at.searles.fractview.ui.MultiScrollView;
 import at.searles.math.color.Palette;
@@ -45,10 +47,9 @@ public class PaletteActivity extends Activity {
 	public static final int CANCEL_RESULT = 0;
 	public static final int OK_RESULT = 1;
 
-	private static final int SAVE_PALETTE = -1; // because positive numbers are for indices
-	private static final int LOAD_PALETTE = -2; // because positive numbers are for indices
+	private static final String DIALOG_TAG = "dialogTag";
 
-    private PaletteViewModel model = null;
+	private PaletteViewModel model = null;
 
 	private String id;
 
@@ -132,26 +133,12 @@ public class PaletteActivity extends Activity {
 		// Handle presses on the action bar items
 		switch (item.getItemId()) {
 			case R.id.action_load_palette: {
-				// TODO:
-				// Start activity!
-				// the fragment needs the name of the prefs as an argument.
-
-//				EditableDialogFragment ft = EditableDialogFragment.newInstance(
-//						LOAD_PALETTE, "Load Palette", false,
-//						EditableDialogFragment.Type.LoadSharedPref);
-//
-//				ft.show(getFragmentManager(), "dialog");
-//				ft.getArguments().putString("prefs_name", PaletteActivity.PREFS_NAME);
+				LoadSharedPreferenceDialogFragment ft = LoadSharedPreferenceDialogFragment.newInstance(PaletteActivity.PREFS_NAME);
+				ft.show(getFragmentManager(), DIALOG_TAG);
 			} return true;
 			case R.id.action_save_palette: {
-				// TODO: Show dialog for entering name.
-//				EditableDialogFragment ft = EditableDialogFragment.newInstance(SAVE_PALETTE,
-//						"Save Palette", false, EditableDialogFragment.Type.SaveSharedPref);
-//
-//				ft.show(getFragmentManager(), "dialog");
-//
-//				// the fragment needs the name of the prefs as an argument.
-//				ft.getArguments().putString("prefs_name", PaletteActivity.PREFS_NAME);
+				SaveSharedPreferenceDialogFragment ft = SaveSharedPreferenceDialogFragment.newInstance(PaletteActivity.PREFS_NAME);
+				ft.show(getFragmentManager(), DIALOG_TAG);
 			} return true;
 			case R.id.action_copy_to_clipboard: {
 				// copy
