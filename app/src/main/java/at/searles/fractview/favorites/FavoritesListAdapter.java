@@ -14,7 +14,9 @@ import at.searles.fractview.R;
 /**
  * This adapter manages all fractal entries. The main item is a
  * TreeMap that represents all Favorite entries.
+ * @deprecated replace with other item.
  */
+@Deprecated
 public class FavoritesListAdapter extends BaseAdapter {
 
     private final FavoritesActivity activity;

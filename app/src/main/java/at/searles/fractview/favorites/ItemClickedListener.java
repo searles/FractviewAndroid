@@ -8,6 +8,8 @@ import at.searles.fractal.entries.FavoriteEntry;
 import at.searles.fractview.fractal.BundleAdapter;
 import at.searles.fractview.ui.DialogHelper;
 
+// replace by itemsmanageractivity.
+@Deprecated
 class ItemClickedListener implements AdapterView.OnItemClickListener {
     private FavoritesListAdapter adapter;
 

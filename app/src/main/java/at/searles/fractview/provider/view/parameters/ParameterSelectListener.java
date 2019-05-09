@@ -14,7 +14,7 @@ import at.searles.fractview.parameters.dialogs.ExprDialogFragment;
 import at.searles.fractview.parameters.dialogs.IntegerDialogFragment;
 import at.searles.fractview.parameters.dialogs.RealDialogFragment;
 import at.searles.fractview.parameters.dialogs.ScaleDialogFragment;
-import at.searles.fractview.parameters.palettes.PaletteActivity;
+import at.searles.fractview.palettes.PaletteActivity;
 import at.searles.fractview.provider.FractalProviderFragment;
 import at.searles.math.Cplx;
 import at.searles.math.Scale;

@@ -1,4 +1,4 @@
-package at.searles.fractview;
+package at.searles.fractview.utils;
 
 import android.content.ClipData;
 import android.content.ClipboardManager;

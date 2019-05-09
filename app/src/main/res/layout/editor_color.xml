@@ -13,7 +13,7 @@
         android:layout_gravity="center_horizontal"/>
 
     <view
-        class="at.searles.fractview.parameters.palettes.ColorView"
+        class="at.searles.fractview.palettes.ColorView"
         android:id="@+id/colorView"
         android:layout_gravity="center_horizontal"
         android:layout_row="0"

@@ -27,7 +27,9 @@ import at.searles.fractview.ui.DialogHelper;
  *
  * The activity consists of a list with all favorites. It allows
  * the caller to delete and export single and multiple favorites.
+ * 
  */
+@Deprecated
 public class FavoritesActivity extends Activity {
 
     private static final int IMPORT_COLLECTION_CODE = 111;
@@ -69,7 +71,7 @@ public class FavoritesActivity extends Activity {
     public boolean onCreateOptionsMenu(Menu menu) {
         // Inflate the menu items for use in the action bar
         MenuInflater inflater = getMenuInflater();
-        inflater.inflate(R.menu.activity_favorites, menu);
+        inflater.inflate(R.menu.items_manager, menu);
         return super.onCreateOptionsMenu(menu);
     }
 

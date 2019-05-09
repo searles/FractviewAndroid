@@ -48,25 +48,6 @@ public class Commons {
     }
 
 
-    /**
-     * Matrices to convert coordinates into value that is
-     * independent from the bitmap-size. Normized always
-     * contains the square -1,-1 - 1-1 with 0,0 in the middle
-     * but also keeps the ratio of the image.
-     */
-    public static Matrix bitmap2norm(int width, int height) {
-        float m = Math.min(width, height);
-
-        Matrix ret = new Matrix();
-
-        ret.setValues(new float[]{
-                2f / m, 0f, -width / m,
-                0f, 2f / m, -height / m,
-                0f, 0f, 1f
-        });
-
-        return ret;
-    }
 
     public static float normX(float bitmapX, int width, int height) {
         float m = Math.min(width, height);
@@ -78,22 +59,6 @@ public class Commons {
         return bitmapY * 2f / m - height / m;
     }
 
-    /**
-     * Inverse of bitmap2norm
-     */
-    public static Matrix norm2bitmap(int width, int height) {
-        float m = Math.min(width, height);
-
-        Matrix ret = new Matrix();
-
-        ret.setValues(new float[]{
-                m / 2f, 0f, width / 2f,
-                0f, m / 2f, height / 2f,
-                0f, 0f, 1f
-        });
-
-        return ret;
-    }
 
     public static float bitmapX(float normX, int width, int height) {
         float m = Math.min(width, height);

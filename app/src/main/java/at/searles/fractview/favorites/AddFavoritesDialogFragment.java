@@ -19,7 +19,7 @@ import at.searles.fractview.provider.FractalProviderFragment;
 // This is practically the same as the IntDialogFragment, except for the parser...
 public class AddFavoritesDialogFragment extends DialogFragment {
 
-    public static AddFavoritesDialogFragment newInstance(int fragmentIndex) {
+    public static AddFavoritesDialogFragment newInstance() {
         Bundle b = new Bundle();
 
         AddFavoritesDialogFragment fragment = new AddFavoritesDialogFragment();

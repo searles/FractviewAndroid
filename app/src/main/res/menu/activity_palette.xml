@@ -1,19 +1,8 @@
 <?xml version="1.0" encoding="utf-8"?>
 <menu xmlns:android="http://schemas.android.com/apk/res/android">
-    <item android:id="@+id/action_load_palette"
-        android:title="@string/action_load_palette"
+    <item android:id="@+id/action_palettes"
+        android:title="Manage Palettes"
         android:icon="@drawable/ic_menu_archive"
         android:showAsAction="ifRoom"
-        />
-    <item android:id="@+id/action_save_palette"
-          android:title="@string/action_save_palette"
-          android:icon="@android:drawable/ic_menu_save"
-          android:showAsAction="ifRoom"
-        />
-    <item android:id="@+id/action_copy_to_clipboard"
-          android:title="@string/action_copy_to_clipboard"
-        />
-    <item android:id="@+id/action_paste_from_clipboard"
-          android:title="@string/action_paste_from_clipboard"
-        />
+    />
 </menu>

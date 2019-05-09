@@ -1,24 +1,23 @@
-package at.searles.fractview.favorites;
+package at.searles.fractview.utils;
 
 import com.google.gson.JsonSyntaxException;
 
 import java.lang.reflect.Type;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.LinkedHashMap;
+import java.util.WeakHashMap;
 
 import at.searles.fractal.gson.Serializers;
 import at.searles.strings.CharComparators;
 import at.searles.strings.NaturalStringComparator;
 
 /**
- * FIXME move to utils
+ * JsonEntries is always considered to be up-to-date.
  */
-
 public class CachedKeyAdapter<A> {
     private ArrayList<String> keys;
     private LinkedHashMap<String, String> jsonEntries;
-    private HashMap<String, A> entries;
+    private WeakHashMap<String, A> entries;
 
     /**
      * If true, then keys must be updated when it is accessed.
@@ -30,7 +29,7 @@ public class CachedKeyAdapter<A> {
         this.type = type;
         keys = new ArrayList<>();
         jsonEntries = new LinkedHashMap<>();
-        entries = new HashMap<>();
+        entries = new WeakHashMap<>();
 
         invalid = false;
     }
@@ -95,5 +94,9 @@ public class CachedKeyAdapter<A> {
             e.printStackTrace();
             return null;
         }
+    }
+
+    public boolean contains(String key) {
+        return jsonEntries.containsKey(key);
     }
 }

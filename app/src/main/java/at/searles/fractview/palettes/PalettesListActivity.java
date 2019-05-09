@@ -1,7 +1,15 @@
-package at.searles.fractview.parameters.palettes;
+package at.searles.fractview.palettes;
 
 import android.app.Activity;
+import android.content.Context;
+import android.content.SharedPreferences;
+import android.os.Bundle;
 import android.widget.ListView;
+
+import at.searles.fractview.R;
+import at.searles.fractview.utils.Accessor;
+import at.searles.fractview.utils.SharedPreferencesAccessor;
+import at.searles.math.color.Palette;
 
 /**
  *
@@ -19,7 +27,24 @@ public class PalettesListActivity extends Activity {
      */
     private ListView listView;
 
-//    private void initCloseButton() {
+    private Accessor<Palette> createAccessor() {
+        SharedPreferences prefs = getSharedPreferences(, Context.MODE_PRIVATE);
+        return new SharedPreferencesAccessor<>(prefs, Palette.class);
+    }
+
+    @Override
+    public void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        setContentView(R.layout.accessor);
+
+        Accessor<Palette>  accessor = new SharedPreferencesAccessor<>(createAccessor(), Palette.class);
+        this.adapter = new AccessorAdapter(this);
+
+        initListView();
+        initCloseButton();
+    }
+
+    //    private void initCloseButton() {
 //        Button closeButton = (Button) findViewById(R.id.closeButton);
 //        closeButton.setOnClickListener(new View.OnClickListener() {
 //            @Override
@@ -30,16 +55,6 @@ public class PalettesListActivity extends Activity {
 //        });
 //    }
 //
-//    @Override
-//    public void onCreate(Bundle savedInstanceState) {
-//        super.onCreate(savedInstanceState);
-//        setContentView(R.layout.fractal_list_activity_layout);
-//
-//        this.adapter = new FavoritesListAdapter(this);
-//
-//        initListView();
-//        initCloseButton();
-//    }
 //
 //    private void initListView() {
 //        this.listView = (ListView) findViewById(R.id.fractalListView);

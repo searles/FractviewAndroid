@@ -1,24 +1,25 @@
-package at.searles.fractview.parameters.palettes;
+package at.searles.fractview.palettes;
 
 import android.app.Activity;
+import android.content.Context;
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.view.Menu;
 import android.view.MenuInflater;
 import android.view.MenuItem;
 import android.view.View;
 import android.widget.Button;
+import android.widget.EditText;
 
 import org.jetbrains.annotations.NotNull;
 
-import at.searles.fractal.gson.Serializers;
-import at.searles.fractview.ClipboardHelper;
 import at.searles.fractview.R;
 import at.searles.fractview.fractal.BundleAdapter;
-import at.searles.fractview.parameters.dialogs.LoadSharedPreferenceDialogFragment;
-import at.searles.fractview.parameters.dialogs.SaveSharedPreferenceDialogFragment;
 import at.searles.fractview.ui.DialogHelper;
 import at.searles.fractview.ui.MultiScrollView;
+import at.searles.fractview.utils.Accessor;
+import at.searles.fractview.utils.SharedPreferencesAccessor;
 import at.searles.math.color.Palette;
 
 /**
@@ -32,8 +33,6 @@ import at.searles.math.color.Palette;
  * Therefore, it would be better if the view did not hold the model.
  */
 public class PaletteActivity extends Activity {
-
-	// FIXME shouldn't there be some title?
 
 	public static final String PALETTE_LABEL = "palette";
 	public static final String ID_LABEL = "id";
@@ -86,6 +85,8 @@ public class PaletteActivity extends Activity {
 
 		// the paletteview is embedded into a multiscrollview
 
+		// TODO Buttons, do it differently.
+
 		Button okButton = findViewById(R.id.okButton);
 		Button cancelButton = findViewById(R.id.cancelButton);
 
@@ -128,43 +129,75 @@ public class PaletteActivity extends Activity {
 		return super.onCreateOptionsMenu(menu);
 	}
 
+	private Accessor<Palette> createAccessor() {
+		SharedPreferences prefs = getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE);
+		return new SharedPreferencesAccessor<>(prefs, Palette.class);
+	}
+
+	private void checkSavePalette() {
+		// TODO from button.
+		EditText nameEditor = findViewById(R.id.nameEditor);
+		String name = nameEditor.getText().toString();
+
+		if(name.isEmpty()) {
+			DialogHelper.error(this, "Name must not be empty");
+			return;
+		}
+
+		// TODO Check whether it already exists.
+		Accessor<Palette> accessor = createAccessor();
+
+		if(accessor.exists(name)) {
+			// TODO Dialog with options
+			// Overwrite/Save anyways
+			// Append index
+			// Cancel
+			return;
+		}
+
+		accessor.add(name, model.createPalette());
+	}
+
 	@Override
 	public boolean onOptionsItemSelected(MenuItem item) {
 		// Handle presses on the action bar items
 		switch (item.getItemId()) {
-			case R.id.action_load_palette: {
-				LoadSharedPreferenceDialogFragment ft = LoadSharedPreferenceDialogFragment.newInstance(PaletteActivity.PREFS_NAME);
-				ft.show(getFragmentManager(), DIALOG_TAG);
-			} return true;
-			case R.id.action_save_palette: {
-				SaveSharedPreferenceDialogFragment ft = SaveSharedPreferenceDialogFragment.newInstance(PaletteActivity.PREFS_NAME);
-				ft.show(getFragmentManager(), DIALOG_TAG);
-			} return true;
-			case R.id.action_copy_to_clipboard: {
-				// copy
-				String entry = Serializers.serializer().toJson(model.createPalette(), Palette.class);
-				ClipboardHelper.copy(this, entry);
-			} return true;
-			case R.id.action_paste_from_clipboard: {
-				// paste
-				CharSequence pastedText = ClipboardHelper.paste(this);
-
-				if(pastedText != null) {
-					Palette p = Serializers.serializer().fromJson(pastedText.toString(), Palette.class);
-
-					if (p != null) {
-						model = new PaletteViewModel(p);
-
-						PaletteView view = findViewById(R.id.paletteView);
-
-						view.invalidate();
-					} else {
-						DialogHelper.error(this, "No palette in clipboard");
-					}
-				} else {
-					DialogHelper.error(this, "The clipboard is empty");
-				}
-			} return true;
+			case R.id.action_palettes: {
+				// TODO
+				startActivityForResult(new Intent(this, PalettesListActivity.class), PALETTE_ACTIVITY_RETURN);
+			}
+			return true;
+// FIXME remove			case R.id.action_load_palette: {
+//				LoadFullScreenDialogFragment ft = LoadFullScreenDialogFragment.newInstance(PaletteActivity.PREFS_NAME);
+//				// TODO LoadSharedPreferenceDialogFragment ft = LoadSharedPreferenceDialogFragment.newInstance(PaletteActivity.PREFS_NAME);
+//				ft.show(getFragmentManager(), DIALOG_TAG);
+//			} return true;
+//			case R.id.action_copy_to_clipboard: {
+//				// TODO Move to copy/paste menu
+//				// copy
+//				String entry = Serializers.serializer().toJson(model.createPalette(), Palette.class);
+//				ClipboardHelper.copy(this, entry);
+//			} return true;
+//			case R.id.action_paste_from_clipboard: {
+//				// paste
+//				CharSequence pastedText = ClipboardHelper.paste(this);
+//
+//				if(pastedText != null) {
+//					Palette p = Serializers.serializer().fromJson(pastedText.toString(), Palette.class);
+//
+//					if (p != null) {
+//						model = new PaletteViewModel(p);
+//
+//						PaletteView view = findViewById(R.id.paletteView);
+//
+//						view.invalidate();
+//					} else {
+//						DialogHelper.error(this, "No palette in clipboard");
+//					}
+//				} else {
+//					DialogHelper.error(this, "The clipboard is empty");
+//				}
+//			} return true;
 			default:
 				return super.onOptionsItemSelected(item);
 		}

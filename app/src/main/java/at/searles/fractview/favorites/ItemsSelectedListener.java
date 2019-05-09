@@ -54,7 +54,7 @@ class ItemsSelectedListener implements AbsListView.MultiChoiceModeListener {
     @Override
     public boolean onCreateActionMode(ActionMode mode, Menu menu) {
         MenuInflater inflater = mode.getMenuInflater();
-        inflater.inflate(R.menu.activity_favorites_selected, menu);
+        inflater.inflate(R.menu.items_manager_selected, menu);
         return true;
     }
 

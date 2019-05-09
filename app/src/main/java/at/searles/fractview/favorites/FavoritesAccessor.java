@@ -22,8 +22,9 @@ import java.util.TreeSet;
 import at.searles.fractal.entries.FavoriteEntry;
 import at.searles.fractal.gson.Serializers;
 import at.searles.fractview.Commons;
-import at.searles.fractview.SharedPrefsHelper;
 import at.searles.fractview.ui.DialogHelper;
+import at.searles.fractview.utils.CachedKeyAdapter;
+import at.searles.fractview.utils.SharedPrefsHelper;
 import at.searles.fractview.utils.SharedPrefsHelperException;
 
 /**
@@ -205,6 +206,10 @@ public class FavoritesAccessor implements FractalAccessor {
         JsonWriter writer = null;
 
         // Create a map
+        // FIXME:
+        //
+//        Type type = new TypeToken<HashMap<Integer, Employee>>(){}.getType();
+//        HashMap<Integer, Employee> clonedMap = gson.fromJson(jsonString, type);
         FavoriteEntry.Collection collection = new FavoriteEntry.Collection();
 
         for (String key : keys) {

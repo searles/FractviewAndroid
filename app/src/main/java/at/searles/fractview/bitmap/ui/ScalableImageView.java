@@ -20,7 +20,6 @@ import org.jetbrains.annotations.NotNull;
 import java.util.LinkedList;
 import java.util.List;
 
-import at.searles.fractview.Commons;
 import at.searles.fractview.bitmap.ui.imageview.Plugin;
 import at.searles.math.Scale;
 
@@ -293,8 +292,8 @@ public class ScalableImageView extends View {
 	private void initializeImageMatrix() {
 		Matrix newImageMatrix = multitouch.initializeViewMatrix();
 
-		newImageMatrix.preConcat(Commons.bitmap2norm(bitmap.getWidth(), bitmap.getHeight()));
-		newImageMatrix.postConcat(Commons.norm2bitmap(bitmap.getWidth(), bitmap.getHeight()));
+		newImageMatrix.preConcat(bitmap2norm(bitmap.getWidth(), bitmap.getHeight()));
+		newImageMatrix.postConcat(norm2bitmap(bitmap.getWidth(), bitmap.getHeight()));
 
 		newImageMatrix.postConcat(bitmap2view);
 
@@ -413,6 +412,43 @@ public class ScalableImageView extends View {
 	}
 
 	/**
+	 * Inverse of bitmap2norm
+	 */
+	public static Matrix norm2bitmap(int width, int height) {
+		float m = Math.min(width, height);
+
+		Matrix ret = new Matrix();
+
+		ret.setValues(new float[]{
+				m / 2f, 0f, width / 2f,
+				0f, m / 2f, height / 2f,
+				0f, 0f, 1f
+		});
+
+		return ret;
+	}
+
+	/**
+	 * Matrices to convert coordinates into value that is
+	 * independent from the bitmap-size. Normized always
+	 * contains the square -1,-1 - 1-1 with 0,0 in the middle
+	 * but also keeps the ratio of the image.
+	 */
+	public static Matrix bitmap2norm(int width, int height) {
+		float m = Math.min(width, height);
+
+		Matrix ret = new Matrix();
+
+		ret.setValues(new float[]{
+				2f / m, 0f, -width / m,
+				0f, 2f / m, -height / m,
+				0f, 0f, 1f
+		});
+
+		return ret;
+	}
+
+	/**
 	 * Map point from view coordinates to screenToNormalized
 	 * @param viewX
 	 * @param viewY
@@ -423,14 +459,14 @@ public class ScalableImageView extends View {
 		normPt[1] = viewY;
 
 		view2bitmap.mapPoints(normPt);
-		Commons.bitmap2norm(bitmap.getWidth(), bitmap.getHeight()).mapPoints(normPt);
+		bitmap2norm(bitmap.getWidth(), bitmap.getHeight()).mapPoints(normPt);
 	}
 
 	public void normalizedToScreen(float normX, float normY, float[] screenPt) {
 		screenPt[0] = normX;
 		screenPt[1] = normY;
 
-		Commons.norm2bitmap(bitmap.getWidth(), bitmap.getHeight()).mapPoints(screenPt);
+		norm2bitmap(bitmap.getWidth(), bitmap.getHeight()).mapPoints(screenPt);
 		bitmap2view.mapPoints(screenPt);
 	}
 
@@ -438,7 +474,7 @@ public class ScalableImageView extends View {
 		bitmapPt[0] = normX;
 		bitmapPt[1] = normY;
 
-		Commons.norm2bitmap(bitmap.getWidth(), bitmap.getHeight()).mapPoints(bitmapPt);
+		norm2bitmap(bitmap.getWidth(), bitmap.getHeight()).mapPoints(bitmapPt);
 	}
 
 	/**

@@ -1,4 +1,4 @@
-package at.searles.fractview.parameters.palettes;
+package at.searles.fractview.palettes;
 
 // TODO: RequestLayout not working?
 
@@ -23,8 +23,8 @@ import at.searles.fractview.ui.MultiScrollView;
 import at.searles.math.Commons;
 import at.searles.math.color.Colors;
 
-import static at.searles.fractview.parameters.palettes.PaletteView.SelectionType.BoundX;
-import static at.searles.fractview.parameters.palettes.PaletteView.SelectionType.BoundY;
+import static at.searles.fractview.palettes.PaletteView.SelectionType.BoundX;
+import static at.searles.fractview.palettes.PaletteView.SelectionType.BoundY;
 
 /**
  + Design: SelectAt should return an object instead setting members.

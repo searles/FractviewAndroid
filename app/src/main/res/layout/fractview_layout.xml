@@ -19,6 +19,7 @@
         app:menu="@menu/activity_fractview"
         app:headerLayout="@layout/nav_header"/>
 
+    <!-- TODO simply replace by LinearLayout? -->
     <ListView
         android:id="@+id/parameter_nav_list_view"
         android:layout_width="match_parent"

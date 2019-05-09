@@ -19,13 +19,15 @@
             </intent-filter>
         </activity>
         <activity android:name=".FavoritesListActivity" />
-        <activity android:name=".parameters.palettes.PaletteActivity"/>
+        <activity android:name=".palettes.PaletteActivity"/>
         <activity android:name=".assets.SourcesListActivity"/>
         <activity android:name=".assets.SelectAssetActivity"/>
         <activity android:name=".SourceEditorActivity"/>
         <activity android:name="at.searles.tutorial.TutorialActivity">
         </activity>
         <activity android:name=".favorites.FavoritesActivity"/>
+        <activity android:name=".source.SourceEditorActivity"/>
+        <activity android:name=".utils.ItemsManagerActivity"/>
 
         <provider
             android:name="android.support.v4.content.FileProvider"

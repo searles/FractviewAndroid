@@ -1,4 +1,4 @@
-package at.searles.fractview;
+package at.searles.fractview.source;
 
 import android.app.Activity;
 import android.content.Intent;
@@ -13,6 +13,7 @@ import android.widget.Button;
 import android.widget.EditText;
 
 import at.searles.fractal.Fractal;
+import at.searles.fractview.R;
 import at.searles.fractview.parameters.dialogs.LoadSharedPreferenceDialogFragment;
 import at.searles.fractview.parameters.dialogs.SaveSharedPreferenceDialogFragment;
 import at.searles.fractview.ui.DialogHelper;

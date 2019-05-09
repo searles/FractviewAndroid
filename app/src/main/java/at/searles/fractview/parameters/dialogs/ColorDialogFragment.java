@@ -15,9 +15,9 @@ import android.widget.AutoCompleteTextView;
 import java.util.Optional;
 
 import at.searles.fractview.R;
-import at.searles.fractview.parameters.palettes.ColorView;
-import at.searles.fractview.parameters.palettes.PaletteActivity;
-import at.searles.fractview.parameters.palettes.PaletteView;
+import at.searles.fractview.palettes.ColorView;
+import at.searles.fractview.palettes.PaletteActivity;
+import at.searles.fractview.palettes.PaletteView;
 import at.searles.fractview.provider.FractalProviderFragment;
 
 // This is practically the same as the IntDialogFragment, except for the parser...

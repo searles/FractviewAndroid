@@ -1,4 +1,4 @@
-package at.searles.fractview.parameters.palettes;
+package at.searles.fractview.palettes;
 
 import android.content.Context;
 import android.graphics.Canvas;

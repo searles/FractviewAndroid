@@ -30,7 +30,7 @@ import at.searles.fractal.data.FractalData;
 import at.searles.fractal.entries.FavoriteEntry;
 import at.searles.fractal.gson.Serializers;
 import at.searles.fractview.Commons;
-import at.searles.fractview.SharedPrefsHelper;
+import at.searles.fractview.utils.SharedPrefsHelper;
 import at.searles.fractview.SourceEditorActivity;
 import at.searles.fractview.assets.AssetsHelper;
 import at.searles.fractview.favorites.AddFavoritesDialogFragment;
@@ -38,7 +38,7 @@ import at.searles.fractview.favorites.FavoritesAccessor;
 import at.searles.fractview.fractal.BundleAdapter;
 import at.searles.fractview.main.FractviewActivity;
 import at.searles.fractview.parameters.dialogs.ImageSizeDialogFragment;
-import at.searles.fractview.parameters.palettes.PaletteActivity;
+import at.searles.fractview.palettes.PaletteActivity;
 import at.searles.fractview.provider.view.UISettings;
 import at.searles.fractview.saving.EnterFilenameDialogFragment;
 import at.searles.fractview.saving.SaveBitmapToMediaFragment;
@@ -395,11 +395,12 @@ public class FractalProviderFragment extends Fragment {
     }
 
     public void showAddToFavoritesDialog() {
-        AddFavoritesDialogFragment fragment = AddFavoritesDialogFragment.newInstance(provider.keyId());
+        AddFavoritesDialogFragment fragment = AddFavoritesDialogFragment.newInstance();
         fragment.show(getChildFragmentManager(), ADD_FRAGMENT_TAG);
     }
 
     public void addToFavorites(String name) {
+        // TODO Move this somewhere else!
         FractalData fractal = getFractal(provider.keyId()).data();
         Bitmap icon = Commons.createIcon(getBitmap(provider.keyId()), FAVORITES_ICON_SIZE);
 

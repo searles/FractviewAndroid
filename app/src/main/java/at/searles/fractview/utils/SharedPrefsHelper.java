@@ -1,15 +1,14 @@
-package at.searles.fractview;
+package at.searles.fractview.utils;
 
 import android.content.Context;
 import android.content.SharedPreferences;
 
 import at.searles.fractal.gson.Serializers;
-import at.searles.fractview.utils.CharUtil;
-import at.searles.fractview.utils.SharedPrefsHelperException;
 
 /**
  * Helper for Shared Preferences
  */
+@Deprecated
 public class SharedPrefsHelper {
 
     public static String renameKey(SharedPreferences prefs, String oldKey, String newKey) {

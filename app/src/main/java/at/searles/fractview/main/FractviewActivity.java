@@ -18,7 +18,6 @@ import org.jetbrains.annotations.NotNull;
 import at.searles.fractal.Fractal;
 import at.searles.fractal.data.FractalData;
 import at.searles.fractview.R;
-import at.searles.fractview.SourceEditorActivity;
 import at.searles.fractview.assets.SelectAssetActivity;
 import at.searles.fractview.favorites.FavoritesActivity;
 import at.searles.fractview.fractal.BundleAdapter;
@@ -27,6 +26,7 @@ import at.searles.fractview.provider.view.UISettings;
 import at.searles.fractview.provider.view.parameters.ParameterAdapter;
 import at.searles.fractview.provider.view.parameters.ParameterLongSelectListener;
 import at.searles.fractview.provider.view.parameters.ParameterSelectListener;
+import at.searles.fractview.source.SourceEditorActivity;
 import at.searles.tutorial.TutorialActivity;
 
 
